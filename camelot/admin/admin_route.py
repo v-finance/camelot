@@ -5,7 +5,7 @@ import typing
 
 from ..admin.action.base import RenderHint
 from ..core.exception import UserException
-from ..core.naming import NamingContext
+from ..core.naming import InitialNamingContext, NamingContext, NamingException
 from ..core.utils import ugettext
 from ..core.serializable import DataclassSerializable
 
@@ -23,6 +23,7 @@ class RouteWithRenderHint(DataclassSerializable):
     route: Route
     render_hint: RenderHint
 
+naming_context = InitialNamingContext()
 
 class AdminRoute(object):
     """
@@ -30,7 +31,7 @@ class AdminRoute(object):
     """
 
     _admin_counter = itertools.count()
-    _admin_routes = NamingContext()
+    _admin_routes = naming_context.bind_new_context(('admin',))
 
     @classmethod
     def admin_for(cls, route):
@@ -41,7 +42,8 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            admin = cls._admin_routes.resolve(route)
+            #admin = cls._admin_routes.resolve(route)
+            admin = naming_context.resolve(route)
         except KeyError:
             cls._admin_routes.dump_names()
             raise UserException(
@@ -62,11 +64,24 @@ class AdminRoute(object):
 
         """
         next_admin = cls._admin_counter.__next__()
+        # Try to resolve 
+        try:
+            cls._admin_routes.resolve((admin.get_name(),))
+        except NamingException as exc:
+            if exc.message == NamingException.Message.not_found:
+                cls._admin_routes.bind_new_context((admin.get_name(),))
+            else:
+                raise exc
+        # Context 
+        admin_context = cls._admin_routes.bind_new_context((admin.get_name(), str(next_admin)))
+        
+        LOGGER.debug('Register admin route: {} -> {}'.format((*admin_context.get_name(), action.get_name()), admin))
+        admin_route = admin_context.bind(admin_context, admin)
         # put name of the admin in the last part of the route, so it can
-        # be used as a reference to store settings
-        admin_route = ('admin', str(next_admin), admin.get_name())
-        LOGGER.debug('Register admin route: {} -> {}'.format(admin_route, admin))
-        cls._admin_routes.bind(admin_route, admin)
+        # be used as a reference to store settings        
+        #admin_route = ('admin', str(next_admin), admin.get_name())
+        #LOGGER.debug('Register admin route: {} -> {}'.format(admin_route, admin))
+        #cls._admin_routes.bind(admin_route, admin)
         return admin_route
 
     @classmethod
@@ -78,7 +93,8 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            admin = cls._admin_routes.resolve(route)
+            admin = naming_context.resolve(route)
+            #admin = cls._admin_routes.resolve(route)
         except KeyError:
             cls._admin_routes.dump_names()
             raise UserException(
@@ -118,10 +134,19 @@ class AdminRoute(object):
         assert isinstance(admin_route, tuple)
         assert isinstance(field_name, str)
         assert admin_route in cls._admin_routes
-        action_route = (*admin_route, 'fields', field_name, 'actions', action.get_name())
-        assert action_route not in cls._admin_routes, NamingContext.verbose_name(action_route) + ' registered before'
-        LOGGER.debug('Register field action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes.bind(action_route, action)
+        admin_context = cls._admin_routes.resolve(admin_route)
+        try:
+            actions_context = admin_context.resolve(('fields', field_name, 'actions'))
+        except NamingException as exc:
+            if exc.message == NamingException.Message.not_found:
+                actions_context = admin_context.bind_new_context('fields').bind_new_context(field_name).bind_new_context('actions')
+        assert action.get_name() not in actions_context, NamingContext.verbose_name((*actions_context.get_name(), action.get_name())) + ' registered before'
+        LOGGER.debug('Registered field action route: {} -> {}'.format(action_route, action))
+        action_route = actions_context.bind(action.get_name(), action)
+        #action_route = (*admin_route, 'fields', field_name, 'actions', action.get_name())
+        #assert action_route not in cls._admin_routes, NamingContext.verbose_name(action_route) + ' registered before'
+        #LOGGER.debug('Register field action route: {} -> {}'.format(action_route, action))
+        #cls._admin_routes.bind(action_route, action)
         return action_route
 
     @classmethod
@@ -129,10 +154,20 @@ class AdminRoute(object):
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in cls._admin_routes
-        action_route = (*admin_route, 'list', 'actions', action.get_name())
-        assert (action_route not in cls._admin_routes) or (cls._admin_routes.resolve(action_route)==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
-        LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes.bind(action_route, action)
+        
+        admin_context = cls._admin_routes.resolve(admin_route)
+        try:
+            actions_context = admin_context.resolve(('list', 'actions'))
+        except NamingException as exc:
+            if exc.message == NamingException.Message.not_found:
+                actions_context = admin_context.bind_new_context('list').bind_new_context('actions')
+        assert (action.get_name() not in actions_context) or (actions_context.resolve(action.get_name())==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Registered field action route: {} -> {}'.format(action_route, action))        
+        action_route = actions_context.rebind(action.get_name(), action)
+        #action_route = (*admin_route, 'list', 'actions', action.get_name())
+        #assert (action_route not in cls._admin_routes) or (cls._admin_routes.resolve(action_route)==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+        #LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
+        #cls._admin_routes.bind(action_route, action)
         return action_route
 
     @classmethod

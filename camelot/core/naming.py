@@ -52,8 +52,15 @@ class AbstractNamingContext(object):
 
     def unbind(self, name: Name):
         """
-        Removes a name binding from the context.
+        Removes a named binding from the context.
         :param name: Name of the object
+        """
+        raise NotImplementedError
+
+    def unbind_context(self, name: Name):
+        """
+        Removes a name context binding from the context.
+        :param name: Name of the context
         """
         raise NotImplementedError
 
@@ -235,6 +242,7 @@ class NamingContext(AbstractNamingContext):
         self.bind_context(name, context)
         return context
 
+    @check_bounded
     def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType):
         """
         Helper method that implements the addition of all types of bindings.
@@ -276,15 +284,65 @@ class NamingContext(AbstractNamingContext):
             context = self._bindings[BindingType.named_context][name]
             if context is None:
                 raise NamingException(NamingException.Message.not_found)
-            if binding_type == BindingType.named_context:
-                if rebind:
-                    return obj.rebind_context(name[1:], obj)
-                return obj.bind_context(name[1:], obj)
-            if binding_type == BindingType.named_object:
-                if rebind:
-                    return context.rebind(name[1:], obj)
-                return context.bind(name[1:], obj)
+            return context._add_binding(name[1:], obj, rebind, binding_type)
+
+    @check_bounded
+    def unbind(self, name: Name):
+        """
+        Removes an object binding from this NamingContext.
+        If the name is singular (length of 1) the binding under the given name will be removed from this NamingContext.
+        In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
+        and the remaining parts are resolved in that resulting context.
+        :param name: name under which the object should have been bound.
+        :raises:
+            NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+        """
+        self._remove_binding(name, BindingType.named_object)
+
+    @check_bounded
+    def unbind_context(self, name: Name):
+        """
+        Remove a context binding from this NamingContext.
+        If the name is singular (length of 1) the context binding under the given name will be removed from this NamingContext.
+        In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
+        and the remaining parts are resolved in that resulting context.
+        :param name: name under which the context should have been bound.
+        :raises:
+            NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+        """
+        self._remove_binding(name, BindingType.named_context)
+
+    @check_bounded
+    def _remove_binding(self, name: Name, binding_type: BindingType):
+        """
+        Helper method that supports removing all types of bindings from this NamingContext.
+        If the name is singular (length of 1) the context binding under the given name will be removed from this NamingContext.
+        In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
+        and the remaining parts are delegated to the resulting context.
+        :param name: name of the binding.
+        :raises:
+            NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
+            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+        """
+        if name is None or not len(name):
+            raise NamingException(NamingException.Message.invalid_name)
+        if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
+        if len(name) == 1:
+            if name[0] not in self._bindings[binding_type]:
+                raise NamingException(NamingException.Message.not_found)
+            self._bindings[binding_type].pop(name[0])
+        else:
+            context = self._bindings[BindingType.named_context][name[0]]
+            if context is None:
+                raise NamingException(NamingException.Message.not_found)
+            return context._remove_binding(name[1:], binding_type)
 
     @check_bounded
     def resolve(self, name: Name):
@@ -312,6 +370,7 @@ class NamingContext(AbstractNamingContext):
         """
         return self._resolve_binding(name, BindingType.named_context)
 
+    @check_bounded
     def _resolve_binding(self, name: Name, binding_type: BindingType):
         """
         Helper method that implements the lookup of all types of bindings, returning the bound object.
@@ -320,10 +379,13 @@ class NamingContext(AbstractNamingContext):
         :param binding_type: the type of binding to resolve, a member of `camelot.core.orm.BindingType.
         :raises:
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
             NamingException NamingException.Message.not_found: if no binding was found for the given name.
         """
         if name is None or not len(name):
             raise NamingException(NamingException.Message.invalid_name)
+        if binding_type not in BindingType:
+            raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
             obj = self._bindings[binding_type].get(name[0])
             if obj is None:
@@ -333,7 +395,7 @@ class NamingContext(AbstractNamingContext):
             context = self._bindings[BindingType.named_context][name[0]]
             if context is None:
                 raise NamingException(NamingException.Message.not_found)
-            return context.resolve(name[1:])
+            return context._resolve_binding(name[1:])
 
     def list(self):
         return self._bindings[BindingType.named_object].keys()
