@@ -10,7 +10,7 @@ from enum import Enum
 
 LOGGER = logging.getLogger(__name__)
 
-Name = typing.Tuple[str, ...]
+Name = typing.Union[str, typing.Tuple[str, ...]]
 
 class AbstractNamingContext(object):
 
@@ -144,11 +144,28 @@ class NamingContext(AbstractNamingContext):
     """
     Implements the AbstractNamingContext interface and provides the
     starting point for resolution of names.
+    Both textual names, as composite names (tuples) are supported.
     """
 
     def __init__(self):
         self._bindings = {btype: dict() for btype in BindingType}
         self._name = None
+
+    @classmethod
+    def _assert_valid_name(cls, name:Name):
+        """
+        Helper method that validates the given (composite) name and returns its composite form.
+
+        :raises:
+            NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
+        """
+        if isinstance(name, str) and len(name):
+            return (name,)
+        if isinstance(name, tuple) and len(name):
+            for _name in name:
+                cls._assert_valid_name(_name)
+            return name
+        raise NamingException(NamingException.Message.invalid_name)
 
     def check_bounded(func):
         # Validation decorator that checks and raises when this NamingContext is unbound.
@@ -175,8 +192,7 @@ class NamingContext(AbstractNamingContext):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
         """
-        if name is None or not len(name):
-            raise NamingException(NamingException.Message.invalid_name)
+        name = self._assert_valid_name(name)
         return (*self._name, *name)
 
     @check_bounded
@@ -308,8 +324,7 @@ class NamingContext(AbstractNamingContext):
             AlreadyBoundException NamingException.Message.already_bound: when an object is already bound under the supplied name.
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
         """
-        if name is None or not len(name):
-            raise NamingException(NamingException.Message.invalid_name)
+        name = self._assert_valid_name(name)
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
@@ -384,8 +399,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
-        if name is None or not len(name):
-            raise NamingException(NamingException.Message.invalid_name)
+        name = self._assert_valid_name(name)
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
@@ -443,8 +457,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
-        if name is None or not len(name):
-            raise NamingException(NamingException.Message.invalid_name)
+        name = self._assert_valid_name(name)
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
