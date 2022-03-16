@@ -453,7 +453,7 @@ class NamingContext(AbstractNamingContext):
                 raise NameNotFoundException(name[0], binding_type)
             return obj
         else:
-            context = self._bindings[BindingType.named_context][name[0]]
+            context = self._bindings[BindingType.named_context].get(name[0])
             if context is None:
                 raise NameNotFoundException(name[0], BindingType.named_context)
             return context._resolve_binding(name[1:], binding_type)
