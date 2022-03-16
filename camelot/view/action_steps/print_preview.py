@@ -26,14 +26,16 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+
+import json
+
 from dataclasses import dataclass
 
-from ...core.qt import QtCore, QtGui, QtPrintSupport
-
+from camelot.core.qt import QtCore, QtGui, QtPrintSupport
 from camelot.admin.action import ActionStep
-from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
+from camelot.view.qml_view import get_qml_root_backend
 
 @dataclass
 class PrintPreview( ActionStep ):
@@ -91,7 +93,6 @@ class PrintPreview( ActionStep ):
     document: QtGui.QTextDocument
     
     def __post_init__(self):
-        self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
         self.margin_left = None
         self.margin_top = None
@@ -139,13 +140,7 @@ class PrintPreview( ActionStep ):
         dialog = self.render( gui_context )
         with hide_progress_dialog( gui_context ):
             dialog.exec()
-        
+
     def get_pdf(self, filename=None):
-        printer = QtPrintSupport.QPrinter()
-        printer.setOutputFormat(QtPrintSupport.QPrinter.OutputFormat.PdfFormat)
-        self.config_printer(printer)
-        if filename is None:
-            filename = OpenFile.create_temporary_file('.pdf')
-        printer.setOutputFileName(filename)
-        self.paint_on_printer(printer)
-        return filename
+        serialized_document_list = json.dumps([document._to_dict() for document in self.document])
+        get_qml_root_backend().savePdf(serialized_document_list.encode(), filename or '')
