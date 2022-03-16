@@ -64,6 +64,13 @@ class AbstractNamingContext(object):
         """
         raise NotImplementedError
 
+    def resolve_context(self, name: Name):
+        """
+        Retrieve the context bound to a name in the context. The given name must exactly match the bound name.
+        :param name: Name of the context
+        """
+        raise NotImplementedError
+
     def list(self):
         """
         Returns the set of bindings in the naming context.
@@ -101,7 +108,7 @@ class NamingException(Exception):
         not_object = 'Trying to rebind an object, while an existing context bind was found'
         already_bound = 'An object is already bound to the specified name'
         context_already_bound = 'This NamingContext is already bound'
-        context_unbounded = 'Can not proceed: this NamingContext is not bound yet'
+        context_unbounded = 'Can not proceed: this NamingContext is not bound to another context yet'
         invalid_name = 'The given name is invalid'
         invalid_binding_type = 'Invalid binding type, should be a member of `camelot.core.naming.BindingType'
         context_expected = 'Expected an instance of `camelot.core.naming.AbstractNamingContext`, instead got {0}'
@@ -228,7 +235,7 @@ class NamingContext(AbstractNamingContext):
         self.bind_context(name, context)
         return context
 
-    def _add_binding(self, name, obj, rebind, binding_type):
+    def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType):
         """
         Helper method that implements the addition of all types of bindings.
         It resolves the name to make sure no binding exists already (in case of a bind and bind_context).
@@ -237,9 +244,9 @@ class NamingContext(AbstractNamingContext):
         :param name: name under which the object will be bound.
         :param obj: the object reference to be bound.
         :param rebind: flag indicating if an existing binding should be replaced or not.
+        :param binding_type: the type of the binding to add, a member of `camelot.core.orm.BindingType.
         :return: the full composite name of the bounded object across the whole context hierarchy.
         :raises:
-            NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NamingException NamingException.Message.not_context: if no existing context binding was found when trying to rebind a NamingContext.
             NamingException NamingException.Message.not_found: if no binding was found for the given name.
@@ -282,16 +289,43 @@ class NamingContext(AbstractNamingContext):
     @check_bounded
     def resolve(self, name: Name):
         """
-        Resolve a name in this context returning the bound object.
+        Resolve a name in this NamingContext and return the bound object.
         It will throw appropriate exceptions if not found.
-        :param name: name to be bound.
+        :param name: name under which the object should have been bound.
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+        """
+        return self._resolve_binding(name, BindingType.named_object)
+
+    @check_bounded
+    def resolve_context(self, name: Name):
+        """
+        Resolve a name in this NamingContext and return the bound object, expecting it to be a NamingContext.
+        It will throw appropriate exceptions if not found.
+        :param name: name under which the context should have been bound.
+        :raises:
+            NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+        """
+        return self._resolve_binding(name, BindingType.named_context)
+
+    def _resolve_binding(self, name: Name, binding_type: BindingType):
+        """
+        Helper method that implements the lookup of all types of bindings, returning the bound object.
+        It will throw appropriate exceptions if not found.
+        :param name: name under which the object should have been bound.
+        :param binding_type: the type of binding to resolve, a member of `camelot.core.orm.BindingType.
+        :raises:
+            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.not_found: if no binding was found for the given name.
         """
         if name is None or not len(name):
             raise NamingException(NamingException.Message.invalid_name)
         if len(name) == 1:
-            obj = self._bindings[BindingType.named_object].get(name[0])
+            obj = self._bindings[binding_type].get(name[0])
             if obj is None:
                 raise NamingException(NamingException.Message.not_found)
             return obj
@@ -299,7 +333,6 @@ class NamingContext(AbstractNamingContext):
             context = self._bindings[BindingType.named_context][name[0]]
             if context is None:
                 raise NamingException(NamingException.Message.not_found)
-
             return context.resolve(name[1:])
 
     def list(self):
