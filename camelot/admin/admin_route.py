@@ -68,11 +68,14 @@ class AdminRoute(object):
             cls._admin_routes.resolve_context((admin.get_name(),))
         except NameNotFoundException:
             cls._admin_routes.bind_new_context((admin.get_name(),))
-        cls._admin_routes.bind_new_context((admin.get_name(), str(next_admin)))
+        admin_context = cls._admin_routes.bind_new_context((admin.get_name(), str(next_admin)))
         admin_route = cls._admin_routes.bind((admin.get_name(), str(next_admin)), admin)
         LOGGER.debug('Registered admin route: {} -> {}'.format(admin_route, admin))
-        # put name of the admin in the last part of the route, so it can
-        # be used as a reference to store settings -> TODO replace on OpenTableView with admin_name in serialized action step.
+        # Create and bind subcontexts for the different type of admin's actions:
+        admin_context.bind_new_context(('actions',))
+        admin_context.bind_new_context(('field',))
+        admin_context.bind_new_context(('form',)).bind_new_context(('actions',))
+        admin_context.bind_new_context(('list',)).bind_new_context(('actions',))
         return admin_route
 
     @classmethod
@@ -124,10 +127,11 @@ class AdminRoute(object):
         assert isinstance(admin_route, tuple)
         assert isinstance(field_name, str)
         assert admin_route in naming_context
+        field_context = naming_context.resolve_context((*admin_route, 'field'))
         try:
-            context = naming_context.resolve_context((*admin_route, 'field', field_name, 'actions',))
+            context = field_context.resolve_context((field_name, 'actions',))
         except NameNotFoundException:
-            context = naming_context.bind_new_context((*admin_route, 'field')).bind_new_context((field_name,)).bind_new_context(('actions',))
+            context = field_context.bind_new_context((field_name,)).bind_new_context(('actions',))
         try:
             action_route = context.bind((action.get_name(),), action)
         except AlreadyBoundException:
@@ -141,10 +145,7 @@ class AdminRoute(object):
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in naming_context
-        try:
-            context = naming_context.resolve_context((*admin_route, 'list', 'actions',))
-        except NameNotFoundException:
-            context = naming_context.bind_new_context((*admin_route, 'list')).bind_new_context(('actions',))
+        context = naming_context.resolve_context((*admin_route, 'list', 'actions'))
         try:
             action_route = context.bind((action.get_name(),), action)
         except AlreadyBoundException:
@@ -158,10 +159,7 @@ class AdminRoute(object):
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in naming_context
-        try:
-            context = naming_context.resolve_context((*admin_route, 'form', 'actions',))
-        except NameNotFoundException:
-            context = naming_context.bind_new_context((*admin_route, 'form')).bind_new_context(('actions',))
+        context = naming_context.resolve_context((*admin_route, 'form', 'actions'))
         try:
             action_route = context.bind((action.get_name(),), action)
         except AlreadyBoundException:
@@ -175,10 +173,7 @@ class AdminRoute(object):
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in naming_context
-        try:
-            context = naming_context.resolve_context((*admin_route, 'actions',))
-        except NameNotFoundException:
-            context = naming_context.bind_new_context((*admin_route, 'actions',))
+        context = naming_context.resolve_context((*admin_route, 'actions',))
         try:
             action_route = context.bind((action.get_name(),), action)
         except AlreadyBoundException:
