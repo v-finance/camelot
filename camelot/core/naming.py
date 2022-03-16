@@ -110,7 +110,7 @@ class NamingException(Exception):
 
     class Message(Enum):
 
-        not_found = 'The given name does not identify a binding'
+        not_found = 'The given name does not identify a {}'
         not_context = 'Trying to rebind a context, while an existing object bind was found'
         not_object = 'Trying to rebind an object, while an existing context bind was found'
         already_bound = 'An object is already bound to the specified name'
@@ -119,6 +119,13 @@ class NamingException(Exception):
         invalid_name = 'The given name is invalid'
         invalid_binding_type = 'Invalid binding type, should be a member of `camelot.core.naming.BindingType'
         context_expected = 'Expected an instance of `camelot.core.naming.AbstractNamingContext`, instead got {0}'
+
+class NotFoundException(NamingException):
+    """Name does not identify a binding"""
+
+    def __init__(self, binding_type: BindingType):
+        assert binding_type in BindingType
+        super().__init__(NamingException.Message.not_found, binding_type.name.replace('_', ' '))
 
 class NamingContext(AbstractNamingContext):
     """
@@ -159,7 +166,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
-            NamingException NamingException.Message.not_found: if no binding was found for the supplied name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the supplied name.
             NamingException NamingException.Message.already_bound : An object is already bound under the supplied name.
             NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext` when it was expected to be be so.
         """
@@ -180,7 +187,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
-            NamingException NamingException.Message.not_found: if no binding was found for the supplied name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the supplied name.
             NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext` when it was expected to be be so.
         """
         return self._add_binding(name, obj, True, BindingType.named_object)
@@ -199,13 +206,12 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
-            NamingException NamingException.Message.not_found: if no binding was found for the supplied name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the supplied name.
             NamingException NamingException.Message.already_bound : when an object is already bound under the supplied name.
             NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext` when it was expected to be be so.
         """
         if not isinstance(context, NamingContext):
             raise NamingException(NamingException.Message.context_expected)
-        # Add binding implements all four flavors of binding
         return self._add_binding(name, context, False, BindingType.named_context)
 
     @check_bounded
@@ -222,7 +228,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
-            NamingException NamingException.Message.not_found: if no binding was found for the supplied name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the supplied name.
             NamingException NamingException.Message.already_bound : when an object is already bound under the supplied name.
             NamingException NamingException.Message.not_context: if the found binding is not an instance of `camelot.core.naming.AbstractNamingContext` when it was expected to be be so.
         """
@@ -257,7 +263,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NamingException NamingException.Message.not_context: if no existing context binding was found when trying to rebind a NamingContext.
-            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the given name.
             NamingException NamingException.Message.already_bound: when an object is already bound under the supplied name.
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
         """
@@ -283,7 +289,7 @@ class NamingContext(AbstractNamingContext):
         else:
             context = self._bindings[BindingType.named_context][name]
             if context is None:
-                raise NamingException(NamingException.Message.not_found)
+                raise NotFoundException(BindingType.named_context)
             return context._add_binding(name[1:], obj, rebind, binding_type)
 
     @check_bounded
@@ -297,7 +303,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
-            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the given name.
         """
         self._remove_binding(name, BindingType.named_object)
 
@@ -312,7 +318,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
-            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the given name.
         """
         self._remove_binding(name, BindingType.named_context)
 
@@ -328,7 +334,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
-            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the given name.
         """
         if name is None or not len(name):
             raise NamingException(NamingException.Message.invalid_name)
@@ -336,12 +342,12 @@ class NamingContext(AbstractNamingContext):
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
             if name[0] not in self._bindings[binding_type]:
-                raise NamingException(NamingException.Message.not_found)
+                raise NotFoundException(binding_type)
             self._bindings[binding_type].pop(name[0])
         else:
             context = self._bindings[BindingType.named_context][name[0]]
             if context is None:
-                raise NamingException(NamingException.Message.not_found)
+                raise NotFoundException(BindingType.named_context)
             return context._remove_binding(name[1:], binding_type)
 
     @check_bounded
@@ -353,7 +359,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
-            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the given name.
         """
         return self._resolve_binding(name, BindingType.named_object)
 
@@ -366,7 +372,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.context_unbounded: if this NamingContext has not been bounded to a name yet.
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
-            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the given name.
         """
         return self._resolve_binding(name, BindingType.named_context)
 
@@ -380,7 +386,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
-            NamingException NamingException.Message.not_found: if no binding was found for the given name.
+            NotFoundException NamingException.Message.not_found: if no binding was found for the given name.
         """
         if name is None or not len(name):
             raise NamingException(NamingException.Message.invalid_name)
@@ -389,12 +395,12 @@ class NamingContext(AbstractNamingContext):
         if len(name) == 1:
             obj = self._bindings[binding_type].get(name[0])
             if obj is None:
-                raise NamingException(NamingException.Message.not_found)
+                raise NotFoundException(binding_type)
             return obj
         else:
             context = self._bindings[BindingType.named_context][name[0]]
             if context is None:
-                raise NamingException(NamingException.Message.not_found)
+                raise NotFoundException(BindingType.named_context)
             return context._resolve_binding(name[1:])
 
     def list(self):
