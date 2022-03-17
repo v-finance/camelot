@@ -372,6 +372,7 @@ class NamingContext(AbstractNamingContext):
         If the name is singular (length of 1) the context binding under the given name will be removed from this NamingContext.
         In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
         and the remaining parts are resolved in that resulting context.
+        As a result of this removal, the found NamingContext will get unbound and not be usable unless its reassociated.
 
         :param name: name under which the context should have been bound.
 
@@ -405,7 +406,9 @@ class NamingContext(AbstractNamingContext):
         if len(name) == 1:
             if name[0] not in self._bindings[binding_type]:
                 raise NameNotFoundException(name[0], binding_type)
-            self._bindings[binding_type].pop(name[0])
+            obj = self._bindings[binding_type].pop(name[0])
+            if binding_type == BindingType.named_context:
+                obj._name = None
         else:
             context = self._bindings[BindingType.named_context][name[0]]
             if context is None:

@@ -42,7 +42,6 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            #admin = cls._admin_routes.resolve(route)
             admin = naming_context.resolve(route)
         except KeyError:
             cls._admin_routes.dump_names()
