@@ -2,6 +2,8 @@
 Server side register for objects whose reference is send to the client.
 Inspired by the Corba/Java NamingContext.
 """
+from __future__ import annotations
+
 import functools
 import logging
 import typing
