@@ -14,66 +14,86 @@ Name = typing.Union[str, typing.Tuple[str, ...]]
 
 class AbstractNamingContext(object):
 
-    def bind(self, name: Name, obj):
+    def bind(self, name: Name, obj) -> Name:
         """
         Creates a binding of a name and an object in the naming context.
+
         :param name: Name of the object
         :param obj: The object to bind with the given name
+
+        :return: The fully qualified name of the resulting binding.
         """
         raise NotImplementedError
 
-    def rebind(self, name: Name, obj):
+    def rebind(self, name: Name, obj) -> Name:
         """
         Creates a binding of a name and an object in the naming context even if the name is already bound in the context.
+
         :param name: Name of the object
         :param obj: The object to bind with the given name
+
+        :return: The fully qualified name of the resulting binding.
         """
         raise NotImplementedError
 
-    def bind_context(self, name: Name, context):
+    def bind_context(self, name: Name, context) -> Name:
         """
         Names an object that is a naming context. Naming contexts that are bound using bind_context() participate in name resolution when compound names are passed to be resolved.
+
         :param name: Name of the object
         :param obj: The AbstractNamingContext obj to bind with the given name
+
+        :return: The fully qualified name of the resulting binding
         """
         raise NotImplementedError
 
-    def rebind_context(self, name: Name, context):
+    def rebind_context(self, name: Name, context) -> Name:
         """
         Creates a binding of a name and a naming context in the naming context even if the name is already bound in the context.
+
         :param name: Name of the object
         :param obj: The AbstractNamingContext obj to bind with the given name
+
+        :return: The fully qualified name of the resulting binding
         """
         raise NotImplementedError
 
-    def bind_new_context(self, name):
-        """Creates a new context and binds it to the name supplied as an argument."""
+    def bind_new_context(self, name) -> AbstractNamingContext:
+        """
+        Creates a new context and binds it to the name supplied as an argument.
+
+        :return: the created context, bound to this context.
+        """
         raise NotImplementedError
 
-    def unbind(self, name: Name):
+    def unbind(self, name: Name) -> None:
         """
         Removes a named binding from the context.
+
         :param name: Name of the object
         """
         raise NotImplementedError
 
-    def unbind_context(self, name: Name):
+    def unbind_context(self, name: Name) -> None:
         """
         Removes a name context binding from the context.
+
         :param name: Name of the context
         """
         raise NotImplementedError
 
-    def resolve(self, name: Name):
+    def resolve(self, name: Name) -> object:
         """
         Retrieve the object bound to a name in the context. The given name must exactly match the bound name.
+
         :param name: Name of the object
         """
         raise NotImplementedError
 
-    def resolve_context(self, name: Name):
+    def resolve_context(self, name: Name) -> AbstractNamingContext:
         """
         Retrieve the context bound to a name in the context. The given name must exactly match the bound name.
+
         :param name: Name of the context
         """
         raise NotImplementedError
@@ -182,11 +202,13 @@ class NamingContext(AbstractNamingContext):
             LOGGER.info(self.verbose_name(*self._name, name))
 
     @check_bounded
-    def get_qual_name(self, name: Name):
+    def get_qual_name(self, name: Name) -> tuple:
         """
         Convert the given binding name into its fully qualified composite name for this NamingContext.
 
         :param name: the name relative to this NamingContext.
+
+        :return: the fully qualified composite form of the provided name
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -196,7 +218,7 @@ class NamingContext(AbstractNamingContext):
         return (*self._name, *name)
 
     @check_bounded
-    def bind(self, name, obj):
+    def bind(self, name, obj) -> Name:
         """
         Bind an object under a name in this NamingContext.
         If the name is singular (length of 1) the given object will be bound with the name in this NamingContext.
@@ -208,7 +230,7 @@ class NamingContext(AbstractNamingContext):
         :param name: name under which the object will be bound.
         :param obj: the object reference to be bound.
 
-        :return: the full composite name of the bound object across the whole context hierarchy.
+        :return: the full qualified name of the bound object across the whole context hierarchy.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -219,7 +241,7 @@ class NamingContext(AbstractNamingContext):
         return self._add_binding(name, obj, False, BindingType.named_object)
 
     @check_bounded
-    def rebind(self, name, obj):
+    def rebind(self, name, obj) -> Name:
         """
         Bind an object under a name in this NamingContext.
         If the name is singular (length of 1) the given object will be rebound the name in this NamingContext.
@@ -231,7 +253,7 @@ class NamingContext(AbstractNamingContext):
         :param name: name under which the object will be bound.
         :param obj: the object reference to be bound.
 
-        :return: the full composite name of the bound object across the whole context hierarchy.
+        :return: the full qualified name of the bound object across the whole context hierarchy.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -241,7 +263,7 @@ class NamingContext(AbstractNamingContext):
         return self._add_binding(name, obj, True, BindingType.named_object)
 
     @check_bounded
-    def bind_context(self, name, context):
+    def bind_context(self, name, context) -> Name:
         """
         Bind a NamingContext under a name in this NamingContext.
         If the name is singular (length of 1) the given context will be rebound the name in this NamingContext.
@@ -252,7 +274,7 @@ class NamingContext(AbstractNamingContext):
         :param name: name under which the object will be bound.
         :param context: the NamingContext object reference to be bound.
 
-        :return: the full composite name of the bound object across the whole context hierarchy.
+        :return: the full qualified name of the bound object across the whole context hierarchy.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -265,7 +287,7 @@ class NamingContext(AbstractNamingContext):
         return self._add_binding(name, context, False, BindingType.named_context)
 
     @check_bounded
-    def rebind_context(self, name, context):
+    def rebind_context(self, name, context) -> Name:
         """
         Bind a NamingContext under a name in this NamingContext.
         If the name is singular (length of 1) the given context will be rebound the name in this NamingContext.
@@ -276,7 +298,7 @@ class NamingContext(AbstractNamingContext):
         :param name: name under which the object will be bound.
         :param context: the NamingContext object reference to be bound.
 
-        :return: the full composite name of the bound object across the whole context hierarchy.
+        :return: the full qualified name of the bound object across the whole context hierarchy.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -287,7 +309,7 @@ class NamingContext(AbstractNamingContext):
         return self._add_binding(name, context, True, BindingType.named_context)
 
     @check_bounded
-    def bind_new_context(self, name):
+    def bind_new_context(self, name) -> NamingContext:
         """
         Creates a new NamingContext, binds it in this NamingContext and returns it.
         This is equivalent to initializing a new NamingContext, followed by a bind_context() with the provided name for the newly created NamingContext.
@@ -303,7 +325,7 @@ class NamingContext(AbstractNamingContext):
         return context
 
     @check_bounded
-    def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType):
+    def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType) -> Name:
         """
         Helper method that implements the addition of all types of bindings.
         It resolves the name to make sure no binding exists already (in case of a bind and bind_context).
@@ -315,7 +337,7 @@ class NamingContext(AbstractNamingContext):
         :param rebind: flag indicating if an existing binding should be replaced or not.
         :param binding_type: the type of the binding to add, a member of `camelot.core.orm.BindingType.
 
-        :return: the full composite name of the bound object across the whole context hierarchy.
+        :return: the full qualified name of the bound object across the whole context hierarchy.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -334,9 +356,9 @@ class NamingContext(AbstractNamingContext):
 
             # Add the object to the registry for the given binding_type.
             self._bindings[binding_type][name[0]] = obj
-            # Determine the full composite named of the bound object (extending that of this NamingContext).
+            # Determine the full qualified named of the bound object (extending that of this NamingContext).
             qual_name = self.get_qual_name(name[0])
-            # If the object is a NamingContext, assign the composite name.
+            # If the object is a NamingContext, assign the qualified name.
             if binding_type == BindingType.named_context:
                 if obj._name is not None:
                     raise AlreadyBoundException(name[0], binding_type)
@@ -349,7 +371,7 @@ class NamingContext(AbstractNamingContext):
             return context._add_binding(name[1:], obj, rebind, binding_type)
 
     @check_bounded
-    def unbind(self, name: Name):
+    def unbind(self, name: Name) -> None:
         """
         Removes an object binding from this NamingContext.
         If the name is singular (length of 1) the binding under the given name will be removed from this NamingContext.
@@ -366,7 +388,7 @@ class NamingContext(AbstractNamingContext):
         self._remove_binding(name, BindingType.named_object)
 
     @check_bounded
-    def unbind_context(self, name: Name):
+    def unbind_context(self, name: Name) -> None:
         """
         Remove a context binding from this NamingContext.
         If the name is singular (length of 1) the context binding under the given name will be removed from this NamingContext.
@@ -384,7 +406,7 @@ class NamingContext(AbstractNamingContext):
         self._remove_binding(name, BindingType.named_context)
 
     @check_bounded
-    def _remove_binding(self, name: Name, binding_type: BindingType):
+    def _remove_binding(self, name: Name, binding_type: BindingType) -> None:
         """
         Helper method that supports removing all types of bindings from this NamingContext.
         If the name is singular (length of 1) the context binding under the given name will be removed from this NamingContext.
@@ -416,7 +438,7 @@ class NamingContext(AbstractNamingContext):
             return context._remove_binding(name[1:], binding_type)
 
     @check_bounded
-    def resolve(self, name: Name):
+    def resolve(self, name: Name) -> object:
         """
         Resolve a name in this NamingContext and return the bound object.
         It will throw appropriate exceptions if not found.
@@ -431,7 +453,7 @@ class NamingContext(AbstractNamingContext):
         return self._resolve_binding(name, BindingType.named_object)
 
     @check_bounded
-    def resolve_context(self, name: Name):
+    def resolve_context(self, name: Name) -> NamingContext:
         """
         Resolve a name in this NamingContext and return the bound object, expecting it to be a NamingContext.
         It will throw appropriate exceptions if not found.
@@ -446,7 +468,7 @@ class NamingContext(AbstractNamingContext):
         return self._resolve_binding(name, BindingType.named_context)
 
     @check_bounded
-    def _resolve_binding(self, name: Name, binding_type: BindingType):
+    def _resolve_binding(self, name: Name, binding_type: BindingType) -> object:
         """
         Helper method that implements the lookup of all types of bindings, returning the bound object.
         It will throw appropriate exceptions if not found.
