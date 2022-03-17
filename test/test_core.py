@@ -6,6 +6,10 @@ import unittest
 from .test_model import ExampleModelMixinCase
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
+from camelot.core.naming import (
+    AlreadyBoundException, BindingType, InitialNamingContext, NameNotFoundException,
+    NamingContext, NamingException, UnboundException
+)
 from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 
@@ -148,3 +152,89 @@ class QtCase(unittest.TestCase):
     def test_variant(self):
         for obj in ['a', 5]:
             self.assertEqual(variant_to_py(py_to_variant(obj)), obj)
+
+class NamingContextCaseMixin(object):
+
+    context_name = None
+    context_cls = None
+    initial_context = InitialNamingContext()
+
+    # Name values that should throw an invalid_name NamingException.
+    invalid_names = [None, '', tuple(), ('',), (None,), ('test', ''), ('test', None)]
+
+    def test_qualified_name(self):
+        context = self.context_cls()
+
+        # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
+        # and bind the context to the initial context.
+        # Actions on the InitialNamingContext, which is bounded by default, should work out of the box.
+        if not isinstance(context, InitialNamingContext):
+            with self.assertRaises(UnboundException):
+                context.get_qual_name('test')
+            # Bind the context to the initial context
+            self.initial_context.bind_context(self.context_name, context)
+
+        # Verify invalid names throw the appropriate exception:
+        for invalid_name in self.invalid_names:
+            with self.assertRaises(NamingException) as exc:
+                context.get_qual_name(invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+
+        # Verify the qualified name resolution of a context concatenates its name prefix with the provid name:
+        # So the qualified result should just be the composite form of the provided name.
+        self.assertEqual(context.get_qual_name('test'),              (*self.context_name, 'test'))
+        self.assertEqual(context.get_qual_name(('test',)),           (*self.context_name, 'test'))
+        self.assertEqual(context.get_qual_name(('first', 'second')), (*self.context_name, 'first', 'second'))
+
+        # Add a subcontext to the context and verify that its qualified name resolution includes
+        # the name of its associated context:
+        subcontext = context.bind_new_context('subcontext')
+        self.assertEqual(subcontext.get_qual_name('test'), (*self.context_name, 'subcontext', 'test'))
+
+    def test_bind(self):
+        context = self.context_cls()
+
+        # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
+        # and bind the context to the initial context.
+        # Actions on the InitialNamingContext, which is bounded by default, should work out of the box.
+        if not isinstance(context, InitialNamingContext):
+            with self.assertRaises(UnboundException):
+                context.bind('test', 1)
+            # Bind the context to the initial context
+            self.initial_context.bind_context(self.context_name, context)
+
+        # Verify invalid names throw the appropriate exception:
+        for invalid_name in self.invalid_names:
+            with self.assertRaises(NamingException) as exc:
+                context.bind(invalid_name, 2)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+
+        # Test the binding of objects to the context, which should return the fully qualified binding name,
+        # and verify the object can be looked back up on both the context (with the bound name),
+        # and on the initial context (using the returned fully qualified name).
+        # that should be able to be used to resolve the object from the initial naming context.
+        obj1 = 1, obj2 = object()
+        self.assertEqual(self.context.bind('1', obj1), (*self.context_name, '1'))
+        self.assertEqual(self.context.resolve('1'), obj1)
+        self.assertEqual(self.initial_context.resolve(*self.context_name, '1'), obj1)
+
+class InitialNamingContextCase(unittest.TestCase, NamingContextCaseMixin):
+
+    context_name = tuple()
+    context_cls = InitialNamingContext
+
+    def test_singleton(self):
+        # Verify the InitialNamingContext is a singleton.
+        self.assertEqual(self.initial_context, InitialNamingContext())
+        self.assertEqual(InitialNamingContext(), InitialNamingContext())
+
+class NamingContextCase(unittest.TestCase, NamingContextCaseMixin):
+
+    context_name = ('context',)
+    context_cls = NamingContext
+
+    def tearDown(self):
+        super().tearDown()
+        # Remove all initial context's bindings after each test.
+        self.initial_context._bindings[BindingType.named_context] = dict()
+        self.initial_context._bindings[BindingType.named_object] = dict()
