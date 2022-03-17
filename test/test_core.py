@@ -466,7 +466,7 @@ class NamingContextCaseMixin(object):
             # Bind the context to the initial context
             self.initial_context.bind_context(self.context_name, context)
 
-        subcontext = context.bind_new_context('subcontext')
+        context.bind_new_context('subcontext')
         name1, obj1 = 'obj1', object()
         name2, obj2 = ('subcontext', 'obj2'), object()
 
