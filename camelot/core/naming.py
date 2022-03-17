@@ -283,11 +283,12 @@ class NamingContext(AbstractNamingContext):
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NamingException NamingException.Message.invalid_name: when the supplied name is invalid (i.e., is None or has length less than 1).
+            NamingException NamingException.Message.context_expected : when the given object is not a NamingContext.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the supplied name.
             AlreadyBoundException NamingException.Message.already_bound : when an object is already bound under the supplied name.
         """
         if not isinstance(context, NamingContext):
-            raise NamingException(NamingException.Message.context_expected)
+            raise NamingException(NamingException.Message.context_expected, context)
         return self._add_binding(name, context, False, BindingType.named_context)
 
     @check_bounded
@@ -307,9 +308,12 @@ class NamingContext(AbstractNamingContext):
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
+            NamingException NamingException.Message.context_expected : when the given object is not a NamingContext.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the supplied name.
             AlreadyBoundException NamingException.Message.already_bound : when an object is already bound under the supplied name.
         """
+        if not isinstance(context, NamingContext):
+            raise NamingException(NamingException.Message.context_expected, context)
         return self._add_binding(name, context, True, BindingType.named_context)
 
     @check_bounded
