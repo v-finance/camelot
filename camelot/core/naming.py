@@ -135,8 +135,8 @@ class NamingException(Exception):
         unbound = 'Can not proceed: NamingContext is not bound to another context yet'
         invalid_name = 'The given name is invalid'
         invalid_binding_type = 'Invalid binding type, should be a member of `camelot.core.naming.BindingType'
-        name_not_found = 'Name {} does not identify a {} binding'
-        already_bound = 'A {} is already bound under the name {}'
+        name_not_found = "Name '{}' does not identify a {} binding"
+        already_bound = "A {} is already bound under the name '{}'"
         context_expected = 'Expected an instance of `camelot.core.naming.AbstractNamingContext`, instead got {0}'
 
 class UnboundException(NamingException):
@@ -151,6 +151,8 @@ class NameNotFoundException(NamingException):
     def __init__(self, name, binding_type: BindingType):
         assert binding_type in BindingType
         super().__init__(NamingException.Message.name_not_found, name, binding_type.name.replace('_', ' '))
+        self.name = name
+        self.binding_type = binding_type
 
 class AlreadyBoundException(NamingException):
     """
@@ -367,9 +369,9 @@ class NamingContext(AbstractNamingContext):
                 obj._name = qual_name
             return qual_name
         else:
-            context = self._bindings[BindingType.named_context][name[0]]
+            context = self._bindings[BindingType.named_context].get(name[0])
             if context is None:
-                raise NameNotFoundException(BindingType.named_context)
+                raise NameNotFoundException(name[0], BindingType.named_context)
             return context._add_binding(name[1:], obj, rebind, binding_type)
 
     @check_bounded
