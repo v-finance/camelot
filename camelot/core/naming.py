@@ -14,6 +14,53 @@ LOGGER = logging.getLogger(__name__)
 
 Name = typing.Union[str, typing.Tuple[str, ...]]
 
+class BindingType(Enum):
+
+    named_object = 1
+    named_context = 2
+
+class NamingException(Exception):
+
+    def __init__(self, message, *args, **kwargs):
+        assert isinstance(message, self.Message)
+        self.message = message
+        self.message_text = message.value.format(*args, **kwargs)
+        super().__init__(self.message_text)
+
+    class Message(Enum):
+
+        unbound = 'Can not proceed: NamingContext is not bound to another context yet'
+        invalid_name = 'The given name is invalid'
+        invalid_binding_type = 'Invalid binding type, should be a member of `camelot.core.naming.BindingType'
+        name_not_found = "Name '{}' does not identify a {} binding"
+        already_bound = "A {} is already bound under the name '{}'"
+        context_expected = 'Expected an instance of `camelot.core.naming.AbstractNamingContext`, instead got {0}'
+
+class UnboundException(NamingException):
+    """A NamingException that is thrown when a NamingContext bound to another NamingContext yet."""
+
+    def __init__(self):
+        super().__init__(NamingException.Message.unbound)
+
+class NameNotFoundException(NamingException):
+    """A NamingException that is thrown when no associated binding could be identified for a name."""
+
+    def __init__(self, name, binding_type: BindingType):
+        assert binding_type in BindingType
+        super().__init__(NamingException.Message.name_not_found, name, binding_type.name.replace('_', ' '))
+        self.name = name
+        self.binding_type = binding_type
+
+class AlreadyBoundException(NamingException):
+    """
+    A NamingException that is thrown if an attempt is made to bind an object
+    in the NamingContext to a name that already has an associated binding.
+    """
+
+    def __init__(self, name, binding_type: BindingType):
+        assert binding_type in BindingType
+        super().__init__(NamingException.Message.already_bound, binding_type.name.replace('_', ' '), name)
+
 class AbstractNamingContext(object):
 
     def bind(self, name: Name, obj) -> Name:
@@ -110,59 +157,12 @@ class AbstractNamingContext(object):
         try:
             self.resolve(name)
             return True
-        except KeyError:
+        except (NameNotFoundException, KeyError):
             return False
 
     @classmethod
     def verbose_name(cls, route):
         return '/'.join(route)
-
-class BindingType(Enum):
-
-    named_object = 1
-    named_context = 2
-
-class NamingException(Exception):
-
-    def __init__(self, message, *args, **kwargs):
-        assert isinstance(message, self.Message)
-        self.message = message
-        self.message_text = message.value.format(*args, **kwargs)
-        super().__init__(self.message_text)
-
-    class Message(Enum):
-
-        unbound = 'Can not proceed: NamingContext is not bound to another context yet'
-        invalid_name = 'The given name is invalid'
-        invalid_binding_type = 'Invalid binding type, should be a member of `camelot.core.naming.BindingType'
-        name_not_found = "Name '{}' does not identify a {} binding"
-        already_bound = "A {} is already bound under the name '{}'"
-        context_expected = 'Expected an instance of `camelot.core.naming.AbstractNamingContext`, instead got {0}'
-
-class UnboundException(NamingException):
-    """A NamingException that is thrown when a NamingContext bound to another NamingContext yet."""
-
-    def __init__(self):
-        super().__init__(NamingException.Message.unbound)
-
-class NameNotFoundException(NamingException):
-    """A NamingException that is thrown when no associated binding could be identified for a name."""
-
-    def __init__(self, name, binding_type: BindingType):
-        assert binding_type in BindingType
-        super().__init__(NamingException.Message.name_not_found, name, binding_type.name.replace('_', ' '))
-        self.name = name
-        self.binding_type = binding_type
-
-class AlreadyBoundException(NamingException):
-    """
-    A NamingException that is thrown if an attempt is made to bind an object
-    in the NamingContext to a name that already has an associated binding.
-    """
-
-    def __init__(self, name, binding_type: BindingType):
-        assert binding_type in BindingType
-        super().__init__(NamingException.Message.already_bound, binding_type.name.replace('_', ' '), name)
 
 class NamingContext(AbstractNamingContext):
     """
