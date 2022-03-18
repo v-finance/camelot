@@ -5,7 +5,7 @@ import typing
 
 from ..admin.action.base import RenderHint
 from ..core.exception import UserException
-from ..core.naming import AlreadyBoundException, InitialNamingContext, NamingContext, NameNotFoundException
+from ..core.naming import AlreadyBoundException, initial_naming_context, NamingContext, NameNotFoundException
 from ..core.utils import ugettext
 from ..core.serializable import DataclassSerializable
 
@@ -23,15 +23,13 @@ class RouteWithRenderHint(DataclassSerializable):
     route: Route
     render_hint: RenderHint
 
-naming_context = InitialNamingContext()
-
 class AdminRoute(object):
     """
     Server side register of admins being used on the client side.
     """
 
     _admin_counter = itertools.count()
-    _admin_routes = naming_context.bind_new_context('admin')
+    _admin_routes = initial_naming_context.bind_new_context('admin')
 
     @classmethod
     def admin_for(cls, route):
@@ -42,7 +40,7 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            admin = naming_context.resolve(route)
+            admin = initial_naming_context.resolve(route)
         except KeyError:
             cls._admin_routes.dump_names()
             raise UserException(
@@ -86,7 +84,7 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            admin = naming_context.resolve(route)
+            admin = initial_naming_context.resolve(route)
         except KeyError:
             cls._admin_routes.dump_names()
             raise UserException(
@@ -125,8 +123,8 @@ class AdminRoute(object):
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert isinstance(field_name, str)
-        assert admin_route in naming_context
-        field_context = naming_context.resolve_context((*admin_route, 'field'))
+        assert admin_route in initial_naming_context
+        field_context = initial_naming_context.resolve_context((*admin_route, 'field'))
         try:
             context = field_context.resolve_context((field_name, 'actions'))
         except NameNotFoundException:
@@ -143,8 +141,8 @@ class AdminRoute(object):
     def _register_list_action_route(cls, admin_route, action) -> Route:
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
-        assert admin_route in naming_context
-        context = naming_context.resolve_context((*admin_route, 'list', 'actions'))
+        assert admin_route in initial_naming_context
+        context = initial_naming_context.resolve_context((*admin_route, 'list', 'actions'))
         try:
             action_route = context.bind(action.get_name(), action)
         except AlreadyBoundException:
@@ -157,8 +155,8 @@ class AdminRoute(object):
     def _register_form_action_route(cls, admin_route, action) -> Route:
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
-        assert admin_route in naming_context
-        context = naming_context.resolve_context((*admin_route, 'form', 'actions'))
+        assert admin_route in initial_naming_context
+        context = initial_naming_context.resolve_context((*admin_route, 'form', 'actions'))
         try:
             action_route = context.bind(action.get_name(), action)
         except AlreadyBoundException:
@@ -171,8 +169,8 @@ class AdminRoute(object):
     def _register_action_route(cls, admin_route, action) -> Route:
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
-        assert admin_route in naming_context
-        context = naming_context.resolve_context((*admin_route, 'actions'))
+        assert admin_route in initial_naming_context
+        context = initial_naming_context.resolve_context((*admin_route, 'actions'))
         try:
             action_route = context.bind(action.get_name(), action)
         except AlreadyBoundException:

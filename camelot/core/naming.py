@@ -535,3 +535,5 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
 
     def new_context(self):
         return NamingContext()
+
+initial_naming_context = InitialNamingContext()
