@@ -107,6 +107,14 @@ class AbstractNamingContext(object):
         """
         raise NotImplementedError
 
+    def new_context(self):
+        """
+        Create and return a new context.
+
+        :return: the created context
+        """
+        raise NotImplementedError
+
     def bind_new_context(self, name) -> AbstractNamingContext:
         """
         Creates a new context and binds it to the name supplied as an argument.
@@ -316,11 +324,15 @@ class NamingContext(AbstractNamingContext):
             raise NamingException(NamingException.Message.context_expected, context)
         return self._add_binding(name, context, True, BindingType.named_context)
 
+    def new_context(self):
+        """Create and return a new NamingContext object."""
+        return self.__class__()
+
     @check_bounded
     def bind_new_context(self, name) -> NamingContext:
         """
         Creates a new NamingContext, binds it in this NamingContext and returns it.
-        This is equivalent to initializing a new NamingContext, followed by a bind_context() with the provided name for the newly created NamingContext.
+        This is equivalent to new_context(), followed by a bind_context() with the provided name for the newly created context.
         :param name: name under which the created NamingContext will be bound.
 
         :return: an instance of `camelot.core.naming.AbstractNamingContext`
@@ -328,7 +340,7 @@ class NamingContext(AbstractNamingContext):
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
         """
-        context = NamingContext()
+        context = self.new_context()
         self.bind_context(name, context)
         return context
 
@@ -525,3 +537,6 @@ class InitialNamingContext(NamingContext):
         # so that it becomes bounded but does not contribute to the full composite name
         # resolution of subcontexts.
         self._name = tuple()
+
+    def new_context(self):
+        return NamingContext()
