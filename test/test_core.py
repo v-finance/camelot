@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import os
 import tempfile
 import unittest
@@ -580,7 +581,20 @@ class NamingContextCaseMixin(object):
         with self.assertRaises(UnboundException):
             subcontext.bind('test', object())
 
-class InitialNamingContextCase(unittest.TestCase, NamingContextCaseMixin):
+class NamingContextCase(unittest.TestCase, NamingContextCaseMixin):
+
+    context_name = ('context',)
+    context_cls = NamingContext
+
+    def setUp(self):
+        super().setUp()
+        self.initial_context_bindings = {k:copy.copy(v) for k,v in InitialNamingContext()._bindings.items()}
+
+    def tearDown(self):
+        super().tearDown()
+        InitialNamingContext()._bindings = self.initial_context_bindings
+
+class InitialNamingContextCase(NamingContextCase):
 
     context_name = tuple()
     context_cls = InitialNamingContext
@@ -589,14 +603,5 @@ class InitialNamingContextCase(unittest.TestCase, NamingContextCaseMixin):
         # Verify the InitialNamingContext is a singleton.
         self.assertEqual(self.initial_context, InitialNamingContext())
         self.assertEqual(InitialNamingContext(), InitialNamingContext())
-
-class NamingContextCase(unittest.TestCase, NamingContextCaseMixin):
-
-    context_name = ('context',)
-    context_cls = NamingContext
-
-    def tearDown(self):
-        super().tearDown()
-        # Remove all initial context's bindings after each test.
-        self.initial_context._bindings[BindingType.named_context] = dict()
-        self.initial_context._bindings[BindingType.named_object] = dict()
+        self.initial_context.bind('test', object())
+        self.assertEqual(self.initial_context._bindings, InitialNamingContext()._bindings)
