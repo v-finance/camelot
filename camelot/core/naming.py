@@ -554,5 +554,10 @@ class ConstantNamingContext(AbstractNamingContext):
             raise NamingException(NamingException.Message.invalid_name)
         try:
             return self.constant_type(name)
-        except ValueError as exc:
+        except ValueError:
             raise NameNotFoundException(name, BindingType.named_object)
+
+# Bind ConstantNamingContext to the initial naming context for each supported 'primitive' python type.
+initial_naming_context.bind_context('constants', NamingContext())
+for constant_type in (int, str, bool): # Do not support floats, as vFinance uses Decimals throughout
+    initial_naming_context.bind_context(('constants', constant_type.__name__), ConstantNamingContext(constant_type))
