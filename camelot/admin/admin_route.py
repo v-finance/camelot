@@ -41,7 +41,7 @@ class AdminRoute(object):
         assert isinstance(route, tuple)
         try:
             admin = initial_naming_context.resolve(route)
-        except KeyError:
+        except NameNotFoundException:
             cls._admin_routes.dump_names()
             raise UserException(
                 ugettext('Admin no longer available'),
@@ -85,7 +85,7 @@ class AdminRoute(object):
         assert isinstance(route, tuple)
         try:
             admin = initial_naming_context.resolve(route)
-        except KeyError:
+        except NameNotFoundException:
             cls._admin_routes.dump_names()
             raise UserException(
                 ugettext('Action no longer available'),
