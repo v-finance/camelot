@@ -588,10 +588,13 @@ class NamingContextCase(unittest.TestCase, NamingContextCaseMixin):
 
     def setUp(self):
         super().setUp()
+        # Store a copy of initial context's bindings before each test,
+        # so that they can be reinstated in the tear down afterwards.
         self.initial_context_bindings = {k:copy.copy(v) for k,v in InitialNamingContext()._bindings.items()}
 
     def tearDown(self):
         super().tearDown()
+        # Reinstate initial context's bindings.
         InitialNamingContext()._bindings = self.initial_context_bindings
 
 class InitialNamingContextCase(NamingContextCase):
