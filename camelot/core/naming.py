@@ -65,6 +65,50 @@ class AlreadyBoundException(NamingException):
 
 class AbstractNamingContext(object):
 
+    def __init__(self):
+        self._name = None
+
+    @classmethod
+    def _assert_valid_name(cls, name:Name):
+        """
+        Helper method that validates the given (composite) name and returns its composite form.
+
+        :raises:
+            NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
+        """
+        if isinstance(name, str) and len(name):
+            return tuple([name])
+        if isinstance(name, tuple) and len(name):
+            for _name in name:
+                cls._assert_valid_name(_name)
+            return name
+        raise NamingException(NamingException.Message.invalid_name)
+
+    def check_bounded(func):
+        # Validation decorator that checks and raises when this context is unbound.
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if self._name is None:
+                raise UnboundException()
+            return func(self, *args, **kwargs)
+        return wrapper
+
+    @check_bounded
+    def get_qual_name(self, name: Name) -> tuple:
+        """
+        Convert the given binding name into its fully qualified composite name for this NamingContext.
+
+        :param name: the name relative to this NamingContext.
+
+        :return: the fully qualified composite form of the provided name
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
+        """
+        name = self._assert_valid_name(name)
+        return (*self._name, *name)
+
     def bind(self, name: Name, obj) -> Name:
         """
         Creates a binding of a name and an object in the naming context.
@@ -174,6 +218,11 @@ class AbstractNamingContext(object):
     def verbose_name(cls, route):
         return '/'.join(route)
 
+    @check_bounded
+    def dump_names(self):
+        for name in self.list():
+            LOGGER.info(self.verbose_name(*self._name, name))
+
 class NamingContext(AbstractNamingContext):
     """
     Implements the AbstractNamingContext interface and provides the
@@ -182,56 +231,10 @@ class NamingContext(AbstractNamingContext):
     """
 
     def __init__(self):
+        super().__init__()
         self._bindings = {btype: dict() for btype in BindingType}
-        self._name = None
 
-    @classmethod
-    def _assert_valid_name(cls, name:Name):
-        """
-        Helper method that validates the given (composite) name and returns its composite form.
-
-        :raises:
-            NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
-        """
-        if isinstance(name, str) and len(name):
-            return tuple([name])
-        if isinstance(name, tuple) and len(name):
-            for _name in name:
-                cls._assert_valid_name(_name)
-            return name
-        raise NamingException(NamingException.Message.invalid_name)
-
-    def check_bounded(func):
-        # Validation decorator that checks and raises when this NamingContext is unbound.
-        @functools.wraps(func)
-        def wrapper(self, *args, **kwargs):
-            if self._name is None:
-                raise UnboundException()
-            return func(self, *args, **kwargs)
-        return wrapper
-
-    @check_bounded
-    def dump_names(self):
-        for name in self.list():
-            LOGGER.info(self.verbose_name(*self._name, name))
-
-    @check_bounded
-    def get_qual_name(self, name: Name) -> tuple:
-        """
-        Convert the given binding name into its fully qualified composite name for this NamingContext.
-
-        :param name: the name relative to this NamingContext.
-
-        :return: the fully qualified composite form of the provided name
-
-        :raises:
-            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
-            NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
-        """
-        name = self._assert_valid_name(name)
-        return (*self._name, *name)
-
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def bind(self, name, obj) -> Name:
         """
         Bind an object under a name in this NamingContext.
@@ -254,7 +257,7 @@ class NamingContext(AbstractNamingContext):
         """
         return self._add_binding(name, obj, False, BindingType.named_object)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def rebind(self, name, obj) -> Name:
         """
         Bind an object under a name in this NamingContext.
@@ -276,7 +279,7 @@ class NamingContext(AbstractNamingContext):
         """
         return self._add_binding(name, obj, True, BindingType.named_object)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def bind_context(self, name, context) -> Name:
         """
         Bind a NamingContext under a name in this NamingContext.
@@ -297,11 +300,11 @@ class NamingContext(AbstractNamingContext):
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the supplied name.
             AlreadyBoundException NamingException.Message.already_bound : when an object is already bound under the supplied name.
         """
-        if not isinstance(context, NamingContext):
+        if not isinstance(context, AbstractNamingContext):
             raise NamingException(NamingException.Message.context_expected, context)
         return self._add_binding(name, context, False, BindingType.named_context)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def rebind_context(self, name, context) -> Name:
         """
         Bind a NamingContext under a name in this NamingContext.
@@ -322,7 +325,7 @@ class NamingContext(AbstractNamingContext):
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the supplied name.
             AlreadyBoundException NamingException.Message.already_bound : when an object is already bound under the supplied name.
         """
-        if not isinstance(context, NamingContext):
+        if not isinstance(context, AbstractNamingContext):
             raise NamingException(NamingException.Message.context_expected, context)
         return self._add_binding(name, context, True, BindingType.named_context)
 
@@ -330,7 +333,7 @@ class NamingContext(AbstractNamingContext):
         """Create and return a new NamingContext object."""
         return self.__class__()
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def bind_new_context(self, name) -> NamingContext:
         """
         Creates a new NamingContext, binds it in this NamingContext and returns it.
@@ -346,7 +349,7 @@ class NamingContext(AbstractNamingContext):
         self.bind_context(name, context)
         return context
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType) -> Name:
         """
         Helper method that implements the addition of all types of bindings.
@@ -392,7 +395,7 @@ class NamingContext(AbstractNamingContext):
                 raise NameNotFoundException(name[0], BindingType.named_context)
             return context._add_binding(name[1:], obj, rebind, binding_type)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def unbind(self, name: Name) -> None:
         """
         Removes an object binding from this NamingContext.
@@ -409,7 +412,7 @@ class NamingContext(AbstractNamingContext):
         """
         self._remove_binding(name, BindingType.named_object)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def unbind_context(self, name: Name) -> None:
         """
         Remove a context binding from this NamingContext.
@@ -427,7 +430,7 @@ class NamingContext(AbstractNamingContext):
         """
         self._remove_binding(name, BindingType.named_context)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def _remove_binding(self, name: Name, binding_type: BindingType) -> None:
         """
         Helper method that supports removing all types of bindings from this NamingContext.
@@ -459,7 +462,7 @@ class NamingContext(AbstractNamingContext):
                 raise NameNotFoundException(name[0], BindingType.named_context)
             return context._remove_binding(name[1:], binding_type)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
         """
         Resolve a name in this NamingContext and return the bound object.
@@ -474,7 +477,7 @@ class NamingContext(AbstractNamingContext):
         """
         return self._resolve_binding(name, BindingType.named_object)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def resolve_context(self, name: Name) -> NamingContext:
         """
         Resolve a name in this NamingContext and return the bound object, expecting it to be a NamingContext.
@@ -489,7 +492,7 @@ class NamingContext(AbstractNamingContext):
         """
         return self._resolve_binding(name, BindingType.named_context)
 
-    @check_bounded
+    @AbstractNamingContext.check_bounded
     def _resolve_binding(self, name: Name, binding_type: BindingType) -> object:
         """
         Helper method that implements the lookup of all types of bindings, returning the bound object.
