@@ -10,6 +10,8 @@ import typing
 
 from enum import Enum
 
+from .singleton import Singleton
+
 LOGGER = logging.getLogger(__name__)
 
 Name = typing.Union[str, typing.Tuple[str, ...]]
@@ -519,17 +521,10 @@ class NamingContext(AbstractNamingContext):
     def list(self):
         return self._bindings[BindingType.named_object].keys()
 
-class InitialNamingContext(NamingContext):
+class InitialNamingContext(NamingContext, metaclass=Singleton):
     """
     Singleton class that provides the initial naming context.
     """
-
-    _instance = None
-
-    def __new__(class_, *args, **kwargs):
-        if not isinstance(class_._instance, class_):
-            class_._instance = object.__new__(class_, *args, **kwargs)
-        return class_._instance
 
     def __init__(self):
         super().__init__()
