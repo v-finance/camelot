@@ -540,3 +540,19 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         return NamingContext()
 
 initial_naming_context = InitialNamingContext()
+
+class ConstantNamingContext(AbstractNamingContext):
+    """"""
+
+    def __init__(self, constant_type):
+        super().__init__()
+        assert constant_type in (int, str, bool, float)
+        self.constant_type = constant_type
+
+    def resolve(self, name: str) -> object:
+        if not isinstance(name, str):
+            raise NamingException(NamingException.Message.invalid_name)
+        try:
+            return self.constant_type(name)
+        except ValueError as exc:
+            raise NameNotFoundException(name, BindingType.named_object)
