@@ -1105,14 +1105,10 @@ class SetFilters(Action, AbstractModelFilter):
             modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
         selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
-            operator_modes = []
             for op in filter_strategy.get_operators():
                 mode_name = op.name + '-' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
-                operator_modes.append(Mode(mode_name, str(op.verbose_name), icon=icon))
-            if operator_modes:
-                icon = Icon('check-circle') if name in filter_value else None
-                modes.append(Mode(name, str(filter_strategy.get_verbose_name()), icon=icon, modes=operator_modes))
+                modes.append(Mode(mode_name, '{} {}'.format(filter_strategy.get_verbose_name(), op.verbose_name), icon=icon))
         self.admin = model_context.admin
         return state
 
