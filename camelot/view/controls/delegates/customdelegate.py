@@ -38,7 +38,6 @@ from ....core.serializable import json_encoder
 from ....core.item_model import (
     ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
 )
-from ....admin.action.field_action import FieldAction
 from ..action_widget import ActionToolbutton
 
 LOGGER = logging.getLogger(__name__)
@@ -153,11 +152,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         routes = model_context.field_attributes.get('action_routes', [])
         states = []
         for action in model_context.field_attributes.get('actions', []):
-            if isinstance(action, FieldAction):
-                state = action.get_state(model_context)
-                states.append(dataclasses.asdict(state))
-            else:
-                states.append(None)
+            state = action.get_state(model_context)
+            states.append(dataclasses.asdict(state))
         #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
         if len(routes) != len(states):
             LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
@@ -229,7 +225,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         #
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
-
         # update actions
         self.update_field_action_states(editor, index)
 
@@ -238,9 +233,12 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         action_routes = json.loads(index.model().data(index, ActionRoutesRole))
         if len(action_routes) == 0:
             return
-        for action_widget in editor.findChildren(ActionToolbutton):
+        for action_widget in editor.findChildren(QtWidgets.QToolButton):
+            action_route = action_widget.property('action_route')
+            if not action_route:
+                continue
             try:
-                action_index = action_routes.index(list(action_widget.action_route))
+                action_index = action_routes.index(list(action_route))
             except ValueError:
                 LOGGER.error('action route not found {}, available routes'.format(
                     action_widget.action_route
@@ -250,7 +248,9 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                 continue
             state = action_states[action_index]
             if state is not None:
-                action_widget.set_state_v2(state)
+                ActionToolbutton.set_toolbutton_state(
+                    action_widget, state, editor.action_menu_triggered
+                )
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))

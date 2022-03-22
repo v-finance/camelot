@@ -27,14 +27,9 @@
 #
 #  ============================================================================
 
-from ....admin.action.base import RenderHint
-from ....admin.admin_route import AdminRoute
 from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
-from camelot.admin.action import FieldActionGuiContext
 from camelot.view.proxy import ValueLoading
-
-from ..action_widget import ActionToolbutton
 
 
 def set_background_color_palette(widget, background_color):
@@ -123,14 +118,6 @@ class AbstractCustomEditor(object):
     def set_background_color(self, background_color):
         set_background_color_palette(self, background_color)
 
-    def render_action(self, action, parent):
-        if action.render_hint == RenderHint.TOOL_BUTTON:
-            button = ActionToolbutton(action, self.gui_context, parent)
-            button.setAutoRaise(True)
-            button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-            return button
-        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
-
 
 class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     """
@@ -143,6 +130,7 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     editingFinished = QtCore.qt_signal()
     valueChanged = QtCore.qt_signal()
     completionPrefixChanged = QtCore.qt_signal(str)
+    actionTriggered = QtCore.qt_signal(list, object)
 
     _font_height = None
     _font_width = None
@@ -150,9 +138,6 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     def __init__(self, parent, column_width=None):
         QtWidgets.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        self.gui_context = FieldActionGuiContext()
-        self.gui_context.editor = self
-        self.gui_context.admin_route = None
 
         if CustomEditor._font_width is None:
             font_metrics = QtGui.QFontMetrics(self.font())
@@ -170,12 +155,24 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         """
         return self.contentsRect().height()
 
+    @QtCore.qt_slot()
+    def action_button_clicked(self):
+        self.actionTriggered.emit(self.sender().property('action_route'), None)
+
+    @QtCore.qt_slot(bool)
+    def action_menu_triggered(self, checked):
+        mode = self.sender().data()
+        action_route = self.sender().property('action_route')
+        self.actionTriggered.emit(action_route, mode)
+
     def add_actions(self, action_routes, layout):
         for action_route in action_routes:
-            action = AdminRoute.action_for(action_route)
-            action_widget = self.render_action(action, self)
-            action_widget.action_route = action_route
-            action_widget.setFixedHeight(self.get_height())
+            action_widget = QtWidgets.QToolButton(parent=self)
+            action_widget.setAutoRaise(True)
+            action_widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+            action_widget.setProperty('action_route', action_route)
+            action_widget.setFixedHeight(min(action_widget.height(), self.get_height()))
+            action_widget.clicked.connect(self.action_button_clicked)
             layout.addWidget(action_widget)
 
     def sizeHint(self):
