@@ -64,6 +64,23 @@ class AlreadyBoundException(NamingException):
         super().__init__(NamingException.Message.already_bound, binding_type.name.replace('_', ' '), name)
 
 class AbstractNamingContext(object):
+    """
+    Interface for a naming context, which consists of methods for
+    adding, examining and updating name-to-object bindings, as well as subcontexts.
+
+    Names
+    -----
+    Each name passed as an argument to a context method is relative to that context.
+    A context keeps track of its fully qualified name, once bounded to another context,
+    so as to return the fully qualified name of bindings where needed.
+    Both singular textual names, as composite names (tuples) for recursive resolving through subcontexts, are supported.
+
+    Exceptions
+    ----------
+    All the methods in this interface can throw a NamingException or
+    any of its subclasses. See NamingException and their subclasses
+    for details on each exception.
+    """
 
     def __init__(self):
         self._name = None
@@ -155,7 +172,7 @@ class AbstractNamingContext(object):
 
     def new_context(self):
         """
-        Create and return a new context.
+        Create and return a new instance of this context class.
 
         :return: the created context
         """
@@ -225,9 +242,9 @@ class AbstractNamingContext(object):
 
 class NamingContext(AbstractNamingContext):
     """
-    Implements the AbstractNamingContext interface and provides the
-    starting point for resolution of names.
-    Both textual names, as composite names (tuples) are supported.
+    Represents a naming context, which consists of a set of name-to-object bindings.
+    It implements the AbstractNamingContext interface to provide methods for adding, examining and updating these bindings,
+    as well as to define subcontexts that take part in recursive resolving of names.
     """
 
     def __init__(self):
@@ -330,7 +347,11 @@ class NamingContext(AbstractNamingContext):
         return self._add_binding(name, context, True, BindingType.named_context)
 
     def new_context(self):
-        """Create and return a new NamingContext object."""
+        """
+        Create and return a new instance of this context class.
+
+        :return: an instance of `camelot.core.naming.NamingContext`
+        """
         return self.__class__()
 
     @AbstractNamingContext.check_bounded
@@ -526,7 +547,9 @@ class NamingContext(AbstractNamingContext):
 
 class InitialNamingContext(NamingContext, metaclass=Singleton):
     """
-    Singleton class that provides the initial naming context.
+    Singleton class that is the starting context for performing naming operations.
+    All naming operations are relative to a context.
+    This initial context implements the NamingContext interface and provides the starting point for resolution of names.
     """
 
     def __init__(self):
@@ -537,12 +560,24 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         self._name = tuple()
 
     def new_context(self):
+        """
+        Create and return a new `camelot.core.naming.NamingContext` instance.
+        Note that this does not create a new InitialNamingContext instance,
+        as this is inherently impossible because of its singleton nature.
+
+        :return: an instance of `camelot.core.naming.NamingContext`
+        """
         return NamingContext()
 
 initial_naming_context = InitialNamingContext()
 
 class ConstantNamingContext(AbstractNamingContext):
-    """"""
+    """
+    Represents a stateless naming context, which handles resolving objects/values of a certain immutable python type.
+    Currently, those constant values are considered to be integers, strings, booleans or float.
+    As it only implements the resolve method from the AbstractNamingContext, no subcontexts can be bound.
+    A ConstantNamingContext will thus by definition always be the 'endpoint' context in a naming hierachy.
+    """
 
     def __init__(self, constant_type):
         super().__init__()
@@ -550,6 +585,18 @@ class ConstantNamingContext(AbstractNamingContext):
         self.constant_type = constant_type
 
     def resolve(self, name: str) -> object:
+        """
+        Resolve a name in this ConstantNamingContext and return the bound object.
+        It will throw appropriate exceptions if the resolution failed.
+
+        :param name: name under which the object should have been bound.
+        :return: the bound object, an instance of this ConstantNamingContext's constant_type.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
         if not isinstance(name, str):
             raise NamingException(NamingException.Message.invalid_name)
         try:
