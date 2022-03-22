@@ -8,7 +8,7 @@ from .test_model import ExampleModelMixinCase
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
-    AlreadyBoundException, BindingType, initial_naming_context, InitialNamingContext,
+    AlreadyBoundException, BindingType, ConstantNamingContext, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
 )
 from camelot.core.profile import Profile, ProfileStore
@@ -154,7 +154,7 @@ class QtCase(unittest.TestCase):
         for obj in ['a', 5]:
             self.assertEqual(variant_to_py(py_to_variant(obj)), obj)
 
-class NamingContextCaseMixin(object):
+class AbstractNamingContextCaseMixin(object):
 
     context_name = None
     context_cls = None
@@ -162,8 +162,11 @@ class NamingContextCaseMixin(object):
     # Name values that should throw an invalid_name NamingException.
     invalid_names = [None, '', tuple(), ('',), (None,), ('test', ''), ('test', None)]
 
+    def new_context(self):
+        return self.context_cls()
+
     def test_qualified_name(self):
-        context = self.context_cls()
+        context = self.context
 
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
         # and bind the context to the initial context.
@@ -186,13 +189,51 @@ class NamingContextCaseMixin(object):
         self.assertEqual(context.get_qual_name(('test',)),           (*self.context_name, 'test'))
         self.assertEqual(context.get_qual_name(('first', 'second')), (*self.context_name, 'first', 'second'))
 
+    def test_bind(self):
+        context = self.new_context()
+        with self.assertRaises(NotImplementedError):
+            context.bind('test', 1)
+
+    def test_rebind(self):
+        context = self.new_context()
+        with self.assertRaises(NotImplementedError):
+            context.rebind('test', 1)
+
+    def test_bind_context(self):
+        context = self.new_context()
+        subcontext = self.new_context()
+        with self.assertRaises(NotImplementedError):
+            context.bind_context('subcontext', subcontext)
+
+    def test_rebind_context(self):
+        context = self.new_context()
+        subcontext = self.new_context()
+        with self.assertRaises(NotImplementedError):
+            context.rebind_context('subcontext', subcontext)
+
+    def test_unbind(self):
+        context = self.new_context()
+        with self.assertRaises(NotImplementedError):
+            context.unbind('test')
+
+    def test_unbind_context(self):
+        context = self.new_context()
+        with self.assertRaises(NotImplementedError):
+            context.unbind_context('test')
+
+class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
+
+    def test_qualified_name(self):
+        super().test_qualified_name()
+        context = self.new_context()
+
         # Add a subcontext to the context and verify that its qualified name resolution includes
         # the name of its associated context:
         subcontext = context.bind_new_context('subcontext')
         self.assertEqual(subcontext.get_qual_name('test'), (*self.context_name, 'subcontext', 'test'))
 
     def test_bind(self):
-        context = self.context_cls()
+        context = self.new_context()
 
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
         # and bind the context to the initial context.
@@ -244,7 +285,7 @@ class NamingContextCaseMixin(object):
         self.assertEqual(initial_naming_context.resolve(qual_name), obj)
 
     def test_rebind(self):
-        context = self.context_cls()
+        context = self.new_context()
 
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
         # and bind the context to the initial context.
@@ -331,7 +372,7 @@ class NamingContextCaseMixin(object):
         self.assertEqual(exc.exception.binding_type, BindingType.named_context)
 
     def test_bind_context(self):
-        context = self.context_cls()
+        context = self.new_context()
         name, subcontext = 'subcontext', NamingContext()
 
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
@@ -391,7 +432,7 @@ class NamingContextCaseMixin(object):
         self.assertEqual(initial_naming_context.resolve_context(qual_name), subsubcontext)
 
     def test_rebind_context(self):
-        context = self.context_cls()
+        context = self.new_context()
         name, subcontext = 'subcontext', NamingContext()
 
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
@@ -455,7 +496,7 @@ class NamingContextCaseMixin(object):
         self.assertEqual(initial_naming_context.resolve_context(qual_name), subsubcontext)
 
     def test_unbind(self):
-        context = self.context_cls()
+        context = self.new_context()
 
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
         # and bind the context to the initial context.
@@ -527,7 +568,7 @@ class NamingContextCaseMixin(object):
         self.assertEqual(exc.exception.binding_type, BindingType.named_object)
 
     def test_unbind_context(self):
-        context = self.context_cls()
+        context = self.new_context()
 
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
         # and bind the context to the initial context.
@@ -607,3 +648,16 @@ class InitialNamingContextCase(NamingContextCase):
         self.assertEqual(InitialNamingContext(), InitialNamingContext())
         initial_naming_context.bind('test', object())
         self.assertEqual(initial_naming_context._bindings, InitialNamingContext()._bindings)
+
+class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
+
+    context_cls = ConstantNamingContext
+    constant_type = None
+
+    def new_context(self):
+        return self.context_cls(self.constant_type)
+
+class StringConstantNamingContextCase(unittest.TestCase, ConstantNamingContextCaseMixin):
+
+    context_name = ('str',)
+    constant_type = str
