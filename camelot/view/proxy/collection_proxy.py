@@ -157,7 +157,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         assert isinstance(admin_route, tuple)
         assert len(admin_route)
         from camelot.view.model_thread import get_model_thread
-        admin_name = admin_route[-1]
+        # TODO: replace with passed entity_name as part of future changes.
+        admin_name = admin_route[-2]
         self.logger = logger.getChild('{0}.{1}'.format(id(self), admin_name))
         self.logger.debug('initialize proxy for %s' % (admin_name))
         self.admin_route = admin_route
