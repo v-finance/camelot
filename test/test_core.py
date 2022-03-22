@@ -161,6 +161,7 @@ class AbstractNamingContextCaseMixin(object):
 
     # Name values that should throw an invalid_name NamingException.
     invalid_names = [None, '', tuple(), ('',), (None,), ('test', ''), ('test', None)]
+    valid_names = ['test', ('test',), ('first', 'second')]
 
     def new_context(self):
         return self.context_cls()
@@ -183,9 +184,34 @@ class AbstractNamingContextCaseMixin(object):
 
         # Verify the qualified name resolution of a context concatenates its name prefix with the provid name:
         # So the qualified result should just be the composite form of the provided name.
-        self.assertEqual(self.context.get_qual_name('test'),              (*self.context_name, 'test'))
-        self.assertEqual(self.context.get_qual_name(('test',)),           (*self.context_name, 'test'))
-        self.assertEqual(self.context.get_qual_name(('first', 'second')), (*self.context_name, 'first', 'second'))
+        for valid_name in self.valid_names:
+            qual_name = (*self.context_name, *(valid_name if isinstance(valid_name, tuple) else [valid_name]))
+            self.assertEqual(self.context.get_qual_name(valid_name), qual_name)
+
+    def test_resolve(self):
+        # Verify general exceptions raised when resolving a name-object binding.
+        # Regular behaviour should be tested in other tests throughout this case after binding.
+
+        # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
+        # and bind the context to the initial context.
+        # Actions on the InitialNamingContext, which is bounded by default, should work out of the box.
+        if not isinstance(self.context, InitialNamingContext):
+            with self.assertRaises(UnboundException):
+                self.context.resolve('test')
+            # Bind the context to the initial context
+            initial_naming_context.bind_context(self.context_name, self.context)
+
+        # Verify invalid names throw the appropriate exception:
+        for invalid_name in self.invalid_names:
+            with self.assertRaises(NamingException) as exc:
+                self.context.resolve(invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+
+    # Some naming contexts implementation may not implement the complete AbstractNamingContext interface,
+    # so assert a NotImplementedError by default so corresponding test cases verify this.
+    def test_resolve_context(self):
+        with self.assertRaises(NotImplementedError):
+            self.context.resolve_context('test')
 
     def test_bind(self):
         with self.assertRaises(NotImplementedError):
@@ -601,6 +627,25 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         with self.assertRaises(UnboundException):
             subcontext.bind('test', object())
 
+    def test_resolve_context(self):
+        # Verify general exceptions raised for name-context resolving.
+        # Regular behaviour is tested in this case throughout after binding values.
+
+        # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
+        # and bind the context to the initial context.
+        # Actions on the InitialNamingContext, which is bounded by default, should work out of the box.
+        if not isinstance(self.context, InitialNamingContext):
+            with self.assertRaises(UnboundException):
+                self.context.resolve_context('test')
+            # Bind the context to the initial context
+            initial_naming_context.bind_context(self.context_name, self.context)
+
+        # Verify invalid names throw the appropriate exception:
+        for invalid_name in self.invalid_names:
+            with self.assertRaises(NamingException) as exc:
+                self.context.resolve_context(invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+
 class AbstractNamingContextCase(unittest.TestCase):
 
     def setUp(self):
@@ -637,10 +682,50 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
     context_cls = ConstantNamingContext
     constant_type = None
 
+    # Constant naming context only allows string names, but allows the empty string:
+    invalid_names = [None, tuple(), ('',), (None,), ('test', ''), ('test', None), ('test',), ('test', 'test')]
+    valid_names = ['', 'x', '-1', '0', '1', 'True', '1.5', 'test']
+
+    # Names may be valid arguments, but still fail the resolve (e.g. the conversion to the constant type).
+    # So define the compatible and incompatible set to verify in concrete cases.
+    incompatible_names = None
+    compatible_names = None
+
     def new_context(self):
         return self.context_cls(self.constant_type)
 
-class StringConstantNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
+    def test_resolve(self):
+        super().test_resolve()
+
+        for name, expected in self.compatible_names:
+            self.assertEqual(self.context.resolve(name), expected)
+
+        for incompatible_name in self.incompatible_names:
+            with self.assertRaises(NameNotFoundException) as exc:
+                self.context.resolve(incompatible_name)
+            self.assertEqual(exc.exception.name, incompatible_name)
+            self.assertEqual(exc.exception.binding_type, BindingType.named_object)
+
+class StringNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
     context_name = ('str',)
     constant_type = str
+
+    incompatible_names = []
+    compatible_names = [(name, name) for name in ConstantNamingContextCaseMixin.valid_names]
+
+class IntegerNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
+
+    context_name = ('int',)
+    constant_type = int
+
+    incompatible_names = ['', 'x', 'True', '1.5', 'test']
+    compatible_names = [('-1', -1), ('0', 0), ('2', 2)]
+
+class BooleanNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
+
+    context_name = ('bool',)
+    constant_type = bool
+
+    incompatible_names = ['', 'x', '-1', '0', '1', 'True', '1.5', 'test']
+    compatible_names = [('True', True), ('False', False), ('2', 2)]
