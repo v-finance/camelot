@@ -667,25 +667,13 @@ class NamingContextCase(AbstractNamingContextCase, NamingContextCaseMixin):
     context_name = ('context',)
     context_cls = NamingContext
 
-class InitialNamingContextCase(NamingContextCase):
-
-    context_name = tuple()
-    context_cls = InitialNamingContext
-
-    def test_singleton(self):
-        # Verify the InitialNamingContext is a singleton.
-        self.assertEqual(initial_naming_context, InitialNamingContext())
-        self.assertEqual(InitialNamingContext(), InitialNamingContext())
-        initial_naming_context.bind('test', object())
-        self.assertEqual(initial_naming_context._bindings, InitialNamingContext()._bindings)
-
 class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
     context_cls = ConstantNamingContext
     constant_type = None
 
     # Constant naming context only allows string names, but allows the empty string:
-    invalid_names = [None, tuple(), ('',), (None,), ('test', ''), ('test', None), ('test',), ('test', 'test')]
+    invalid_names = [None, tuple(), (1,), (None,), ('test', ''), ('test', None), ('test', 'test')]
     valid_names = ['', 'x', '-1', '0', '1', 'True', '1.5', 'test']
 
     # Names may be valid arguments, but still fail the resolve (e.g. the conversion to the constant type).
@@ -699,14 +687,18 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
     def test_resolve(self):
         super().test_resolve()
 
-        for name, expected in self.compatible_names:
-            self.assertEqual(self.context.resolve(name), expected)
-
+        # Verify that incompatible names raise a NameNotFoundException:
         for incompatible_name in self.incompatible_names:
             with self.assertRaises(NameNotFoundException) as exc:
                 self.context.resolve(incompatible_name)
             self.assertEqual(exc.exception.name, incompatible_name)
             self.assertEqual(exc.exception.binding_type, BindingType.named_object)
+
+        # Verify compatible names resolve to the expected objects:
+        # Both string names as singular composite names should be allowed:
+        for name, expected in self.compatible_names:
+            self.assertEqual(self.context.resolve(name), expected)
+            self.assertEqual(self.context.resolve(tuple([name])), expected)
 
 class StringNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
@@ -731,3 +723,39 @@ class DecimalNamingContextCase(AbstractNamingContextCase, ConstantNamingContextC
 
     incompatible_names = ['', 'x', 'True', 'test']
     compatible_names = [('-1', Decimal(-1)), ('0', Decimal(0)), ('2', Decimal(2)), ('1.5', Decimal(1.5))]
+
+class InitialNamingContextCase(NamingContextCase):
+
+    context_name = tuple()
+    context_cls = InitialNamingContext
+
+    def test_singleton(self):
+        # Verify the InitialNamingContext is a singleton.
+        self.assertEqual(initial_naming_context, InitialNamingContext())
+        self.assertEqual(InitialNamingContext(), InitialNamingContext())
+        initial_naming_context.bind('test', object())
+        self.assertEqual(initial_naming_context._bindings, InitialNamingContext()._bindings)
+
+    def test_resolve(self):
+        super().test_resolve()
+
+        # Verify that the constant naming contexts are available by default on the initial context:
+        # * Boolean values
+        self.assertEqual(self.context.resolve(('constants', 'True')), True)
+        self.assertEqual(self.context.resolve(('constants', 'False')), False)
+        # * None value
+        self.assertEqual(self.context.resolve(('constants', 'None')), None)
+        # * Int values
+        self.assertEqual(self.context.resolve(('constants', 'int', '-1')), -1)
+        self.assertEqual(self.context.resolve(('constants', 'int', '0')), 0)
+        self.assertEqual(self.context.resolve(('constants', 'int', '2')), 2)
+        # * String values
+        self.assertEqual(self.context.resolve(('constants', 'str', '')), '')
+        self.assertEqual(self.context.resolve(('constants', 'str', 'x')), 'x')
+        self.assertEqual(self.context.resolve(('constants', 'str', 'test')), 'test')
+        # * Decimal values
+        self.assertEqual(self.context.resolve(('constants', 'decimal', '-2')), Decimal(-2))
+        self.assertEqual(self.context.resolve(('constants', 'decimal', '-1.0')), Decimal(-1.0))
+        self.assertEqual(self.context.resolve(('constants', 'decimal', '0')), Decimal(0))
+        self.assertEqual(self.context.resolve(('constants', 'decimal', '0.0')), Decimal(0.0))
+        self.assertEqual(self.context.resolve(('constants', 'decimal', '2')), Decimal(2))
