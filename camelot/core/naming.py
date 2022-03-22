@@ -3,6 +3,7 @@ Server side register for objects whose reference is send to the client.
 Inspired by the Corba/Java NamingContext.
 """
 from __future__ import annotations
+from decimal import Decimal
 
 import functools
 import logging
@@ -581,7 +582,7 @@ class ConstantNamingContext(AbstractNamingContext):
 
     def __init__(self, constant_type):
         super().__init__()
-        assert constant_type in (int, str, bool, float)
+        assert constant_type in (int, str, bool, float, Decimal)
         self.constant_type = constant_type
 
     def resolve(self, name: str) -> object:
@@ -606,5 +607,5 @@ class ConstantNamingContext(AbstractNamingContext):
 
 # Bind ConstantNamingContext to the initial naming context for each supported 'primitive' python type.
 constants_naming_context = initial_naming_context.bind_new_context('constants')
-for constant_type in (int, str, bool): # Do not support floats, as vFinance uses Decimals throughout
-    constants_naming_context.bind_context(constant_type.__name__, ConstantNamingContext(constant_type))
+for constant_type in (int, str, bool, Decimal): # Do not support floats, as vFinance uses Decimals throughout
+    constants_naming_context.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type))
