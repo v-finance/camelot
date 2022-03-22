@@ -3,13 +3,14 @@ Server side register for objects whose reference is send to the client.
 Inspired by the Corba/Java NamingContext.
 """
 from __future__ import annotations
-from decimal import Decimal
 
+import decimal
 import functools
 import logging
 import typing
 
 from enum import Enum
+from decimal import Decimal
 
 from .singleton import Singleton
 
@@ -546,32 +547,6 @@ class NamingContext(AbstractNamingContext):
     def list(self):
         return self._bindings[BindingType.named_object].keys()
 
-class InitialNamingContext(NamingContext, metaclass=Singleton):
-    """
-    Singleton class that is the starting context for performing naming operations.
-    All naming operations are relative to a context.
-    This initial context implements the NamingContext interface and provides the starting point for resolution of names.
-    """
-
-    def __init__(self):
-        super().__init__()
-        # Initialize the name of this InitialNamingContext to the empty tuple,
-        # so that it becomes bounded but does not contribute to the full composite name
-        # resolution of subcontexts.
-        self._name = tuple()
-
-    def new_context(self):
-        """
-        Create and return a new `camelot.core.naming.NamingContext` instance.
-        Note that this does not create a new InitialNamingContext instance,
-        as this is inherently impossible because of its singleton nature.
-
-        :return: an instance of `camelot.core.naming.NamingContext`
-        """
-        return NamingContext()
-
-initial_naming_context = InitialNamingContext()
-
 class ConstantNamingContext(AbstractNamingContext):
     """
     Represents a stateless naming context, which handles resolving objects/values of a certain immutable python type.
@@ -614,10 +589,39 @@ class ConstantNamingContext(AbstractNamingContext):
         self._assert_valid_name(name)
         try:
             return self.constant_type(name)
-        except ValueError:
+        except (ValueError, decimal.InvalidOperation):
             raise NameNotFoundException(name, BindingType.named_object)
 
-# Bind ConstantNamingContext to the initial naming context for each supported 'primitive' python type.
-constants_naming_context = initial_naming_context.bind_new_context('constants')
-for constant_type in (int, str, bool, Decimal): # Do not support floats, as vFinance uses Decimals throughout
-    constants_naming_context.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type))
+class InitialNamingContext(NamingContext, metaclass=Singleton):
+    """
+    Singleton class that is the starting context for performing naming operations.
+    All naming operations are relative to a context.
+    This initial context implements the NamingContext interface and provides the starting point for resolution of names.
+    """
+
+    def __init__(self):
+        super().__init__()
+        # Initialize the name of this InitialNamingContext to the empty tuple,
+        # so that it becomes bounded but does not contribute to the full composite name
+        # resolution of subcontexts.
+        self._name = tuple()
+
+        # Bind values and contexts for each supported 'constant' python type.
+        constants = self.bind_new_context('constants')
+        for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
+            constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type))
+        constants.bind('None', None)
+        constants.bind('True', True)
+        constants.bind('False', False)
+
+    def new_context(self):
+        """
+        Create and return a new `camelot.core.naming.NamingContext` instance.
+        Note that this does not create a new InitialNamingContext instance,
+        as this is inherently impossible because of its singleton nature.
+
+        :return: an instance of `camelot.core.naming.NamingContext`
+        """
+        return NamingContext()
+
+initial_naming_context = InitialNamingContext()
