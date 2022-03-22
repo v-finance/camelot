@@ -416,7 +416,14 @@ class NamingContext(AbstractNamingContext):
             context = self._bindings[BindingType.named_context].get(name[0])
             if context is None:
                 raise NameNotFoundException(name[0], BindingType.named_context)
-            return context._add_binding(name[1:], obj, rebind, binding_type)
+            if binding_type == BindingType.named_context:
+                if rebind:
+                    return context.rebind_context(name[1:], obj)
+                return context.bind_context(name[1:], obj)
+            elif binding_type == BindingType.named_object:
+                if rebind:
+                    return context.rebind(name[1:], obj)
+                return context.bind(name[1:], obj)
 
     @AbstractNamingContext.check_bounded
     def unbind(self, name: Name) -> None:
@@ -483,7 +490,10 @@ class NamingContext(AbstractNamingContext):
             context = self._bindings[BindingType.named_context][name[0]]
             if context is None:
                 raise NameNotFoundException(name[0], BindingType.named_context)
-            return context._remove_binding(name[1:], binding_type)
+            if binding_type == BindingType.named_context:
+                context.unbind_context(name[1:])
+            elif binding_type == BindingType.named_object:
+                context.unbind(name[1:])
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
@@ -542,7 +552,10 @@ class NamingContext(AbstractNamingContext):
             context = self._bindings[BindingType.named_context].get(name[0])
             if context is None:
                 raise NameNotFoundException(name[0], BindingType.named_context)
-            return context._resolve_binding(name[1:], binding_type)
+            if binding_type == BindingType.named_context:
+                return context.resolve_context(name[1:])
+            elif binding_type == BindingType.named_object:
+                return context.resolve(name[1:])
 
     def list(self):
         return self._bindings[BindingType.named_object].keys()
@@ -568,12 +581,14 @@ class ConstantNamingContext(AbstractNamingContext):
         :raises:
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e. is not a valid string).
         """
+        if isinstance(name, tuple) and len(name) == 1:
+            name = name[0]
         if not isinstance(name, str):
             raise NamingException(NamingException.Message.invalid_name)
-        return tuple([name])
+        return (name,)
 
     @AbstractNamingContext.check_bounded
-    def resolve(self, name: str) -> object:
+    def resolve(self, name: Name) -> object:
         """
         Resolve a name in this ConstantNamingContext and return the bound object.
         It will throw appropriate exceptions if the resolution failed.
@@ -586,9 +601,9 @@ class ConstantNamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
-        self._assert_valid_name(name)
+        name = self._assert_valid_name(name)
         try:
-            return self.constant_type(name)
+            return self.constant_type(name[0])
         except (ValueError, decimal.InvalidOperation):
             raise NameNotFoundException(name, BindingType.named_object)
 
