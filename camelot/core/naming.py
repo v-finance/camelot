@@ -585,6 +585,7 @@ class ConstantNamingContext(AbstractNamingContext):
         assert constant_type in (int, str, bool, float, Decimal)
         self.constant_type = constant_type
 
+    @AbstractNamingContext.check_bounded
     def resolve(self, name: str) -> object:
         """
         Resolve a name in this ConstantNamingContext and return the bound object.
