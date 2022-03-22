@@ -14,6 +14,8 @@ from camelot.core.naming import (
 from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 
+from decimal import Decimal
+
 memento_id_counter = 0
 
 class MementoCase(unittest.TestCase, ExampleModelMixinCase):
@@ -722,10 +724,10 @@ class IntegerNamingContextCase(AbstractNamingContextCase, ConstantNamingContextC
     incompatible_names = ['', 'x', 'True', '1.5', 'test']
     compatible_names = [('-1', -1), ('0', 0), ('2', 2)]
 
-class BooleanNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
+class DecimalNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
-    context_name = ('bool',)
-    constant_type = bool
+    context_name = ('decimal',)
+    constant_type = Decimal
 
-    incompatible_names = ['', 'x', '-1', '0', '1', 'True', '1.5', 'test']
-    compatible_names = [('True', True), ('False', False), ('2', 2)]
+    incompatible_names = ['', 'x', 'True', 'test']
+    compatible_names = [('-1', Decimal(-1)), ('0', Decimal(0)), ('2', Decimal(2)), ('1.5', Decimal(1.5))]
