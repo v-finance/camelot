@@ -585,6 +585,18 @@ class ConstantNamingContext(AbstractNamingContext):
         assert constant_type in (int, str, bool, float, Decimal)
         self.constant_type = constant_type
 
+    @classmethod
+    def _assert_valid_name(cls, name:str) -> Name:
+        """
+        Helper method that validates a name and returns its composite form.
+
+        :raises:
+            NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e. is not a valid string).
+        """
+        if not isinstance(name, str):
+            raise NamingException(NamingException.Message.invalid_name)
+        return tuple([name])
+
     @AbstractNamingContext.check_bounded
     def resolve(self, name: str) -> object:
         """
@@ -599,8 +611,7 @@ class ConstantNamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
-        if not isinstance(name, str):
-            raise NamingException(NamingException.Message.invalid_name)
+        self._assert_valid_name(name)
         try:
             return self.constant_type(name)
         except ValueError:
