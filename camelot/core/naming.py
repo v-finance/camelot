@@ -421,8 +421,8 @@ class NamingContext(AbstractNamingContext):
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
-            bound_obj = self._bindings[binding_type].get(name[0])
-            if not rebind and bound_obj is not None:
+            # If binding, check if their exists one already
+            if not rebind and name[0] in self._bindings[binding_type]:
                 raise AlreadyBoundException(name[0], binding_type)
 
             # Add the object to the registry for the given binding_type.
@@ -567,10 +567,9 @@ class NamingContext(AbstractNamingContext):
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
-            obj = self._bindings[binding_type].get(name[0])
-            if obj is None:
+            if name[0] not in self._bindings[binding_type]:
                 raise NameNotFoundException(name[0], binding_type)
-            return obj
+            return self._bindings[binding_type][name[0]]
         else:
             context = self._bindings[BindingType.named_context].get(name[0])
             if context is None:
