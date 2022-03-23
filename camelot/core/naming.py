@@ -25,11 +25,15 @@ class BindingType(Enum):
 
 class NamingException(Exception):
 
-    def __init__(self, message, *args, **kwargs):
+    def __init__(self, message, *args, reason=None, **kwargs):
         assert isinstance(message, self.Message)
-        self.message = message
+        assert reason is None or isinstance(reason, self.Message)
         self.message_text = message.value.format(*args, **kwargs)
+        if reason is not None:
+            self.message_text = self.message_text + ': ' + reason
         super().__init__(self.message_text)
+        self.message = message
+        self.reason = reason
 
     class Message(Enum):
 
