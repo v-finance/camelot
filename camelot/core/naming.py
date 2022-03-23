@@ -37,8 +37,8 @@ class NamingException(Exception):
 
     class Message(Enum):
 
-        unbound = 'Can not proceed: NamingContext is not bound to another context yet'
         invalid_name = 'The given name is invalid'
+        unbound = 'Can not proceed: NamingContext is not bound to another context yet'
         invalid_binding_type = 'Invalid binding type, should be a member of `camelot.core.naming.BindingType'
         name_not_found = "Name '{}' does not identify a {} binding"
         already_bound = "A {} is already bound under the name '{}'"
@@ -92,19 +92,38 @@ class AbstractNamingContext(object):
         self._name = None
 
     @classmethod
-    def _assert_valid_name(cls, name:Name):
+    def is_valid_name(cls, name: str) -> bool:
         """
-        Helper method that validates the given (composite) name and returns its composite form.
+        Returns whether the given name part is a valid name for this naming context.
+        This method will be used to validate names used in this context,
+        or by contexts that have this context bound as a subcontext, to validate a name part of composite names with.
+        """
+        return isinstance(name, str) and len(name) > 0
+
+    @classmethod
+    def is_valid_composite_name(cls, name: Name) -> bool:
+        """
+        Returns whether the given composite name is a valid name for this naming context.
+        This method will be used to validate names used in this context,
+        or by contexts that have this context bound as a subcontext, to validate a part of a composite name with.
+        """
+        return isinstance(name, tuple) and len(name) > 0 and all([isinstance(name_part, str) for name_part in name])
+
+    @classmethod
+    def get_composite_name(cls, name: Name):
+        """
+        Utility method that returns the given name's composite form.
+        The name will also be generally validated, with context specific name part validation for the first composed name part.
+        Possible other name parts can only be validated fully be the corresponding subcontext after the recursive resolve.
 
         :raises:
-            NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
+            NamingException NamingException.Message.invalid_name: The supplied name or one of its composed part is invalid for this context.
         """
-        if isinstance(name, str) and len(name):
+        if isinstance(name, str) and cls.is_valid_name(name):
             return tuple([name])
-        if isinstance(name, tuple) and len(name):
-            for _name in name:
-                cls._assert_valid_name(_name)
-            return name
+        if isinstance(name, tuple) and cls.is_valid_composite_name(name):
+            if cls.is_valid_name(name[0]):
+                return name
         raise NamingException(NamingException.Message.invalid_name)
 
     def check_bounded(func):
@@ -129,7 +148,7 @@ class AbstractNamingContext(object):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
         """
-        name = self._assert_valid_name(name)
+        name = self.get_composite_name(name)
         return (*self._name, *name)
 
     def bind(self, name: Name, obj) -> Name:
@@ -398,7 +417,7 @@ class NamingContext(AbstractNamingContext):
             AlreadyBoundException NamingException.Message.already_bound: when an object is already bound under the supplied name.
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
         """
-        name = self._assert_valid_name(name)
+        name = self.get_composite_name(name)
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
@@ -481,7 +500,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
-        name = self._assert_valid_name(name)
+        name = self.get_composite_name(name)
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
@@ -544,7 +563,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
-        name = self._assert_valid_name(name)
+        name = self.get_composite_name(name)
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
@@ -578,18 +597,12 @@ class ConstantNamingContext(AbstractNamingContext):
         self.constant_type = constant_type
 
     @classmethod
-    def _assert_valid_name(cls, name:str) -> Name:
-        """
-        Helper method that validates a name and returns its composite form.
+    def is_valid_name(cls, name:str) -> bool:
+        return isinstance(name, str)
 
-        :raises:
-            NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e. is not a valid string).
-        """
-        if isinstance(name, tuple) and len(name) == 1:
-            name = name[0]
-        if not isinstance(name, str):
-            raise NamingException(NamingException.Message.invalid_name)
-        return (name,)
+    @classmethod
+    def is_valid_composite_name(cls, name:str) -> bool:
+        return isinstance(name, tuple) and len(name) == 1
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
@@ -605,11 +618,11 @@ class ConstantNamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
-        name = self._assert_valid_name(name)
+        name = self.get_composite_name(name)
         try:
             return self.constant_type(name[0])
         except (ValueError, decimal.InvalidOperation):
-            raise NameNotFoundException(name, BindingType.named_object)
+            raise NameNotFoundException(name[0], BindingType.named_object)
 
 class InitialNamingContext(NamingContext, metaclass=Singleton):
     """

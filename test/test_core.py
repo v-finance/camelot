@@ -162,7 +162,7 @@ class AbstractNamingContextCaseMixin(object):
     context_cls = None
 
     # Name values that should throw an invalid_name NamingException.
-    invalid_names = [None, '', tuple(), ('',), (None,), ('test', ''), ('test', None)]
+    invalid_names = [None, '', tuple(), ('',), (None,)]
     valid_names = ['test', ('test',), ('first', 'second')]
 
     def new_context(self):
