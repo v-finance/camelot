@@ -118,7 +118,7 @@ class AbstractNamingContext(object):
         self._name = None
 
     @classmethod
-    def validate_atomic_name(cls, name: str) -> typing.Optional[NamingException.Message]:
+    def validate_atomic_name(cls, name: str):
         """
         Validate an atomic name for this naming context.
         This method will be used to validate names used within this context,
