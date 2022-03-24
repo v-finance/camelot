@@ -16,7 +16,9 @@ from .singleton import Singleton
 
 LOGGER = logging.getLogger(__name__)
 
+# Composite name represents a sequence of composed atomic names
 CompositeName = typing.Tuple[str, ...]
+# Unified name that can be either an atomic name or a composte name.
 Name = typing.Union[str, CompositeName]
 
 class BindingType(Enum):
@@ -31,19 +33,27 @@ class NamingException(Exception):
         assert reason is None or isinstance(reason, self.Message)
         self.message_text = message.value.format(*args, **kwargs)
         if reason is not None:
-            self.message_text = self.message_text + ': ' + reason
+            self.message_text = self.message_text + ': ' + reason.value
         super().__init__(self.message_text)
         self.message = message
         self.reason = reason
 
     class Message(Enum):
 
-        invalid_name = 'The given name is invalid'
         unbound = 'Can not proceed: NamingContext is not bound to another context yet'
         invalid_binding_type = 'Invalid binding type, should be a member of `camelot.core.naming.BindingType'
         name_not_found = "Name '{}' does not identify a {} binding"
         already_bound = "A {} is already bound under the name '{}'"
         context_expected = 'Expected an instance of `camelot.core.naming.AbstractNamingContext`, instead got {0}'
+
+        invalid_name = 'The given name is invalid'
+        # Invalid name reasons
+        invalid_atomic_name = 'atomic name should be a string'
+        invalid_atomic_name_length = 'atomic name should contain at least 1 character'
+        invalid_composite_name = 'composite name should be a tuple'
+        invalid_composite_name_length = 'composite name should be composed of at least 1 atomic part'
+        invalid_composite_name_parts = 'composite name should be composed of valid atomic parts'
+        singular_name_expected = 'only atomic or singular composite names are supported by this endpoint naming context'
 
 class UnboundException(NamingException):
     """A NamingException that is thrown when a NamingContext bound to another NamingContext yet."""
@@ -97,24 +107,41 @@ class AbstractNamingContext(object):
         self._name = None
 
     @classmethod
-    def is_valid_name(cls, name: str) -> bool:
+    def validate_atomic_name(cls, name: str) -> typing.Optional[NamingException.Message]:
         """
-        Returns whether the given atomic name is a valid for this naming context.
+        Validate an atomic name for this naming context.
         This method will be used to validate names used within this context,
         or by contexts higher up that have this context bound as one of their subcontexts,
         to validate an atomic part of a composite name with.
+
+        :raises:
+            NamingException NamingException.Message.invalid_atomic_name when the given name is not a string instance.
+            NamingException NamingException.Message.invalid_atomic_name when the given name is the empty string.
         """
-        return isinstance(name, str) and len(name) > 0
+        if not isinstance(name, str):
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name)
+        elif len(name) == 0:
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_length)
 
     @classmethod
-    def is_valid_composite_name(cls, name: CompositeName) -> bool:
+    def validate_composite_name(cls, name: CompositeName) -> bool:
         """
-        Returns whether the given composite name is valid for this naming context.
+        Validate a composite name for this naming context.
         This method will be used to validate composite names used within this context,
         or by contexts higher up that have this context bound as one of their subcontexts,
         to validate composite names with.
+
+        :raises:
+            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.invalid_composite_name_length when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
         """
-        return isinstance(name, tuple) and len(name) > 0 and all([isinstance(name_part, str) for name_part in name])
+        if not isinstance(name, tuple):
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name)
+        elif len(name) == 0:
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length)
+        elif not all([isinstance(name_part, str) for name_part in name]):
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_parts)
 
     @classmethod
     def get_composite_name(cls, name: Name) -> CompositeName:
@@ -132,11 +159,13 @@ class AbstractNamingContext(object):
         :raises:
             NamingException NamingException.Message.invalid_name: The supplied name or one of its composed part is invalid for this context.
         """
-        if isinstance(name, str) and cls.is_valid_name(name):
+        if isinstance(name, str):
+            cls.validate_atomic_name(name)
             return tuple([name])
-        if isinstance(name, tuple) and cls.is_valid_composite_name(name):
-            if cls.is_valid_name(name[0]):
-                return name
+        if isinstance(name, tuple):
+            cls.validate_composite_name(name)
+            cls.validate_atomic_name(name[0])
+            return name
         raise NamingException(NamingException.Message.invalid_name)
 
     def check_bounded(func):
@@ -621,12 +650,35 @@ class ConstantNamingContext(AbstractNamingContext):
         self.constant_type = constant_type
 
     @classmethod
-    def is_valid_name(cls, name:str) -> bool:
-        return isinstance(name, str)
+    def validate_atomic_name(cls, name: str) -> bool:
+        """
+        Customized atomic name validation for this constant naming context.
+        This enforces less constraints than the default validation inherited from ´camelot.core.naming.AbstractNamingContext´,
+        in that it allows for the empty string as a valid atomic name,
+        as that to should be able to be resolved by the corresponding String constant naming context.
+
+        :raises:
+            NamingException NamingException.Message.invalid_atomic_name when the given name is not a string instance.
+        """
+        if not isinstance(name, str):
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name)
 
     @classmethod
-    def is_valid_composite_name(cls, name:CompositeName) -> bool:
-        return isinstance(name, tuple) and len(name) == 1
+    def validate_composite_name(cls, name: CompositeName) -> bool:
+        """
+        Customized composite name validation for this constant naming context.
+        This expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
+        in that it only allows singular composite names, as this context by definition is an endpoint in the context hierarchy.
+
+        :raises:
+            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.invalid_composite_name_length when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
+            NamingException NamingException.Message.singular_name_expected when the given composite name is not singular.
+        """
+        super().validate_composite_name(name)
+        if len(name) != 1:
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
