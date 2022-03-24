@@ -16,7 +16,8 @@ from .singleton import Singleton
 
 LOGGER = logging.getLogger(__name__)
 
-Name = typing.Union[str, typing.Tuple[str, ...]]
+CompositeName = typing.Tuple[str, ...]
+Name = typing.Union[str, CompositeName]
 
 class BindingType(Enum):
 
@@ -76,16 +77,20 @@ class AbstractNamingContext(object):
 
     Names
     -----
-    Each name passed as an argument to a context method is relative to that context.
-    A context keeps track of its fully qualified name, once bounded to another context,
-    so as to return the fully qualified name of bindings where needed.
-    Both singular textual names, as composite names (tuples) for recursive resolving through subcontexts, are supported.
+    Each name passed as an argument to a context method should be relative to that context.
+    This can be both an atomic string name, for binding on the context itself,
+    or composite names (composed of multiple atomic parts), for binding through subcontexts using the recursive resolve.
+    Internally, a context always uses the composite form of names, even when provided with atomic values.
+
+    Each context also keeps track of its fully qualified composite name, once it gets bound to another context.
+    This composite name is always relative to the initial naming context :see: camelot.core.naming.InitialNamingContext.
+    The context uses this name to compose and return the fully qualified name of created bindings,
+    which can thus be used to resolve them afterwards on the initial naming context.
 
     Exceptions
     ----------
-    All the methods in this interface can throw a NamingException or
-    any of its subclasses. See NamingException and their subclasses
-    for details on each exception.
+    All the methods in this interface can throw a NamingException or any of its subclasses.
+    See NamingException and their subclasses for details on each exception.
     """
 
     def __init__(self):
@@ -94,27 +99,35 @@ class AbstractNamingContext(object):
     @classmethod
     def is_valid_name(cls, name: str) -> bool:
         """
-        Returns whether the given name part is a valid name for this naming context.
-        This method will be used to validate names used in this context,
-        or by contexts that have this context bound as a subcontext, to validate a name part of composite names with.
+        Returns whether the given atomic name is a valid for this naming context.
+        This method will be used to validate names used within this context,
+        or by contexts higher up that have this context bound as one of their subcontexts,
+        to validate an atomic part of a composite name with.
         """
         return isinstance(name, str) and len(name) > 0
 
     @classmethod
-    def is_valid_composite_name(cls, name: Name) -> bool:
+    def is_valid_composite_name(cls, name: CompositeName) -> bool:
         """
-        Returns whether the given composite name is a valid name for this naming context.
-        This method will be used to validate names used in this context,
-        or by contexts that have this context bound as a subcontext, to validate a part of a composite name with.
+        Returns whether the given composite name is valid for this naming context.
+        This method will be used to validate composite names used within this context,
+        or by contexts higher up that have this context bound as one of their subcontexts,
+        to validate composite names with.
         """
         return isinstance(name, tuple) and len(name) > 0 and all([isinstance(name_part, str) for name_part in name])
 
     @classmethod
-    def get_composite_name(cls, name: Name):
+    def get_composite_name(cls, name: Name) -> CompositeName:
         """
-        Utility method that returns the given name's composite form.
-        The name will also be generally validated, with context specific name part validation for the first composed name part.
-        Possible other name parts can only be validated fully be the corresponding subcontext after the recursive resolve.
+        Utility method that returns the composite form of the given name (atomic or composite).
+        The composite result will also be generally validated for use within this context,
+        as well as the the first composed atomic part (as that is the only one used directly on this context).
+        Any other atomic parts can only be validated be the corresponding subcontext after the recursive resolve,
+        as its validation might differ from this one.
+
+        :param name: the name to convert, atomic or composite.
+
+        :return: the composite form of the provided name.
 
         :raises:
             NamingException NamingException.Message.invalid_name: The supplied name or one of its composed part is invalid for this context.
@@ -136,13 +149,17 @@ class AbstractNamingContext(object):
         return wrapper
 
     @check_bounded
-    def get_qual_name(self, name: Name) -> tuple:
+    def get_qual_name(self, name: Name) -> CompositeName:
         """
-        Convert the given binding name into its fully qualified composite name for this NamingContext.
+        Convert the given name relative to this NamingContext into its
+        fully qualified composite name relative to the initial naming context.
+        Checks will be performed on the validity of the provided name,
+        but not on its presence in the context hierarchy.
+        The resulting composite name is thus not guaranteed to resolve into a bound object.
 
-        :param name: the name relative to this NamingContext.
+        :param name: the name, atomic or composite, and relative to this naming context.
 
-        :return: the fully qualified composite form of the provided name
+        :return: the fully qualified composite form of the provided name, relative to the initial naming context.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -151,51 +168,52 @@ class AbstractNamingContext(object):
         name = self.get_composite_name(name)
         return (*self._name, *name)
 
-    def bind(self, name: Name, obj) -> Name:
+    def bind(self, name: Name, obj) -> CompositeName:
         """
         Creates a binding of a name and an object in the naming context.
 
-        :param name: Name of the object
+        :param name: Name of the object, atomic or composite, and relative to this naming context.
         :param obj: The object to bind with the given name
 
-        :return: The fully qualified name of the resulting binding.
+        :return: The fully qualified composite name of the resulting binding, relative to the initial naming context.
         """
         raise NotImplementedError
 
-    def rebind(self, name: Name, obj) -> Name:
+    def rebind(self, name: Name, obj) -> CompositeName:
         """
         Creates a binding of a name and an object in the naming context even if the name is already bound in the context.
 
-        :param name: Name of the object
+        :param name: Name of the object, atomic or composite, and relative to this naming context.
         :param obj: The object to bind with the given name
 
-        :return: The fully qualified name of the resulting binding.
+        :return: The fully qualified composite name of the resulting binding, relative to the initial naming context.
         """
         raise NotImplementedError
 
-    def bind_context(self, name: Name, context) -> Name:
+    def bind_context(self, name: Name, context) -> CompositeName:
         """
-        Names an object that is a naming context. Naming contexts that are bound using bind_context() participate in name resolution when compound names are passed to be resolved.
+        Names an object that is a naming context.
+        Naming contexts that are bound using bind_context() participate in recursive name resolution when composite names are passed to be resolved.
 
-        :param name: Name of the object
+        :param name: Name of the object, atomic or composite, and relative to this naming context.
         :param obj: The AbstractNamingContext obj to bind with the given name
 
-        :return: The fully qualified name of the resulting binding
+        :return: The fully qualified composite name of the resulting binding, relative to the initial naming context.
         """
         raise NotImplementedError
 
-    def rebind_context(self, name: Name, context) -> Name:
+    def rebind_context(self, name: Name, context) -> CompositeName:
         """
         Creates a binding of a name and a naming context in the naming context even if the name is already bound in the context.
 
-        :param name: Name of the object
+        :param name: Name of the object, atomic or composite, and relative to this naming context.
         :param obj: The AbstractNamingContext obj to bind with the given name
 
-        :return: The fully qualified name of the resulting binding
+        :return: The fully qualified composite name of the resulting binding, relative to the initial naming context.
         """
         raise NotImplementedError
 
-    def new_context(self):
+    def new_context(self) -> AbstractNamingContext:
         """
         Create and return a new instance of this context class.
 
@@ -203,9 +221,11 @@ class AbstractNamingContext(object):
         """
         raise NotImplementedError
 
-    def bind_new_context(self, name) -> AbstractNamingContext:
+    def bind_new_context(self, name: str) -> AbstractNamingContext:
         """
-        Creates a new context and binds it to the name supplied as an argument.
+        Creates a new context and binds it to this context under the provided atomic name.
+
+        :param name: Name, actomic and compose, and relative to this naming context, to bind the created context to this naming context.
 
         :return: the created context, bound to this context.
         """
@@ -215,7 +235,7 @@ class AbstractNamingContext(object):
         """
         Removes a named binding from the context.
 
-        :param name: Name of the object
+        :param name: Name of the object, atomic or composite, and relative to this naming context.
         """
         raise NotImplementedError
 
@@ -223,7 +243,7 @@ class AbstractNamingContext(object):
         """
         Removes a name context binding from the context.
 
-        :param name: Name of the context
+        :param name: Name of the context, atomic or composite.
         """
         raise NotImplementedError
 
@@ -231,7 +251,7 @@ class AbstractNamingContext(object):
         """
         Retrieve the object bound to a name in the context. The given name must exactly match the bound name.
 
-        :param name: Name of the object
+        :param name: Name of the object, atomic or composite, and relative to this naming context.
         """
         raise NotImplementedError
 
@@ -239,7 +259,7 @@ class AbstractNamingContext(object):
         """
         Retrieve the context bound to a name in the context. The given name must exactly match the bound name.
 
-        :param name: Name of the context
+        :param name: Name of the context, atomic or composite, and relative to this naming context.
         """
         raise NotImplementedError
 
@@ -277,19 +297,19 @@ class NamingContext(AbstractNamingContext):
         self._bindings = {btype: dict() for btype in BindingType}
 
     @AbstractNamingContext.check_bounded
-    def bind(self, name, obj) -> Name:
+    def bind(self, name: Name, obj: object) -> CompositeName:
         """
         Bind an object under a name in this NamingContext.
-        If the name is singular (length of 1) the given object will be bound with the name in this NamingContext.
-        In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
-        and the remaining parts are bound in that resulting context.
+        If the name is atomic or composed out of a single atomic part, the given object will be bound with that atomic name to this NamingContext.
+        In case it is composed out of multiple parts, the first part is resolved in this context, expecting the result to be a bound NamingContext,
+        and the remaining parts are recursively bound in the resulting context.
         An exception is thrown if a binding with the supplied name already exists.
         If the object to be bound is a NamingContext it will not participate in a recursive resolve; use bind_context() instead for this behaviour.
 
-        :param name: name under which the object will be bound.
+        :param name: name under which the object will be bound, atomic or composite, and relative to this naming context.
         :param obj: the object reference to be bound.
 
-        :return: the full qualified name of the bound object across the whole context hierarchy.
+        :return: the full qualified composite name of the bound object, relative to the initial naming context.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -300,19 +320,19 @@ class NamingContext(AbstractNamingContext):
         return self._add_binding(name, obj, False, BindingType.named_object)
 
     @AbstractNamingContext.check_bounded
-    def rebind(self, name, obj) -> Name:
+    def rebind(self, name: Name, obj: object) -> CompositeName:
         """
         Bind an object under a name in this NamingContext.
-        If the name is singular (length of 1) the given object will be rebound the name in this NamingContext.
+        If the name is atomic or composed out of a single atomic part, the given object will be rebound with that atomic name to this NamingContext.
         In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
-        and the remaining parts are rebound in that resulting context.
+        and the remaining parts are recursively rebound in that resulting context.
         If a binding under the supplied name already exists it will be unbounded first.
-        If the object to be bound is a NamingContext it will not participate in a recursive resolve.
+        If the object to be bound is a NamingContext it will not participate in the recursive resolve.
 
-        :param name: name under which the object will be bound.
+        :param name: name under which the object will be bound, atomic or composite, and relative to this naming context.
         :param obj: the object reference to be bound.
 
-        :return: the full qualified name of the bound object across the whole context hierarchy.
+        :return: the full qualified composite name of the bound object, relative to the initial naming context.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -322,15 +342,15 @@ class NamingContext(AbstractNamingContext):
         return self._add_binding(name, obj, True, BindingType.named_object)
 
     @AbstractNamingContext.check_bounded
-    def bind_context(self, name, context) -> Name:
+    def bind_context(self, name: Name, context: AbstractNamingContext) -> CompositeName:
         """
         Bind a NamingContext under a name in this NamingContext.
-        If the name is singular (length of 1) the given context will be rebound the name in this NamingContext.
+        If the name is atomic or composed out of a single atomic part, the given context will be bound with that atomic name to this NamingContext.
         In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
         and the remaining parts are rebound in that resulting context.
         An exception is thrown if a binding with the supplied name already exists. The NamingContext will participate in recursive resolving.
 
-        :param name: name under which the object will be bound.
+        :param name: name under which the object will be bound, atomic or composite, and relative to this naming context.
         :param context: the NamingContext object reference to be bound.
 
         :return: the full qualified name of the bound object across the whole context hierarchy.
@@ -347,18 +367,18 @@ class NamingContext(AbstractNamingContext):
         return self._add_binding(name, context, False, BindingType.named_context)
 
     @AbstractNamingContext.check_bounded
-    def rebind_context(self, name, context) -> Name:
+    def rebind_context(self, name: Name, context: AbstractNamingContext) -> CompositeName:
         """
         Bind a NamingContext under a name in this NamingContext.
-        If the name is singular (length of 1) the given context will be rebound the name in this NamingContext.
+        If the name is atomic or composed out of a single atomic part, the given context will be rebound with that atomic name to this NamingContext.
         In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
         If a binding under the supplied name already exists it will be unbound first.
         The NamingContext will participate in recursive resolving.
 
-        :param name: name under which the object will be bound.
+        :param name: name under which the object will be bound, atomic or composite, and relative to this naming context.
         :param context: the NamingContext object reference to be bound.
 
-        :return: the full qualified name of the bound object across the whole context hierarchy.
+        :return: the full qualified composite name of the bound object, relative to the initial naming context.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -371,7 +391,7 @@ class NamingContext(AbstractNamingContext):
             raise NamingException(NamingException.Message.context_expected, context)
         return self._add_binding(name, context, True, BindingType.named_context)
 
-    def new_context(self):
+    def new_context(self) -> NamingContext:
         """
         Create and return a new instance of this context class.
 
@@ -380,13 +400,14 @@ class NamingContext(AbstractNamingContext):
         return self.__class__()
 
     @AbstractNamingContext.check_bounded
-    def bind_new_context(self, name) -> NamingContext:
+    def bind_new_context(self, name: Name) -> NamingContext:
         """
         Creates a new NamingContext, binds it in this NamingContext and returns it.
         This is equivalent to new_context(), followed by a bind_context() with the provided name for the newly created context.
-        :param name: name under which the created NamingContext will be bound.
 
-        :return: an instance of `camelot.core.naming.AbstractNamingContext`
+        :param name: name under which the created NamingContext will be bound, atomic or composite, and relative to this naming context.
+
+        :return: an instance of `camelot.core.naming.NamingContext`
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -396,19 +417,19 @@ class NamingContext(AbstractNamingContext):
         return context
 
     @AbstractNamingContext.check_bounded
-    def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType) -> Name:
+    def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType) -> CompositeName:
         """
         Helper method that implements the addition of all types of bindings.
         It resolves the name to make sure no binding exists already (in case of a bind and bind_context).
-        If the name has a length of 1, the given object is bound with the name in this NamingContext.
-        Otherwise, the first part of the name is resolved in this context and the bind is passed to the resulting NamingContext.
+        If the name is atomic, or composed of only a single atomic part, the given object is bound with that name in this NamingContext.
+        Otherwise, the first atomic part is resolved in this context and the bind is passed to the resulting NamingContext.
 
-        :param name: name under which the object will be bound.
+        :param name: name under which the object will be bound, atomic or composite, and relative to this naming context.
         :param obj: the object reference to be bound.
         :param rebind: flag indicating if an existing binding should be replaced or not.
         :param binding_type: the type of the binding to add, a member of `camelot.core.orm.BindingType.
 
-        :return: the full qualified name of the bound object across the whole context hierarchy.
+        :return: the full qualified composite name of the bound object, relative to the initial naming context.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -452,11 +473,11 @@ class NamingContext(AbstractNamingContext):
     def unbind(self, name: Name) -> None:
         """
         Removes an object binding from this NamingContext.
-        If the name is singular (length of 1) the binding under the given name will be removed from this NamingContext.
+        If the name is atomic, or composed of only a single atomic part, the object binding under the given name will be removed from this NamingContext.
         In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
         and the remaining parts are resolved in that resulting context.
 
-        :param name: name under which the object should have been bound.
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -469,12 +490,12 @@ class NamingContext(AbstractNamingContext):
     def unbind_context(self, name: Name) -> None:
         """
         Remove a context binding from this NamingContext.
-        If the name is singular (length of 1) the context binding under the given name will be removed from this NamingContext.
+        If the name is atomic, or composed of only a single atomic part, the context binding under the given name will be removed from this NamingContext.
         In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
         and the remaining parts are resolved in that resulting context.
         As a result of this removal, the found NamingContext will get unbound and not be usable unless its reassociated.
 
-        :param name: name under which the context should have been bound.
+        :param name: name under which the context should have been bound, atomic or composite, and relative to this naming context.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -487,11 +508,11 @@ class NamingContext(AbstractNamingContext):
     def _remove_binding(self, name: Name, binding_type: BindingType) -> None:
         """
         Helper method that supports removing all types of bindings from this NamingContext.
-        If the name is singular (length of 1) the context binding under the given name will be removed from this NamingContext.
+        If the name is atomic, or composed of only a single atomic part, the binding under the given name will be removed from this NamingContext.
         In case it is composed out of multiple parts, the first part is resolved in this context, expecting a bound NamingContext,
-        and the remaining parts are delegated to the resulting context.
+        and the remaining parts are delegated for removal to the resulting context.
 
-        :param name: name of the binding.
+        :param name: name of the binding to remove, atomic or composite, and relative to this naming context.
         :param binding_type: the type of the binding to remove, a member of `camelot.core.orm.BindingType.
 
         :raises:
@@ -524,7 +545,9 @@ class NamingContext(AbstractNamingContext):
         Resolve a name in this NamingContext and return the bound object.
         It will throw appropriate exceptions if not found.
 
-        :param name: name under which the object should have been bound.
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+
+        :return: the object that was bound under the given name.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -534,12 +557,12 @@ class NamingContext(AbstractNamingContext):
         return self._resolve_binding(name, BindingType.named_object)
 
     @AbstractNamingContext.check_bounded
-    def resolve_context(self, name: Name) -> NamingContext:
+    def resolve_context(self, name: Name) -> AbstractNamingContext:
         """
         Resolve a name in this NamingContext and return the bound object, expecting it to be a NamingContext.
         It will throw appropriate exceptions if not found.
 
-        :param name: name under which the context should have been bound.
+        :param name: name under which the context should have been bound, atomic or composite, and relative to this naming context.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -554,8 +577,10 @@ class NamingContext(AbstractNamingContext):
         Helper method that implements the lookup of all types of bindings, returning the bound object.
         It will throw appropriate exceptions if not found.
 
-        :param name: name under which the object should have been bound.
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
         :param binding_type: the type of binding to resolve, a member of `camelot.core.orm.BindingType.
+
+        :return: the object that was bound under the given name.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -600,7 +625,7 @@ class ConstantNamingContext(AbstractNamingContext):
         return isinstance(name, str)
 
     @classmethod
-    def is_valid_composite_name(cls, name:str) -> bool:
+    def is_valid_composite_name(cls, name:CompositeName) -> bool:
         return isinstance(name, tuple) and len(name) == 1
 
     @AbstractNamingContext.check_bounded
@@ -609,7 +634,8 @@ class ConstantNamingContext(AbstractNamingContext):
         Resolve a name in this ConstantNamingContext and return the bound object.
         It will throw appropriate exceptions if the resolution failed.
 
-        :param name: name under which the object should have been bound.
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+
         :return: the bound object, an instance of this ConstantNamingContext's constant_type.
 
         :raises:
@@ -645,7 +671,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         constants.bind('True', True)
         constants.bind('False', False)
 
-    def new_context(self):
+    def new_context(self) -> NamingContext:
         """
         Create and return a new `camelot.core.naming.NamingContext` instance.
         Note that this does not create a new InitialNamingContext instance,
