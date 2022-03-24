@@ -208,12 +208,13 @@ class AbstractNamingContext(object):
         name = self.get_composite_name(name)
         return (*self._name, *name)
 
-    def bind(self, name: Name, obj) -> CompositeName:
+    def bind(self, name: Name, obj: object, immutable: False) -> CompositeName:
         """
         Creates a binding of a name and an object in the naming context.
 
         :param name: Name of the object, atomic or composite, and relative to this naming context.
         :param obj: The object to bind with the given name
+        :param immutable: flag that indicates whether the created binding should be immutable.
 
         :return: The fully qualified composite name of the resulting binding, relative to the initial naming context.
         """
@@ -230,19 +231,20 @@ class AbstractNamingContext(object):
         """
         raise NotImplementedError
 
-    def bind_context(self, name: Name, context) -> CompositeName:
+    def bind_context(self, name: Name, context: AbstractNamingContext, immutable=False) -> CompositeName:
         """
         Names an object that is a naming context.
         Naming contexts that are bound using bind_context() participate in recursive name resolution when composite names are passed to be resolved.
 
         :param name: Name of the object, atomic or composite, and relative to this naming context.
         :param obj: The AbstractNamingContext obj to bind with the given name
+        :param immutable: flag that indicates whether the created context binding should be immutable.
 
         :return: The fully qualified composite name of the resulting binding, relative to the initial naming context.
         """
         raise NotImplementedError
 
-    def rebind_context(self, name: Name, context) -> CompositeName:
+    def rebind_context(self, name: Name, context: AbstractNamingContext) -> CompositeName:
         """
         Creates a binding of a name and a naming context in the naming context even if the name is already bound in the context.
 
@@ -261,11 +263,12 @@ class AbstractNamingContext(object):
         """
         raise NotImplementedError
 
-    def bind_new_context(self, name: str) -> AbstractNamingContext:
+    def bind_new_context(self, name: Name, immutable=False) -> AbstractNamingContext:
         """
         Creates a new context and binds it to this context under the provided atomic name.
 
         :param name: Name, actomic and compose, and relative to this naming context, to bind the created context to this naming context.
+        :param immutable: flag that indicates whether the created context should be bound immutable.
 
         :return: the created context, bound to this context.
         """
@@ -337,7 +340,7 @@ class NamingContext(AbstractNamingContext):
         self._bindings = {btype: dict() for btype in BindingType}
 
     @AbstractNamingContext.check_bounded
-    def bind(self, name: Name, obj: object) -> CompositeName:
+    def bind(self, name: Name, obj: object, immutable=False) -> CompositeName:
         """
         Bind an object under a name in this NamingContext.
         If the name is atomic or composed out of a single atomic part, the given object will be bound with that atomic name to this NamingContext.
@@ -348,6 +351,8 @@ class NamingContext(AbstractNamingContext):
 
         :param name: name under which the object will be bound, atomic or composite, and relative to this naming context.
         :param obj: the object reference to be bound.
+        :param immutable: flag that indicates whether the object should be bound as immutable,
+         which will throw a `camelot.core.naming.ImmutableBindingException` when trying to mutate the binding afterwards
 
         :return: the full qualified composite name of the bound object, relative to the initial naming context.
 
@@ -378,11 +383,12 @@ class NamingContext(AbstractNamingContext):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NamingException NamingException.Message.invalid_name: The supplied name is invalid (i.e., is None or has length less than 1).
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the supplied name.
+            ImmutableBindingException NamingException.Message.binding_immutable: when trying to rebind an immutable object binding.
         """
         return self._add_binding(name, obj, True, BindingType.named_object)
 
     @AbstractNamingContext.check_bounded
-    def bind_context(self, name: Name, context: AbstractNamingContext) -> CompositeName:
+    def bind_context(self, name: Name, context: AbstractNamingContext, immutable=False) -> CompositeName:
         """
         Bind a NamingContext under a name in this NamingContext.
         If the name is atomic or composed out of a single atomic part, the given context will be bound with that atomic name to this NamingContext.
@@ -392,6 +398,8 @@ class NamingContext(AbstractNamingContext):
 
         :param name: name under which the object will be bound, atomic or composite, and relative to this naming context.
         :param context: the NamingContext object reference to be bound.
+        :param immutable: flag that indicates whether the context should be bound as immutable,
+         which will throw a `camelot.core.naming.ImmutableBindingException` when trying to mutate the binding afterwards
 
         :return: the full qualified name of the bound object across the whole context hierarchy.
 
@@ -426,6 +434,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.context_expected : when the given object is not a NamingContext.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the supplied name.
             AlreadyBoundException NamingException.Message.already_bound : when an object is already bound under the supplied name.
+            ImmutableBindingException NamingException.Message.binding_immutable: when trying to rebind an immutable context binding.
         """
         if not isinstance(context, AbstractNamingContext):
             raise NamingException(NamingException.Message.context_expected, context)
@@ -440,12 +449,14 @@ class NamingContext(AbstractNamingContext):
         return self.__class__()
 
     @AbstractNamingContext.check_bounded
-    def bind_new_context(self, name: Name) -> NamingContext:
+    def bind_new_context(self, name: Name, immutable=False) -> NamingContext:
         """
         Creates a new NamingContext, binds it in this NamingContext and returns it.
         This is equivalent to new_context(), followed by a bind_context() with the provided name for the newly created context.
 
         :param name: name under which the created NamingContext will be bound, atomic or composite, and relative to this naming context.
+        :param immutable: flag that indicates whether the created naming context should be bound as immutable to this context,
+         which will throw a `camelot.core.naming.ImmutableBindingException` when trying to mutate the binding afterwards.
 
         :return: an instance of `camelot.core.naming.NamingContext`
 
@@ -453,7 +464,7 @@ class NamingContext(AbstractNamingContext):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
         """
         context = self.new_context()
-        self.bind_context(name, context)
+        self.bind_context(name, context, immutable)
         return context
 
     @AbstractNamingContext.check_bounded
@@ -468,6 +479,7 @@ class NamingContext(AbstractNamingContext):
         :param obj: the object reference to be bound.
         :param rebind: flag indicating if an existing binding should be replaced or not.
         :param binding_type: the type of the binding to add, a member of `camelot.core.orm.BindingType`.
+        :param immutable: flag that indicates whether the binding should be added as immutable, which will throw a `camelot.core.naming.ImmutableBindingException` when trying to mutate it afterwards
 
         :return: the full qualified composite name of the bound object, relative to the initial naming context.
 
@@ -477,6 +489,7 @@ class NamingContext(AbstractNamingContext):
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
             AlreadyBoundException NamingException.Message.already_bound: when an object is already bound under the supplied name.
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
+            ImmutableBindingException NamingException.Message.binding_immutable: when trying to rebind an immutable binding.
         """
         name = self.get_composite_name(name)
         if binding_type not in BindingType:
@@ -504,10 +517,7 @@ class NamingContext(AbstractNamingContext):
         else:
             if name[0] not in self._bindings[BindingType.named_context]:
                 raise NameNotFoundException(name[0], BindingType.named_context)
-            context, context_immutable = self._bindings[BindingType.named_context][name[0]]
-            if context_immutable:
-                raise ImmutableBindingException(BindingType.named_context, name[0])
-
+            context, _ = self._bindings[BindingType.named_context][name[0]]
             if binding_type == BindingType.named_context:
                 if rebind:
                     return context.rebind_context(name[1:], obj)
@@ -531,6 +541,7 @@ class NamingContext(AbstractNamingContext):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            ImmutableBindingException NamingException.Message.binding_immutable: when trying to unbind an immutable object binding.
         """
         self._remove_binding(name, BindingType.named_object)
 
@@ -549,6 +560,7 @@ class NamingContext(AbstractNamingContext):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            ImmutableBindingException NamingException.Message.binding_immutable: when trying to unbind an immutable context binding.
         """
         self._remove_binding(name, BindingType.named_context)
 
@@ -568,6 +580,7 @@ class NamingContext(AbstractNamingContext):
             NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
             NamingException NamingException.Message.invalid_binding_type: if the binding type is not a valid BindingType enum member.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            ImmutableBindingException NamingException.Message.binding_immutable: when trying to remove an immutable binding.
         """
         name = self.get_composite_name(name)
         if binding_type not in BindingType:
@@ -584,9 +597,7 @@ class NamingContext(AbstractNamingContext):
         else:
             if name[0] not in self._bindings[BindingType.named_context]:
                 raise NameNotFoundException(name[0], BindingType.named_context)
-            context, immutable = self._bindings[BindingType.named_context][name[0]]
-            if immutable:
-                raise ImmutableBindingException(BindingType.named_context, name[0])
+            context, _ = self._bindings[BindingType.named_context][name[0]]
             if binding_type == BindingType.named_context:
                 context.unbind_context(name[1:])
             elif binding_type == BindingType.named_object:
@@ -740,13 +751,12 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         self._name = tuple()
 
         # Add immutable bindings for constants' values and contexts for each supported 'constant' python type.
-        constants = self.new_context()
-        self._add_binding('constants', constants, rebind=False, BindingType.named_context, immutable=True)
+        constants = self.bind_new_context('constants', immutable=True)
         for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
-            constants._add_binding(constant_type.__name__.lower(), ConstantNamingContext(constant_type), rebind=False, BindingType.named_context, immutable=True)
-        constants._add_binding('None', None, rebind=False, BindingType.named_object, immutable=True)
-        constants._add_binding('True', True, BindingType.named_object, immutable=True)
-        constants._add_binding('False', False, BindingType.named_object, immutable=True)
+            constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type), immutable=True)
+        constants.bind('None', None, immutable=True)
+        constants.bind('True', True, immutable=True)
+        constants.bind('False', False, immutable=True)
 
     def new_context(self) -> NamingContext:
         """
