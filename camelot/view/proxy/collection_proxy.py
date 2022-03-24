@@ -530,9 +530,16 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.SizeHintRole:
-            item = self.verticalHeaderItem(section)
+            item = self.horizontalHeaderItem(section)
             if item is not None:
                 item.setData(value.width(), role)
+                field_name = item.data(Qt.ItemDataRole.UserRole)
+                width = value.width()
+                self.settings.beginGroup('column_width')
+                self.settings.beginGroup('0')
+                self.settings.setValue(field_name, width)
+                self.settings.endGroup()
+                self.settings.endGroup()
         return super(CollectionProxy, self).setHeaderData(section, orientation, value, role)
     
     def headerData( self, section, orientation, role ):
