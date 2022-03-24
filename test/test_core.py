@@ -816,3 +816,15 @@ class InitialNamingContextCase(NamingContextCase):
         self.assertEqual(self.context.resolve(('constants', 'decimal', '0')), Decimal(0))
         self.assertEqual(self.context.resolve(('constants', 'decimal', '0.0')), Decimal(0.0))
         self.assertEqual(self.context.resolve(('constants', 'decimal', '2')), Decimal(2))
+
+        # Verify that those constants contexts are immutabe on the initial naming context:
+        with self.assertRaises(ImmutableBindingException):
+            self.context.rebind_context('constants', NamingContext())
+        with self.assertRaises(ImmutableBindingException):
+            self.context.unbind_context('constants')
+
+        constants = self.context.resolve_context('constants')
+        with self.assertRaises(ImmutableBindingException):
+            constants.rebind_context('str', NamingContext())
+        with self.assertRaises(ImmutableBindingException):
+            constants.unbind_context('str')
