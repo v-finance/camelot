@@ -739,13 +739,14 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         # resolution of subcontexts.
         self._name = tuple()
 
-        # Bind values and contexts for each supported 'constant' python type.
-        constants = self.bind_new_context('constants')
+        # Add immutable bindings for constants' values and contexts for each supported 'constant' python type.
+        constants = self.new_context()
+        self._add_binding('constants', constants, rebind=False, BindingType.named_context, immutable=True)
         for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
-            constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type))
-        constants.bind('None', None)
-        constants.bind('True', True)
-        constants.bind('False', False)
+            constants._add_binding(constant_type.__name__.lower(), ConstantNamingContext(constant_type), rebind=False, BindingType.named_context, immutable=True)
+        constants._add_binding('None', None, rebind=False, BindingType.named_object, immutable=True)
+        constants._add_binding('True', True, BindingType.named_object, immutable=True)
+        constants._add_binding('False', False, BindingType.named_object, immutable=True)
 
     def new_context(self) -> NamingContext:
         """
