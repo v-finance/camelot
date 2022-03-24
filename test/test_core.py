@@ -161,8 +161,15 @@ class AbstractNamingContextCaseMixin(object):
     context_name = None
     context_cls = None
 
-    # Name values that should throw an invalid_name NamingException.
-    invalid_names = [None, '', tuple(), ('',), (None,)]
+    # Name values that should throw an invalid_name NamingException with corresponding reason.
+    invalid_names = [
+        # value   reason
+        (None,    NamingException.Message.invalid_name_type),
+        ('',      NamingException.Message.invalid_atomic_name_length),
+        (tuple(), NamingException.Message.invalid_composite_name_length),
+        (('',),   NamingException.Message.invalid_atomic_name_length),
+        ((None,), NamingException.Message.invalid_composite_name_parts)
+    ]
     valid_names = ['test', ('test',), ('first', 'second')]
 
     def new_context(self):
@@ -179,10 +186,11 @@ class AbstractNamingContextCaseMixin(object):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.get_qual_name(invalid_name)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # Verify the qualified name resolution of a context concatenates its name prefix with the provid name:
         # So the qualified result should just be the composite form of the provided name.
@@ -204,10 +212,11 @@ class AbstractNamingContextCaseMixin(object):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.resolve(invalid_name)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
     # Some naming contexts implementation may not implement the complete AbstractNamingContext interface,
     # so assert a NotImplementedError by default so corresponding test cases verify this.
@@ -261,10 +270,11 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.bind(invalid_name, 2)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # Test the binding of an object to the context, which should return the fully qualified binding name,
         # and verify it can be looked back up on both the context (with the bound name),
@@ -311,10 +321,11 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.rebind(invalid_name, 2)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # Test rebinding without an existing binding, which should behave like the regular bind():
         name, obj = 'obj1', object()
@@ -398,10 +409,11 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.bind_context(invalid_name, subcontext)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # The passed object should be asserted to be an instance of NamingContext:
         for invalid_context in [None, '', object()]:
@@ -457,10 +469,11 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.rebind_context(invalid_name, subcontext)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # The passed object should be asserted to be an instance of NamingContext:
         for invalid_context in [None, '', object()]:
@@ -522,10 +535,11 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         name2, obj2 = ('subcontext', 'obj2'), object()
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.unbind(invalid_name)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # Unbinding should fail when no existing binding was found:
         with self.assertRaises(NameNotFoundException) as exc:
@@ -588,10 +602,11 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.unbind_context(invalid_name)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # Unbinding should fail when no existing binding was found:
         with self.assertRaises(NameNotFoundException) as exc:
@@ -643,10 +658,11 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         # Verify invalid names throw the appropriate exception:
-        for invalid_name in self.invalid_names:
+        for invalid_name, reason in self.invalid_names:
             with self.assertRaises(NamingException) as exc:
                 self.context.resolve_context(invalid_name)
-            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name)
+            self.assertEqual(exc.exception.message, NamingException.Message.invalid_name, invalid_name)
+            self.assertEqual(exc.exception.reason, reason, invalid_name)
 
 class AbstractNamingContextCase(unittest.TestCase):
 
@@ -673,7 +689,15 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
     constant_type = None
 
     # Constant naming context only allows string names, but allows the empty string:
-    invalid_names = [None, tuple(), (1,), (None,), ('test', ''), ('test', None), ('test', 'test')]
+    invalid_names = [
+        (None,             NamingException.Message.invalid_name_type),
+        (tuple(),          NamingException.Message.invalid_composite_name_length),
+        ((1,),             NamingException.Message.invalid_composite_name_parts),
+        ((None,),          NamingException.Message.invalid_composite_name_parts),
+        (('test', ''),     NamingException.Message.singular_name_expected),
+        (('test', None),   NamingException.Message.invalid_composite_name_parts),
+        (('test', 'test'), NamingException.Message.singular_name_expected),
+    ]
     valid_names = ['', 'x', '-1', '0', '1', 'True', '1.5', 'test']
 
     # Names may be valid arguments, but still fail the resolve (e.g. the conversion to the constant type).

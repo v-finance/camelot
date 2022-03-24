@@ -48,6 +48,7 @@ class NamingException(Exception):
 
         invalid_name = 'The given name is invalid'
         # Invalid name reasons
+        invalid_name_type = 'name should an atomic name or a composite name'
         invalid_atomic_name = 'atomic name should be a string'
         invalid_atomic_name_length = 'atomic name should contain at least 1 character'
         invalid_composite_name = 'composite name should be a tuple'
@@ -166,7 +167,7 @@ class AbstractNamingContext(object):
             cls.validate_composite_name(name)
             cls.validate_atomic_name(name[0])
             return name
-        raise NamingException(NamingException.Message.invalid_name)
+        raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_name_type)
 
     def check_bounded(func):
         # Validation decorator that checks and raises when this context is unbound.
