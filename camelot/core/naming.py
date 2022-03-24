@@ -45,6 +45,7 @@ class NamingException(Exception):
         name_not_found = "Name '{}' does not identify a {} binding"
         already_bound = "A {} is already bound under the name '{}'"
         context_expected = 'Expected an instance of `camelot.core.naming.AbstractNamingContext`, instead got {0}'
+        binding_immutable = 'Can not proceed: the {} binding under name {} is immutable'
 
         invalid_name = 'The given name is invalid'
         # Invalid name reasons
@@ -61,6 +62,15 @@ class UnboundException(NamingException):
 
     def __init__(self):
         super().__init__(NamingException.Message.unbound)
+
+class ImmutableBindingException(NamingException):
+    """A NamingException that is thrown when trying to mutate an immutable binding."""
+
+    def __init__(self, binding_type: BindingType, name):
+        assert binding_type in BindingType
+        super().__init__(NamingException.Message.binding_immutable, name, binding_type.name.replace('_', ' '))
+        self.name = name
+        self.binding_type = binding_type
 
 class NameNotFoundException(NamingException):
     """A NamingException that is thrown when no associated binding could be identified for a name."""
@@ -447,7 +457,7 @@ class NamingContext(AbstractNamingContext):
         return context
 
     @AbstractNamingContext.check_bounded
-    def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType) -> CompositeName:
+    def _add_binding(self, name: Name, obj, rebind: bool, binding_type: BindingType, immutable=False) -> CompositeName:
         """
         Helper method that implements the addition of all types of bindings.
         It resolves the name to make sure no binding exists already (in case of a bind and bind_context).
@@ -457,7 +467,7 @@ class NamingContext(AbstractNamingContext):
         :param name: name under which the object will be bound, atomic or composite, and relative to this naming context.
         :param obj: the object reference to be bound.
         :param rebind: flag indicating if an existing binding should be replaced or not.
-        :param binding_type: the type of the binding to add, a member of `camelot.core.orm.BindingType.
+        :param binding_type: the type of the binding to add, a member of `camelot.core.orm.BindingType`.
 
         :return: the full qualified composite name of the bound object, relative to the initial naming context.
 
@@ -473,11 +483,16 @@ class NamingContext(AbstractNamingContext):
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
             # If binding, check if their exists one already
-            if not rebind and name[0] in self._bindings[binding_type]:
-                raise AlreadyBoundException(name[0], binding_type)
+            if name[0] in self._bindings[binding_type]:
+                if not rebind:
+                    raise AlreadyBoundException(name[0], binding_type)
+                else:
+                    _, binding_immutable = self._bindings[binding_type][name[0]]
+                    if binding_immutable:
+                        raise ImmutableBindingException(binding_type, name[0])
 
-            # Add the object to the registry for the given binding_type.
-            self._bindings[binding_type][name[0]] = obj
+            # Add the object and its mutability to the registry for the given binding_type.
+            self._bindings[binding_type][name[0]] = (obj, immutable)
             # Determine the full qualified named of the bound object (extending that of this NamingContext).
             qual_name = self.get_qual_name(name[0])
             # If the object is a NamingContext, assign the qualified name.
@@ -487,9 +502,12 @@ class NamingContext(AbstractNamingContext):
                 obj._name = qual_name
             return qual_name
         else:
-            context = self._bindings[BindingType.named_context].get(name[0])
-            if context is None:
+            if name[0] not in self._bindings[BindingType.named_context]:
                 raise NameNotFoundException(name[0], BindingType.named_context)
+            context, context_immutable = self._bindings[BindingType.named_context][name[0]]
+            if context_immutable:
+                raise ImmutableBindingException(BindingType.named_context, name[0])
+
             if binding_type == BindingType.named_context:
                 if rebind:
                     return context.rebind_context(name[1:], obj)
@@ -557,13 +575,18 @@ class NamingContext(AbstractNamingContext):
         if len(name) == 1:
             if name[0] not in self._bindings[binding_type]:
                 raise NameNotFoundException(name[0], binding_type)
-            obj = self._bindings[binding_type].pop(name[0])
+            obj, immutable = self._bindings[binding_type][name[0]]
+            if immutable:
+                raise ImmutableBindingException(binding_type, name)
+            self._bindings[binding_type].pop(name[0])
             if binding_type == BindingType.named_context:
                 obj._name = None
         else:
-            context = self._bindings[BindingType.named_context][name[0]]
-            if context is None:
+            if name[0] not in self._bindings[BindingType.named_context]:
                 raise NameNotFoundException(name[0], BindingType.named_context)
+            context, immutable = self._bindings[BindingType.named_context][name[0]]
+            if immutable:
+                raise ImmutableBindingException(BindingType.named_context, name[0])
             if binding_type == BindingType.named_context:
                 context.unbind_context(name[1:])
             elif binding_type == BindingType.named_object:
@@ -624,11 +647,11 @@ class NamingContext(AbstractNamingContext):
         if len(name) == 1:
             if name[0] not in self._bindings[binding_type]:
                 raise NameNotFoundException(name[0], binding_type)
-            return self._bindings[binding_type][name[0]]
+            return self._bindings[binding_type][name[0]][0]
         else:
-            context = self._bindings[BindingType.named_context].get(name[0])
-            if context is None:
+            if name[0] not in self._bindings[BindingType.named_context]:
                 raise NameNotFoundException(name[0], BindingType.named_context)
+            context, _ = self._bindings[BindingType.named_context][name[0]]
             if binding_type == BindingType.named_context:
                 return context.resolve_context(name[1:])
             elif binding_type == BindingType.named_object:
