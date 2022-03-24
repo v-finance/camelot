@@ -798,10 +798,10 @@ class InitialNamingContextCase(NamingContextCase):
 
         # Verify that the constant naming contexts are available by default on the initial context:
         # * Boolean values
-        self.assertEqual(self.context.resolve(('constants', 'True')), True)
-        self.assertEqual(self.context.resolve(('constants', 'False')), False)
+        self.assertEqual(self.context.resolve(('constants', 'true')), True)
+        self.assertEqual(self.context.resolve(('constants', 'false')), False)
         # * None value
-        self.assertEqual(self.context.resolve(('constants', 'None')), None)
+        self.assertEqual(self.context.resolve(('constants', 'null')), None)
         # * Int values
         self.assertEqual(self.context.resolve(('constants', 'int', '-1')), -1)
         self.assertEqual(self.context.resolve(('constants', 'int', '0')), 0)

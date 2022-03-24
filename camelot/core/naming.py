@@ -754,9 +754,9 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         constants = self.bind_new_context('constants', immutable=True)
         for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
             constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type), immutable=True)
-        constants.bind('None', None, immutable=True)
-        constants.bind('True', True, immutable=True)
-        constants.bind('False', False, immutable=True)
+        constants.bind('null', None, immutable=True)
+        constants.bind('true', True, immutable=True)
+        constants.bind('false', False, immutable=True)
 
     def new_context(self) -> NamingContext:
         """
