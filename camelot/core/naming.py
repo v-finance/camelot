@@ -208,7 +208,7 @@ class AbstractNamingContext(object):
         name = self.get_composite_name(name)
         return (*self._name, *name)
 
-    def bind(self, name: Name, obj: object, immutable: False) -> CompositeName:
+    def bind(self, name: Name, obj: object, immutable=False) -> CompositeName:
         """
         Creates a binding of a name and an object in the naming context.
 
@@ -362,7 +362,7 @@ class NamingContext(AbstractNamingContext):
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the supplied name.
             AlreadyBoundException NamingException.Message.already_bound : An object is already bound under the supplied name.
         """
-        return self._add_binding(name, obj, False, BindingType.named_object)
+        return self._add_binding(name, obj, False, BindingType.named_object, immutable)
 
     @AbstractNamingContext.check_bounded
     def rebind(self, name: Name, obj: object) -> CompositeName:
@@ -412,7 +412,7 @@ class NamingContext(AbstractNamingContext):
         """
         if not isinstance(context, AbstractNamingContext):
             raise NamingException(NamingException.Message.context_expected, context)
-        return self._add_binding(name, context, False, BindingType.named_context)
+        return self._add_binding(name, context, False, BindingType.named_context, immutable)
 
     @AbstractNamingContext.check_bounded
     def rebind_context(self, name: Name, context: AbstractNamingContext) -> CompositeName:
@@ -590,7 +590,7 @@ class NamingContext(AbstractNamingContext):
                 raise NameNotFoundException(name[0], binding_type)
             obj, immutable = self._bindings[binding_type][name[0]]
             if immutable:
-                raise ImmutableBindingException(binding_type, name)
+                raise ImmutableBindingException(binding_type, name[0])
             self._bindings[binding_type].pop(name[0])
             if binding_type == BindingType.named_context:
                 obj._name = None

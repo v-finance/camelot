@@ -8,7 +8,8 @@ from .test_model import ExampleModelMixinCase
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
-    AlreadyBoundException, BindingType, ConstantNamingContext, initial_naming_context, InitialNamingContext,
+    AlreadyBoundException, BindingType, ConstantNamingContext,
+    ImmutableBindingException, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
 )
 from camelot.core.profile import Profile, ProfileStore
@@ -310,6 +311,14 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         self.assertEqual(subcontext.resolve('obj2'), obj)
         self.assertEqual(initial_naming_context.resolve(qual_name), obj)
 
+        # Add immutable bindings and verify that the appropriate exception is thrown
+        # when trying to mutate them:
+        self.context.bind('immutable', 'test', immutable=True)
+        with self.assertRaises(ImmutableBindingException) as exc:
+            self.context.rebind('immutable', 'test')
+        self.assertEqual(exc.exception.binding_type, BindingType.named_object)
+        self.assertEqual(exc.exception.name, 'immutable')
+
     def test_rebind(self):
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
         # and bind the context to the initial context.
@@ -456,6 +465,14 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         self.assertEqual(subcontext.resolve_context('subsubcontext'), subsubcontext)
         self.assertEqual(initial_naming_context.resolve_context(qual_name), subsubcontext)
 
+        # Add immutable binding and verify that the appropriate exception is thrown
+        # when trying to rebind it:
+        immutable_context = self.context.bind_new_context('immutable', immutable=True)
+        with self.assertRaises(ImmutableBindingException) as exc:
+            self.context.rebind_context('immutable', immutable_context)
+        self.assertEqual(exc.exception.binding_type, BindingType.named_context)
+        self.assertEqual(exc.exception.name, 'immutable')
+
     def test_rebind_context(self):
         name, subcontext = 'subcontext', NamingContext()
 
@@ -591,6 +608,14 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         self.assertEqual(exc.exception.name, name2[-1])
         self.assertEqual(exc.exception.binding_type, BindingType.named_object)
 
+        # Add immutable bindings and verify that the appropriate exception is thrown
+        # when trying to unbind it:
+        self.context.bind('immutable', 'test', immutable=True)
+        with self.assertRaises(ImmutableBindingException) as exc:
+            self.context.unbind('immutable')
+        self.assertEqual(exc.exception.binding_type, BindingType.named_object)
+        self.assertEqual(exc.exception.name, 'immutable')
+
     def test_unbind_context(self):
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
         # and bind the context to the initial context.
@@ -643,6 +668,14 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         # The unbound context should now also throw unbound exceptions:
         with self.assertRaises(UnboundException):
             subcontext.bind('test', object())
+
+        # Add immutable binding and verify that the appropriate exception is thrown
+        # when trying to rebind it:
+        self.context.bind_new_context('immutable', immutable=True)
+        with self.assertRaises(ImmutableBindingException) as exc:
+            self.context.unbind_context('immutable')
+        self.assertEqual(exc.exception.binding_type, BindingType.named_context)
+        self.assertEqual(exc.exception.name, 'immutable')
 
     def test_resolve_context(self):
         # Verify general exceptions raised for name-context resolving.
