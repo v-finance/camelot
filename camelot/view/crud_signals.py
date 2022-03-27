@@ -26,15 +26,13 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import logging
 
-LOGGER = logging.getLogger('camelot.view.crud_signals')
-
+from ..core.singleton import QSingleton
 from ..core.qt import QtCore
-from .model_thread import object_thread, gui_thread
+from .model_thread import object_thread
 
 
-class CrudSignalHandler(QtCore.QObject):
+class CrudSignalHandler(QtCore.QObject, metaclass=QSingleton):
     """The signal handler connects multiple :class:`QtCore.QObject` instances to
     inform each other when they have changed an object.
 
@@ -45,23 +43,9 @@ class CrudSignalHandler(QtCore.QObject):
     on the network of the change.
      """
 
-    objects_updated = QtCore.qt_signal(object, tuple)
-    objects_deleted = QtCore.qt_signal(object, tuple)
-    objects_created = QtCore.qt_signal(object, tuple)
-
-    __instance = None
-
-    def __new__(cls):
-        assert gui_thread()
-        if cls.__instance is None:
-            instance = super(CrudSignalHandler, cls).__new__(cls)
-            instance.__init__()
-            cls.__instance = instance
-        return cls.__instance
-
-    def __init__(self):
-        if self.__instance is None:
-            super(CrudSignalHandler, self).__init__()
+    objects_updated = QtCore.qt_signal(tuple)
+    objects_deleted = QtCore.qt_signal(tuple)
+    objects_created = QtCore.qt_signal(tuple)
 
     def connect_signals(self, obj):
         """Connect the SignalHandlers its signals to the slots of obj"""
@@ -70,28 +54,3 @@ class CrudSignalHandler(QtCore.QObject):
         self.objects_updated.connect(obj.objects_updated)
         self.objects_deleted.connect(obj.objects_deleted)
         self.objects_created.connect(obj.objects_created)
-        
-    def send_objects_updated(self, sender, objects, scope='local'):
-        """Call this method to inform the whole application an entity has 
-        changed"""
-        assert object_thread(self)
-        if len(objects):
-            self.objects_updated.emit(sender, objects)
-
-    def send_objects_deleted(self, sender, objects, scope='local'):
-        """Call this method to inform the whole application an entity is 
-        about to be deleted"""
-        assert object_thread(self)
-        if len(objects):
-            self.objects_deleted.emit(sender, objects)
-            
-    def send_objects_created(self, sender, objects, scope='local'):
-        """Call this method to inform the whole application an entity is 
-        about to be deleted"""
-        assert object_thread(self)
-        if len(objects):
-            self.objects_created.emit(sender, objects)
-
-
-
-

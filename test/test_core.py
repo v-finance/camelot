@@ -14,6 +14,7 @@ from camelot.core.naming import (
 )
 from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
+from camelot.core.singleton import QSingleton
 
 from decimal import Decimal
 
@@ -156,6 +157,16 @@ class QtCase(unittest.TestCase):
     def test_variant(self):
         for obj in ['a', 5]:
             self.assertEqual(variant_to_py(py_to_variant(obj)), obj)
+
+    def test_qsingleton(self):
+
+        class NewQObject(QtCore.QObject, metaclass=QSingleton):
+            pass
+
+        obj1 = NewQObject()
+        obj2 = NewQObject()
+
+        self.assertTrue(obj1 is obj2)
 
 class AbstractNamingContextCaseMixin(object):
 

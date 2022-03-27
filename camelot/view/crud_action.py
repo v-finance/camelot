@@ -405,8 +405,8 @@ class ChangedObjectMixin(object):
 
     def add_changed_object(
         self, model_context, depending_objects_before_change,
-        row, obj,
-        changed_ranges, created_objects, updated_objects, deleted_objects):
+        obj,
+        created_objects, updated_objects, deleted_objects):
         """
         Add the changed object and row to the changed_ranges, created_objects etc.
         """
@@ -425,9 +425,6 @@ class ChangedObjectMixin(object):
                 logger.error( 'Programming Error, could not flush object', exc_info = e )
             if was_persistent is False:
                 created_objects.add(subsystem_obj)
-        # update the cache
-        columns = tuple(range(len(model_context.static_field_attributes)))
-        changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         updated_objects.add(subsystem_obj)
         depending_objects = depending_objects_before_change.union(set(admin.get_depending_objects(obj)))
         for depending_object in depending_objects:
@@ -455,9 +452,6 @@ class SetData(Update, ChangedObjectMixin):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        created_objects = None
-        updated_objects = None  
-        changed_ranges = []
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
         for row, obj_id, column, value in self.updates:
@@ -529,14 +523,17 @@ class SetData(Update, ChangedObjectMixin):
                 changed = value_changed or changed
             if changed:
                 self.add_changed_object(
-                    model_context, depending_objects_before_set, row, obj,
-                    changed_ranges,
+                    model_context, depending_objects_before_set, obj,
                     created_objects, updated_objects, deleted_objects
                 )
         created_objects = tuple(created_objects)
         updated_objects = tuple(updated_objects)
         deleted_objects = tuple(deleted_objects)
-        yield action_steps.SetData(changed_ranges, created_objects, updated_objects, deleted_objects)
+        yield action_steps.CreateUpdateDelete(
+            objects_created=created_objects,
+            objects_updated=updated_objects,
+            objects_deleted=deleted_objects,
+        )
 
 
 class Sort(RowCount):

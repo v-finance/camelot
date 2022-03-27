@@ -43,11 +43,16 @@ from .item_view import (
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
-from .orm import (CreateObjects, DeleteObjects, FlushSession, UpdateObjects)
+from .orm import (
+    CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
+    UpdateObjects
+)
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .update_progress import UpdateProgress
-from .crud import SetColumns, Completion, Created, RowCount, Update, SetData, ChangeSelection
+from .crud import (
+    SetColumns, Completion, Created, RowCount, Update, ChangeSelection
+)
 
 __all__ = [
     ChangeField.__name__,
@@ -59,6 +64,7 @@ __all__ = [
     Completion.__name__,
     Created.__name__,
     CreateObjects.__name__,
+    CreateUpdateDelete.__name__,
     DeleteObjects.__name__,
     Exit.__name__,
     FlushSession.__name__,
@@ -84,7 +90,6 @@ __all__ = [
     SelectItem.__name__,
     SelectObjects.__name__,
     SetColumns.__name__,
-    SetData.__name__,
     SetFilter.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
