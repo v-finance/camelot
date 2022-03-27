@@ -61,16 +61,14 @@ class CreateUpdateDelete(ActionStep):
         # Presumed to be unnecessary, as ActionStep's gui_run constructs an ActionRunner on it's (empty) model_run,
         # which results in a unwanted round-trip to the model thread / server.
         #super(CreateUpdateDelete, self).gui_run(gui_context)
-        try:
-            crud_signal_handler = CrudSignalHandler()
-            if len(self.objects_deleted):
-                crud_signal_handler.objects_deleted.emit(self.objects_deleted)
-            if len(self.objects_updated):
-                crud_signal_handler.objects_updated.emit(self.objects_updated)
-            if len(self.objects_created):
-                crud_signal_handler.objects_created.emit(self.objects_created)
-        except:
-            print('FOOOO')
+        crud_signal_handler = CrudSignalHandler()
+        if len(self.objects_deleted):
+            crud_signal_handler.objects_deleted.emit(self.objects_deleted)
+        if len(self.objects_updated):
+            crud_signal_handler.objects_updated.emit(self.objects_updated)
+        if len(self.objects_created):
+            crud_signal_handler.objects_created.emit(self.objects_created)
+
 
 class FlushSession(CreateUpdateDelete):
     """Flushes the session and informs the GUI about the
