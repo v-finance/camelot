@@ -778,7 +778,7 @@ class FilterMode(Mode):
     checked: bool = False
 
     def __init__(self, value, verbose_name, checked=False):
-        super(FilterMode, self).__init__(name=value, verbose_name=verbose_name)
+        super(FilterMode, self).__init__(value=value, verbose_name=verbose_name)
         self.checked = checked
 
     def decorate_query(self, query, value):
@@ -903,7 +903,7 @@ class GroupBoxFilter(Filter):
     name = 'group_box_filter'
 
     def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True, joins=[], where=None):
-        super().__init__(*attributes, default=default, verbose_name=verbose_name, joins=joins, where=where)
+        super().__init__(*attributes, default=DecimalFilter, verbose_name=verbose_name, joins=joins, where=where)
         self.exclusive = exclusive
         self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
 

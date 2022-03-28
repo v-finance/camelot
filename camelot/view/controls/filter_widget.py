@@ -126,7 +126,7 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         group = self.findChild(QtWidgets.QButtonGroup)
         layout = self.layout()
         button_layout = QtWidgets.QVBoxLayout()
-        self.values = [mode.name for mode in state.modes]
+        self.values = [mode.value for mode in state.modes]
 
         for i, mode in enumerate(state.modes):
             button = self.button_type(str(mode.verbose_name), self)
@@ -146,7 +146,7 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         group = self.findChild(QtWidgets.QButtonGroup)
         layout = self.layout()
         button_layout = QtWidgets.QVBoxLayout()
-        self.values = [mode['name'] for mode in state['modes']]
+        self.values = [mode['value'] for mode in state['modes']]
 
         for i, mode in enumerate(state['modes']):
             button = self.button_type(str(mode['verbose_name']), self)
@@ -186,7 +186,7 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
                     current_index = i
                 combobox.insertItem(i,
                                     str(mode.verbose_name),
-                                    py_to_variant(mode.name))
+                                    py_to_variant(mode.value))
             # setting the current index will trigger the run of the action to
             # apply the initial filter
             combobox.setCurrentIndex(current_index)
@@ -202,7 +202,7 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
                     current_index = i
                 combobox.insertItem(i,
                                     mode['verbose_name'],
-                                    mode['name'])
+                                    mode['value'])
             # setting the current index will trigger the run of the action to
             # apply the initial filter
             combobox.setCurrentIndex(current_index)
@@ -288,7 +288,7 @@ class OperatorFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         arity"""
         if self._index >= 2:
             mode = self.get_mode()
-            arity = self.action.get_arity(mode.name)
+            arity = self.action.get_arity(mode.value)
             self._editor.setEnabled(True)
             if arity > 0:
                 self._editor.setEnabled(True)
@@ -324,6 +324,6 @@ class OperatorFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
 
     def get_value(self):
         mode = self.get_mode()
-        return (mode.name, self._editor.get_value(), self._editor2.get_value())
+        return (mode.value, self._editor.get_value(), self._editor2.get_value())
 
 
