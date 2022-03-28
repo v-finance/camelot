@@ -32,6 +32,7 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.admin.action.list_filter import Filter
 from camelot.admin.action.field_action import FieldAction
+from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.admin_route import AdminRoute
 from ....admin.action.base import State, RenderHint
@@ -232,7 +233,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        admin = AdminRoute.admin_for(self.admin_route)
+        admin = initial_naming_context.resolve(self.admin_route)
         if admin.list_action:
             admin.list_action.gui_run(self.list_gui_context)
 

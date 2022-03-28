@@ -38,6 +38,7 @@ from .base import RenderHint
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
+from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
@@ -126,7 +127,7 @@ class ApplicationActionGuiContext( GuiContext ):
         # the possibility of having no admin class is an aberation, needed
         # to keep the FieldAction working
         context = super( ApplicationActionGuiContext, self ).create_model_context()
-        context.admin = AdminRoute.admin_for(self.admin_route) if self.admin_route is not None else None
+        context.admin = initial_naming_context.resolve(self.admin_route) if self.admin_route is not None else None
         # todo : action routes should be translated to actions here
         context.actions = list(self.action_routes.keys())
         return context

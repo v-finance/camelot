@@ -39,6 +39,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
+from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
@@ -585,7 +586,7 @@ class ChangeField( ActionStep ):
     def render( self ):
         """create the dialog. this method is used to unit test
         the action step."""
-        admin = AdminRoute.admin_for(tuple(self.admin_route))
+        admin = initial_naming_context.resolve(tuple(self.admin_route))
         dialog = ChangeFieldDialog(
             admin, admin.get_all_fields_and_attributes(), self.field_name, self.field_value
         )

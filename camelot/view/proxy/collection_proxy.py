@@ -57,6 +57,7 @@ from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.form_action import FormActionModelContext
 from ...admin.admin_route import AdminRoute
+from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
@@ -425,7 +426,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """
         self.logger.debug('set_value called')
         model_context = RowModelContext()
-        model_context.admin = AdminRoute.admin_for(self.admin_route)
+        model_context.admin = initial_naming_context.resolve(self.admin_route)
         model_context.proxy = ProxyRegistry.pop(value)
         assert isinstance(model_context.proxy, AbstractModelProxy)
         # todo : remove the concept of a validator
@@ -670,7 +671,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def get_admin( self ):
         """Get the admin object associated with this model"""
         self.logger.debug('get_admin called')
-        return AdminRoute.admin_for(self.admin_route)
+        return initial_naming_context.resolve(self.admin_route)
 
     def add_action_route(self, action_route):
         """Add the action route for an action that needs it's state to be updated
