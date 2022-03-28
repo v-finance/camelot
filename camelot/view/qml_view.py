@@ -93,8 +93,14 @@ class QmlActionDispatch(QtCore.QObject):
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
+        # register None gui_context as with context_id 0
+        self.register(None)
 
     def register(self, gui_context, model=None):
+        if gui_context is None:
+            context_id = self._context_ids.__next__()
+            self.gui_contexts[context_id] = gui_context
+            return context_id
         if gui_context.context_id is not None:
             if id(self.gui_contexts[gui_context.context_id]) == id(gui_context):
                 return gui_context.context_id
@@ -106,6 +112,8 @@ class QmlActionDispatch(QtCore.QObject):
         return context_id
 
     def has_context(self, gui_context):
+        if gui_context is None:
+            return True
         if gui_context.context_id is None:
             return False
         return gui_context.context_id in self.gui_contexts
@@ -135,6 +143,7 @@ class QmlActionDispatch(QtCore.QObject):
             gui_context.mode_name = args
             action.gui_run( gui_context )
 
+    # FIXME: remove these functions
     def set_return_value(self, context_id, value):
         self.return_values[context_id] = value
 

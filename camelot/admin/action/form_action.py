@@ -135,8 +135,6 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         super( FormActionGuiContext, self ).__init__()
         self.widget_mapper = None
         self.view = None
-        # temporary admin, so be able to do a cleanup context by context
-        self.admin = None
 
     def get_progress_dialog(self):
         return GuiContext.get_progress_dialog(self)
@@ -148,8 +146,6 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
 
     def create_model_context(self):
         context = super( FormActionGuiContext, self ).create_model_context()
-        # temporary admin, so be able to do a cleanup context by context
-        context.admin = self.admin
         context.proxy = self.widget_mapper.model().get_value()
         current_index = self.widget_mapper.currentIndex()
         if current_index >= 0:
@@ -161,8 +157,6 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         new_context = super( FormActionGuiContext, self ).copy( base_class )
         new_context.widget_mapper = self.widget_mapper
         new_context.view = self.view
-        # temporary admin, so be able to do a cleanup context by context
-        new_context.admin = self.admin
         return new_context
 
 class ShowHistory( Action ):

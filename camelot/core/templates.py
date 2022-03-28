@@ -38,7 +38,7 @@ customize the look of the print previews or reuse the existing style
 
 The `environment` is a :class:`jinja2.environment.Environment` which uses
 the `loader` and that can be used with
-the :class:`vfinance.view.action_steps.notification_print_preview.NotificationPrintPreview` action
+the :class:`vfinance.view.action_steps.print_notification.PrintNotification` action
 step.
 """
 

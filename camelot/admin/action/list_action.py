@@ -1107,14 +1107,10 @@ class SetFilters(Action, AbstractModelFilter):
             modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
         selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
-            operator_modes = []
             for op in filter_strategy.get_operators():
                 mode_name = op.name + '-' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
-                operator_modes.append(Mode(mode_name, str(op.verbose_name), icon=icon))
-            if operator_modes:
-                icon = Icon('check-circle') if name in filter_value else None
-                modes.append(Mode(name, str(filter_strategy.get_verbose_name()), icon=icon, modes=operator_modes))
+                modes.append(Mode(mode_name, '{} {}'.format(filter_strategy.get_verbose_name(), op.verbose_name), icon=icon))
         self.admin = model_context.admin
         return state
 
@@ -1124,31 +1120,6 @@ class SetFilters(Action, AbstractModelFilter):
 
 set_filters = SetFilters()
 
-class AddExistingObject( EditAction ):
-    """Add an existing object to a list if it is not yet in the
-    list"""
-    
-    tooltip = _('Add')
-    verbose_name = _('Add')
-    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
-    name = 'add_object'
-    
-    def model_run( self, model_context, mode ):
-        from sqlalchemy.orm import object_session
-        from camelot.view import action_steps
-        super().model_run(model_context, mode)
-        objs_to_add = yield action_steps.SelectObjects(model_context.admin)
-        for obj_to_add in objs_to_add:
-            for obj in model_context.get_collection():
-                if obj_to_add == obj:
-                    return
-            model_context.proxy.append(obj_to_add)
-        yield action_steps.UpdateObjects(objs_to_add)
-        for obj_to_add in objs_to_add:
-            yield action_steps.FlushSession(object_session(obj_to_add))
-            break
-
-add_existing_object = AddExistingObject()
 
 class AddNewObjectMixin(object):
     

@@ -20,7 +20,11 @@ from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
-from camelot.admin.action.list_action import SetFilters
+from camelot.admin.action.field_action import (
+    ClearObject, DetachFile, NewObject, SelectObject,
+    UploadFile, add_existing_object,
+)
+from camelot.admin.action.list_action import SetFilters, ListActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
@@ -41,10 +45,11 @@ from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls import actionsbox, delegates, tableview
 from camelot.view.controls.action_widget import ActionPushButton
 from camelot.view.controls.tableview import TableView
+from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.view.qml_view import get_qml_root_backend
 from camelot_example.importer import ImportCovers
-from camelot_example.model import Movie
+from camelot_example.model import Movie, Tag
 
 from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
@@ -554,6 +559,10 @@ class ListActionsCase(
         self.process()
         self.assertFalse(selected_object in self.session)
 
+    def test_remove_selection(self):
+        remove_selection_action = list_action.RemoveSelection()
+        list( remove_selection_action.model_run( self.gui_context.create_model_context(), None ) )
+
     def test_move_rank_up_down(self):
         metadata = MetaData()
         Entity = declarative_base(cls = EntityBase,
@@ -657,24 +666,9 @@ class ListActionsCase(
         metadata.drop_all()
         metadata.clear()
 
-    def test_add_existing_object(self):
-        initial_row_count = self._row_count(self.item_model)
-        action = list_action.AddExistingObject()
-        steps = self.gui_run(action, self.gui_context)
-        for step in steps:
-            # SelectObjects is a serializable action
-            if isinstance(step, tuple) and step[0] == action_steps.SelectObjects.__name__:
-                steps.send([Person(first_name='Unknown', last_name='Unknown')])
-        new_row_count = self._row_count(self.item_model)
-        self.assertEqual(new_row_count, initial_row_count+1)
-
     def test_add_new_object(self):
         add_new_object_action = list_action.AddNewObject()
         add_new_object_action.gui_run( self.gui_context )
-
-    def test_remove_selection(self):
-        remove_selection_action = list_action.RemoveSelection()
-        list( remove_selection_action.model_run( self.gui_context.create_model_context(), None ) )
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
@@ -997,10 +991,7 @@ class ApplicationActionsCase(
     def test_open_new_view( self ):
         person_admin = app_admin.get_related_admin(Person)
         open_new_view_action = application_action.OpenNewView(person_admin)
-        generator = self.gui_run(open_new_view_action, self.gui_context)
-        for step in generator:
-            if isinstance(step, action_steps.SelectSubclass):
-                generator.send(person_admin)
+        list(self.gui_run(open_new_view_action, self.gui_context))
 
     def test_change_logging( self ):
         change_logging_action = ChangeLogging()
@@ -1011,6 +1002,104 @@ class ApplicationActionsCase(
     def test_segmentation_fault( self ):
         segmentation_fault = application_action.SegmentationFault()
         list(self.gui_run(segmentation_fault, self.gui_context))
+
+
+class FieldActionCase(TestMetaData, ExampleModelMixinCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        movie_admin = app_admin.get_related_admin(Movie)
+        cls.setup_sample_model()
+        cls.load_example_data()
+        cls.movie = cls.session.query(Movie).offset(1).first()
+        movie_list_model_context = ListActionModelContext()
+        movie_list_model_context.admin = movie_admin
+        # a model context for the director attribute
+        director_attributes = list(movie_admin.get_static_field_attributes(
+            ['director']
+        ))[0]
+        cls.director_context = UpdateMixin.field_action_model_context(
+            movie_list_model_context, cls.movie, director_attributes
+        )
+        # a model context for the script attribute
+        script_attributes = list(movie_admin.get_static_field_attributes(
+            ['script']
+        ))[0]
+        cls.script_context = UpdateMixin.field_action_model_context(
+            movie_list_model_context, cls.movie, script_attributes
+        )
+        # a model context for the tags attribute
+        tags_attributes = list(movie_admin.get_static_field_attributes(
+            ['tags']
+        ))[0]
+        cls.tags_context = UpdateMixin.field_action_model_context(
+            movie_list_model_context, cls.movie, tags_attributes
+        )
+
+    def test_select_object(self):
+        select_object = SelectObject()
+        object_selected = False
+        person = self.session.query(Person).first()
+        self.assertTrue(person)
+        self.assertNotEqual(self.movie, person)
+        generator = select_object.model_run(self.director_context, mode=None)
+        for step in generator:
+            if isinstance(step, action_steps.SelectObjects):
+                generator.send([person])
+                object_selected = True
+        self.assertTrue(object_selected)
+        self.assertEqual(self.movie.director, person)
+
+    def test_new_object_and_clear_object(self):
+        new_object = NewObject()
+        generator = new_object.model_run(self.director_context, mode=None)
+        open_form = None
+        for step in generator:
+            if isinstance(step, action_steps.OpenFormView):
+                open_form = step
+        self.assertTrue(open_form)
+        new_object = step.get_objects()[0]
+        self.assertIsInstance(new_object, Person)
+        self.assertEqual(self.movie.director, new_object)
+        clear_object = ClearObject()
+        list(clear_object.model_run(self.director_context, mode=None))
+        self.assertEqual(self.movie.director, None)
+
+    def test_upload_and_detach_file(self):
+        upload_file = UploadFile()
+        file_uploaded = False
+        generator = upload_file.model_run(self.script_context, mode=None)
+        for step in generator:
+            if isinstance(step, action_steps.SelectFile):
+                generator.send([__file__])
+                file_uploaded = True
+        self.assertTrue(file_uploaded)
+        self.assertTrue(self.movie.script)
+        detach_file = DetachFile()
+        generator = detach_file.model_run(self.script_context, mode=None)
+        detach_confirmed = False
+        for step in generator:
+            if isinstance(step, action_steps.MessageBox):
+                generator.send(QtWidgets.QMessageBox.StandardButton.Yes)
+                detach_confirmed = True
+        self.assertTrue(detach_confirmed)
+        self.assertEqual(self.movie.script, None)
+
+    def test_add_existing_object(self):
+        tag = self.session.query(Tag).first()
+        self.assertTrue(tag)
+        state = add_existing_object.get_state(self.tags_context)
+        self.assertTrue(state.visible)
+        self.assertTrue(state.enabled)
+        initial_row_count = len(self.movie.tags)
+        generator = add_existing_object.model_run(self.tags_context, mode=None)
+        for step in generator:
+            if isinstance(step, action_steps.SelectObjects):
+                generator.send([tag])
+        new_row_count = len(self.movie.tags)
+        self.assertEqual(new_row_count, initial_row_count+1)
+
 
 class ListFilterCase(TestMetaData):
 

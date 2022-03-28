@@ -35,7 +35,7 @@ from .change_object import ChangeField, ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
 from .gui import (
-    CloseView, MessageBox, Refresh, SelectItem, SelectSubclass, UpdateEditor
+    CloseView, MessageBox, Refresh, SelectItem
 )
 from .item_view import (
     Sort, OpenTableView, UpdateTableView, ClearSelection,
@@ -43,12 +43,16 @@ from .item_view import (
 )
 from .open_file import ( OpenFile, OpenStream,
                          OpenString, OpenJinjaTemplate, WordJinjaTemplate )
-from .orm import (CreateObjects, DeleteObjects, FlushSession, UpdateObjects)
-from .print_preview import PrintPreview
+from .orm import (
+    CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
+    UpdateObjects
+)
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
 from .update_progress import UpdateProgress
-from .crud import SetColumns, Completion, Created, RowCount, Update, SetData, ChangeSelection
+from .crud import (
+    SetColumns, Completion, Created, RowCount, Update, ChangeSelection
+)
 
 __all__ = [
     ChangeField.__name__,
@@ -60,6 +64,7 @@ __all__ = [
     Completion.__name__,
     Created.__name__,
     CreateObjects.__name__,
+    CreateUpdateDelete.__name__,
     DeleteObjects.__name__,
     Exit.__name__,
     FlushSession.__name__,
@@ -75,7 +80,6 @@ __all__ = [
     OpenString.__name__,
     OpenTableView.__name__,
     OpenQmlTableView.__name__,
-    PrintPreview.__name__,
     Refresh.__name__,
     RefreshItemView.__name__,
     RemoveTranslators.__name__,
@@ -85,7 +89,6 @@ __all__ = [
     SelectFile.__name__,
     SelectItem.__name__,
     SelectObjects.__name__,
-    SelectSubclass.__name__,
     SetColumns.__name__,
     SetData.__name__,
     Sort.__name__,
@@ -97,7 +100,6 @@ __all__ = [
     ToPreviousForm.__name__,
     Update.__name__,
     UpdateActionsState.__name__,
-    UpdateEditor.__name__,
     UpdateObjects.__name__,
     UpdateProgress.__name__,
     UpdateTableView.__name__,

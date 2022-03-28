@@ -13,6 +13,8 @@ from ...core.item_model import FieldAttributesRole, CompletionsRole
 class UpdateMixin(object):
     
     def update_item_model(self, item_model):
+        if is_deleted(item_model):
+            return
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return
@@ -41,6 +43,8 @@ class RowCount(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(self, item_model, serialized_step):
+        if is_deleted(item_model):
+            return
         step = json.loads(serialized_step)
         if step["rows"] is not None:
             item_model._refresh_content(step["rows"])
@@ -53,6 +57,8 @@ class SetColumns(ActionStep):
         self.static_field_attributes = static_field_attributes
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         item_model.beginResetModel()
         item_model.settings.beginGroup( 'column_width' )
         item_model.settings.beginGroup( '0' )
@@ -108,6 +114,8 @@ class Completion(ActionStep):
         self.completions = completion        
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return
@@ -143,23 +151,6 @@ class Update(ActionStep, UpdateMixin):
     def gui_run(self, item_model):
         self.update_item_model(item_model)     
 
-
-class SetData(Update): 
-    
-    def __init__(self, changed_ranges, created_objects, updated_objects, deleted_objects):
-        super(SetData, self).__init__(changed_ranges)
-        self.created_objects = created_objects
-        self.updated_objects = updated_objects
-        self.deleted_objects = deleted_objects
-        
-    def gui_run(self, item_model):
-        super(SetData, self).gui_run(item_model)
-        signal_handler = item_model._crud_signal_handler
-        signal_handler.send_objects_created(item_model, self.created_objects)
-        signal_handler.send_objects_updated(item_model, self.updated_objects)
-        signal_handler.send_objects_deleted(item_model, self.deleted_objects)  
-        
-        
 class ChangeSelection(ActionStep):
     
     def __init__(self, action_routes, action_states):

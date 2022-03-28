@@ -64,6 +64,7 @@ class ChangeRatingAction( Action ):
     """Action to print a list of movies"""
     
     verbose_name = _('Change Rating')
+    name = 'change_rating'
     
     def model_run( self, model_context ):
         #

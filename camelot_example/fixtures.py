@@ -33,7 +33,7 @@ def load_movie_fixtures():
 
     from camelot.model.fixture import Fixture
     from camelot.model.party import Person
-    from camelot_example.model import Movie, VisitorReport
+    from camelot_example.model import Movie, VisitorReport, Tag
     from camelot.core.files.storage import Storage
     from camelot.core.resources import resource_filename
 
@@ -260,6 +260,10 @@ def load_movie_fixtures():
             (u'Boston', 5000, datetime.date(2009, 12, 18)),
         ],
     }
+
+    Fixture.insert_or_update_fixture(
+        Tag, fixture_key = 'drama', values = {'name': 'Drama',}
+    )
 
     for title, short_description, releasedate, (director_first_name, director_last_name), cast, tags, genre, rating, cover, description in movies:
         director = Fixture.insert_or_update_fixture(
