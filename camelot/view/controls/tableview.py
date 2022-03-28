@@ -34,7 +34,6 @@ import logging
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action.base import State, RenderHint
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _

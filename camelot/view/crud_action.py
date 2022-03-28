@@ -5,7 +5,6 @@ logger = logging.getLogger(__name__)
 
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
-from ..admin.admin_route import AdminRoute
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
 from ..core.exception import log_programming_error
 from ..core.naming import initial_naming_context

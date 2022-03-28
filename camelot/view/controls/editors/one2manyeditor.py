@@ -34,7 +34,6 @@ from camelot.admin.action.list_filter import Filter
 from camelot.admin.action.field_action import FieldAction
 from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from ....admin.admin_route import AdminRoute
 from ....admin.action.base import State, RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy, ProxyRegistry

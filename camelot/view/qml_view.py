@@ -5,7 +5,6 @@ import json
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
-from camelot.admin.admin_route import AdminRoute
 
 LOGGER = logging.getLogger(__name__)
 

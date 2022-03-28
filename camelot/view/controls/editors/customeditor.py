@@ -28,7 +28,6 @@
 #  ============================================================================
 
 from ....admin.action.base import RenderHint
-from ....admin.admin_route import AdminRoute
 from ....core.naming import initial_naming_context
 from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 

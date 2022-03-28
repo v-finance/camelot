@@ -4,9 +4,7 @@ import logging
 import typing
 
 from ..admin.action.base import RenderHint
-from ..core.exception import UserException
 from ..core.naming import AlreadyBoundException, initial_naming_context, NamingContext, NameNotFoundException
-from ..core.utils import ugettext
 from ..core.serializable import DataclassSerializable
 
 LOGGER = logging.getLogger(__name__)
