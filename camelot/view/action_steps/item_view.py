@@ -68,24 +68,6 @@ class Sort( ActionStep, DataclassSerializable ):
         if model is not None:
             model.sort( step["column"], step["order"] )
 
-@dataclass
-class SetFilter( ActionStep ):
-    """Filter the items in the item view
-
-            :param list_filter: the `AbstractModelFilter` to apply
-            :param value: the value on which to filter
-    """
-    list_filter: AbstractModelFilter
-    value: Any
-
-    blocking = False
-    cancelable = False
-
-    def gui_run( self, gui_context ):
-        model = gui_context.get_item_model()
-        if model is not None:
-            model.set_filter(self.list_filter, self.value)
-
 row_count_instance = RowCount()
 set_columns_instance = SetColumns()
 row_data_instance = RowData()
