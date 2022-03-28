@@ -767,7 +767,7 @@ class SearchFilter(Action, AbstractModelFilter):
         old_value = model_context.proxy.get_filter(self)
         if old_value != value:
             model_context.proxy.filter(self, value)
-        yield action_steps.RefreshItemView()
+            yield action_steps.RefreshItemView()
 
 search_filter = SearchFilter()
 
