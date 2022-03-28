@@ -128,6 +128,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
         self._add_action_states(admin, proxy, self.actions, self.action_states)
+        self.set_filters(self.action_states, proxy)
         self.crud_actions = CrudActions(admin)
 
     @staticmethod
@@ -148,11 +149,11 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             if not isinstance(action, Filter):
                 continue
             state = action_state[1]
-            values = [mode['name'] for mode in state['modes'] if mode['checked']]
+            values = [mode.name for mode in state.modes if mode.checked]
             # if all modes are checked, replace with [All]
-            if len(values) == len(state['modes']):
+            if len(values) == len(state.modes):
                 values = [All]
-            model.set_filter(action, values)
+            model.filter(action, values)
 
     @classmethod
     def update_table_view(cls, table_view, step):
@@ -160,10 +161,6 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         table_view.set_admin()
         model = table_view.get_model()
         list(model.add_columns(step['columns']))
-        # filters can have default values, so they need to be set before
-        # the value is set
-        cls.set_filters(step['action_states'], model)
-
         table_view.set_value(step['proxy_route'])
         table_view.list_action = initial_naming_context.resolve(tuple(step['list_action']))
         table_view.set_actions(step['actions'], step['action_states'])
@@ -263,9 +260,6 @@ class OpenQmlTableView(OpenTableView):
         list_gui_context.admin_route = tuple(step['admin_route'])
 
         new_model = CollectionProxy(tuple(step['admin_route']))
-        # filters can have default values, so they need to be set before
-        # the value is set
-        cls.set_filters(step['action_states'], new_model)
         list(new_model.add_columns(step['columns']))
         new_model.set_value(step['proxy_route'])
 
