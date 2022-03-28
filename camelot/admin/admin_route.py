@@ -32,25 +32,6 @@ class AdminRoute(object):
     _admin_routes = initial_naming_context.bind_new_context('admin')
 
     @classmethod
-    def admin_for(cls, route):
-        """
-        Retrieve an admin from its route
-
-        :return: an 'Admin' object
-        """
-        assert isinstance(route, tuple)
-        try:
-            admin = initial_naming_context.resolve(route)
-        except NameNotFoundException:
-            cls._admin_routes.dump_names()
-            raise UserException(
-                ugettext('Admin no longer available'),
-                resolution=ugettext('Restart the application'),
-                detail='/'.join(route),
-            )
-        return admin
-
-    @classmethod
     def _register_admin_route(cls, admin) -> Route:
         """
         Register a new admin
