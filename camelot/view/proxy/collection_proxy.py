@@ -345,7 +345,6 @@ class CollectionProxy(QtGui.QStandardItemModel):
     # end of timer functions
     #
 
-
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
         assert object_thread( self )
@@ -466,36 +465,36 @@ class CollectionProxy(QtGui.QStandardItemModel):
         if (self._model_context is not None):
             self._append_request(Filter(list_filter, old_value, value), None)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_updated(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_updated(self, objects):
         """Handles the entity signal, indicating that the model is out of
             )
         date
         """
         assert object_thread(self)
-        if (sender != self) and (self._model_context is not None):
+        if self._model_context is not None:
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
             self._append_request(Update(objects), None)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_deleted(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_deleted(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        if (sender != self) and (self._model_context is not None):
+        if self._model_context is not None:
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
             self._append_request(Deleted(objects, super(CollectionProxy, self).rowCount()), None)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_created(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_created(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        if (sender != self) and (self._model_context is not None):
+        if self._model_context is not None:
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
