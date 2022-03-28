@@ -56,7 +56,6 @@ from ...admin.action.application_action import ApplicationActionGuiContext
 from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.form_action import FormActionModelContext
-from ...admin.admin_route import AdminRoute
 from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)

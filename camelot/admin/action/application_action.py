@@ -33,7 +33,6 @@ import os
 
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
-from ..admin_route import AdminRoute
 from .base import RenderHint
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
