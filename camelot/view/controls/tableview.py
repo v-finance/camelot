@@ -38,6 +38,7 @@ from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action.base import State, RenderHint
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.utils import ugettext as _
+from camelot.core.naming import initial_naming_context
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls.filter_widget import AbstractFilterWidget
@@ -631,7 +632,7 @@ class TableView(AbstractView):
             filters_widget.setObjectName('filters')
             self.filters_layout.addWidget(filters_widget)
             for action_route in filter_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(action, filters_widget)
                 self.get_model().add_action_route(tuple(action_route))
                 action_widget.set_state_v2(self._get_action_state(action_route, action_states))
@@ -646,7 +647,7 @@ class TableView(AbstractView):
             actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
             for action_route in action_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(action, actions_widget)
                 self.get_model().add_action_route(tuple(action_route))
                 action_widget.set_state_v2(self._get_action_state(action_route, action_states))
@@ -666,7 +667,7 @@ class TableView(AbstractView):
             toolbar = self.findChild(QtWidgets.QToolBar, 'actions_toolbar')
             assert toolbar
             for action_route in action_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 rendered = self.render_action(action, toolbar)
                 self.get_model().add_action_route(tuple(action_route))
                 rendered.set_state_v2(self._get_action_state(action_route, action_states))
@@ -705,7 +706,7 @@ class TableView(AbstractView):
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):
-        action = AdminRoute.action_for(route)
+        action = initial_naming_context.resolve(route)
         action_name = self.gui_context.action_routes[action]
         action_widget = self.findChild(AbstractActionWidget, action_name)
         if not isinstance(action_widget, AbstractFilterWidget):

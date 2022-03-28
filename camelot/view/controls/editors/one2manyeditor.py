@@ -146,7 +146,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             toolbar.setIconSize(QtCore.QSize(16, 16))
             toolbar.setOrientation(Qt.Orientation.Vertical)
             for action_route in action_routes:
-                action = AdminRoute.action_for(action_route)
+                action = initial_naming_context.resolve(action_route)
                 if not isinstance(action, (FieldAction, Filter)):
                     self.list_gui_context.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(action, toolbar)

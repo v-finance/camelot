@@ -4,6 +4,7 @@ import json
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py
 from camelot.core.exception import UserException
+from camelot.core.naming import initial_naming_context
 from camelot.admin.admin_route import AdminRoute
 
 LOGGER = logging.getLogger(__name__)
@@ -123,7 +124,7 @@ class QmlActionDispatch(QtCore.QObject):
                 'Could not find gui_context for context id: {}'.format(context_id),
                 detail='run_action({}, {})'.format(route, args)
             )
-        action = AdminRoute.action_for(tuple(route.split('/')))
+        action = initial_naming_context.resolve(tuple(route.split('/')))
 
         gui_context = self.gui_contexts[context_id].copy()
 

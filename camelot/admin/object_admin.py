@@ -41,6 +41,7 @@ from camelot.admin.action import field_action, list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
+from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, EntityMeta
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
@@ -748,7 +749,7 @@ be specified using the verbose_name attribute.
                 field_attributes['columns'] = related_admin.get_columns()
                 if field_attributes.get('actions') is None:
                     field_attributes['actions'] = [
-                        AdminRoute.action_for(action.route) for action in related_admin.get_related_toolbar_actions(direction)
+                        initial_naming_context.resolve(action.route) for action in related_admin.get_related_toolbar_actions(direction)
                     ]
                 if column_width is None:
                     table = related_admin.get_table()

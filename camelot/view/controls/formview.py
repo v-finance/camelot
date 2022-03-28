@@ -42,6 +42,7 @@ from camelot.admin.admin_route import AdminRoute
 from camelot.admin.action.base import State
 from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.core.naming import initial_naming_context
 from camelot.view.crud_action import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.action_widget import AbstractActionWidget
@@ -319,7 +320,7 @@ class FormView(AbstractView):
             actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
             for action_route in action_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(action, actions_widget)
                 self.model.add_action_route(tuple(action_route))
                 state = route2state.get(tuple(action_route))
@@ -340,7 +341,7 @@ class FormView(AbstractView):
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
             for action_route in action_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(action, toolbar)
                 self.model.add_action_route(tuple(action_route))
                 state = route2state.get(tuple(action_route))
@@ -357,7 +358,7 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):
-        action = AdminRoute.action_for(route)
+        action = initial_naming_context.resolve(route)
         action_name = self.gui_context.action_routes[action]
         action_widget = self.findChild(AbstractActionWidget, action_name)
         action_widget.set_state(state)

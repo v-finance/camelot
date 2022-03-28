@@ -148,7 +148,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             actions_widget = ActionsBox(parent = self)
             actions_widget.setObjectName('actions')
             for action_route in action_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(action, actions_widget)
                 state = None
                 for action_state in action_states:
@@ -302,7 +302,7 @@ class ChangeObject(ActionStep):
         model_context.admin = admin
         model_context.proxy = proxy
         for action_route in actions:
-            action = AdminRoute.action_for(action_route.route)
+            action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
 
@@ -413,7 +413,7 @@ class ChangeObjects( ActionStep ):
         list_model_context.admin = admin
         list_model_context.proxy = proxy
         for action_route in action_routes:
-            action = AdminRoute.action_for(action_route)
+            action = initial_naming_context.resolve(action_route)
             if isinstance(action, FieldAction):
                 state = action.get_state(field_model_context)
             else:

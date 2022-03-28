@@ -40,10 +40,11 @@ from ...admin.admin_route import Route, AdminRoute
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
-from ...core.qt import Qt
-from ...core.utils import ugettext_lazy
 from ...core.item_model import ProxyRegistry
+from ...core.naming import initial_naming_context
+from ...core.qt import Qt
 from ...core.serializable import DataclassSerializable
+from ...core.utils import ugettext_lazy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     CollectionProxy, RowCount, RowData, SetColumns
@@ -135,7 +136,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         model_context.admin = admin
         model_context.proxy = proxy
         for action_route in actions:
-            action = AdminRoute.action_for(action_route.route)
+            action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
 
@@ -143,7 +144,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     def set_filters(action_states, model):
         for action_state in action_states:
             route = tuple(action_state[0])
-            action = AdminRoute.action_for(route)
+            action = initial_naming_context.resolve(route)
             if not isinstance(action, Filter):
                 continue
             state = action_state[1]
@@ -164,7 +165,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         cls.set_filters(step['action_states'], model)
 
         table_view.set_value(step['proxy_route'])
-        table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
+        table_view.list_action = initial_naming_context.resolve(tuple(step['list_action']))
         table_view.set_actions(step['actions'], step['action_states'])
         if step['search_text'] is not None:
             search_control = table_view.findChild(SimpleSearchControl)

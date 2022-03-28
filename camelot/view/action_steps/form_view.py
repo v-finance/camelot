@@ -43,6 +43,7 @@ from ...admin.action.form_action import FormActionModelContext
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.object_admin import ObjectAdmin
 from ...core.item_model import AbstractModelProxy, ProxyRegistry
+from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
 
 
@@ -116,7 +117,7 @@ class OpenFormView(ActionStep):
         model_context.admin = admin
         model_context.proxy = proxy
         for action_route in actions:
-            action = AdminRoute.action_for(action_route.route)
+            action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
 
