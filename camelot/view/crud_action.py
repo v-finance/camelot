@@ -457,6 +457,7 @@ class ChangedObjectMixin(object):
             if was_persistent is False:
                 created_objects.add(subsystem_obj)
         updated_objects.add(subsystem_obj)
+        updated_objects.add(obj)
         depending_objects = depending_objects_before_change.union(set(admin.get_depending_objects(obj)))
         for depending_object in depending_objects:
             related_admin = admin.get_related_admin(type(depending_object))
@@ -612,15 +613,18 @@ class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
         yield from action.model_run(field_action_model_context, action_mode)
         new_value = getattr(obj, static_field_attributes['field_name'])
         if field_action_model_context.value != new_value:
-            changed_ranges = []
             updated_objects, created_objects, deleted_objects = set(), set(), set()
             self.add_changed_object(
-                model_context, depending_objects_before_change, row, obj,
-                changed_ranges, created_objects, updated_objects, deleted_objects
+                model_context, depending_objects_before_change, obj,
+                created_objects, updated_objects, deleted_objects
             )
             created_objects = tuple(created_objects)
             updated_objects = tuple(updated_objects)
             deleted_objects = tuple(deleted_objects)
-            yield action_steps.SetData(changed_ranges, created_objects, updated_objects, deleted_objects)
+            yield action_steps.CreateUpdateDelete(
+                objects_created=created_objects,
+                objects_updated=updated_objects,
+                objects_deleted=deleted_objects,
+            )
 
 run_field_action = RunFieldAction()
