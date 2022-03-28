@@ -90,7 +90,6 @@ __all__ = [
     SelectItem.__name__,
     SelectObjects.__name__,
     SetColumns.__name__,
-    SetData.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
     ToFirstRow.__name__,

@@ -27,7 +27,6 @@
 #
 #  ============================================================================
 
-from ....core.naming import initial_naming_context
 from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
 from camelot.view.proxy import ValueLoading
@@ -168,19 +167,12 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
 
     def add_actions(self, action_routes, layout):
         for action_route in action_routes:
-<<<<<<< HEAD
-            action = initial_naming_context.resolve(action_route)
-            action_widget = self.render_action(action, self)
-            action_widget.action_route = action_route
-            action_widget.setFixedHeight(self.get_height())
-=======
             action_widget = QtWidgets.QToolButton(parent=self)
             action_widget.setAutoRaise(True)
             action_widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
             action_widget.setProperty('action_route', action_route)
             action_widget.setFixedHeight(min(action_widget.height(), self.get_height()))
             action_widget.clicked.connect(self.action_button_clicked)
->>>>>>> e29bc4bab8fc8b3194eb7411841df17459221781
             layout.addWidget(action_widget)
 
     def sizeHint(self):

@@ -124,7 +124,7 @@ class ApplicationActionGuiContext( GuiContext ):
 
     def create_model_context(self):
         context = super(ApplicationActionGuiContext, self).create_model_context()
-        context.admin = AdminRoute.resolve(self.admin_route)
+        context.admin = initial_naming_context.resolve(self.admin_route)
         # todo : action routes should be translated to actions here
         context.actions = list(self.action_routes.keys())
         return context
