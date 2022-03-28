@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from __future__ import annotations
 
 import logging
 import typing
@@ -153,7 +154,7 @@ the default mode.
     value: Any
     verbose_name: typing.Union[str, ugettext_lazy] = None
     icon: typing.Union[Icon, None] = None
-    modes: typing.List[DataclassSerializable] = field(default_factory=list)
+    modes: typing.List[Mode] = field(default_factory=list)
 
     def __post_init__(self):
         for mode in self.modes:
