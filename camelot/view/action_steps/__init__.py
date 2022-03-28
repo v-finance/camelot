@@ -38,7 +38,7 @@ from .gui import (
     CloseView, MessageBox, Refresh, SelectItem, SelectSubclass, UpdateEditor
 )
 from .item_view import (
-    Sort, OpenTableView, SetFilter, UpdateTableView, ClearSelection,
+    Sort, OpenTableView, UpdateTableView, ClearSelection,
     RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
@@ -88,7 +88,6 @@ __all__ = [
     SelectSubclass.__name__,
     SetColumns.__name__,
     SetData.__name__,
-    SetFilter.__name__,
     Sort.__name__,
     ToFirstForm.__name__,
     ToFirstRow.__name__,
