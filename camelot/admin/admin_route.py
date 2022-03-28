@@ -56,25 +56,6 @@ class AdminRoute(object):
         admin_context.bind_new_context('list').bind_new_context('actions')
         return admin_route
 
-    @classmethod
-    def action_for(cls, route):
-        """
-        Retrieve an action from its route
-
-        :return: an 'Action' object
-        """
-        assert isinstance(route, tuple)
-        try:
-            admin = initial_naming_context.resolve(route)
-        except NameNotFoundException:
-            cls._admin_routes.dump_names()
-            raise UserException(
-                ugettext('Action no longer available'),
-                resolution=ugettext('Restart the application'),
-                detail='/'.join(route),
-            )
-        return admin
-
     @staticmethod
     def _validate_action_name(action) -> bool:
         """
