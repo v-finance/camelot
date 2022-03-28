@@ -51,7 +51,7 @@ from camelot.admin.action.base import ActionStep
 from ..crud_signals import CrudSignalHandler
 
 @dataclass
-class AbstractCrudSignal(ActionStep):
+class CreateUpdateDelete(ActionStep):
 
     objects_deleted: tuple = field(default_factory=tuple)
     objects_updated: tuple = field(default_factory=tuple)
@@ -60,16 +60,17 @@ class AbstractCrudSignal(ActionStep):
     def gui_run(self, gui_context):
         # Presumed to be unnecessary, as ActionStep's gui_run constructs an ActionRunner on it's (empty) model_run,
         # which results in a unwanted round-trip to the model thread / server.
-        #super(AbstractCrudSignal, self).gui_run(gui_context)
+        #super(CreateUpdateDelete, self).gui_run(gui_context)
         crud_signal_handler = CrudSignalHandler()
         if len(self.objects_deleted):
-            crud_signal_handler.send_objects_deleted(self, self.objects_deleted)
+            crud_signal_handler.objects_deleted.emit(self.objects_deleted)
         if len(self.objects_updated):
-            crud_signal_handler.send_objects_updated(self, self.objects_updated)
+            crud_signal_handler.objects_updated.emit(self.objects_updated)
         if len(self.objects_created):
-            crud_signal_handler.send_objects_created(self, self.objects_created)
+            crud_signal_handler.objects_created.emit(self.objects_created)
 
-class FlushSession(AbstractCrudSignal):
+
+class FlushSession(CreateUpdateDelete):
     """Flushes the session and informs the GUI about the
     changes.
     
@@ -110,7 +111,7 @@ class FlushSession(AbstractCrudSignal):
         self.objects_updated = tuple(dirty_objects)
 
 
-class UpdateObjects(AbstractCrudSignal):
+class UpdateObjects(CreateUpdateDelete):
     """Inform the GUI that objects have changed.
 
     :param objects: the objects that have changed
@@ -123,7 +124,7 @@ class UpdateObjects(AbstractCrudSignal):
     def get_objects(self):
         return self.objects_updated
 
-class DeleteObjects(AbstractCrudSignal):
+class DeleteObjects(CreateUpdateDelete):
     """Inform the GUI that objects are going to be deleted.
 
     :param objects: the objects that are going to be deleted
@@ -136,7 +137,7 @@ class DeleteObjects(AbstractCrudSignal):
     def get_objects(self):
         return self.objects_deleted
 
-class CreateObjects(AbstractCrudSignal):
+class CreateObjects(CreateUpdateDelete):
     """Inform the GUI that objects were created.
 
     :param objects: the objects that were created

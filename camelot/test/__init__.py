@@ -42,7 +42,7 @@ import json
 
 from ..admin.action.base import ActionStep
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
-from ..view.action_steps.orm import AbstractCrudSignal
+from ..view.action_steps.orm import CreateUpdateDelete
 from ..view.action_runner import ActionRunner
 from ..view.model_process import ModelProcess
 from ..view import model_thread
@@ -172,7 +172,7 @@ class ActionMixinCase(object):
                         serialized_step = json.loads(step[1])
                         gui_result = yield tuple([step[0], serialized_step])                    
                     else:
-                        if isinstance(step, AbstractCrudSignal):
+                        if isinstance(step, CreateUpdateDelete):
                             LOGGER.debug('crud step, update view')
                             step.gui_run(gui_context)
                         gui_result = yield step
