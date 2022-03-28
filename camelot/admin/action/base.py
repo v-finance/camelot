@@ -132,9 +132,9 @@ class Mode(DataclassSerializable):
 be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
 the default mode.
     
-.. attribute:: name
+.. attribute:: value
 
-    a string representing the mode to the developer and the authentication
+    a value representing the mode to the developer and the authentication
     system.  this name will be used in the :class:`GuiContext`
     
 .. attribute:: verbose_name
@@ -150,7 +150,7 @@ the default mode.
     Optionally, a list of sub modes.
     """
 
-    name: str
+    value: Any
     verbose_name: typing.Union[str, ugettext_lazy] = None
     icon: typing.Union[Icon, None] = None
     modes: typing.List[DataclassSerializable] = field(default_factory=list)
@@ -159,14 +159,14 @@ the default mode.
         for mode in self.modes:
             assert isinstance(mode, type(self))
         if self.verbose_name is None:
-            self.verbose_name = self.name.capitalize()
+            self.verbose_name = self.value.capitalize()
 
     def render( self, parent ):
         """
         In case this mode is a leaf (no containing sub modes), a :class:`QtWidgets.QAction`
         will be created (or `QtWidgets.QMenu` in case this modes has sub modes defined)
         that can be used to enable the widget to trigger the action in a specific mode.
-        The data attribute of the action will contain the name of the mode.
+        The data attribute of the action will contain the value of the mode.
         In case has underlying sub modes, a `QtWidgets.QMenu` will be created to which
         the rendered sub modes can be attached.
         :return: a :class:`QtWidgets.QAction` or :class:`QtWidgets.QMenu` to use this mode
@@ -179,7 +179,7 @@ the default mode.
             return menu
         else:
             action = QtGui.QAction( parent )
-            action.setData( self.name )
+            action.setData( self.value )
             action.setText( str(self.verbose_name) )
             if self.icon is None:
                 action.setIconVisibleInMenu(False)
