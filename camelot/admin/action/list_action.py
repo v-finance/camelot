@@ -1076,7 +1076,9 @@ class SetFilters(Action, AbstractModelFilter):
             new_filter_values = {k:v for k,v in filter_values.items()}
             new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
 
-        yield action_steps.SetFilter(self, new_filter_values)
+        if filter_values != new_filter_values:
+            model_context.proxy.filter(self, new_filter_values)
+            yield action_steps.RefreshItemView()
         new_state = self._get_state(model_context, new_filter_values)
         yield action_steps.UpdateActionsState(model_context, {self: new_state})
 

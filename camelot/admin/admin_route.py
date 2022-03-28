@@ -4,9 +4,7 @@ import logging
 import typing
 
 from ..admin.action.base import RenderHint
-from ..core.exception import UserException
 from ..core.naming import AlreadyBoundException, initial_naming_context, NamingContext, NameNotFoundException
-from ..core.utils import ugettext
 from ..core.serializable import DataclassSerializable
 
 LOGGER = logging.getLogger(__name__)
@@ -32,25 +30,6 @@ class AdminRoute(object):
     _admin_routes = initial_naming_context.bind_new_context('admin')
 
     @classmethod
-    def admin_for(cls, route):
-        """
-        Retrieve an admin from its route
-
-        :return: an 'Admin' object
-        """
-        assert isinstance(route, tuple)
-        try:
-            admin = initial_naming_context.resolve(route)
-        except NameNotFoundException:
-            cls._admin_routes.dump_names()
-            raise UserException(
-                ugettext('Admin no longer available'),
-                resolution=ugettext('Restart the application'),
-                detail='/'.join(route),
-            )
-        return admin
-
-    @classmethod
     def _register_admin_route(cls, admin) -> Route:
         """
         Register a new admin
@@ -74,25 +53,6 @@ class AdminRoute(object):
         admin_context.bind_new_context('form').bind_new_context('actions')
         admin_context.bind_new_context('list').bind_new_context('actions')
         return admin_route
-
-    @classmethod
-    def action_for(cls, route):
-        """
-        Retrieve an action from its route
-
-        :return: an 'Action' object
-        """
-        assert isinstance(route, tuple)
-        try:
-            admin = initial_naming_context.resolve(route)
-        except NameNotFoundException:
-            cls._admin_routes.dump_names()
-            raise UserException(
-                ugettext('Action no longer available'),
-                resolution=ugettext('Restart the application'),
-                detail='/'.join(route),
-            )
-        return admin
 
     @staticmethod
     def _validate_action_name(action) -> bool:

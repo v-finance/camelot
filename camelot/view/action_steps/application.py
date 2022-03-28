@@ -36,6 +36,7 @@ from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
+from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
@@ -152,7 +153,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
             self._add_action_states(model_context, item.items, action_states)
             action_route = item.action_route
             if action_route is not None:
-                action = AdminRoute.action_for(action_route)
+                action = initial_naming_context.resolve(action_route)
                 state = action.get_state(model_context)
                 action_states.append((action_route, state))
 
@@ -187,7 +188,7 @@ class MainMenu(ActionStep, DataclassSerializable):
             self._add_action_states(model_context, item.items, action_states)
             action_route = item.action_route
             if action_route is not None:
-                action = AdminRoute.action_for(action_route)
+                action = initial_naming_context.resolve(action_route)
                 state = action.get_state(model_context)
                 action_states.append((action_route, state))
 
@@ -261,7 +262,7 @@ class UpdateActionsState(ActionStep, DataclassSerializable):
 
         step = json.loads(serialized_step)
         for action_route, action_state in step['action_states']:
-            action = AdminRoute.action_for(tuple(action_route))
+            action = initial_naming_context.resolve(tuple(action_route))
             rendered_action_route = gui_context.action_routes.get(action)
             if rendered_action_route is None:
                 LOGGER.warn('Cannot update rendered action, rendered_action_route is unknown')

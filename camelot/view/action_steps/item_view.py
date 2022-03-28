@@ -33,17 +33,18 @@ the `ListActionGuiContext`.
 """
 
 from dataclasses import dataclass, InitVar, field
-from typing import Any, Union, List, Tuple
+from typing import Union, List, Tuple
 import json
 
-from ...admin.admin_route import Route, AdminRoute
+from ...admin.admin_route import Route
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import Filter, All
+from ...core.item_model import ProxyRegistry
+from ...core.naming import initial_naming_context
 from ...core.qt import Qt
-from ...core.utils import ugettext_lazy
-from ...core.item_model import ProxyRegistry, AbstractModelFilter
 from ...core.serializable import DataclassSerializable
+from ...core.utils import ugettext_lazy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     CollectionProxy, RowCount, RowData, SetColumns
@@ -67,24 +68,6 @@ class Sort( ActionStep, DataclassSerializable ):
         model = gui_context.get_item_model()
         if model is not None:
             model.sort( step["column"], step["order"] )
-
-@dataclass
-class SetFilter( ActionStep ):
-    """Filter the items in the item view
-
-            :param list_filter: the `AbstractModelFilter` to apply
-            :param value: the value on which to filter
-    """
-    list_filter: AbstractModelFilter
-    value: Any
-
-    blocking = False
-    cancelable = False
-
-    def gui_run( self, gui_context ):
-        model = gui_context.get_item_model()
-        if model is not None:
-            model.set_filter(self.list_filter, self.value)
 
 row_count_instance = RowCount()
 set_columns_instance = SetColumns()
@@ -145,6 +128,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         proxy = admin.get_proxy(value)
         self.proxy_route = ProxyRegistry.register(proxy)
         self._add_action_states(admin, proxy, self.actions, self.action_states)
+        self.set_filters(self.action_states, proxy)
         self.crud_actions = CrudActions(admin)
 
     @staticmethod
@@ -153,7 +137,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         model_context.admin = admin
         model_context.proxy = proxy
         for action_route in actions:
-            action = AdminRoute.action_for(action_route.route)
+            action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
 
@@ -161,15 +145,15 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     def set_filters(action_states, model):
         for action_state in action_states:
             route = tuple(action_state[0])
-            action = AdminRoute.action_for(route)
+            action = initial_naming_context.resolve(route)
             if not isinstance(action, Filter):
                 continue
             state = action_state[1]
-            values = [mode['name'] for mode in state['modes'] if mode['checked']]
+            values = [mode.name for mode in state.modes if mode.checked]
             # if all modes are checked, replace with [All]
-            if len(values) == len(state['modes']):
+            if len(values) == len(state.modes):
                 values = [All]
-            model.set_filter(action, values)
+            model.filter(action, values)
 
     @classmethod
     def update_table_view(cls, table_view, step):
@@ -177,12 +161,8 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         table_view.set_admin()
         model = table_view.get_model()
         list(model.add_columns(step['columns']))
-        # filters can have default values, so they need to be set before
-        # the value is set
-        cls.set_filters(step['action_states'], model)
-
         table_view.set_value(step['proxy_route'])
-        table_view.list_action = AdminRoute.action_for(tuple(step['list_action']))
+        table_view.list_action = initial_naming_context.resolve(tuple(step['list_action']))
         table_view.set_actions(step['actions'], step['action_states'])
         if step['search_text'] is not None:
             search_control = table_view.findChild(SimpleSearchControl)
@@ -280,9 +260,6 @@ class OpenQmlTableView(OpenTableView):
         list_gui_context.admin_route = tuple(step['admin_route'])
 
         new_model = CollectionProxy(tuple(step['admin_route']))
-        # filters can have default values, so they need to be set before
-        # the value is set
-        cls.set_filters(step['action_states'], new_model)
         list(new_model.add_columns(step['columns']))
         new_model.set_value(step['proxy_route'])
 

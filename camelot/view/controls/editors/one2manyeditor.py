@@ -30,8 +30,8 @@
 import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
+from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from ....admin.admin_route import AdminRoute
 from ....admin.action.base import State, RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy, ProxyRegistry
@@ -121,7 +121,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             )
 
     def render_action(self, render_hint, action_route, parent):
-        action = AdminRoute.action_for(action_route)
+        action = initial_naming_context.resolve(action_route)
         if render_hint == RenderHint.TOOL_BUTTON:
             # Use tool button, because this one sets the popup mode
             # to instant if there are modes in the state
@@ -219,7 +219,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        admin = AdminRoute.admin_for(self.admin_route)
+        admin = initial_naming_context.resolve(self.admin_route)
         if admin.list_action:
             admin.list_action.gui_run(self.list_gui_context)
 

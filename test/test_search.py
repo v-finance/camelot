@@ -103,6 +103,7 @@ class SearchCase( test_orm.TestMetaData ):
         search_filter = SearchFilter()
         model_context = MockModelContext()
         model_context.admin = admin
+        model_context.proxy = admin.get_proxy([])
         list(search_filter.model_run(model_context, None))
         #
         # insert the value of i in each column of T, that can be searched for

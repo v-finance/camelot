@@ -5,10 +5,10 @@ logger = logging.getLogger(__name__)
 
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
-from ..admin.admin_route import AdminRoute
-from ..core.qt import Qt, QtGui, py_to_variant, variant_to_py
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
 from ..core.exception import log_programming_error
+from ..core.naming import initial_naming_context
+from ..core.qt import Qt, QtGui, py_to_variant, variant_to_py
 from .item_model.cache import ValueCache
 
 
@@ -135,7 +135,7 @@ class ChangeSelection(Action):
         from camelot.view import action_steps
         action_states = []
         for action_route in self.action_routes:
-            action = AdminRoute.action_for(action_route)
+            action = initial_naming_context.resolve(action_route)
             state = action.get_state(self.model_context)
             action_states.append(state)
         yield action_steps.ChangeSelection(self.action_routes, action_states)
@@ -377,6 +377,37 @@ class RowData(Update):
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
 
+class RunFieldAction(Action):
+
+    name = 'field_action'
+
+    def model_run(self, model_context, mode):
+        row = mode['row']
+        column = mode['column']
+        obj_id = mode['object']
+        action_route = mode['action_route']
+        action_mode = mode['action_mode']
+        object_slice = list(model_context.proxy[row:row+1])
+        if not len(object_slice):
+            logger.error('Cannot run field action : no object in row {0}'.format(row))
+            return
+        obj = object_slice[0]
+        if not (id(obj)==obj_id):
+            logger.warn('Cannot run field action : object in row {0} is inconsistent with view, {1} vs {2}'.format(row, id(obj), obj_id))
+            return
+        action = initial_naming_context.resolve(tuple(action_route))
+        static_field_attributes = model_context.static_field_attributes[column]
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.field = static_field_attributes['field_name']
+        field_action_model_context.value = getattr(
+            obj, static_field_attributes['field_name']
+        )
+        # @todo : should include dynamic field attributes, but those are not
+        # yet used in any of the field actions
+        field_action_model_context.field_attributes = static_field_attributes
+        yield from action.model_run(field_action_model_context, action_mode)
+
+run_field_action = RunFieldAction()
 
 class SetColumns(Action):
 
@@ -571,7 +602,7 @@ class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
             return
         depending_objects_before_change = set(model_context.admin.get_depending_objects(obj))
         static_field_attributes = model_context.static_field_attributes[column]
-        action = AdminRoute.action_for(tuple(action_route))
+        action = initial_naming_context.resolve(tuple(action_route))
         # @todo : should include dynamic field attributes, but those are not
         # yet used in any of the field actions
         field_action_model_context = self.field_action_model_context(

@@ -764,7 +764,10 @@ class SearchFilter(Action, AbstractModelFilter):
         value = mode
         if (value is not None) and len(value) == 0:
             value = None
-        yield action_steps.SetFilter(self, value)
+        old_value = model_context.proxy.get_filter(self)
+        if old_value != value:
+            model_context.proxy.filter(self, value)
+            yield action_steps.RefreshItemView()
 
 search_filter = SearchFilter()
 
