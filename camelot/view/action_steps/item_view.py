@@ -33,7 +33,7 @@ the `ListActionGuiContext`.
 """
 
 from dataclasses import dataclass, InitVar, field
-from typing import Any, Union, List, Tuple
+from typing import Union, List, Tuple
 import json
 
 from ...admin.admin_route import Route, AdminRoute
@@ -42,7 +42,7 @@ from ...admin.action.list_action import ListActionModelContext, ListActionGuiCon
 from ...admin.action.list_filter import Filter, All
 from ...core.qt import Qt
 from ...core.utils import ugettext_lazy
-from ...core.item_model import ProxyRegistry, AbstractModelFilter
+from ...core.item_model import ProxyRegistry
 from ...core.serializable import DataclassSerializable
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
