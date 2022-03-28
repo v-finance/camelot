@@ -152,15 +152,13 @@ the default mode.
     """
 
     value: Any
-    verbose_name: typing.Union[str, ugettext_lazy] = None
+    verbose_name: typing.Union[str, ugettext_lazy]
     icon: typing.Union[Icon, None] = None
     modes: typing.List[Mode] = field(default_factory=list)
 
     def __post_init__(self):
         for mode in self.modes:
             assert isinstance(mode, type(self))
-        if self.verbose_name is None:
-            self.verbose_name = self.value.capitalize()
 
     def render( self, parent ):
         """
