@@ -5,7 +5,7 @@ import typing
 
 from ..admin.action.base import RenderHint
 from ..core.exception import UserException
-from ..core.naming import NamingContext
+from ..core.naming import AlreadyBoundException, initial_naming_context, NamingContext, NameNotFoundException
 from ..core.utils import ugettext
 from ..core.serializable import DataclassSerializable
 
@@ -23,14 +23,13 @@ class RouteWithRenderHint(DataclassSerializable):
     route: Route
     render_hint: RenderHint
 
-
 class AdminRoute(object):
     """
     Server side register of admins being used on the client side.
     """
 
     _admin_counter = itertools.count()
-    _admin_routes = NamingContext()
+    _admin_routes = initial_naming_context.bind_new_context('admin')
 
     @classmethod
     def admin_for(cls, route):
@@ -41,8 +40,8 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            admin = cls._admin_routes.resolve(route)
-        except KeyError:
+            admin = initial_naming_context.resolve(route)
+        except NameNotFoundException:
             cls._admin_routes.dump_names()
             raise UserException(
                 ugettext('Admin no longer available'),
@@ -62,11 +61,18 @@ class AdminRoute(object):
 
         """
         next_admin = cls._admin_counter.__next__()
-        # put name of the admin in the last part of the route, so it can
-        # be used as a reference to store settings
-        admin_route = ('admin', str(next_admin), admin.get_name())
-        LOGGER.debug('Register admin route: {} -> {}'.format(admin_route, admin))
-        cls._admin_routes.bind(admin_route, admin)
+        try:
+            cls._admin_routes.resolve_context(admin.get_name())
+        except NameNotFoundException:
+            cls._admin_routes.bind_new_context(admin.get_name())
+        admin_context = cls._admin_routes.bind_new_context((admin.get_name(), str(next_admin)))
+        admin_route = cls._admin_routes.bind((admin.get_name(), str(next_admin)), admin)
+        LOGGER.debug('Registered admin route: {} -> {}'.format(admin_route, admin))
+        # Create and bind subcontexts for the different type of admin's actions:
+        admin_context.bind_new_context('actions')
+        admin_context.bind_new_context('field')
+        admin_context.bind_new_context('form').bind_new_context('actions')
+        admin_context.bind_new_context('list').bind_new_context('actions')
         return admin_route
 
     @classmethod
@@ -78,8 +84,8 @@ class AdminRoute(object):
         """
         assert isinstance(route, tuple)
         try:
-            admin = cls._admin_routes.resolve(route)
-        except KeyError:
+            admin = initial_naming_context.resolve(route)
+        except NameNotFoundException:
             cls._admin_routes.dump_names()
             raise UserException(
                 ugettext('Action no longer available'),
@@ -117,44 +123,60 @@ class AdminRoute(object):
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert isinstance(field_name, str)
-        assert admin_route in cls._admin_routes
-        action_route = (*admin_route, 'fields', field_name, 'actions', action.get_name())
-        assert action_route not in cls._admin_routes, NamingContext.verbose_name(action_route) + ' registered before'
-        LOGGER.debug('Register field action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes.bind(action_route, action)
+        assert admin_route in initial_naming_context
+        field_context = initial_naming_context.resolve_context((*admin_route, 'field'))
+        try:
+            context = field_context.resolve_context((field_name, 'actions'))
+        except NameNotFoundException:
+            context = field_context.bind_new_context(field_name).bind_new_context('actions')
+        try:
+            action_route = context.bind(action.get_name(), action)
+        except AlreadyBoundException:
+            action_route = context.get_qual_name(action.get_name())
+            assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Registered field action route: {} -> {}'.format(action_route, action))
         return action_route
 
     @classmethod
     def _register_list_action_route(cls, admin_route, action) -> Route:
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
-        assert admin_route in cls._admin_routes
-        action_route = (*admin_route, 'list', 'actions', action.get_name())
-        assert (action_route not in cls._admin_routes) or (cls._admin_routes.resolve(action_route)==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
-        LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes.bind(action_route, action)
+        assert admin_route in initial_naming_context
+        context = initial_naming_context.resolve_context((*admin_route, 'list', 'actions'))
+        try:
+            action_route = context.bind(action.get_name(), action)
+        except AlreadyBoundException:
+            action_route = context.get_qual_name(action.get_name())
+            assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Registered list action route: {} -> {}'.format(action_route, action))
         return action_route
 
     @classmethod
     def _register_form_action_route(cls, admin_route, action) -> Route:
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
-        assert admin_route in cls._admin_routes
-        action_route = (*admin_route, 'form', 'actions', action.get_name())
-        assert (action_route not in cls._admin_routes) or (cls._admin_routes.resolve(action_route)==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
-        LOGGER.debug('Register list action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes.bind(action_route, action)
+        assert admin_route in initial_naming_context
+        context = initial_naming_context.resolve_context((*admin_route, 'form', 'actions'))
+        try:
+            action_route = context.bind(action.get_name(), action)
+        except AlreadyBoundException:
+            action_route = context.get_qual_name(action.get_name())
+            assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Registered form action route: {} -> {}'.format(action_route, action))
         return action_route
 
     @classmethod
     def _register_action_route(cls, admin_route, action) -> Route:
         assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
-        assert admin_route in cls._admin_routes
-        action_route = (*admin_route, 'actions', action.get_name())
-        assert (action_route not in cls._admin_routes) or (cls._admin_routes.resolve(action_route)==action), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
-        LOGGER.debug('Register action route: {} -> {}'.format(action_route, action))
-        cls._admin_routes.bind(action_route, action)
+        assert admin_route in initial_naming_context
+        context = initial_naming_context.resolve_context((*admin_route, 'actions'))
+        try:
+            action_route = context.bind(action.get_name(), action)
+        except AlreadyBoundException:
+            action_route = context.get_qual_name(action.get_name())
+            assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
+        LOGGER.debug('Registered action route: {} -> {}'.format(action_route, action))
         return action_route
 
 def _register_actions_decorator(register_func, attr_admin_route, attr_cache):

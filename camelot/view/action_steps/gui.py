@@ -32,7 +32,7 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 import functools
 import json
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 from dataclasses import dataclass, field
 
@@ -45,28 +45,6 @@ from camelot.view.qml_view import qml_action_step
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 
-
-@dataclass
-class UpdateEditor(ActionStep):
-    """This step should be used in the context of an editor action.  It
-    will update an attribute of the editor.
-
-    :param attribute: the name of the attribute of the editor to update
-    :param value: the new value of the attribute
-    :param propagate: set to `True` if the editor should notify the underlying
-       model of it's change, so that the changes can be written to the model
-    """
-
-    attribute: str
-    value: Any
-    propagate: bool = False
-    
-    def gui_run(self, gui_context):
-        if is_deleted(gui_context.editor):
-            return
-        setattr(gui_context.editor, self.attribute, self.value)
-        if self.propagate:
-            gui_context.editor.editingFinished.emit()
 
 @dataclass
 class Refresh( ActionStep, DataclassSerializable ):
@@ -155,34 +133,6 @@ class SelectItem(ActionStep):
         if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_value()
-
-class SelectSubclass(SelectItem):
-    """Allow the user to select a subclass out of a class hierarchy.  If the
-    hierarch has only one class, this step returns immediately.
-
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
-
-    yielding this step will return the admin for the subclass selected by the
-    user.
-    """
-
-    def __init__(self, admin):
-        self.admin = admin
-        items = []
-        self._append_subclass_tree_to_items(items, admin.get_subclass_tree())
-        super().__init__(items)
-
-    def _append_subclass_tree_to_items(self, items, subclass_tree):
-        for admin, tree in subclass_tree:
-            if len(tree):
-                self._append_subclass_tree_to_items(items, tree)
-            else:
-                items.append((admin, admin.get_verbose_name_plural()))
-
-    def gui_run(self, gui_context):
-        if not len(self.items):
-            return self.admin
-        return super().gui_run(gui_context)
 
 
 @dataclass

@@ -73,6 +73,7 @@ def genre_choices( entity_instance ):
 class BurnToDisk( Action ):
     
     verbose_name = _('Burn to disk')
+    name = 'burn'
     
     def model_run( self, model_context ):
         yield action_steps.UpdateProgress( 0, 3, _('Formatting disk') )

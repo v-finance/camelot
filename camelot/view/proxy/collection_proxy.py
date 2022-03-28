@@ -157,7 +157,8 @@ class CollectionProxy(QtGui.QStandardItemModel):
         assert isinstance(admin_route, tuple)
         assert len(admin_route)
         from camelot.view.model_thread import get_model_thread
-        admin_name = admin_route[-1]
+        # TODO: replace with passed entity_name as part of future changes.
+        admin_name = admin_route[-2]
         self.logger = logger.getChild('{0}.{1}'.format(id(self), admin_name))
         self.logger.debug('initialize proxy for %s' % (admin_name))
         self.admin_route = admin_route
@@ -374,8 +375,14 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def get_progress_dialog(self):
         pass
 
+    def get_window(self):
+        return QtCore.QObject.parent(self).window()
+
     def copy(self, base_class=None):
-        return ApplicationActionGuiContext()
+        new_gui_context = ApplicationActionGuiContext()
+        if base_class is None:
+            return new_gui_context
+        return new_gui_context.copy(base_class)
 
     @property
     def mode_name(self):

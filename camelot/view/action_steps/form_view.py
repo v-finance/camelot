@@ -79,7 +79,7 @@ class OpenFormView(ActionStep):
     """
     obj: InitVar[Any]
     proxy: AbstractModelProxy
-    admin: ObjectAdmin
+    admin: InitVar[ObjectAdmin]
 
     admin_name: str = field(init=False)
     actions: List[Action] = field(init=False)
@@ -90,25 +90,29 @@ class OpenFormView(ActionStep):
     admin_route: AdminRoute = field(init=False)
     objects: List[Any] = field(init=False)
     row: int = field(init=False)
+    form_state: str = field(init=False)
+    form_close_route: Route = field(init=False)
 
-    def __post_init__(self, obj):
+    def __post_init__(self, obj, admin):
         assert obj is not None
         assert isinstance(self.proxy, AbstractModelProxy)
-        self.admin_name = self.admin.get_name()
-        self.actions = self.admin.get_form_actions(None)
-        get_form_toolbar_actions = self.admin.get_form_toolbar_actions
+        self.admin_name = admin.get_name()
+        self.actions = admin.get_form_actions(None)
+        get_form_toolbar_actions = admin.get_form_toolbar_actions
         self.top_toolbar_actions = get_form_toolbar_actions()
-        self._columns = self.admin.get_fields()
-        self._form_display = self.admin.get_form_display()._to_bytes()
-        self.admin_route = self.admin.get_admin_route()
-        self._add_action_states(self.admin, self.proxy, self.actions + self.top_toolbar_actions, self.action_states)
-
+        self._columns = admin.get_fields()
+        self._form_display = admin.get_form_display()._to_bytes()
+        self.admin_route = admin.get_admin_route()
+        self._add_action_states(admin, self.proxy, self.actions + self.top_toolbar_actions, self.action_states)
         self.objects = [obj]
         self.row = self.proxy.index(obj)
         self.proxy = ProxyRegistry.register(self.proxy)
-
+        self.form_close_route = AdminRoute._register_action_route(
+            self.admin_route, admin.form_close_action
+        )
         self.top_level = True
         self.title = u' '
+        self.form_state = admin.form_state
 
     @staticmethod
     def _add_action_states(admin, proxy, actions, action_states):
@@ -127,6 +131,10 @@ class OpenFormView(ActionStep):
         """
         return self.objects
 
+    def get_admin(self):
+        """Use this method to get access to the admin in unit tests"""
+        return AdminRoute.admin_for(self.admin_route)
+
     def render(self, gui_context):
         from camelot.view.controls.formview import FormView
 
@@ -134,9 +142,12 @@ class OpenFormView(ActionStep):
         list(model.add_columns((fn for fn, fa in self._columns)))
         model.set_value(self.proxy)
 
-        form = FormView(title=self.title, admin=self.admin, model=model,
-                        columns=self._columns, form_display=self._form_display,
-                        index=self.row)
+        form = FormView(
+            title=self.title, admin_route=self.admin_route,
+            form_close_route=self.form_close_route, model=model,
+            columns=self._columns, form_display=self._form_display,
+            index=self.row
+        )
         form.set_actions([action.route for action in self.actions], self.action_states)
         form.set_toolbar_actions([action.route for action in self.top_toolbar_actions], self.action_states)
         return form
@@ -149,7 +160,7 @@ class OpenFormView(ActionStep):
                 formview.setObjectName('form.{}.{}'.format(
                     self.admin_name, id(formview)
                 ))
-                show_top_level(formview, window, self.admin.form_state)
+                show_top_level(formview, window, self.form_state)
             else:
                 gui_context.workspace.set_view(formview)
 
