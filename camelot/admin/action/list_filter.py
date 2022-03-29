@@ -219,12 +219,6 @@ class AbstractFilterStrategy(object):
             return None
         return operand
 
-    def value_to_string(self, filter_value, admin):
-        """
-        Turn the given filter value into its corresponding string representation applicable for this filter strategy, based on the given admin.
-        """
-        raise NotImplementedError
-
     def get_operators(self):
         """
         Return the list of operators that are available for this filter strategy instance.
@@ -430,7 +424,7 @@ class RelatedFilter(AbstractFilterStrategy):
             field_operands = []
             for operand in operands:
                 field_operand = self.field_operand(related_admin, field_strategy, operand)
-                field_operands.append(field_strategy.value_to_string(field_operand, admin))
+                field_operands.append(field_operand)
             field_filter_clause = field_strategy.get_clause(related_admin, session, operator, *field_operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
@@ -448,11 +442,6 @@ class RelatedFilter(AbstractFilterStrategy):
         By default, no conversion is done, and the operand is shared between all underlying field strategies.
         """
         return operand
-
-    def value_to_string(self, filter_value, admin):
-        for field_strategy in self.field_filters:
-            related_admin = admin.get_related_admin(field_strategy.attribute.class_)
-            return field_strategy.value_to_string(filter_value, related_admin)
 
 class RelatedSearch(RelatedFilter):
     """
@@ -476,9 +465,6 @@ class NoFilter(FieldFilter):
 
     def get_clause(self, admin, session, operator, *operands):
         return None
-
-    def value_to_string(self, filter_value, admin):
-        return filter_value
 
     def get_verbose_name(self):
         return None
@@ -505,9 +491,6 @@ class StringFilter(FieldFilter):
             return sql.and_(super().get_attribute_clause(field_attributes, attribute, Operator.ne, ''), filter_clause)
         elif not all([operand.isdigit() for operand in operands]) or self.allow_digits:
             return filter_clause
-
-    def value_to_string(self, filter_value, admin):
-        return filter_value
 
 class DecimalFilter(FieldFilter):
     
@@ -540,19 +523,6 @@ class DecimalFilter(FieldFilter):
 
         elif operator == Operator.between and None not in (float_operands[0], float_operands[1]):
             return super().get_attribute_clause(field_attributes, attribute, operator, float_operands[0]-delta, float_operands[1]+delta)
-    
-    def value_to_string(self, value, admin):
-        admin_field_attributes = admin.get_field_attributes(self.attribute.key).items()
-        field_attributes = {h:copy.copy(v) for h,v in admin_field_attributes}
-        field_attributes['suffix'] = None
-        delegate = field_attributes.get('delegate')
-        model_context = FieldActionModelContext()
-        model_context.admin = admin
-        model_context.value = value
-        model_context.field_attributes = field_attributes
-        standard_item = delegate.get_standard_item(locale(), model_context)
-        value_str = standard_item.data(PreviewRole)
-        return value_str
         
 class TimeFilter(FieldFilter):
     
@@ -561,32 +531,12 @@ class TimeFilter(FieldFilter):
     operators = Operator.numerical_operators()
     _default_from_string = utils.time_from_string
 
-    def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
-        delegate = field_attributes.get('delegate')
-        model_context = FieldActionModelContext()
-        model_context.admin = admin
-        model_context.value = value
-        model_context.field_attributes = field_attributes
-        standard_item = delegate.get_standard_item(locale(), model_context)
-        return standard_item.data(PreviewRole)
-
 class DateFilter(FieldFilter):
 
     name = 'date_filter'
     python_type = datetime.date
     operators = Operator.numerical_operators()
     _default_from_string = utils.date_from_string
-    
-    def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
-        delegate = field_attributes.get('delegate')
-        model_context = FieldActionModelContext()
-        model_context.admin = admin
-        model_context.value = value
-        model_context.field_attributes = field_attributes
-        standard_item = delegate.get_standard_item(locale(), model_context)
-        return standard_item.data(PreviewRole)
     
 class IntFilter(FieldFilter):
 
@@ -595,17 +545,6 @@ class IntFilter(FieldFilter):
     operators = Operator.numerical_operators()
     _default_from_string = utils.int_from_string
 
-    def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
-        delegate = field_attributes.get('delegate')
-        to_string = field_attributes.get('to_string')
-        model_context = FieldActionModelContext()
-        model_context.admin = admin
-        model_context.value = value
-        model_context.field_attributes = field_attributes
-        standard_item = delegate.get_standard_item(locale(), model_context)
-        return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
-
 class BoolFilter(FieldFilter):
 
     name = 'bool_filter'
@@ -613,17 +552,6 @@ class BoolFilter(FieldFilter):
     operators = (Operator.eq,)
     _default_from_string = utils.bool_from_string
 
-    def value_to_string(self, value, admin):
-        field_attributes = admin.get_field_attributes(self.attribute.key)
-        delegate = field_attributes.get('delegate')
-        to_string = field_attributes.get('to_string')
-        model_context = FieldActionModelContext()
-        model_context.admin = admin
-        model_context.value = value
-        model_context.field_attributes = field_attributes
-        standard_item = delegate.get_standard_item(locale(), model_context)
-        return to_string(standard_item.data(Qt.ItemDataRole.EditRole))
-    
 class ChoicesFilter(FieldFilter):
 
     name = 'choices_filter'
@@ -637,9 +565,6 @@ class ChoicesFilter(FieldFilter):
             self.python_type = self.get_attribute_python_type(attributes[0])
         super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level)
         self.choices = field_attributes.get('choices')
-
-    def value_to_string(self, filter_value, admin):
-        return filter_value
 
     def from_string(self, admin, session, operand):
         return operand
@@ -669,9 +594,6 @@ class Many2OneFilter(IntFilter):
         super().__init__(foreign_key_attribute, where=where, key=(key or attribute.key), verbose_name=(verbose_name or field_attributes.get('name')), priority_level=priority_level, **field_attributes)
         self.entity = attribute.prop.entity.entity
         self.admin = field_attributes.get('admin')
-
-    def value_to_string(self, value, admin):
-        return str(value.id)
 
 class One2ManyFilter(RelatedFilter):
     """
@@ -730,12 +652,6 @@ class One2ManyFilter(RelatedFilter):
 
     def get_operators(self):
         return self.operators
-
-    def value_to_string(self, value, admin):
-        assert isinstance(value, self.entity), self.AssertionMessage.invalid_target_entity_instance.value.format(self.entity)
-        mapper = orm.object_mapper(value)
-        primary_key = mapper.primary_key_from_instance(value)
-        return [str(pk) for pk in primary_key]
 
 class SearchFilter(Action, AbstractModelFilter):
 
