@@ -1074,7 +1074,7 @@ class SetFilters(Action, AbstractModelFilter):
 
             operands = [filter_field_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_operands()]
             new_filter_values = {k:v for k,v in filter_values.items()}
-            new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
+            new_filter_values[filter_field_name] = (filter_value.operator, *operands)
 
         if filter_values != new_filter_values:
             model_context.proxy.filter(self, new_filter_values)
@@ -1083,15 +1083,13 @@ class SetFilters(Action, AbstractModelFilter):
         yield action_steps.UpdateActionsState(model_context, {self: new_state})
 
     def decorate_query(self, query, values):
-        from camelot.admin.action.list_filter import Operator
         # Previously, the query was decorated with the the string-based filter value tuples by applying them to the query using filter_by.
         # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         clauses = []
-        for name, (operator_name, *operands) in values.items():
+        for name, (operator, *operands) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
-            operator = Operator[operator_name]
             filter_clause = filter_strategy.get_clause(self.admin, query.session, operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
@@ -1105,7 +1103,7 @@ class SetFilters(Action, AbstractModelFilter):
         # Only show clear filter mode if any filters are active
         if len(filter_value):
             modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
-        selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
+        selected_mode_names = [op.name + '-' + field for field, (op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
             for op in filter_strategy.get_operators():
                 mode_name = op.name + '-' + name
