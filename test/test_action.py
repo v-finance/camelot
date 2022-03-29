@@ -1157,20 +1157,21 @@ class ListFilterCase(TestMetaData):
         a3 = A(**a_defaults)
         self.session.flush()
 
-        for cols, strategy_cls, *values in (
-            ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test'),
-            ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,      True),
-            ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,      datetime.date(2020,1,1), datetime.date(2022,1,1)),
-            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,      datetime.datetime(2020,1,1), datetime.datetime(2022,1,1)),
-            ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,       1000, 5000),
-            ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,    12, 24),
-            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test'),
-            ([A.many2one_col],                      list_filter.Many2OneFilter,  a1.id),
-            ([A.many2one_col],                      list_filter.Many2OneFilter,  a1.id, a2.id),
-            ([A.many2one_col],                      list_filter.Many2OneFilter,  a1.id, a2.id, a3.id),
-            ([B.one2many_col],                      list_filter.One2ManyFilter,  a1),
-            ([B.one2many_col],                      list_filter.One2ManyFilter,  a1, a2),
-            ([B.one2many_col],                      list_filter.One2ManyFilter,  a1, a2, a3),
+        # Verify strategies accept both the 'raw' operands, as well as their textual representation (used when searching).
+        for cols, strategy_cls, search_text, *values in (
+            ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test',       'test'),
+            ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,     'True',        True),
+            ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,     '01-01-2020',  datetime.date(2020,1,1), datetime.date(2022,1,1)),
+            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '10:00',       datetime.time(10,0), datetime.time(12,30)),
+            ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',        1000, 5000),
+            ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',          12, 24),
+            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test',       'Test'),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           a1.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           a1.id, a2.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           a1.id, a2.id, a3.id),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1, a2),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1, a2, a3),
             ):
             for col in cols:
                 admin = self.app_admin.get_related_admin(col.class_)
@@ -1213,6 +1214,16 @@ class ListFilterCase(TestMetaData):
                 with self.assertRaises(AssertionError) as exc:
                     filter_strategy.get_clause(admin, self.session, list_filter.Operator.eq)
                 self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.nr_operands_arity_mismatch.value.format(0, 1, 1))
+
+                # Verify that for each operator of the filter strategy its search clause is constructed properly:
+                search_clause = filter_strategy.get_search_clause(search_text, admin, self.session)
+                # Verify that the search clause equals a general filter clause with the strategy's search operator and the converted operand:
+                search_operator = filter_strategy.get_search_operator()
+                operands = values[0:search_operator.arity.maximum-1] if search_operator.arity.maximum is not None else values
+                filter_clause = filter_strategy.get_clause(admin, self.session, search_operator, operands[0])
+                if str(search_clause) != str(filter_clause):
+                    filter_clause = filter_strategy.get_clause(admin, self.session, search_operator, operands[0])
+                self.assertEqual(str(search_clause), str(filter_clause))
 
         # Check assertion on python type mismatch:
         with self.assertRaises(AssertionError) as exc:
