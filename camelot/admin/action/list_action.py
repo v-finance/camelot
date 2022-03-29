@@ -1038,6 +1038,7 @@ class SetFilters(Action, AbstractModelFilter):
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
 
+        filter_values = model_context.proxy.get_filter(self) or {}
         if mode == '__clear':
             new_filter_values = {}
         elif mode is None:
@@ -1045,7 +1046,6 @@ class SetFilters(Action, AbstractModelFilter):
         else:
             from camelot.admin.action.list_filter import Operator, Many2OneFilter, One2ManyFilter
             operator_name, filter_field_name = mode.split('-')
-            filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
             filter_field_strategy = filter_strategy.get_field_strategy()
