@@ -1072,7 +1072,7 @@ class SetFilters(Action, AbstractModelFilter):
                 else:
                     yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_field_strategy.get_verbose_name()))
 
-            operands = [filter_field_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_operands()]
+            operands = filter_value.get_operands()
             new_filter_values = {k:v for k,v in filter_values.items()}
             new_filter_values[filter_field_name] = (filter_value.operator, *operands)
 
