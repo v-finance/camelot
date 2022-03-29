@@ -128,8 +128,10 @@ class RowModelContext(ListActionModelContext):
     def get_object( self ):
         return self.obj
 
-                 
-class CollectionProxy(QtGui.QStandardItemModel):
+# CollectionProxy subclasses ApplicationActionGuiContext to be able to behave
+# as a gui_context when running field actions.  To be removed later on.
+
+class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
     :class:`QtWidgets.QTableView`  
@@ -152,6 +154,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         :param admin_route: the route to the view to display
         """
         super(CollectionProxy, self).__init__()
+        ApplicationActionGuiContext.__init__(self)
         assert object_thread(self)
         assert isinstance(max_number_of_rows, int)
         assert isinstance(admin_route, tuple)
@@ -171,7 +174,6 @@ class CollectionProxy(QtGui.QStandardItemModel):
             16 + 10, self._vertical_header_height
         )
         self._max_number_of_rows = max_number_of_rows
-        self._mode_name = None
         self._model_context = None
         self._model_thread = get_model_thread()
         self._action_routes = []
@@ -302,10 +304,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 model_context, request_id, request, mode = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
                 # dirty hack to get mode to the action runner
-                self._mode_name = mode
+                self.mode_name = mode
                 runner = ActionRunner(request.model_run, self)
                 runner.exec()
-                self._mode_name = None
+                self.mode_name = None
                 # end of dirty hack
 
     def _start_timer(self):
@@ -375,17 +377,15 @@ class CollectionProxy(QtGui.QStandardItemModel):
         pass
 
     def get_window(self):
-        return QtCore.QObject.parent(self).window()
+        parent = QtCore.QObject.parent(self)
+        if parent is not None:
+            return parent.window()
 
     def copy(self, base_class=None):
-        new_gui_context = ApplicationActionGuiContext()
-        if base_class is None:
-            return new_gui_context
-        return new_gui_context.copy(base_class)
+        return super().copy(
+            base_class=base_class or ApplicationActionGuiContext
+        )
 
-    @property
-    def mode_name(self):
-        return self._mode_name
     # End of methods to behave like a GuiContext. 
     
     def refresh(self):
@@ -529,9 +529,16 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.SizeHintRole:
-            item = self.verticalHeaderItem(section)
+            item = self.horizontalHeaderItem(section)
             if item is not None:
                 item.setData(value.width(), role)
+                field_name = item.data(Qt.ItemDataRole.UserRole)
+                width = value.width()
+                self.settings.beginGroup('column_width')
+                self.settings.beginGroup('0')
+                self.settings.setValue(field_name, width)
+                self.settings.endGroup()
+                self.settings.endGroup()
         return super(CollectionProxy, self).setHeaderData(section, orientation, value, role)
     
     def headerData( self, section, orientation, role ):
