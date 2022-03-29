@@ -30,9 +30,10 @@ from __future__ import annotations
 
 import logging
 import typing
-from enum import Enum
 
+from enum import Enum
 from dataclasses import dataclass, field
+from typing import Any
 
 from ...admin.icon import Icon
 from ...core.qt import QtWidgets, QtGui, transferto

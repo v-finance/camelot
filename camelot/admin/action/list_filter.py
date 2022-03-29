@@ -31,7 +31,6 @@
 Actions to filter table views
 """
 import collections
-import copy
 import datetime
 import decimal
 import enum
@@ -48,13 +47,10 @@ from sqlalchemy import orm, sql
 from sqlalchemy.sql.operators import between_op
 
 from ...core.utils import ugettext, ugettext_lazy as _
-from ...core.item_model import PreviewRole
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import Qt, QtGui
-from ...view.utils import locale
+from ...core.qt import QtGui
 
 from .base import Action, Mode, RenderHint
-from .field_action import FieldActionModelContext
 
 arity = collections.namedtuple('arity', ('minimum', 'maximum'))
 
