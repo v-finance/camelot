@@ -1070,6 +1070,12 @@ class SetFilters(Action, AbstractModelFilter):
                     filter_value.set_operands(*objects)
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
                 else:
+                    # In case there was already an active filter present for the same field and operator,
+                    # set the active operands as the default filter values for the user to manipulate:
+                    if filter_field_name in filter_values:
+                        (existing_operator, *existing_operands) = filter_values[filter_field_name]
+                        if existing_operator == filter_operator:
+                            filter_value.set_operands(*existing_operands)
                     yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_field_strategy.get_verbose_name()))
 
             operands = filter_value.get_operands()
