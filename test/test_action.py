@@ -1152,25 +1152,25 @@ class ListFilterCase(TestMetaData):
             text_col='', bool_col=False, date_col=datetime.date.today(), time_col=datetime.time(21, 5, 0),
             int_col=1000, months_col=12, enum_col='Test', many2one_col=b
         )
-        A(**a_defaults)
-        A(**a_defaults)
-        A(**a_defaults)
+        a1 = A(**a_defaults)
+        a2 = A(**a_defaults)
+        a3 = A(**a_defaults)
         self.session.flush()
 
         for cols, strategy_cls, *values in (
             ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test'),
-            ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,     'True'),
-            ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,     '2020-01-01', '2022-01-01'),
-            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '2020-01-01', '2022-01-01'),
-            ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',       '5000'),
-            ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',         '24'),
+            ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,      True),
+            ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,      datetime.date(2020,1,1), datetime.date(2022,1,1)),
+            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,      datetime.datetime(2020,1,1), datetime.datetime(2022,1,1)),
+            ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,       1000, 5000),
+            ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,    12, 24),
             ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test'),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1'),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2'),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2', '3'),
-            ([B.one2many_col],                      list_filter.One2ManyFilter, '1'),
-            ([B.one2many_col],                      list_filter.One2ManyFilter, '1', '2'),
-            ([B.one2many_col],                      list_filter.One2ManyFilter, '1', '2', '3'),
+            ([A.many2one_col],                      list_filter.Many2OneFilter,  a1.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter,  a1.id, a2.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter,  a1.id, a2.id, a3.id),
+            ([B.one2many_col],                      list_filter.One2ManyFilter,  a1),
+            ([B.one2many_col],                      list_filter.One2ManyFilter,  a1, a2),
+            ([B.one2many_col],                      list_filter.One2ManyFilter,  a1, a2, a3),
             ):
             for col in cols:
                 admin = self.app_admin.get_related_admin(col.class_)
