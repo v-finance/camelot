@@ -37,7 +37,7 @@ import enum
 import functools
 import operator
 
-from camelot.core.orm import Entity
+from camelot.core.orm import Entity, EntityBase
 from camelot.core.sql import ilike_op, in_op, is_none, is_not_none
 from camelot.view import utils
 
@@ -199,12 +199,18 @@ class AbstractFilterStrategy(object):
 
     def get_search_clause(self, text, admin, session):
         """
-        Return a search filter clause for the given search text, within the given admin and session.
-        This method is a shortcut for and equivalent to using the get_clause method with this strategy's search operator.
+        Return a search filter clause for the given search text, within the given admin and session, if the search is applicable for this strategy.
+        This method is a shortcut for and equivalent to using the get_clause method with this strategy's search operator,
+        and the corresponding operand converted from the given search text.
+        If the conversion from string fails for this strategy, the resulting clause will be undefined.
         :param admin: The entity admin that will use the resulting search clause as part of its search query.
         :param session: The session in which the search query takes place.
         """
-        return self.get_clause(admin, session, self.get_search_operator(), text)
+        try:
+            operand = self.from_string(admin, session, text)
+        except utils.ParsingError:
+            return
+        return self.get_clause(admin, session, self.get_search_operator(), operand)
 
     def from_string(self, admin, session, operand):
         """
@@ -320,15 +326,9 @@ class FieldFilter(AbstractFilterStrategy):
         """
         self.assert_operands(operator, *operands)
         field_attributes = admin.get_field_attributes(self.key)
-        field_operands = []
-        try:
-            for operand in operands:
-                field_operands.append(self.from_string(admin, session, operand))
-        except utils.ParsingError:
-            return
         attribute_clauses = []
         for attribute in self.attributes:
-            attribute_clause = self.get_attribute_clause(field_attributes, attribute, operator, *field_operands)
+            attribute_clause = self.get_attribute_clause(field_attributes, attribute, operator, *operands)
             if attribute_clause is not None:
                 where_conditions = []
                 if operator.pre_condition is not None:
@@ -411,7 +411,6 @@ class RelatedFilter(AbstractFilterStrategy):
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
         self.assert_operands(operator, *operands)
-        operands = [self.from_string(admin, session, op) for op in operands]
         related_query = self.get_related_query(admin, session)
 
         field_filter_clauses = []
@@ -562,9 +561,6 @@ class ChoicesFilter(FieldFilter):
         super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level)
         self.choices = field_attributes.get('choices')
 
-    def from_string(self, admin, session, operand):
-        return operand
-
 class MonthsFilter(IntFilter):
 
     name = 'months_filter'
@@ -620,6 +616,8 @@ class One2ManyFilter(RelatedFilter):
         Convert the given stringified primary key operand value to query and return the corresponding entity instance.
         This will allow the field operand extraction to get the appropriate field filter operands.
         """
+        if isinstance(operand, EntityBase):
+            return operand
         return session.query(self.entity).get(operand)
 
     def field_operand(self, admin, field_strategy, operand):
