@@ -206,6 +206,15 @@ class AbstractFilterStrategy(object):
         """
         return self.get_clause(admin, session, self.get_search_operator(), text)
 
+    def from_string(self, admin, session, operand):
+        """
+        Turn the given stringified operand into its original value.
+        By default, the conversion of stringified None values is supported.
+        """
+        if operand in ('None', 'none'):
+            return None
+        return operand
+
     def get_operators(self):
         """
         Return the list of operators that are available for this filter strategy instance.
@@ -311,9 +320,15 @@ class FieldFilter(AbstractFilterStrategy):
         """
         self.assert_operands(operator, *operands)
         field_attributes = admin.get_field_attributes(self.key)
+        field_operands = []
+        try:
+            for operand in operands:
+                field_operands.append(self.from_string(admin, session, operand))
+        except utils.ParsingError:
+            return
         attribute_clauses = []
         for attribute in self.attributes:
-            attribute_clause = self.get_attribute_clause(field_attributes, attribute, operator, *operands)
+            attribute_clause = self.get_attribute_clause(field_attributes, attribute, operator, *field_operands)
             if attribute_clause is not None:
                 where_conditions = []
                 if operator.pre_condition is not None:
@@ -335,6 +350,13 @@ class FieldFilter(AbstractFilterStrategy):
         """
         assert attribute in self.attributes
         return operator.operator(attribute, *operands)
+
+    def from_string(self, admin, session, operand):
+        if isinstance(operand, self.python_type):
+            return operand
+        operand = super().from_string(admin, session, operand)
+        field_attributes = admin.get_field_attributes(self.attribute.key)
+        return field_attributes.get('from_string', self.__class__._default_from_string)(operand)
 
 class RelatedFilter(AbstractFilterStrategy):
     """
@@ -389,6 +411,7 @@ class RelatedFilter(AbstractFilterStrategy):
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
         self.assert_operands(operator, *operands)
+        operands = [self.from_string(admin, session, op) for op in operands]
         related_query = self.get_related_query(admin, session)
 
         field_filter_clauses = []
@@ -539,6 +562,9 @@ class ChoicesFilter(FieldFilter):
         super().__init__(*attributes, where=where, key=key, verbose_name=verbose_name, priority_level=priority_level)
         self.choices = field_attributes.get('choices')
 
+    def from_string(self, admin, session, operand):
+        return operand
+
 class MonthsFilter(IntFilter):
 
     name = 'months_filter'
@@ -588,6 +614,13 @@ class One2ManyFilter(RelatedFilter):
                          verbose_name=(verbose_name or field_attributes.get('name')),
                          priority_level=priority_level,
                          **field_attributes)
+
+    def from_string(self, admin, session, operand):
+        """
+        Convert the given stringified primary key operand value to query and return the corresponding entity instance.
+        This will allow the field operand extraction to get the appropriate field filter operands.
+        """
+        return session.query(self.entity).get(operand)
 
     def field_operand(self, admin, field_strategy, operand):
         """
