@@ -903,7 +903,7 @@ class GroupBoxFilter(Filter):
     name = 'group_box_filter'
 
     def __init__(self, *attributes, default=All, verbose_name=None, exclusive=True, joins=[], where=None):
-        super().__init__(*attributes, default=DecimalFilter, verbose_name=verbose_name, joins=joins, where=where)
+        super().__init__(*attributes, default=default, verbose_name=verbose_name, joins=joins, where=where)
         self.exclusive = exclusive
         self.render_hint = RenderHint.EXCLUSIVE_GROUP_BOX if exclusive else RenderHint.NON_EXCLUSIVE_GROUP_BOX
 
