@@ -1080,7 +1080,7 @@ class SetFilters(Action, AbstractModelFilter):
 
             operands = filter_value.get_operands()
             new_filter_values = {k:v for k,v in filter_values.items()}
-            new_filter_values[filter_field_name] = (filter_value.operator, *operands)
+            new_filter_values[filter_field_name] = (filter_field_strategy, filter_value.operator, *operands)
 
         if filter_values != new_filter_values:
             model_context.proxy.filter(self, new_filter_values)
@@ -1094,13 +1094,12 @@ class SetFilters(Action, AbstractModelFilter):
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         clauses = []
-        for name, (operator, *operands) in values.items():
-            filter_strategy = self.admin.get_field_filters().get(name)
+        for name, (filter_strategy, operator, *operands) in values.items():
             filter_clause = filter_strategy.get_clause(query, operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
         return query.filter(*clauses)
-    
+
     def _get_state(self, model_context, filter_value):
         state = super(SetFilters, self).get_state(model_context)
         state.modes = modes = []
@@ -1109,13 +1108,12 @@ class SetFilters(Action, AbstractModelFilter):
         # Only show clear filter mode if any filters are active
         if len(filter_value):
             modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
-        selected_mode_names = [op.name + '-' + field for field, (op, *_) in filter_value.items()]
+        selected_mode_names = [op.name + '-' + field for field, (_, op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
             for op in filter_strategy.get_operators():
                 mode_name = op.name + '-' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
                 modes.append(Mode(mode_name, '{} {}'.format(filter_strategy.get_verbose_name(), op.verbose_name), icon=icon))
-        self.admin = model_context.admin
         return state
 
     def get_state(self, model_context):
