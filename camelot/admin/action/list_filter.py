@@ -641,7 +641,7 @@ class One2ManyFilter(RelatedFilter):
         Convert the given stringified primary key operand value to query and return the corresponding entity instance.
         This will allow the field operand extraction to get the appropriate field filter operands.
         """
-        if isinstance(operand, EntityBase):
+        if isinstance(operand, self.entity):
             return operand
         session = query.session
         return session.query(self.entity).get(operand)
@@ -767,7 +767,7 @@ class Filter(Action):
         return field_filter_strategy
 
     def get_name(self):
-        return '{}_{}'.format(self.name, self.attribute)
+        return '{}_{}'.format(self.name, self.attribute.key)
 
     def gui_run(self, gui_context, value):
         model = gui_context.get_item_model()
