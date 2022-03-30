@@ -443,7 +443,7 @@ class RelatedSearch(RelatedFilter):
     RelatedFilter strategy for defining a filter clause as part of an entity admin's search query on fields of one of its related entities.
     As this strategy is meant for decorating a search query, the operators used by this RelatedFilter strategy are configured as such:
       * search operator:  as the field operands are text-based subsets of the values to be matched, the search operator is set to be the `Operator.like` operator.
-      * connecttive operator: as it concerns a search query, the logical connective operator for connecting the underlying field strategies' clauses is set to be the `Operator.or_` operator.
+      * connective operator: as it concerns a search query, the logical connective operator for connecting the underlying field strategies' clauses is set to be the `Operator.or_` operator.
     """
     connective_operator = Operator.or_
 
@@ -463,6 +463,9 @@ class NoFilter(FieldFilter):
 
     def get_verbose_name(self):
         return None
+
+    def from_string(self, admin, session, operand):
+        return operand
 
 class StringFilter(FieldFilter):
 
