@@ -213,7 +213,7 @@ class AbstractFilterStrategy(object):
             return
         return self.get_clause(query, self.get_search_operator(), operand)
 
-    def from_string(self, admin, session, operand):
+    def from_string(self, query, operand):
         """
         Turn the given stringified operand into its original value.
         By default, the conversion of stringified None values is supported.
@@ -277,6 +277,7 @@ class FieldFilter(AbstractFilterStrategy):
         self.connective_operator = connective_operator
         nullable = field_attributes.get('nullable')
         self.nullable = nullable if isinstance(nullable, bool) else True
+        self._from_string = field_attributes.get('from_string')
 
     @property
     def attribute(self):
@@ -350,12 +351,11 @@ class FieldFilter(AbstractFilterStrategy):
         assert attribute in self.attributes
         return operator.operator(attribute, *operands)
 
-    def from_string(self, admin, session, operand):
+    def from_string(self, query, operand):
         if isinstance(operand, self.python_type):
             return operand
-        operand = super().from_string(admin, session, operand)
-        field_attributes = admin.get_field_attributes(self.attribute.key)
-        return field_attributes.get('from_string', self.__class__._default_from_string)(operand)
+        operand = super().from_string(query, operand)
+        return (self._from_string or self.__class__._default_from_string)(operand)
 
 class RelatedFilter(AbstractFilterStrategy):
     """
@@ -465,7 +465,7 @@ class NoFilter(FieldFilter):
     def get_verbose_name(self):
         return None
 
-    def from_string(self, admin, session, operand):
+    def from_string(self, query, operand):
         return operand
 
 class StringFilter(FieldFilter):
@@ -615,13 +615,14 @@ class One2ManyFilter(RelatedFilter):
                          priority_level=priority_level,
                          **field_attributes)
 
-    def from_string(self, admin, session, operand):
+    def from_string(self, query, operand):
         """
         Convert the given stringified primary key operand value to query and return the corresponding entity instance.
         This will allow the field operand extraction to get the appropriate field filter operands.
         """
         if isinstance(operand, EntityBase):
             return operand
+        session = query.session
         return session.query(self.entity).get(operand)
 
     def field_operand(self, field_strategy, operand):

@@ -821,7 +821,7 @@ be specified using the verbose_name attribute.
             field_attributes['filter_strategy'] = filter_strategy(attribute, **field_attributes)
         search_strategy = field_attributes['search_strategy']
         if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.AbstractFilterStrategy):
-            field_attributes['search_strategy'] = search_strategy(attribute)
+            field_attributes['search_strategy'] = search_strategy(attribute, **field_attributes)
 
     def _get_entity_descriptor(self, field_name):
         return getattr(self.entity, field_name, None)
