@@ -777,14 +777,14 @@ class Filter(Action):
     def get_operator(self, values):
         return Operator.in_ if values else Operator.is_empty
 
-    def get_operands(self, values):
+    def get_operands(self, query, values):
         return values
 
     def decorate_query(self, query, values):
         if All in values:
             return query
         operator = self.get_operator(values)
-        operands = self.get_operands(values)
+        operands = self.get_operands(query, values)
         filter_clause = self.filter_strategy.get_clause(query, operator, *operands)
         return query.filter(filter_clause)
 
