@@ -1175,6 +1175,7 @@ class ListFilterCase(TestMetaData):
             ):
             for col in cols:
                 admin = self.app_admin.get_related_admin(col.class_)
+                query = admin.get_query()
                 # Verify expected filter strategy is set:
                 fa = admin.get_field_attributes(col.key)
                 self.assertIsInstance( fa['filter_strategy'], strategy_cls)
@@ -1208,21 +1209,21 @@ class ListFilterCase(TestMetaData):
                 # Verify that for each operator of the filter strategy its clause is constructed properly:
                 for operator in operators:
                     operands = values[0:operator.arity.maximum-1] if operator.arity.maximum is not None else values
-                    filter_strategy.get_clause(admin, self.session, operator, *operands)
+                    filter_strategy.get_clause(query, operator, *operands)
 
                 # Verify assertion on operands arity mismatch
                 with self.assertRaises(AssertionError) as exc:
-                    filter_strategy.get_clause(admin, self.session, list_filter.Operator.eq)
+                    filter_strategy.get_clause(query, list_filter.Operator.eq)
                 self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.nr_operands_arity_mismatch.value.format(0, 1, 1))
 
                 # Verify that for each operator of the filter strategy its search clause is constructed properly:
-                search_clause = filter_strategy.get_search_clause(search_text, admin, self.session)
+                search_clause = filter_strategy.get_search_clause(query, search_text)
                 # Verify that the search clause equals a general filter clause with the strategy's search operator and the converted operand:
                 search_operator = filter_strategy.get_search_operator()
                 operands = values[0:search_operator.arity.maximum-1] if search_operator.arity.maximum is not None else values
-                filter_clause = filter_strategy.get_clause(admin, self.session, search_operator, operands[0])
+                filter_clause = filter_strategy.get_clause(query, search_operator, operands[0])
                 if str(search_clause) != str(filter_clause):
-                    filter_clause = filter_strategy.get_clause(admin, self.session, search_operator, operands[0])
+                    filter_clause = filter_strategy.get_clause(query, search_operator, operands[0])
                 self.assertEqual(str(search_clause), str(filter_clause))
 
         # Check assertion on python type mismatch:
