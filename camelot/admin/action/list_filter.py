@@ -734,7 +734,6 @@ class Filter(Action):
         self.default = default
         self.verbose_name = verbose_name
         self.exclusive = True
-        self.attributes = None
         self.filter_names = []
 
     def get_strategy(self, *attributes):
@@ -772,19 +771,18 @@ class Filter(Action):
         state = super(Filter, self).get_state(model_context)
         session = model_context.session
         entity = model_context.admin.entity
-        self.admin = model_context.admin
-        self.attributes = self.admin.get_field_attributes(self.attribute.key)
-        self.filter_names.append(self.attributes['name'])
+        attributes = model_context.admin.get_field_attributes(self.attribute.key)
+        self.filter_names.append(attributes['name'])
         query = session.query(self.attribute).select_from(entity)
         query = query.distinct()
 
         modes = list()
         for value in query:
-            if 'to_string' in self.attributes:
-                verbose_name = self.attributes['to_string'](value[0])
+            if 'to_string' in attributes:
+                verbose_name = attributes['to_string'](value[0])
             else:
                 verbose_name = value[0]
-            if self.attributes.get('translate_content', False):
+            if attributes.get('translate_content', False):
                 verbose_name = ugettext(verbose_name)
             mode = FilterMode(value=value[0],
                               verbose_name=verbose_name,
