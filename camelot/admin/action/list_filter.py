@@ -184,7 +184,7 @@ class AbstractFilterStrategy(object):
         assert isinstance(priority_level, PriorityLevel)
         self._key = key
         self.where = where
-        self._verbose_name = verbose_name
+        self._verbose_name = verbose_name or field_attributes.get('name')
         self.priority_level = priority_level
 
     def get_clause(self, query, operator, *operands):
