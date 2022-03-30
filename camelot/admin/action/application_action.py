@@ -352,6 +352,7 @@ class ShowAbout(Action):
             text = about,
             title = ugettext('About'),
             standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok],
+            hide_progress=True
         )
 
 class Backup( Action ):
