@@ -591,6 +591,14 @@ class Many2OneFilter(IntFilter):
         self.entity = attribute.prop.entity.entity
         self.admin = field_attributes.get('admin')
 
+    def get_clause(self, query, operator, *operands):
+        # Both primary key integer operands as entity instances are supported.
+        if not all([isinstance(operand, self.python_type) for operand in operands]):
+            # In case the operands are not all integers, they should be entities that need converting to their primary keys:
+            assert all([isinstance(operand, self.entity) for operand in operands]), self.AssertionMessage.invalid_target_entity_instance.value.format(self.entity)
+            operands = [op.id for op in operands]
+        return super().get_clause(query, operator, *operands)
+
 class One2ManyFilter(RelatedFilter):
     """
     Specialized RelatedFilter strategy that expects a one2many relationship attribute which

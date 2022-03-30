@@ -1146,15 +1146,17 @@ class ListFilterCase(TestMetaData):
 
         self.create_all()
         # Create entity instance to be able to test Many2One and One2Many filter strategies.
-        b = B()
+        b1 = B()
+        b2 = B()
+        b3 = B()
         self.session.flush()
         a_defaults = dict(
             text_col='', bool_col=False, date_col=datetime.date.today(), time_col=datetime.time(21, 5, 0),
-            int_col=1000, months_col=12, enum_col='Test', many2one_col=b
+            int_col=1000, months_col=12, enum_col='Test'
         )
-        a1 = A(**a_defaults)
-        a2 = A(**a_defaults)
-        a3 = A(**a_defaults)
+        a1 = A(**a_defaults, many2one_col=b1)
+        a2 = A(**a_defaults, many2one_col=b2)
+        a3 = A(**a_defaults, many2one_col=b3)
         self.session.flush()
 
         # Verify strategies accept both the 'raw' operands, as well as their textual representation (used when searching).
@@ -1166,9 +1168,12 @@ class ListFilterCase(TestMetaData):
             ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',        1000, 5000),
             ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',          12, 24),
             ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test',       'Test'),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           a1.id),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           a1.id, a2.id),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           a1.id, a2.id, a3.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1.id, b2.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1.id, b2.id, b3.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1, b2),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1, b2, b3),
             ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1),
             ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1, a2),
             ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1, a2, a3),
