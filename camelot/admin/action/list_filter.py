@@ -189,27 +189,29 @@ class AbstractFilterStrategy(object):
 
     def get_clause(self, query, operator, *operands):
         """
-        Construct a filter clause for the given query based on the given filter operator and operands.
+        Construct a filter clause for the given query based on the given filter operator and operands, if applicable for this strategy.
+
         :param query: the query the filter clause should be constructed for (and could be applied on if desired).
         :param operator: a `camelot.admin.action.list_filter.Operator` instance that defines which operator to use in the column based expression(s) of the resulting filter clause.
         :param operands: the filter values that are used as the operands for the given operator to filter by.
         """
         raise NotImplementedError
 
-    def get_search_clause(self, text, admin, session):
+    def get_search_clause(self, query, text):
         """
-        Return a search filter clause for the given search text, within the given admin and session, if the search is applicable for this strategy.
-        This method is a shortcut for and equivalent to using the get_clause method with this strategy's search operator,
+        Constracut a search filter clause for the given query based on the given search text, if the search is applicable for this strategy.
+        This method is a shortcut for (and equivalent to using) the get_clause method with this strategy's search operator,
         and the corresponding operand converted from the given search text.
-        If the conversion from string fails for this strategy, the resulting clause will be undefined.
+        If the from-string-conversion for this strategy fails, the resulting clause will be undefined.
+
         :param admin: The entity admin that will use the resulting search clause as part of its search query.
         :param session: The session in which the search query takes place.
         """
         try:
-            operand = self.from_string(admin, session, text)
+            operand = self.from_string(query, text)
         except utils.ParsingError:
             return
-        return self.get_clause(admin, session, self.get_search_operator(), operand)
+        return self.get_clause(query, self.get_search_operator(), operand)
 
     def from_string(self, admin, session, operand):
         """
