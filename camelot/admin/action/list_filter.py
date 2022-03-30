@@ -393,7 +393,7 @@ class RelatedFilter(AbstractFilterStrategy):
         for field_strategy in self.field_filters:
             return field_strategy.get_search_operator()
 
-    def get_related_query(self, query):
+    def get_related_query(self, query, field_filter_clauses=[]):
         session = query.session
         entity = query._mapper_zero().entity
         related_query = session.query(entity.id)
@@ -401,6 +401,9 @@ class RelatedFilter(AbstractFilterStrategy):
             related_query = related_query.join(join)
         if self.where is not None:
             related_query = related_query.filter(self.where)
+        if field_filter_clauses:
+            related_query = related_query.filter(self.connective_operator.operator(*field_filter_clauses))
+        related_query = related_query.subquery()
         return related_query
 
     def get_clause(self, query, operator, *operands):
@@ -413,7 +416,6 @@ class RelatedFilter(AbstractFilterStrategy):
         """
         self.assert_operands(operator, *operands)
         entity = query._mapper_zero().entity
-        related_query = self.get_related_query(query)
 
         field_filter_clauses = []
         for field_strategy in self.field_filters:
@@ -421,15 +423,26 @@ class RelatedFilter(AbstractFilterStrategy):
             for operand in operands:
                 field_operand = self.field_operand(field_strategy, operand)
                 field_operands.append(field_operand)
-            field_filter_clause = field_strategy.get_clause(related_query, operator, *field_operands)
+            field_filter_clause = field_strategy.get_clause(query, operator, *field_operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
-                
+
         if field_filter_clauses:
-            related_query = related_query.filter(self.connective_operator.operator(*field_filter_clauses))
-            related_query = related_query.subquery()
-            filter_clause = entity.id.in_(related_query)
-            return filter_clause
+            related_query = self.get_related_query(query, field_filter_clauses)
+            return entity.id.in_(related_query)
+
+    def get_search_clause(self, query, text):
+        entity = query._mapper_zero().entity
+
+        field_filter_clauses = []
+        for field_strategy in self.field_filters:
+            field_filter_clause = field_strategy.get_search_clause(query, text)
+            if field_filter_clause is not None:
+                field_filter_clauses.append(field_filter_clause)
+
+        if field_filter_clauses:
+            related_query = self.get_related_query(query, field_filter_clauses)
+            return entity.id.in_(related_query)
 
     def field_operand(self, field_strategy, operand):
         """
@@ -648,7 +661,6 @@ class One2ManyFilter(RelatedFilter):
         if operator in (Operator.is_empty, Operator.is_not_empty):
             entity = query._mapper_zero().entity
             related_query = self.get_related_query(query)
-            related_query = related_query.subquery()
             if operator == Operator.is_empty:
                 return entity.id.notin_(related_query)
             else:
