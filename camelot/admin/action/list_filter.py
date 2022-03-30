@@ -318,9 +318,9 @@ class FieldFilter(AbstractFilterStrategy):
         """
         return self.search_operator
 
-    def get_clause(self, admin, session, operator, *operands):
+    def get_clause(self, query, operator, *operands):
         """
-        Construct a filter clause for the given filter operator and operands, within the given admin and session.
+        Construct a filter clause for the given query based on the filter operator and operand.
         The resulting clause will consists of a connective between field type clauses for each of this field strategy's attributes,
         expanded with conditions on the attributes being set (None check) and the optionally set where conditions.
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
@@ -393,46 +393,48 @@ class RelatedFilter(AbstractFilterStrategy):
         for field_strategy in self.field_filters:
             return field_strategy.get_search_operator()
 
-    def get_related_query(self, admin, session):
-        related_query = session.query(admin.entity.id)
+    def get_related_query(self, query):
+        session = query.session
+        entity = query._mapper_zero().entity
+        related_query = session.query(entity.id)
         for join in self.joins:
             related_query = related_query.join(join)
         if self.where is not None:
             related_query = related_query.filter(self.where)
         return related_query
 
-    def get_clause(self, admin, session, operator, *operands):
+    def get_clause(self, query, operator, *operands):
         """
-        Construct a filter clause for the given filter operator and value, within the given admin and session.
-        The resulting clause will consists of a check on the admin's entity's id being present in a related subquery.
+        Construct a filter clause for the given query based on a provided filter operator and operands.
+        The resulting clause will consists of a check on the query base entity's id being present in a related subquery.
         That subquery will use the this strategy's joins to join the entity with the related entity on which the set field filters are defined.
         The subquery is composed based on this related filter strategy's joins and where condition.
         :raises: An AssertionError in case number of provided operands does not correspond with the arity of the given operator.
         """
         self.assert_operands(operator, *operands)
-        related_query = self.get_related_query(admin, session)
+        entity = query._mapper_zero().entity
+        related_query = self.get_related_query(query)
 
         field_filter_clauses = []
         for field_strategy in self.field_filters:
-            related_admin = admin.get_related_admin(field_strategy.attribute.class_)
             field_operands = []
             for operand in operands:
-                field_operand = self.field_operand(related_admin, field_strategy, operand)
+                field_operand = self.field_operand(field_strategy, operand)
                 field_operands.append(field_operand)
-            field_filter_clause = field_strategy.get_clause(related_admin, session, operator, *field_operands)
+            field_filter_clause = field_strategy.get_clause(related_query, operator, *field_operands)
             if field_filter_clause is not None:
                 field_filter_clauses.append(field_filter_clause)
                 
         if field_filter_clauses:
             related_query = related_query.filter(self.connective_operator.operator(*field_filter_clauses))
             related_query = related_query.subquery()
-            filter_clause = admin.entity.id.in_(related_query)
+            filter_clause = entity.id.in_(related_query)
             return filter_clause
 
-    def field_operand(self, admin, field_strategy, operand):
+    def field_operand(self, field_strategy, operand):
         """
         Turn a operand value for this related filter strategy into the appropriate field operand value
-        for the given field strategy and related admin.
+        for the given field strategy.
         By default, no conversion is done, and the operand is shared between all underlying field strategies.
         """
         return operand
@@ -457,7 +459,7 @@ class NoFilter(FieldFilter):
     def assert_valid_attribute(cls, attribute):
         pass
 
-    def get_clause(self, admin, session, operator, *operands):
+    def get_clause(self, query, operator, *operands):
         return None
 
     def get_verbose_name(self):
@@ -622,7 +624,7 @@ class One2ManyFilter(RelatedFilter):
             return operand
         return session.query(self.entity).get(operand)
 
-    def field_operand(self, admin, field_strategy, operand):
+    def field_operand(self, field_strategy, operand):
         """
         Turn the given entity instance operand into the appropriate field operand value
         for the given field strategy using its instrumented attribute.
@@ -630,18 +632,19 @@ class One2ManyFilter(RelatedFilter):
         assert isinstance(operand, self.entity), self.AssertionMessage.invalid_target_entity_instance.value.format(self.entity)
         return field_strategy.attribute.__get__(operand, None)
 
-    def get_clause(self, admin, session, operator, *operands):
+    def get_clause(self, query, operator, *operands):
         # Explicity support for the is_empty and is_not_empty operators on the one2many relation.
         # In this case, the underlying field filters are not needed and the related query's join is enough.
         # So it suffices for the resulting clause to check if the entity's id is in the related query (or not).
         if operator in (Operator.is_empty, Operator.is_not_empty):
-            related_query = self.get_related_query(admin, session)
+            entity = query._mapper_zero().entity
+            related_query = self.get_related_query(query)
             related_query = related_query.subquery()
             if operator == Operator.is_empty:
-                return admin.entity.id.notin_(related_query)
+                return entity.id.notin_(related_query)
             else:
-                return admin.entity.id.in_(related_query)
-        return super().get_clause(admin, session, operator, *operands)
+                return entity.id.in_(related_query)
+        return super().get_clause(query, operator, *operands)
 
     def get_field_strategy(self):
         return self
@@ -758,7 +761,7 @@ class Filter(Action):
             return query
         operator = self.get_operator(values)
         operands = self.get_operands(values)
-        filter_clause = self.filter_strategy.get_clause(self.admin, query.session, operator, *operands)
+        filter_clause = self.filter_strategy.get_clause(query, operator, *operands)
         return query.filter(filter_clause)
 
     def get_state(self, model_context):

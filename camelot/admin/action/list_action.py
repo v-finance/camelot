@@ -1096,7 +1096,7 @@ class SetFilters(Action, AbstractModelFilter):
         clauses = []
         for name, (operator, *operands) in values.items():
             filter_strategy = self.admin.get_field_filters().get(name)
-            filter_clause = filter_strategy.get_clause(self.admin, query.session, operator, *operands)
+            filter_clause = filter_strategy.get_clause(query, operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
         return query.filter(*clauses)
