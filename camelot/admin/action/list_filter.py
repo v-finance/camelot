@@ -663,10 +663,12 @@ class SearchFilter(Action, AbstractModelFilter):
         state = Action.get_state(self, model_context)
         return state
 
-    def decorate_query(self, query, text):
-        if (text is None) or (len(text.strip())==0):
-            return query
-        return self.admin.decorate_search_query(query, text)
+    def decorate_query(self, query, value):
+        if value is not None:
+            admin, text = value
+            if text is not None and len(text.strip()) > 0:
+                return admin.decorate_search_query(query, text)
+        return query
 
     def gui_run(self, gui_context):
         # overload the action gui run to avoid a progress dialog
@@ -675,13 +677,15 @@ class SearchFilter(Action, AbstractModelFilter):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        # dirty : action requires admin as argument
-        self.admin = model_context.admin
-        value = mode
-        if (value is not None) and len(value) == 0:
+        text = mode
+        value = (model_context.admin, text)
+        if text is None or len(text) == 0:
             value = None
         old_value = model_context.proxy.get_filter(self)
         if old_value != value:
+            # Store admin in filter value as the search query decoration
+            # can be customized in concrete admins.
+            # TODO: move search query decoration out from admins.
             model_context.proxy.filter(self, value)
             yield action_steps.RefreshItemView()
 
