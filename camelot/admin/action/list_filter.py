@@ -37,7 +37,7 @@ import enum
 import functools
 import operator
 
-from camelot.core.orm import Entity, EntityBase
+from camelot.core.orm import Entity
 from camelot.core.sql import ilike_op, in_op, is_none, is_not_none
 from camelot.view import utils
 
