@@ -187,11 +187,10 @@ class AbstractFilterStrategy(object):
         self._verbose_name = verbose_name
         self.priority_level = priority_level
 
-    def get_clause(self, admin, session, operator, *operands):
+    def get_clause(self, query, operator, *operands):
         """
-        Construct a filter clause for the given filter operator and operands, within the given admin and session.
-        :param admin: The entity admin that will use the resulting search clause as part of its search query.
-        :param session: The session in which the search query takes place.
+        Construct a filter clause for the given query based on the given filter operator and operands.
+        :param query: the query the filter clause should be constructed for (and could be applied on if desired).
         :param operator: a `camelot.admin.action.list_filter.Operator` instance that defines which operator to use in the column based expression(s) of the resulting filter clause.
         :param operands: the filter values that are used as the operands for the given operator to filter by.
         """
