@@ -416,10 +416,9 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
-        self.admin = model_context.admin
-        self.attributes = self.admin.get_field_attributes(self.attribute.key)
+        attributes = model_context.admin.get_field_attributes(self.attribute.key)
         history_type = self.attribute.class_
-        history_admin = self.admin.get_related_admin(history_type)
+        history_admin = model_context.admin.get_related_admin(history_type)
         classification_fa = history_admin.get_field_attributes('classified_by')
 
         target = classification_fa.get('target')
@@ -450,5 +449,5 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
             modes.append(none_mode)
 
         state.modes = modes
-        state.verbose_name = self.attributes['name']
+        state.verbose_name = attributes['name']
         return state
