@@ -700,7 +700,7 @@ and used as a custom action.
         
         for search_field in self._get_search_fields(text):
             assert isinstance(search_field, list_filter.AbstractFilterStrategy)
-            arg = search_field.get_search_clause(text, self, query.session)
+            arg = search_field.get_search_clause(query, text)
             if arg is not None:
                 args.append(arg)
             

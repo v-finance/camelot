@@ -162,8 +162,8 @@ class AbstractActionWidget( object ):
                     submodes = []
                     for submode_data in mode_data['modes']:
                         submode_icon = Icon(submode_data['icon']['name'], submode_data['icon']['pixmap_size'], submode_data['icon']['color']) if submode_data['icon'] is not None else None
-                        submodes.append(Mode(submode_data['name'], submode_data['verbose_name'], submode_icon))
-                    mode = Mode(mode_data['name'], mode_data['verbose_name'], submode_icon, submodes)
+                        submodes.append(Mode(submode_data['value'], submode_data['verbose_name'], submode_icon))
+                    mode = Mode(mode_data['value'], mode_data['verbose_name'], submode_icon, submodes)
                     mode_menu = mode.render(menu)
                     for submode in mode.modes:
                         submode_action = submode.render(mode_menu)
@@ -172,7 +172,7 @@ class AbstractActionWidget( object ):
                         submode_action.setProperty('action_route', widget.property('action_route'))
                         mode_menu.addAction(submode_action)
                 else:
-                    mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
+                    mode = Mode(mode_data['value'], mode_data['verbose_name'], icon)
                     mode_action = mode.render(menu)
                     if slot is not None:
                         mode_action.triggered.connect(slot)

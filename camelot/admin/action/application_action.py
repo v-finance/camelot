@@ -33,11 +33,11 @@ import os
 
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
-from ..admin_route import AdminRoute
 from .base import RenderHint
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
+from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
@@ -124,7 +124,7 @@ class ApplicationActionGuiContext( GuiContext ):
 
     def create_model_context(self):
         context = super(ApplicationActionGuiContext, self).create_model_context()
-        context.admin = AdminRoute.admin_for(self.admin_route)
+        context.admin = initial_naming_context.resolve(self.admin_route)
         # todo : action routes should be translated to actions here
         context.actions = list(self.action_routes.keys())
         return context

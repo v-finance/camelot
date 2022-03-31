@@ -56,7 +56,7 @@ from ...admin.action.application_action import ApplicationActionGuiContext
 from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.form_action import FormActionModelContext
-from ...admin.admin_route import AdminRoute
+from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
@@ -128,8 +128,10 @@ class RowModelContext(ListActionModelContext):
     def get_object( self ):
         return self.obj
 
-                 
-class CollectionProxy(QtGui.QStandardItemModel):
+# CollectionProxy subclasses ApplicationActionGuiContext to be able to behave
+# as a gui_context when running field actions.  To be removed later on.
+
+class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
     :class:`QtWidgets.QTableView`  
@@ -152,6 +154,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         :param admin_route: the route to the view to display
         """
         super(CollectionProxy, self).__init__()
+        ApplicationActionGuiContext.__init__(self)
         assert object_thread(self)
         assert isinstance(max_number_of_rows, int)
         assert isinstance(admin_route, tuple)
@@ -171,7 +174,6 @@ class CollectionProxy(QtGui.QStandardItemModel):
             16 + 10, self._vertical_header_height
         )
         self._max_number_of_rows = max_number_of_rows
-        self._mode_name = None
         self._model_context = None
         self._model_thread = get_model_thread()
         self._action_routes = []
@@ -302,10 +304,10 @@ class CollectionProxy(QtGui.QStandardItemModel):
                 model_context, request_id, request, mode = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
                 # dirty hack to get mode to the action runner
-                self._mode_name = mode
+                self.mode_name = mode
                 runner = ActionRunner(request.model_run, self)
                 runner.exec()
-                self._mode_name = None
+                self.mode_name = None
                 # end of dirty hack
 
     def _start_timer(self):
@@ -345,7 +347,6 @@ class CollectionProxy(QtGui.QStandardItemModel):
     # end of timer functions
     #
 
-
     @QtCore.qt_slot(int)
     def _refresh_content(self, rows ):
         assert object_thread( self )
@@ -376,17 +377,15 @@ class CollectionProxy(QtGui.QStandardItemModel):
         pass
 
     def get_window(self):
-        return QtCore.QObject.parent(self).window()
+        parent = QtCore.QObject.parent(self)
+        if parent is not None:
+            return parent.window()
 
     def copy(self, base_class=None):
-        new_gui_context = ApplicationActionGuiContext()
-        if base_class is None:
-            return new_gui_context
-        return new_gui_context.copy(base_class)
+        return super().copy(
+            base_class=base_class or ApplicationActionGuiContext
+        )
 
-    @property
-    def mode_name(self):
-        return self._mode_name
     # End of methods to behave like a GuiContext. 
     
     def refresh(self):
@@ -431,7 +430,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
         """
         self.logger.debug('set_value called')
         model_context = RowModelContext()
-        model_context.admin = AdminRoute.admin_for(self.admin_route)
+        model_context.admin = initial_naming_context.resolve(self.admin_route)
         model_context.proxy = ProxyRegistry.pop(value)
         assert isinstance(model_context.proxy, AbstractModelProxy)
         # todo : remove the concept of a validator
@@ -466,36 +465,36 @@ class CollectionProxy(QtGui.QStandardItemModel):
         if (self._model_context is not None):
             self._append_request(Filter(list_filter, old_value, value), None)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_updated(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_updated(self, objects):
         """Handles the entity signal, indicating that the model is out of
             )
         date
         """
         assert object_thread(self)
-        if (sender != self) and (self._model_context is not None):
+        if self._model_context is not None:
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
             self._append_request(Update(objects), None)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_deleted(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_deleted(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        if (sender != self) and (self._model_context is not None):
+        if self._model_context is not None:
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
             self._append_request(Deleted(objects, super(CollectionProxy, self).rowCount()), None)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_created(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_created(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
-        if (sender != self) and (self._model_context is not None):
+        if self._model_context is not None:
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
@@ -530,9 +529,16 @@ class CollectionProxy(QtGui.QStandardItemModel):
         self.logger.debug('setHeaderData called')
         assert object_thread( self )
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.SizeHintRole:
-            item = self.verticalHeaderItem(section)
+            item = self.horizontalHeaderItem(section)
             if item is not None:
                 item.setData(value.width(), role)
+                field_name = item.data(Qt.ItemDataRole.UserRole)
+                width = value.width()
+                self.settings.beginGroup('column_width')
+                self.settings.beginGroup('0')
+                self.settings.setValue(field_name, width)
+                self.settings.endGroup()
+                self.settings.endGroup()
         return super(CollectionProxy, self).setHeaderData(section, orientation, value, role)
     
     def headerData( self, section, orientation, role ):
@@ -676,7 +682,7 @@ class CollectionProxy(QtGui.QStandardItemModel):
     def get_admin( self ):
         """Get the admin object associated with this model"""
         self.logger.debug('get_admin called')
-        return AdminRoute.admin_for(self.admin_route)
+        return initial_naming_context.resolve(self.admin_route)
 
     def add_action_route(self, action_route):
         """Add the action route for an action that needs it's state to be updated
