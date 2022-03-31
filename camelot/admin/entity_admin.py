@@ -687,27 +687,6 @@ and used as a custom action.
                         self._search_fields.append(search_strategy)
         return self._search_fields
 
-    def decorate_search_query(self, query, text):
-        """
-        Decorate the given sqlalchemy query for the objects that should be displayed in the table or selection view,
-        with the needed clauses for filtering based on the given search text.
-        By default all 'basic' columns of this admin's and the explicitly set search fields will be used to compare the search text with.
-        Overwrite this method to change this behaviour with more fine-grained or complex search strategies.
-        """
-        assert len(text)
-        # arguments for the where clause
-        args = []
-        
-        for search_field in self._get_search_fields(text):
-            assert isinstance(search_field, list_filter.AbstractFilterStrategy)
-            arg = search_field.get_search_clause(query, text)
-            if arg is not None:
-                args.append(arg)
-            
-        query = query.filter(sql.or_(*args))
-    
-        return query
-
     def copy(self, obj, new_obj=None):
         """Duplicate an object.  If no new object is given to copy to, a new
         one will be created.  This function will be called every time the
