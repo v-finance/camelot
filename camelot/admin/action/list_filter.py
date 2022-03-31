@@ -692,7 +692,15 @@ class SearchFilter(Action, AbstractModelFilter):
                     filter_clause = search_strategy.get_search_clause(query, search_text)
                     if filter_clause is not None:
                         clauses.append(filter_clause)
-                return query.filter(sql.or_(*clauses))
+                query = query.filter(sql.or_(*clauses))
+
+                # Sort search query if configured in the entity's entity_args:
+                entity = query._mapper_zero().entity
+                order_search_by = entity._get_entity_arg('order_search_by')
+                if order_search_by is not None:
+                    query = query.order_by(None)
+                    query = query.order_by(order_search_by(search_text))
+
         return query
 
     def gui_run(self, gui_context):
