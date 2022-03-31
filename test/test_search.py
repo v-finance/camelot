@@ -126,7 +126,7 @@ class SearchCase( test_orm.TestMetaData ):
             string_value = str( i )
 
             query = self.session.query( self.T )
-            query = search_filter.decorate_query(query, string_value)
+            query = search_filter.decorate_query(query, (admin, string_value))
             
             self.assertTrue( query.count() > 0 )
             

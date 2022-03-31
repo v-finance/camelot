@@ -149,7 +149,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             if not isinstance(action, Filter):
                 continue
             state = action_state[1]
-            values = [mode.name for mode in state.modes if mode.checked]
+            values = [mode.value for mode in state.modes if mode.checked]
             # if all modes are checked, replace with [All]
             if len(values) == len(state.modes):
                 values = [All]

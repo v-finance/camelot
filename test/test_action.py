@@ -1146,34 +1146,41 @@ class ListFilterCase(TestMetaData):
 
         self.create_all()
         # Create entity instance to be able to test Many2One and One2Many filter strategies.
-        b = B()
+        b1 = B()
+        b2 = B()
+        b3 = B()
         self.session.flush()
         a_defaults = dict(
             text_col='', bool_col=False, date_col=datetime.date.today(), time_col=datetime.time(21, 5, 0),
-            int_col=1000, months_col=12, enum_col='Test', many2one_col=b
+            int_col=1000, months_col=12, enum_col='Test'
         )
-        A(**a_defaults)
-        A(**a_defaults)
-        A(**a_defaults)
+        a1 = A(**a_defaults, many2one_col=b1)
+        a2 = A(**a_defaults, many2one_col=b2)
+        a3 = A(**a_defaults, many2one_col=b3)
         self.session.flush()
 
-        for cols, strategy_cls, *values in (
-            ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test'),
-            ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,     'True'),
-            ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,     '2020-01-01', '2022-01-01'),
-            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '2020-01-01', '2022-01-01'),
-            ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',       '5000'),
-            ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',         '24'),
-            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test'),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1'),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2'),
-            ([A.many2one_col],                      list_filter.Many2OneFilter, '1', '2', '3'),
-            ([B.one2many_col],                      list_filter.One2ManyFilter, '1'),
-            ([B.one2many_col],                      list_filter.One2ManyFilter, '1', '2'),
-            ([B.one2many_col],                      list_filter.One2ManyFilter, '1', '2', '3'),
+        # Verify strategies accept both the 'raw' operands, as well as their textual representation (used when searching).
+        for cols, strategy_cls, search_text, *values in (
+            ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test',       'test'),
+            ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,     'True',        True),
+            ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,     '01-01-2020',  datetime.date(2020,1,1), datetime.date(2022,1,1)),
+            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '10:00',       datetime.time(10,0), datetime.time(12,30)),
+            ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',        1000, 5000),
+            ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',          12, 24),
+            ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test',       'Test'),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1.id, b2.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1.id, b2.id, b3.id),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1, b2),
+            ([A.many2one_col],                      list_filter.Many2OneFilter, '1',           b1, b2, b3),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1, a2),
+            ([B.one2many_col],                      list_filter.One2ManyFilter, '1',           a1, a2, a3),
             ):
             for col in cols:
                 admin = self.app_admin.get_related_admin(col.class_)
+                query = admin.get_query()
                 # Verify expected filter strategy is set:
                 fa = admin.get_field_attributes(col.key)
                 self.assertIsInstance( fa['filter_strategy'], strategy_cls)
@@ -1207,12 +1214,22 @@ class ListFilterCase(TestMetaData):
                 # Verify that for each operator of the filter strategy its clause is constructed properly:
                 for operator in operators:
                     operands = values[0:operator.arity.maximum-1] if operator.arity.maximum is not None else values
-                    filter_strategy.get_clause(admin, self.session, operator, *operands)
+                    filter_strategy.get_clause(query, operator, *operands)
 
                 # Verify assertion on operands arity mismatch
                 with self.assertRaises(AssertionError) as exc:
-                    filter_strategy.get_clause(admin, self.session, list_filter.Operator.eq)
+                    filter_strategy.get_clause(query, list_filter.Operator.eq)
                 self.assertEqual(str(exc.exception), strategy_cls.AssertionMessage.nr_operands_arity_mismatch.value.format(0, 1, 1))
+
+                # Verify that for each operator of the filter strategy its search clause is constructed properly:
+                search_clause = filter_strategy.get_search_clause(query, search_text)
+                # Verify that the search clause equals a general filter clause with the strategy's search operator and the converted operand:
+                search_operator = filter_strategy.get_search_operator()
+                operands = values[0:search_operator.arity.maximum-1] if search_operator.arity.maximum is not None else values
+                filter_clause = filter_strategy.get_clause(query, search_operator, operands[0])
+                if str(search_clause) != str(filter_clause):
+                    filter_clause = filter_strategy.get_clause(query, search_operator, operands[0])
+                self.assertEqual(str(search_clause), str(filter_clause))
 
         # Check assertion on python type mismatch:
         with self.assertRaises(AssertionError) as exc:

@@ -1038,6 +1038,7 @@ class SetFilters(Action, AbstractModelFilter):
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
 
+        filter_values = model_context.proxy.get_filter(self) or {}
         if mode == '__clear':
             new_filter_values = {}
         elif mode is None:
@@ -1045,7 +1046,6 @@ class SetFilters(Action, AbstractModelFilter):
         else:
             from camelot.admin.action.list_filter import Operator, Many2OneFilter, One2ManyFilter
             operator_name, filter_field_name = mode.split('-')
-            filter_values = model_context.proxy.get_filter(self) or {}
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
             filter_field_strategy = filter_strategy.get_field_strategy()
@@ -1070,11 +1070,17 @@ class SetFilters(Action, AbstractModelFilter):
                     filter_value.set_operands(*objects)
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
                 else:
+                    # In case there was already an active filter present for the same field and operator,
+                    # set the active operands as the default filter values for the user to manipulate:
+                    if filter_field_name in filter_values:
+                        (existing_operator, *existing_operands) = filter_values[filter_field_name]
+                        if existing_operator == filter_operator:
+                            filter_value.set_operands(*existing_operands)
                     yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_field_strategy.get_verbose_name()))
 
-            operands = [filter_field_strategy.value_to_string(operand, model_context.admin) for operand in filter_value.get_operands()]
+            operands = filter_value.get_operands()
             new_filter_values = {k:v for k,v in filter_values.items()}
-            new_filter_values[filter_field_name] = (filter_value.operator.name, *operands)
+            new_filter_values[filter_field_name] = (filter_field_strategy, filter_value.operator, *operands)
 
         if filter_values != new_filter_values:
             model_context.proxy.filter(self, new_filter_values)
@@ -1083,20 +1089,17 @@ class SetFilters(Action, AbstractModelFilter):
         yield action_steps.UpdateActionsState(model_context, {self: new_state})
 
     def decorate_query(self, query, values):
-        from camelot.admin.action.list_filter import Operator
         # Previously, the query was decorated with the the string-based filter value tuples by applying them to the query using filter_by.
         # This created problems though, as the filters are applied to the query's current zero joinpoint, which changes after every applied join to the joined entity.
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         clauses = []
-        for name, (operator_name, *operands) in values.items():
-            filter_strategy = self.admin.get_field_filters().get(name)
-            operator = Operator[operator_name]
-            filter_clause = filter_strategy.get_clause(self.admin, query.session, operator, *operands)
+        for name, (filter_strategy, operator, *operands) in values.items():
+            filter_clause = filter_strategy.get_clause(query, operator, *operands)
             if filter_clause is not None:
                 clauses.append(filter_clause)
         return query.filter(*clauses)
-    
+
     def _get_state(self, model_context, filter_value):
         state = super(SetFilters, self).get_state(model_context)
         state.modes = modes = []
@@ -1105,13 +1108,12 @@ class SetFilters(Action, AbstractModelFilter):
         # Only show clear filter mode if any filters are active
         if len(filter_value):
             modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
-        selected_mode_names = [op + '-' + field for field, (op, *_) in filter_value.items()]
+        selected_mode_names = [op.name + '-' + field for field, (_, op, *_) in filter_value.items()]
         for name, filter_strategy in self.get_filter_strategies(model_context):
             for op in filter_strategy.get_operators():
                 mode_name = op.name + '-' + name
                 icon = Icon('check-circle') if mode_name in selected_mode_names else None
                 modes.append(Mode(mode_name, '{} {}'.format(filter_strategy.get_verbose_name(), op.verbose_name), icon=icon))
-        self.admin = model_context.admin
         return state
 
     def get_state(self, model_context):
