@@ -685,9 +685,14 @@ class SearchFilter(Action, AbstractModelFilter):
 
     def decorate_query(self, query, value):
         if value is not None:
-            admin, text = value
-            if text is not None and len(text.strip()) > 0:
-                return admin.decorate_search_query(query, text)
+            search_text, *search_strategies = value
+            if search_text is not None and len(search_text.strip()) > 0:
+                clauses = []
+                for search_strategy in search_strategies:
+                    filter_clause = search_strategy.get_search_clause(query, search_text)
+                    if filter_clause is not None:
+                        clauses.append(filter_clause)
+                return query.filter(sql.or_(*clauses))
         return query
 
     def gui_run(self, gui_context):
@@ -697,15 +702,13 @@ class SearchFilter(Action, AbstractModelFilter):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        text = mode
-        value = (model_context.admin, text)
-        if text is None or len(text) == 0:
-            value = None
+        search_text = mode
         old_value = model_context.proxy.get_filter(self)
+        value = None
+        if search_text is not None and len(search_text) > 0:
+            search_strategies = [search_strategy for search_strategy in model_context.admin._get_search_fields(search_text)]
+            value = (search_text, *search_strategies)
         if old_value != value:
-            # Store admin in filter value as the search query decoration
-            # can be customized in concrete admins.
-            # TODO: move search query decoration out from admins.
             model_context.proxy.filter(self, value)
             yield action_steps.RefreshItemView()
 
