@@ -2,7 +2,7 @@ import logging
 import itertools
 import json
 
-from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py
+from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py, is_deleted
 from camelot.core.exception import UserException
 from camelot.admin.admin_route import AdminRoute
 
@@ -89,7 +89,6 @@ class QmlActionDispatch(QtCore.QObject):
         super().__init__(parent)
         self.gui_contexts = {}
         self.models = {}
-        self.return_values = {}
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
@@ -108,8 +107,14 @@ class QmlActionDispatch(QtCore.QObject):
         self.gui_contexts[context_id] = gui_context
         if model is not None:
             self.models[context_id] = model
+            model.destroyed.connect(self.remove_model)
         gui_context.context_id = context_id
         return context_id
+
+    def remove_model(self):
+        for context_id, model in list(self.models.items()):
+            if is_deleted(model):
+                del self.models[context_id]
 
     def has_context(self, gui_context):
         if gui_context is None:
@@ -142,18 +147,6 @@ class QmlActionDispatch(QtCore.QObject):
         else:
             gui_context.mode_name = args
             action.gui_run( gui_context )
-
-    # FIXME: remove these functions
-    def set_return_value(self, context_id, value):
-        self.return_values[context_id] = value
-
-    def has_return_value(self, context_id):
-        return context_id in self.return_values
-
-    def get_return_value(self, context_id, remove=True):
-        return_value = self.return_values[context_id]
-        del self.return_values[context_id]
-        return return_value
 
 qml_action_dispatch = QmlActionDispatch()
 

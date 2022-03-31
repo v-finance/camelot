@@ -136,6 +136,8 @@ class Created(ActionStep, UpdateMixin):
         self.changed_ranges = changed_ranges
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         # appending new items to the model will increase the rowcount, so
         # there is no need to set the rowcount explicitly
         self.update_item_model(item_model) 
@@ -161,6 +163,8 @@ class SetData(Update):
         self.deleted_objects = deleted_objects
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         super(SetData, self).gui_run(item_model)
         signal_handler = item_model._crud_signal_handler
         signal_handler.send_objects_created(item_model, self.created_objects)
@@ -175,6 +179,8 @@ class ChangeSelection(ActionStep):
         self.action_states = action_states
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         for i, action_route in enumerate(self.action_routes):
             item_model.action_state_changed_signal.emit(action_route, self.action_states[i])    
             item_model.action_state_changed_cpp_signal.emit('/'.join(action_route), self.action_states[i]._to_bytes())
