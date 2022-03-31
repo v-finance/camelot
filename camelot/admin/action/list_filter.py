@@ -340,7 +340,7 @@ class FieldFilter(AbstractFilterStrategy):
                     attribute_clauses.append(sql.and_(*where_conditions, attribute_clause))
                 attribute_clauses.append(attribute_clause)
         if attribute_clauses:
-            return self.connective_operator.operator(*attribute_clauses)
+            return self.connective_operator.operator(*attribute_clauses).self_group()
 
     def get_attribute_clause(self, attribute, operator, *operands):
         """
