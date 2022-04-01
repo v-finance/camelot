@@ -678,6 +678,7 @@ class SearchFilter(Action, AbstractModelFilter):
     render_hint = RenderHint.SEARCH_BUTTON
     name = 'search_filter'
     shortcut = QtGui.QKeySequence.StandardKey.Find
+    _order_by_decorator = lambda x,text:x
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
@@ -698,24 +699,12 @@ class SearchFilter(Action, AbstractModelFilter):
                 # If a search order is configured in the entity's entity_args,
                 # sort the query based on the corresponding search strategies order by clauses.
                 entity = query._mapper_zero().entity
-                order_search_by = entity._get_entity_arg('order_search_by')
+                order_search_by = entity.get_order_search_by()
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
-                    order_by_clauses = []
-                    for order_by_arg in order_search_by:
-                        if isinstance(order_by_arg, (str, orm.attributes.QueryableAttribute)):
-                            for search_strategy in search_strategies:
-                                if search_strategy.attribute == order_by_arg or search_strategy.key == order_by_arg:
-                                    order_by_clause = search_strategy.get_order_by_clause(query, search_text)
-                                    if order_by_clause is not None:
-                                        order_by_clauses.append(order_by_clause)
-                        else:
-                            order_by_clauses.append(order_by_arg)
-
-                    if order_by_clauses:
-                        # Reset any default ordering for the configured search order to take effect.
-                        query = query.order_by(None)
-                        query = query.order_by(*order_by_clauses)
+                    # Reset any default ordering for the configured search order to take effect.
+                    query = query.order_by(None)
+                    query = query.order_by(sql.func.least(*[cls._order_by_decorator(order_by, search_text) for order_by in order_search_by]))
         return query
 
     def gui_run(self, gui_context):
