@@ -199,19 +199,29 @@ class AbstractFilterStrategy(object):
 
     def get_search_clause(self, query, text):
         """
-        Constracut a search filter clause for the given query based on the given search text, if the search is applicable for this strategy.
+        Construct a search filter clause for the given query based on the given search text, if the search is applicable for this strategy.
         This method is a shortcut for (and equivalent to using) the get_clause method with this strategy's search operator,
         and the corresponding operand converted from the given search text.
         If the from-string-conversion for this strategy fails, the resulting clause will be undefined.
 
-        :param admin: The entity admin that will use the resulting search clause as part of its search query.
-        :param session: The session in which the search query takes place.
+        :param query: the query the filter clause should be constructed for (and could be applied on if desired).
+        :param text: the search text operand on which the resulting search clause should filter on.
         """
         try:
             operand = self.from_string(query, text)
         except utils.ParsingError:
             return
         return self.get_clause(query, self.get_search_operator(), operand)
+
+    def get_order_by_clause(self, query, text):
+        """
+        Construct an order by clause based on this filter strategy for the given search query and text,
+        if applicable for this strategy; returns None if not.
+
+        :param query: the search query the order by clause should be constructed for (and could be applied on if desired).
+        :param text: the search text on which the resulting order by clause may be defined on.
+        """
+        return None
 
     def from_string(self, query, operand):
         """
@@ -350,6 +360,9 @@ class FieldFilter(AbstractFilterStrategy):
         """
         assert attribute in self.attributes
         return operator.operator(attribute, *operands)
+
+    def get_order_by_clause(self, query, text):
+        return self.attribute
 
     def from_string(self, query, operand):
         if isinstance(operand, self.python_type):
