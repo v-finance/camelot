@@ -98,7 +98,6 @@ class SearchCase( test_orm.TestMetaData ):
         self.assertTrue('id_max' not in search_fields)
 
     def test_search_filter( self ):
-        import wingdbstub
         """Verify it search works for most common types"""
         admin = self.TAdmin(self.app_admin, self.T)
         search_filter = SearchFilter()
