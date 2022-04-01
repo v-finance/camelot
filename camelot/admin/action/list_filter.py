@@ -708,13 +708,28 @@ class SearchFilter(Action, AbstractModelFilter):
                         clauses.append(filter_clause)
                 query = query.filter(sql.or_(*clauses))
 
-                # Sort search query if configured in the entity's entity_args:
+                # If a search order is configured in the entity's entity_args,
+                # sort the query based on the corresponding search strategies order by clauses.
                 entity = query._mapper_zero().entity
                 order_search_by = entity._get_entity_arg('order_search_by')
                 if order_search_by is not None:
-                    query = query.order_by(None)
-                    query = query.order_by(order_search_by(search_text))
+                    order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+                    order_by_clauses = []
+                    for order_by_attribute in order_search_by:
+                        attribute_order_by = []
+                        for search_strategy in search_strategies:
+                            if search_strategy.attribute == order_by_attribute:
+                                order_by_clause = search_strategy.get_order_by_clause(query, search_text)
+                                if order_by_clause is not None:
+                                    attribute_order_by.append(order_by_clause)
+                        assert len(attribute_order_by), 'Attribute {} configured as order_search_by on {}, but no corresponding strategy found that defines its order by clause.'.format(
+                            order_by_attribute.key, entity)
+                        order_by_clauses.extend(attribute_order_by)
 
+                    if order_by_clauses:
+                        # Reset any default ordering for the configured search order to take effect.
+                        query = query.order_by(None)
+                        query = query.order_by(order_search_by(search_text))
         return query
 
     def gui_run(self, gui_context):
