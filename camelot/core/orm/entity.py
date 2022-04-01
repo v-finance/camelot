@@ -224,6 +224,12 @@ class EntityMeta( DeclarativeMeta ):
                         rank_col = rank_col.prop.columns[0]
                     assert isinstance(rank_col.type, Integer), 'The first column/attributes of the ranked by definition, indicating the rank column, should be of type Integer'
 
+                order_search_by = entity_args.get('order_search_by')
+                if order_search_by is not None:
+                    order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+                    for col in order_search_by:
+                        assert isinstance(col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Search order definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute` or a tuple of those instances'
+
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity' and dict_.get('__tablename__') is not None:
