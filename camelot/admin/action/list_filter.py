@@ -683,7 +683,8 @@ class SearchFilter(Action, AbstractModelFilter):
         state = Action.get_state(self, model_context)
         return state
 
-    def decorate_query(self, query, value):
+    @classmethod
+    def decorate_query(cls, query, value):
         if value is not None:
             search_text, *search_strategies = value
             if search_text is not None and len(search_text.strip()) > 0:
