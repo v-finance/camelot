@@ -213,16 +213,6 @@ class AbstractFilterStrategy(object):
             return
         return self.get_clause(query, self.get_search_operator(), operand)
 
-    def get_order_by_clause(self, query, text):
-        """
-        Construct an order by clause based on this filter strategy for the given search query and text,
-        if applicable for this strategy; returns None if not.
-
-        :param query: the search query the order by clause should be constructed for (and could be applied on if desired).
-        :param text: the search text on which the resulting order by clause may be defined on.
-        """
-        return None
-
     def from_string(self, query, operand):
         """
         Turn the given stringified operand into its original value.
@@ -360,9 +350,6 @@ class FieldFilter(AbstractFilterStrategy):
         """
         assert attribute in self.attributes
         return operator.operator(attribute, *operands)
-
-    def get_order_by_clause(self, query, text):
-        return self.attribute
 
     def from_string(self, query, operand):
         if isinstance(operand, self.python_type):
@@ -715,21 +702,20 @@ class SearchFilter(Action, AbstractModelFilter):
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
                     order_by_clauses = []
-                    for order_by_attribute in order_search_by:
-                        attribute_order_by = []
-                        for search_strategy in search_strategies:
-                            if search_strategy.attribute == order_by_attribute:
-                                order_by_clause = search_strategy.get_order_by_clause(query, search_text)
-                                if order_by_clause is not None:
-                                    attribute_order_by.append(order_by_clause)
-                        assert len(attribute_order_by), 'Attribute {} configured as order_search_by on {}, but no corresponding strategy found that defines its order by clause.'.format(
-                            order_by_attribute.key, entity)
-                        order_by_clauses.extend(attribute_order_by)
+                    for order_by_arg in order_search_by:
+                        if isinstance(order_by_arg, (str, orm.attributes.QueryableAttribute)):
+                            for search_strategy in search_strategies:
+                                if search_strategy.attribute == order_by_arg or search_strategy.key == order_by_arg:
+                                    order_by_clause = search_strategy.get_order_by_clause(query, search_text)
+                                    if order_by_clause is not None:
+                                        order_by_clauses.append(order_by_clause)
+                        else:
+                            order_by_clauses.append(order_by_arg)
 
                     if order_by_clauses:
                         # Reset any default ordering for the configured search order to take effect.
                         query = query.order_by(None)
-                        query = query.order_by(order_search_by(search_text))
+                        query = query.order_by(*order_by_clauses)
         return query
 
     def gui_run(self, gui_context):
