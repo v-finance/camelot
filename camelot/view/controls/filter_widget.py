@@ -173,7 +173,7 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         combobox = QtWidgets.QComboBox(self)
         layout.addWidget( combobox )
         self.setLayout(layout)
-        combobox.currentIndexChanged.connect(self.group_button_clicked)
+        combobox.activated.connect(self.group_button_clicked)
 
     def set_state(self, state):
         AbstractFilterWidget.set_state(self, state)
@@ -196,6 +196,7 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         self.setTitle(state['verbose_name'])
         combobox = self.findChild(QtWidgets.QComboBox)
         if combobox is not None:
+            combobox.clear()
             current_index = 0
             for i, mode in enumerate(state['modes']):
                 if mode['checked'] == True:
