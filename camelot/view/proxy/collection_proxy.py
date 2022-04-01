@@ -699,6 +699,10 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         """
         self.logger.debug('change_selection called')
 
+        # as long as no value is set, there is no selection
+        if self.get_value() is None:
+            return
+
         if selection_model is not None:
             # Create model context based on selection
             # model_conext.field_attributes required???
