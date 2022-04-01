@@ -305,6 +305,20 @@ class EntityMeta( DeclarativeMeta ):
             rank_cols = [getattr(cls, rank_col.key) if isinstance(rank_col, sql.schema.Column) else rank_col for rank_col in ranked_by]
             return tuple(rank_cols)
 
+    def get_order_search_by(cls):
+        order_search_by = cls._get_entity_arg('order_search_by')
+        if order_search_by is not None:
+            order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+            order_by_clauses = []
+            for order_by in order_search_by:
+                if isinstance(order_by, sql.schema.Column):
+                    order_by_clauses.append(getattr(cls, order_by.key))
+                elif isinstance(order_by, hybrid.hybrid_property):
+                    order_by_clauses.append(getattr(cls, order_by.fget.__name__))
+                else:
+                    order_by_clauses.append(order_by)
+            return tuple(order_by_clauses)
+
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
