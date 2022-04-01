@@ -27,15 +27,16 @@
 #
 #  ============================================================================
 
+import json
 import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from ....admin.action.base import State, RenderHint
+from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy, ProxyRegistry
-from ..action_widget import AbstractActionWidget, ActionAction, ActionToolbutton, ActionPushButton
+from ..action_widget import AbstractActionWidget, ActionToolbutton, ActionPushButton
 from ..filter_widget import ComboBoxFilterWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
@@ -90,7 +91,7 @@ class One2ManyEditor(CustomEditor, WideEditor):
             self.trigger_list_action
         )
         model = CollectionProxy(admin_route)
-        model.action_state_changed_signal.connect(self.action_state_changed)
+        model.action_state_changed_cpp_signal.connect(self.action_state_changed)
         model.setParent(self)
         table.setModel(model)
         self.admin_route = admin_route
@@ -164,12 +165,14 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def current_row_changed(self, current=None, previous=None):
         self.update_list_action_states()
 
-    @QtCore.qt_slot(tuple, State)
-    def action_state_changed(self, route, state):
+    @QtCore.qt_slot(str, QtCore.QByteArray)
+    def action_state_changed(self, route, serialized_state):
+        route = tuple(route.split('/'))
         for action_widget in self.findChildren(AbstractActionWidget):
             if action_widget.action_route == route:
-                if isinstance(action_widget, (ActionAction, ActionToolbutton, ActionPushButton)):
-                    action_widget.set_state(state)
+                state = json.loads(serialized_state.data())
+                action_widget.set_state_v2(state)
+                break
 
     def get_model(self):
         """
