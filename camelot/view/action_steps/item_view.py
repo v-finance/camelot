@@ -110,7 +110,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     search_text: Union[str, None] = field(init=False)
     title: Union[str, ugettext_lazy] = field(init=False)
     columns: List[str] = field(init=False)
-    list_action: Route = field(init=False)
+    list_action: Union[Route, None] = field(init=False)
     proxy_route: Route = field(init=False)
     actions: List[Tuple[Route, RenderHint]] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)

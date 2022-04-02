@@ -420,7 +420,10 @@ be specified using the verbose_name attribute.
 
         :return: by default returns the route for the `list_action` attribute
         """
-        return AdminRoute._register_list_action_route(self._admin_route, self.list_action)
+        if self.list_action is not None:
+            return AdminRoute._register_list_action_route(
+                self._admin_route, self.list_action
+            )
 
     def get_depending_objects(self, obj):
         """Overwrite this function to generate a list of objects that depend on a given
