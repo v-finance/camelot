@@ -111,6 +111,7 @@ class QmlActionDispatch(QtCore.QObject):
         gui_context.context_id = context_id
         return context_id
 
+    @QtCore.qt_slot(QtCore.QObject)
     def remove_model(self):
         for context_id, model in list(self.models.items()):
             if is_deleted(model):
