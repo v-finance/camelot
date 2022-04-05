@@ -751,7 +751,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         self._name = tuple()
 
         # Add immutable bindings for constants' values and contexts for each supported 'constant' python type.
-        constants = self.bind_new_context('constants', immutable=True)
+        constants = self.bind_new_context('constant', immutable=True)
         for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
             constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type), immutable=True)
         constants.bind('null', None, immutable=True)
@@ -781,11 +781,11 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
         """
         if obj is None:
-            return ('constants', 'null')
+            return ('constant', 'null')
         if isinstance(obj, bool):
-            return ('constants', 'true' if obj else 'false')
+            return ('constant', 'true' if obj else 'false')
         if isinstance(obj, (str, int, Decimal)):
-            return ('constants', type(obj).__name__.lower(), str(obj))
+            return ('constant', type(obj).__name__.lower(), str(obj))
         # TODO:
         #if isinstance(obj, Entity):
             #return ('entity', obj.__tablename__, obj.id)
