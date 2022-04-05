@@ -31,7 +31,7 @@ from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
-from camelot.core.orm import EntityBase, EntityMeta, Session
+from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import party
 from camelot.model.party import Person
