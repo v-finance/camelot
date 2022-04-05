@@ -90,7 +90,10 @@ def setup_all( create_tables=False, *args, **kwargs ):
     """
     if create_tables:
         metadata.create_all( *args, **kwargs )
-        
+
+# Assert that EntityMeta does not allow rebinding entity naming contexts.
+# This flag should only be enabled in test scenarios.
+assert EntityMeta.rebind == False
 Entity = declarative_base( cls = EntityBase, 
                            metadata = metadata,
                            metaclass = EntityMeta,
