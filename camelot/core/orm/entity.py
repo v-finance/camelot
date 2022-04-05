@@ -44,6 +44,7 @@ from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
+from ..naming import initial_naming_context, EntityNamingContext, NameNotFoundException
 from . statements import MUTATORS
 from . import Session, options
 
@@ -240,6 +241,15 @@ class EntityMeta( DeclarativeMeta ):
                 table = dict_.get('__table__', None)
                 if table is None or table.primary_key.issubset([]):
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
+
+            # Bind an EntityNamingContext to the initial naming context for the entity class.
+            # As multiple mapped entity classes can be defined on the same table,
+            # they are bound under a subcontext for their tablename.
+            try:
+                initial_naming_context.resolve_context(('entity', _class.__tablename__))
+            except NameNotFoundException:
+                initial_naming_context.bind_new_context(('entity', _class.__tablename__))
+            initial_naming_context.bind_context(('entity', _class.__tablename__, _class.__name__), EntityNamingContext(_class))
 
         return _class
 
