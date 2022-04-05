@@ -809,32 +809,32 @@ class InitialNamingContextCase(NamingContextCase):
 
         # Verify that the constant naming contexts are available by default on the initial context:
         # * Boolean values
-        self.assertEqual(self.context.resolve(('constants', 'true')), True)
-        self.assertEqual(self.context.resolve(('constants', 'false')), False)
+        self.assertEqual(self.context.resolve(('constant', 'true')), True)
+        self.assertEqual(self.context.resolve(('constant', 'false')), False)
         # * None value
-        self.assertEqual(self.context.resolve(('constants', 'null')), None)
+        self.assertEqual(self.context.resolve(('constant', 'null')), None)
         # * Int values
-        self.assertEqual(self.context.resolve(('constants', 'int', '-1')), -1)
-        self.assertEqual(self.context.resolve(('constants', 'int', '0')), 0)
-        self.assertEqual(self.context.resolve(('constants', 'int', '2')), 2)
+        self.assertEqual(self.context.resolve(('constant', 'int', '-1')), -1)
+        self.assertEqual(self.context.resolve(('constant', 'int', '0')), 0)
+        self.assertEqual(self.context.resolve(('constant', 'int', '2')), 2)
         # * String values
-        self.assertEqual(self.context.resolve(('constants', 'str', '')), '')
-        self.assertEqual(self.context.resolve(('constants', 'str', 'x')), 'x')
-        self.assertEqual(self.context.resolve(('constants', 'str', 'test')), 'test')
+        self.assertEqual(self.context.resolve(('constant', 'str', '')), '')
+        self.assertEqual(self.context.resolve(('constant', 'str', 'x')), 'x')
+        self.assertEqual(self.context.resolve(('constant', 'str', 'test')), 'test')
         # * Decimal values
-        self.assertEqual(self.context.resolve(('constants', 'decimal', '-2')), Decimal(-2))
-        self.assertEqual(self.context.resolve(('constants', 'decimal', '-1.0')), Decimal(-1.0))
-        self.assertEqual(self.context.resolve(('constants', 'decimal', '0')), Decimal(0))
-        self.assertEqual(self.context.resolve(('constants', 'decimal', '0.0')), Decimal(0.0))
-        self.assertEqual(self.context.resolve(('constants', 'decimal', '2')), Decimal(2))
+        self.assertEqual(self.context.resolve(('constant', 'decimal', '-2')), Decimal(-2))
+        self.assertEqual(self.context.resolve(('constant', 'decimal', '-1.0')), Decimal(-1.0))
+        self.assertEqual(self.context.resolve(('constant', 'decimal', '0')), Decimal(0))
+        self.assertEqual(self.context.resolve(('constant', 'decimal', '0.0')), Decimal(0.0))
+        self.assertEqual(self.context.resolve(('constant', 'decimal', '2')), Decimal(2))
 
         # Verify that those constants contexts are immutabe on the initial naming context:
         with self.assertRaises(ImmutableBindingException):
-            self.context.rebind_context('constants', NamingContext())
+            self.context.rebind_context('constant', NamingContext())
         with self.assertRaises(ImmutableBindingException):
-            self.context.unbind_context('constants')
+            self.context.unbind_context('constant')
 
-        constants = self.context.resolve_context('constants')
+        constants = self.context.resolve_context('constant')
         with self.assertRaises(ImmutableBindingException):
             constants.rebind_context('str', NamingContext())
         with self.assertRaises(ImmutableBindingException):
