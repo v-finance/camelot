@@ -768,4 +768,29 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         """
         return NamingContext()
 
+    def _bind_object(self, obj):
+        """
+        Helper method for binding any type of python object under the appropriate name.
+        This functionality is meant for backend binding of objects and will always perform a mutable bind.
+
+        :param obj: the object to be bound.
+
+        :return: the full qualified composite name of the bound object, relative to the initial naming context.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+        """
+        if obj is None:
+            return ('constants', 'null')
+        if isinstance(obj, bool):
+            return ('constants', 'true' if obj else 'false')
+        if isinstance(obj, (str, int, Decimal)):
+            return ('constants', type(obj).__name__.lower(), str(obj))
+        # TODO:
+        #if isinstance(obj, Entity):
+            #return ('entity', obj.__tablename__, obj.id)
+        if isinstance(obj, float):
+            raise NotImplementedError('Use Decimal instead')
+        return self.rebind(str(id(obj)), obj)
+
 initial_naming_context = InitialNamingContext()
