@@ -742,6 +742,37 @@ class ConstantNamingContext(EndpointNamingContext):
         except (ValueError, decimal.InvalidOperation):
             raise NameNotFoundException(name[0], BindingType.named_object)
 
+class EntityNamingContext(EndpointNamingContext):
+    """
+    Represents a stateless endpoint naming context, which handles resolving instances of an Entity.
+    """
+
+    def __init__(self, entity):
+        super().__init__()
+        from camelot.core.orm import EntityBase
+        assert issubclass(entity, EntityBase)
+        self.entity = entity
+
+    @AbstractNamingContext.check_bounded
+    def resolve(self, name: Name) -> object:
+        """
+        Resolve a name in this ConstantNamingContext and return the bound object.
+        It will throw appropriate exceptions if the resolution failed.
+
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+
+        :return: the bound object, an instance of this ConstantNamingContext's constant_type.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
+        from camelot.core.orm import Session
+        name = self.get_composite_name(name)
+        session = Session()
+        return session.query(self.entity).get(name[0])
+
 class InitialNamingContext(NamingContext, metaclass=Singleton):
     """
     Singleton class that is the starting context for performing naming operations.
