@@ -671,23 +671,18 @@ class NamingContext(AbstractNamingContext):
     def list(self):
         return self._bindings[BindingType.named_object].keys()
 
-class ConstantNamingContext(AbstractNamingContext):
+class EndpointNamingContext(AbstractNamingContext):
     """
-    Represents a stateless naming context, which handles resolving objects/values of a certain immutable python type.
-    Currently, those constant values are considered to be integers, strings, booleans or float.
-    As it only implements the resolve method from the AbstractNamingContext, no subcontexts can be bound.
-    A ConstantNamingContext will thus by definition always be the 'endpoint' context in a naming hierachy.
+    Interface for a naming context that only supports binding and resolving objects/values,
+    and not subcontexts.
+    As such, they are by definition always an 'endpoint' context in a naming hierachy.
+    Because no recursive resolve is possible, names used by this context are validated to be singular.
     """
-
-    def __init__(self, constant_type):
-        super().__init__()
-        assert constant_type in (int, str, bool, float, Decimal)
-        self.constant_type = constant_type
 
     @classmethod
     def validate_atomic_name(cls, name: str) -> bool:
         """
-        Customized atomic name validation for this constant naming context.
+        Customized atomic name validation for this endpoint naming context.
         This enforces less constraints than the default validation inherited from ´camelot.core.naming.AbstractNamingContext´,
         in that it allows for the empty string as a valid atomic name,
         as that to should be able to be resolved by the corresponding String constant naming context.
@@ -701,7 +696,7 @@ class ConstantNamingContext(AbstractNamingContext):
     @classmethod
     def validate_composite_name(cls, name: CompositeName) -> bool:
         """
-        Customized composite name validation for this constant naming context.
+        Customized composite name validation for this endpoint naming context.
         This expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
         in that it only allows singular composite names, as this context by definition is an endpoint in the context hierarchy.
 
@@ -714,6 +709,17 @@ class ConstantNamingContext(AbstractNamingContext):
         super().validate_composite_name(name)
         if len(name) != 1:
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
+
+class ConstantNamingContext(EndpointNamingContext):
+    """
+    Represents a stateless endpoint naming context, which handles resolving objects/values of a certain immutable python type.
+    Currently, those constant values are considered to be integers, strings, booleans or float.
+    """
+
+    def __init__(self, constant_type):
+        super().__init__()
+        assert constant_type in (int, str, bool, float, Decimal)
+        self.constant_type = constant_type
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
