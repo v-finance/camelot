@@ -8,15 +8,19 @@ from .test_model import ExampleModelMixinCase
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
-    AlreadyBoundException, BindingType, ConstantNamingContext,
+    AlreadyBoundException, BindingType, ConstantNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
 )
+from camelot.core.orm import Session
 from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 from camelot.core.singleton import QSingleton
+from camelot.model import party
 
 from decimal import Decimal
+
+from .test_model import ExampleModelMixinCase
 
 memento_id_counter = 0
 
@@ -732,7 +736,7 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
     context_cls = ConstantNamingContext
     constant_type = None
 
-    # Constant naming context only allows string names, but allows the empty string:
+    # Constant naming context only allows singular names, and allows the empty string:
     invalid_names = [
         (None,             NamingException.Message.invalid_name_type),
         (tuple(),          NamingException.Message.invalid_composite_name_length),
@@ -839,3 +843,79 @@ class InitialNamingContextCase(NamingContextCase):
             constants.rebind_context('str', NamingContext())
         with self.assertRaises(ImmutableBindingException):
             constants.unbind_context('str')
+
+class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
+
+    context_cls = EntityNamingContext
+    entity = None
+
+    # Entity naming context only allows singular names, and numeric atomic names.
+    invalid_names = [
+        (None,             NamingException.Message.invalid_name_type),
+        ('',               NamingException.Message.invalid_atomic_name_numeric),
+        (tuple(),          NamingException.Message.invalid_composite_name_length),
+        (('',),            NamingException.Message.invalid_atomic_name_numeric),
+        ((None,),          NamingException.Message.invalid_composite_name_parts),
+        ((1,),             NamingException.Message.invalid_composite_name_parts),
+        ((None,),          NamingException.Message.invalid_composite_name_parts),
+        (('test', ''),     NamingException.Message.singular_name_expected),
+        (('test', None),   NamingException.Message.invalid_composite_name_parts),
+        (('test', 'test'), NamingException.Message.singular_name_expected),
+        #'True', '1.5', 'test'
+    ]
+    valid_names = ['0', '1', '2', '9999']
+    incompatible_names = ['0', '9999']
+    compatible_names = ['1', '2']
+
+    def new_context(self):
+        return self.context_cls(self.entity)
+
+    def test_resolve(self):
+        super().test_resolve()
+
+        # Verify that incompatible names raise a NameNotFoundException:
+        for incompatible_name in self.incompatible_names:
+            with self.assertRaises(NameNotFoundException) as exc:
+                self.context.resolve(incompatible_name)
+            self.assertEqual(exc.exception.name, incompatible_name)
+            self.assertEqual(exc.exception.binding_type, BindingType.named_object)
+
+        # Verify compatible names resolve to the expected entity instances:
+        # Both string names as singular composite names should be allowed:
+        for name in self.compatible_names:
+            expected_instance = self.session.query(self.entity).get(name)
+            self.assertIsNotNone(expected_instance)
+            self.assertEqual(self.context.resolve(name), expected_instance)
+            self.assertEqual(self.context.resolve(tuple([name])), expected_instance)
+
+class AbstractEntityNamingContextCase(AbstractNamingContextCase, ExampleModelMixinCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(AbstractEntityNamingContextCase, cls).setUpClass()
+        cls.setup_sample_model()
+        cls.load_example_data()
+        cls.session = Session()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
+
+class PersonEntityNamingContextCase(AbstractEntityNamingContextCase, EntityNamingContextCaseMixin):
+
+    entity = party.Person
+    context_name = ('person',)
+
+class OrganizationEntityNamingContextCase(AbstractEntityNamingContextCase, EntityNamingContextCaseMixin):
+
+    entity = party.Organization
+    context_name = ('organization',)
+
+    @classmethod
+    def setUpClass(cls):
+        AbstractEntityNamingContextCase.setUpClass()
+        # Make sure at least 2 organization exist.
+        org1 = party.Organization( name = 'Test1' )
+        org2 = party.Organization( name = 'Test2' )
+        cls.session.flush()
+        cls.compatible_names = [str(org1.id), str(org2.id)]
