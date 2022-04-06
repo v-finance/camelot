@@ -818,15 +818,16 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
         """
+        from camelot.core.orm import Entity
         if obj is None:
             return ('constant', 'null')
         if isinstance(obj, bool):
             return ('constant', 'true' if obj else 'false')
         if isinstance(obj, (str, int, Decimal)):
             return ('constant', type(obj).__name__.lower(), str(obj))
-        # TODO:
-        #if isinstance(obj, Entity):
-            #return ('entity', obj.__tablename__, obj.id)
+        if isinstance(obj, Entity):
+            entity = type(obj)
+            return ('entity', entity.__tablename__, entity.__name__, str(obj.id))
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
         return self.rebind(str(id(obj)), obj)
