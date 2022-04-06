@@ -52,6 +52,7 @@ class NamingException(Exception):
         invalid_name_type = 'name should an atomic name or a composite name'
         invalid_atomic_name = 'atomic name should be a string'
         invalid_atomic_name_length = 'atomic name should contain at least 1 character'
+        invalid_atomic_name_numeric = 'atomic name should be numeric'
         invalid_composite_name = 'composite name should be a tuple'
         invalid_composite_name_length = 'composite name should be composed of at least 1 atomic part'
         invalid_composite_name_parts = 'composite name should be composed of valid atomic parts'
@@ -733,7 +734,7 @@ class ConstantNamingContext(EndpointNamingContext):
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
-            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.invalid_name: when the name is invalid.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
         name = self.get_composite_name(name)
@@ -753,19 +754,36 @@ class EntityNamingContext(EndpointNamingContext):
         assert issubclass(entity, EntityBase)
         self.entity = entity
 
+    @classmethod
+    def validate_atomic_name(cls, name: str) -> bool:
+        """
+        Customized atomic name validation for this entity naming context that enforces
+        the atomic names used by this context to be numeric, as they are used as primary keys
+        to query entity instances with.
+
+        :raises:
+            NamingException NamingException.Message.invalid_atomic_name_numeric when the given name is not numeric.
+        """
+        super().validate_atomic_name(name)
+        if not name.isdecimal():
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
+
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
         """
-        Resolve a name in this ConstantNamingContext and return the bound object.
+        Resolve a name in this EntityNamingContext and return the bound object.
+        The name should be singular and its atomic form numeric, as it is used
+        as the primary key to query the corresponding instance with of the entity of this naming context.
+
         It will throw appropriate exceptions if the resolution failed.
 
         :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
 
-        :return: the bound object, an instance of this ConstantNamingContext's constant_type.
+        :return: the bound object, an instance of this EntityNamingContext's entity class.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
-            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.invalid_name: when the name is invalid.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
         from camelot.core.orm import Session
