@@ -340,7 +340,7 @@ class FieldFilter(AbstractFilterStrategy):
                     attribute_clauses.append(sql.and_(*where_conditions, attribute_clause))
                 attribute_clauses.append(attribute_clause)
         if attribute_clauses:
-            return self.connective_operator.operator(*attribute_clauses)
+            return self.connective_operator.operator(*attribute_clauses).self_group()
 
     def get_attribute_clause(self, attribute, operator, *operands):
         """
@@ -683,11 +683,25 @@ class SearchFilter(Action, AbstractModelFilter):
         state = Action.get_state(self, model_context)
         return state
 
-    def decorate_query(self, query, value):
+    @classmethod
+    def decorate_query(cls, query, value):
         if value is not None:
-            admin, text = value
-            if text is not None and len(text.strip()) > 0:
-                return admin.decorate_search_query(query, text)
+            search_text, *search_strategies = value
+            if search_text is not None and len(search_text.strip()) > 0:
+                clauses = []
+                for search_strategy in search_strategies:
+                    filter_clause = search_strategy.get_search_clause(query, search_text)
+                    if filter_clause is not None:
+                        clauses.append(filter_clause)
+                query = query.filter(sql.or_(*clauses))
+
+                # Sort search query if configured in the entity's entity_args:
+                entity = query._mapper_zero().entity
+                order_search_by = entity._get_entity_arg('order_search_by')
+                if order_search_by is not None:
+                    query = query.order_by(None)
+                    query = query.order_by(order_search_by(search_text))
+
         return query
 
     def gui_run(self, gui_context):
@@ -697,15 +711,13 @@ class SearchFilter(Action, AbstractModelFilter):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        text = mode
-        value = (model_context.admin, text)
-        if text is None or len(text) == 0:
-            value = None
+        search_text = mode
         old_value = model_context.proxy.get_filter(self)
+        value = None
+        if search_text is not None and len(search_text) > 0:
+            search_strategies = [search_strategy for search_strategy in model_context.admin._get_search_fields(search_text)]
+            value = (search_text, *search_strategies)
         if old_value != value:
-            # Store admin in filter value as the search query decoration
-            # can be customized in concrete admins.
-            # TODO: move search query decoration out from admins.
             model_context.proxy.filter(self, value)
             yield action_steps.RefreshItemView()
 

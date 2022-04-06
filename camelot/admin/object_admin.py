@@ -41,6 +41,7 @@ from camelot.admin.action import field_action, list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
+from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, EntityMeta
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
@@ -579,6 +580,10 @@ be specified using the verbose_name attribute.
             if (admin is not None) and (session is not None):
                 query = admin.get_query(session)
                 if not (prefix is None or len(prefix.strip())==0):
+                    for action_route in admin.get_list_toolbar_actions():
+                        search_filter = initial_naming_context.resolve(action_route.route)
+                        if isinstance(search_filter, list_filter.SearchFilter):
+                            query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]))
                     query = admin.decorate_search_query(query, prefix)
                 return [e for e in query.limit(20).all()]
 
