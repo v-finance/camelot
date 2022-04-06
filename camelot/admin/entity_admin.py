@@ -41,6 +41,7 @@ from camelot.admin.action import list_filter, application_action, list_action
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.memento import memento_change
+from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
@@ -451,9 +452,12 @@ and used as a custom action.
         admin = all_attributes.get('admin')
         session = orm.object_session(obj)
         if (admin is not None) and (session is not None) and not (prefix is None or len(prefix.strip())==0):
-            query = admin.get_query(session)
-            query = admin.decorate_search_query(query, prefix)
-            return [e for e in query.limit(20).all()]
+            for action_route in admin.get_list_toolbar_actions():
+                search_filter = initial_naming_context.resolve(action_route.route)
+                if isinstance(search_filter, list_filter.SearchFilter):
+                    query = admin.get_query(session)
+                    query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]))
+                    return [e for e in query.limit(20).all()]
         return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
 
     @register_list_actions('_admin_route', '_filter_actions')
@@ -686,27 +690,6 @@ and used as a custom action.
                         search_strategy = self.get_field_attributes(field_name).get('search_strategy')
                         self._search_fields.append(search_strategy)
         return self._search_fields
-
-    def decorate_search_query(self, query, text):
-        """
-        Decorate the given sqlalchemy query for the objects that should be displayed in the table or selection view,
-        with the needed clauses for filtering based on the given search text.
-        By default all 'basic' columns of this admin's and the explicitly set search fields will be used to compare the search text with.
-        Overwrite this method to change this behaviour with more fine-grained or complex search strategies.
-        """
-        assert len(text)
-        # arguments for the where clause
-        args = []
-        
-        for search_field in self._get_search_fields(text):
-            assert isinstance(search_field, list_filter.AbstractFilterStrategy)
-            arg = search_field.get_search_clause(query, text)
-            if arg is not None:
-                args.append(arg)
-            
-        query = query.filter(sql.or_(*args))
-    
-        return query
 
     def copy(self, obj, new_obj=None):
         """Duplicate an object.  If no new object is given to copy to, a new

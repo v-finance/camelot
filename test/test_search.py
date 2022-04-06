@@ -103,7 +103,7 @@ class SearchCase( test_orm.TestMetaData ):
         search_filter = SearchFilter()
         model_context = MockModelContext()
         model_context.admin = admin
-        model_context.proxy = admin.get_proxy([])
+        model_context.proxy = admin.get_proxy(admin.get_query())
         list(search_filter.model_run(model_context, None))
         #
         # insert the value of i in each column of T, that can be searched for
@@ -113,6 +113,7 @@ class SearchCase( test_orm.TestMetaData ):
             self.session.execute(insert,
                                  {name:self.value_for_type( definition, i )})
 
+        initial_count = model_context.proxy.get_query().count()
         for (i,name), definition in types_to_test.items():
             value = self.value_for_type( definition, i )
             #
@@ -125,9 +126,6 @@ class SearchCase( test_orm.TestMetaData ):
                 continue
             string_value = str( i )
 
-            query = self.session.query( self.T )
-            query = search_filter.decorate_query(query, (admin, string_value))
-            
-            self.assertTrue( query.count() > 0 )
-            
-    
+            list(search_filter.model_run(model_context, string_value))
+            query = model_context.proxy.get_query()
+            self.assertTrue( 0 < query.count() < initial_count)
