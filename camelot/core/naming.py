@@ -788,8 +788,10 @@ class EntityNamingContext(EndpointNamingContext):
         """
         from camelot.core.orm import Session
         name = self.get_composite_name(name)
-        session = Session()
-        return session.query(self.entity).get(name[0])
+        instance = Session().query(self.entity).get(name[0])
+        if instance is None:
+            raise NameNotFoundException(name[0], BindingType.named_object)
+        return instance
 
 class InitialNamingContext(NamingContext, metaclass=Singleton):
     """
