@@ -1,7 +1,13 @@
 import collections
 import logging
+import typing
 
 logger = logging.getLogger(__name__)
+
+from camelot.core.naming import CompositeName, initial_naming_context
+from camelot.core.serializable import DataclassSerializable
+from camelot.core.utils import ugettext_lazy
+from dataclasses import dataclass
 
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
@@ -139,8 +145,30 @@ class ChangeSelection(Action):
             state = action.get_state(self.model_context)
             action_states.append(state)
         yield action_steps.ChangeSelection(self.action_routes, action_states)
-        
-        
+
+@dataclass
+class CompletionValue(DataclassSerializable):
+    """
+    Represent one of the autocompletion values.
+
+    .. attribute:: value
+
+        A :class:`camelot.core.naming.CompositeName` that resolves to a bound completion value.
+
+    .. attribute:: verbose_name
+
+        The verbose representation of the value as it will appear to the user.
+
+    .. attribute:: tooltip
+
+        The tooltip as displayed to the user, this should be of type :class:`camelot.core.utils.ugettext_lazy`.
+
+    """
+
+    route: CompositeName
+    verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    tooltip: typing.Union[str, ugettext_lazy, None] = None
+
 class Completion(Action):
 
     name = 'completion'
