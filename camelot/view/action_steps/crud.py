@@ -4,7 +4,9 @@ import typing
 import logging
 
 logger = logging.getLogger(__name__)
-    
+
+from camelot.core.naming import initial_naming_context
+
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
 from ...core.serializable import DataclassSerializable
@@ -107,12 +109,12 @@ class Completion(ActionStep):
     
     blocking = False
     
-    def __init__(self, row, column, prefix, completion):
+    def __init__(self, row, column, prefix, completions):
         self.row = row
         self.column = column
         self.prefix = prefix
-        self.completions = completion        
-        
+        self.completions = completions
+
     def gui_run(self, item_model):
         if is_deleted(item_model):
             return
@@ -125,7 +127,11 @@ class Completion(ActionStep):
             # calling setData twice triggers dataChanged twice, resulting in
             # the editors state being updated twice
             #child.setData(self.prefix, CompletionPrefixRole)
-            child.setData(self.completions, CompletionsRole)
+            completions = [{
+                Qt.ItemDataRole.UserRole: initial_naming_context.resolve(completion.route),
+                Qt.ItemDataRole.DisplayRole: completion.verbose_name,
+                Qt.ItemDataRole.ToolTipRole: completion.tooltip} for completion in self.completions]
+            child.setData(completions, CompletionsRole)
         logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
 
 class Created(ActionStep, UpdateMixin):
