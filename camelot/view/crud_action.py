@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from camelot.core.naming import initial_naming_context
+from camelot.core.orm import Entity
 
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
@@ -547,6 +548,13 @@ class SetData(Update, ChangedObjectMixin):
                     continue
                 # update the model
                 try:
+                    if isinstance(new_value, Entity):
+                        # Temporary measure to handle entity instances that are attached in a different
+                        # session because of the Completion action_step currently resolving named entity instances,
+                        # instead of the resolving taking place generally here in the future.
+                        # A possible cleaner temporary solution would be resolve them here, in case the new_value is a route,
+                        # but to distinguish regular list/tuples values from routes might not be totally fail-proof.
+                        new_value = model_context.session.merge(new_value)
                     admin.set_field_value(obj, field_name, new_value)
                     #
                     # setting this attribute, might trigger a default function 
