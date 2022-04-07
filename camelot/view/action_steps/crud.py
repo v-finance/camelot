@@ -4,8 +4,7 @@ import typing
 
 logger = logging.getLogger(__name__)
 
-from camelot.core.naming import CompositeName, initial_naming_context
-from camelot.core.serializable import DataclassSerializable
+from camelot.core.naming import CompositeName
 from camelot.core.utils import ugettext_lazy
 from dataclasses import dataclass
 

@@ -3,9 +3,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from camelot.core.naming import initial_naming_context
-from camelot.core.orm import Entity
-
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
