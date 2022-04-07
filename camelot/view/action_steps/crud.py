@@ -129,34 +129,36 @@ class CompletionValue(DataclassSerializable):
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
     tooltip: typing.Union[str, ugettext_lazy, None] = None
 
-class Completion(ActionStep):
+@dataclass
+class Completion(ActionStep, DataclassSerializable):
     
     blocking = False
-    
-    def __init__(self, row, column, prefix, completions):
-        self.row = row
-        self.column = column
-        self.prefix = prefix
-        self.completions = completions
 
-    def gui_run(self, item_model):
+    row: int
+    column: int
+    prefix: str
+    completions: typing.List[CompletionValue]
+
+    @classmethod
+    def gui_run(self, item_model, serialized_step):
         if is_deleted(item_model):
             return
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return
-        logger.debug('begin gui update {0} completions'.format(len(self.completions)))
-        child = root_item.child(self.row, self.column)
+        step = json.loads(serialized_step)
+        logger.debug('begin gui update {0} completions'.format(len(step['completions'])))
+        child = root_item.child(step['row'], step['column'])
         if child is not None:
             # calling setData twice triggers dataChanged twice, resulting in
             # the editors state being updated twice
             #child.setData(self.prefix, CompletionPrefixRole)
             completions = [{
-                Qt.ItemDataRole.UserRole: initial_naming_context.resolve(completion.route),
-                Qt.ItemDataRole.DisplayRole: completion.verbose_name,
-                Qt.ItemDataRole.ToolTipRole: completion.tooltip} for completion in self.completions]
+                Qt.ItemDataRole.UserRole: initial_naming_context.resolve(tuple(completion['route'])),
+                Qt.ItemDataRole.DisplayRole: completion['verbose_name'],
+                Qt.ItemDataRole.ToolTipRole: completion['tooltip']} for completion in step['completions']]
             child.setData(completions, CompletionsRole)
-        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
+        logger.debug('end gui update rows {0}, column {1}'.format(step['row'], step['column']))
 
 class Created(ActionStep, UpdateMixin):
     
