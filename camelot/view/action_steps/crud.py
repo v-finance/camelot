@@ -154,7 +154,7 @@ class Completion(ActionStep, DataclassSerializable):
             # the editors state being updated twice
             #child.setData(self.prefix, CompletionPrefixRole)
             completions = [{
-                Qt.ItemDataRole.UserRole: initial_naming_context.resolve(tuple(completion['route'])),
+                Qt.ItemDataRole.UserRole: completion['route'],
                 Qt.ItemDataRole.DisplayRole: completion['verbose_name'],
                 Qt.ItemDataRole.ToolTipRole: completion['tooltip']} for completion in step['completions']]
             child.setData(completions, CompletionsRole)
