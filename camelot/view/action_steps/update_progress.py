@@ -31,7 +31,7 @@ from dataclasses import dataclass
 import json
 import typing
 
-from camelot.core.qt import QtCore, QtWidgets
+from camelot.core.qt import QtCore, QtWidgets, transferto
 from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
@@ -111,6 +111,8 @@ updated.
                     progress_dialog.set_ok_hidden(False)
                     progress_dialog.set_cancel_hidden(True)
                     progress_dialog.exec()
+                    # https://vfinance.atlassian.net/browse/VFIN-1844
+                    transferto(progress_dialog, progress_dialog)
                     progress_dialog.set_ok_hidden(True)
                     progress_dialog.set_cancel_hidden(False)
                 if progress_dialog.wasCanceled():
