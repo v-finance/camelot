@@ -191,7 +191,12 @@ class Completion(Action):
             prefix,
         )
         # Empty if the field does not support autocompletions
-        completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else [] 
+        completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else []
+        completions = [
+            CompletionValue(
+                initial_naming_context._bind_object(si[Qt.ItemDataRole.UserRole]),
+                si[Qt.ItemDataRole.DisplayRole],
+                si[Qt.ItemDataRole.ToolTipRole]) for si in completions]
         yield action_steps.Completion(row, column, prefix, completions)
 
     def __repr__(self):
