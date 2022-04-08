@@ -850,6 +850,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             return ('entity', entity.__tablename__, entity.__name__, str(obj.id))
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
+        LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
         return self.rebind(str(id(obj)), obj)
 
 initial_naming_context = InitialNamingContext()
