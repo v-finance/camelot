@@ -874,8 +874,8 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (Decimal('-2.1'), ('constant', 'decimal', '-2.1')),
             (Decimal('0.0'),  ('constant', 'decimal', '0.0')),
             (Decimal('3.5'),  ('constant', 'decimal', '3.5')),
-            (obj1,            (str(id(obj1)),)),
-            (obj2,            (str(id(obj2)),)),
+            (obj1,            ('object', str(id(obj1)))),
+            (obj2,            ('object', str(id(obj2)),)),
             (entity1,         ('entity', 'organization', 'Organization', str(entity1.id))),
             (entity2,         ('entity', 'person', 'Person', str(entity2.id))),
             ]:

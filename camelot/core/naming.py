@@ -815,7 +815,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         constants.bind('null', None, immutable=True)
         constants.bind('true', True, immutable=True)
         constants.bind('false', False, immutable=True)
-        constants = self.bind_new_context('entity', immutable=True)
+        self.bind_new_context('entity', immutable=True)
+        self.bind_new_context('object', immutable=True)
 
     def new_context(self) -> NamingContext:
         """
@@ -855,6 +856,6 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             raise NotImplementedError('Use Decimal instead')
         LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
         # TBD: possibly put objects in a seperate objects subcontext?
-        return self.rebind(str(id(obj)), obj)
+        return self.rebind(('object', str(id(obj))), obj)
 
 initial_naming_context = InitialNamingContext()
