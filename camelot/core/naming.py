@@ -851,6 +851,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
         LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
+        # TBD: possibly put objects in a seperate objects subcontext?
         return self.rebind(str(id(obj)), obj)
 
 initial_naming_context = InitialNamingContext()

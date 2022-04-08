@@ -844,6 +844,38 @@ class InitialNamingContextCase(NamingContextCase):
         with self.assertRaises(ImmutableBindingException):
             constants.unbind_context('str')
 
+    def test_bind_object(self):
+        obj1 = object()
+        obj2 = object()
+        entity1 = party.Organization(name='1')
+        entity2 = party.Person(first_name='Test', last_name='Dummy')
+
+        for obj, expected_name in [
+            (None,            ('constant', 'null')),
+            (True,            ('constant', 'true')),
+            (False,           ('constant', 'false')),
+            ('test',          ('constant', 'str', 'test')),
+            ('',              ('constant', 'str', '')),
+            (1,               ('constant', 'int', '1')),
+            (0,               ('constant', 'int', '0')),
+            (-1,              ('constant', 'int', '-1')),
+            (Decimal('-2.1'), ('constant', 'decimal', '-2.1')),
+            (Decimal('0.0'),  ('constant', 'decimal', '0.0')),
+            (Decimal('3.5'),  ('constant', 'decimal', '3.5')),
+            (obj1,            (str(id(obj1)),)),
+            (obj2,            (str(id(obj2)),)),
+            (entity1,         ('entity', 'organization', 'Organization', str(entity1.id))),
+            (entity2,         ('entity', 'person', 'Person', str(entity2.id))),
+            ]:
+            name = self.context._bind_object(obj)
+            self.assertEqual(name, expected_name)
+            self.assertIn(name, self.context)
+            self.assertEqual(obj, self.context.resolve(name))
+
+        # Floats should not be implemented:
+        with self.assertRaises(NotImplementedError):
+            self.context._bind_object(3.5)
+
 class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
     context_cls = EntityNamingContext
