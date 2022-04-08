@@ -11,6 +11,7 @@ import typing
 
 from enum import Enum
 from decimal import Decimal
+from sqlalchemy import inspect
 
 from .singleton import Singleton
 
@@ -846,6 +847,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         if isinstance(obj, (str, int, Decimal)):
             return ('constant', type(obj).__name__.lower(), str(obj))
         if isinstance(obj, Entity):
+            if not inspect(obj).persistent:
+                raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
             return ('entity', entity.__tablename__, entity.__name__, str(obj.id))
         if isinstance(obj, float):

@@ -796,10 +796,21 @@ class DecimalNamingContextCase(AbstractNamingContextCase, ConstantNamingContextC
     incompatible_names = ['', 'x', 'True', 'test']
     compatible_names = [('-1', Decimal(-1)), ('0', Decimal(0)), ('2', Decimal(2)), ('1.5', Decimal(1.5))]
 
-class InitialNamingContextCase(NamingContextCase):
+class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
     context_name = tuple()
     context_cls = InitialNamingContext
+
+    @classmethod
+    def setUpClass(cls):
+        super(InitialNamingContextCase, cls).setUpClass()
+        cls.setup_sample_model()
+        cls.load_example_data()
+        cls.session = Session()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_sample_model()
 
     def test_singleton(self):
         # Verify the InitialNamingContext is a singleton.
@@ -849,6 +860,7 @@ class InitialNamingContextCase(NamingContextCase):
         obj2 = object()
         entity1 = party.Organization(name='1')
         entity2 = party.Person(first_name='Test', last_name='Dummy')
+        self.session.flush()
 
         for obj, expected_name in [
             (None,            ('constant', 'null')),
@@ -876,6 +888,10 @@ class InitialNamingContextCase(NamingContextCase):
         with self.assertRaises(NotImplementedError):
             self.context._bind_object(3.5)
 
+        # Only flushed entities should be supported:
+        with self.assertRaises(NotImplementedError):
+            self.context._bind_object(party.Person())
+
 class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
     context_cls = EntityNamingContext
@@ -893,7 +909,6 @@ class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
         (('test', ''),     NamingException.Message.singular_name_expected),
         (('test', None),   NamingException.Message.invalid_composite_name_parts),
         (('test', 'test'), NamingException.Message.singular_name_expected),
-        #'True', '1.5', 'test'
     ]
     valid_names = ['0', '1', '2', '9999']
     incompatible_names = ['0', '9999']
