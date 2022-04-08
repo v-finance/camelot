@@ -848,7 +848,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         if isinstance(obj, (str, int, Decimal)):
             return ('constant', type(obj).__name__.lower(), str(obj))
         if isinstance(obj, Entity):
-            if not inspect(obj).persistent:
+            # TBD: possibly move the context specific object validations to the respective context?
+            if not inspect(obj).persistent or obj.id is None:
                 raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
             return ('entity', entity.__tablename__, entity.__name__, str(obj.id))

@@ -890,7 +890,11 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
         # Only flushed entities should be supported:
         with self.assertRaises(NotImplementedError):
-            self.context._bind_object(party.Person())
+            self.context._bind_object(party.Person(first_name='Crash test', last_name='Dummy'))
+        self.session.delete(entity1)
+        self.session.flush()
+        with self.assertRaises(NotImplementedError):
+            self.context._bind_object(entity1)
 
 class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
