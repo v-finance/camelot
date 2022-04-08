@@ -163,6 +163,9 @@ class Completion(Action):
         )
         # Empty if the field does not support autocompletions
         completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else []
+        # TBD: With the Completion action step now responsible for translating the serialized completion data with the correct Qt item data roles,
+        # the round trip to the admin's get_search_identifiers definition could be reworked or possibly be moved here,
+        # given that the current occurences do not differ much.
         completions = [
             action_steps.CompletionValue(
                 initial_naming_context._bind_object(si[Qt.ItemDataRole.UserRole]),
