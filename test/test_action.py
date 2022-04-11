@@ -1051,21 +1051,6 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         self.assertTrue(object_selected)
         self.assertEqual(self.movie.director, person)
 
-    def test_new_object_and_clear_object(self):
-        new_object = NewObject()
-        generator = new_object.model_run(self.director_context, mode=None)
-        open_form = None
-        for step in generator:
-            if isinstance(step, action_steps.OpenFormView):
-                open_form = step
-        self.assertTrue(open_form)
-        new_object = step.get_objects()[0]
-        self.assertIsInstance(new_object, Person)
-        self.assertEqual(self.movie.director, new_object)
-        clear_object = ClearObject()
-        list(clear_object.model_run(self.director_context, mode=None))
-        self.assertEqual(self.movie.director, None)
-
     def test_upload_and_detach_file(self):
         upload_file = UploadFile()
         file_uploaded = False
