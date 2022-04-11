@@ -239,6 +239,9 @@ and used as a custom action.
                     )
         return self.get_verbose_name()
 
+    def get_verbose_search_identifier(self, obj):
+        return self.get_verbose_object_name(obj)
+
     def get_search_identifiers(self, obj):
         search_identifiers = {}
         search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s' % (str(obj))
