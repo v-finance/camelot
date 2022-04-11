@@ -331,6 +331,14 @@ be specified using the verbose_name attribute.
         """
         return str(obj)
 
+    def get_verbose_search_identifier(self, obj):
+        """
+        Create an identifier for an object that is interpretable when
+        searching; e.g. : the primary key of an object.
+        By default, this returns the same value as ´get_verbose_identifier´.
+        """
+        return self.get_verbose_identifier(obj)
+
     def get_proxy(self, objects):
         """
         :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
