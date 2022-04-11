@@ -45,7 +45,6 @@ from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
-from camelot.core.qt import Qt
 
 from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
 from sqlalchemy.ext import hybrid
