@@ -165,7 +165,7 @@ class Completion(Action):
         # Empty if the field does not support autocompletions
         completions = [
             action_steps.CompletionValue(
-                initial_naming_context._bind_object(obj),
+                value=initial_naming_context._bind_object(obj),
                 verbose_name=admin.get_verbose_search_identifier(obj),
                 tooltip='id: %s' % (admin.primary_key(obj)))
             for obj in completions] if completions is not None else []

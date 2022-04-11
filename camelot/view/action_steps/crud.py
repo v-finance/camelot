@@ -124,7 +124,7 @@ class CompletionValue(DataclassSerializable):
 
     """
 
-    route: CompositeName
+    value: CompositeName
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
     tooltip: typing.Union[str, ugettext_lazy, None] = None
 
@@ -154,7 +154,7 @@ class Completion(ActionStep, DataclassSerializable):
             #child.setData(self.prefix, CompletionPrefixRole)
             completions = [{
                 # Use user role for object to avoid display role / edit role confusion
-                Qt.ItemDataRole.UserRole: completion['route'],
+                Qt.ItemDataRole.UserRole: completion['value'],
                 Qt.ItemDataRole.DisplayRole: completion['verbose_name'],
                 Qt.ItemDataRole.ToolTipRole: completion['tooltip']} for completion in step['completions']]
             child.setData(completions, CompletionsRole)
