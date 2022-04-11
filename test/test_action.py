@@ -20,10 +20,7 @@ from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
-from camelot.admin.action.field_action import (
-    ClearObject, DetachFile, NewObject, SelectObject,
-    UploadFile, add_existing_object,
-)
+from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFile, add_existing_object
 from camelot.admin.action.list_action import SetFilters, ListActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
