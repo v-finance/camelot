@@ -346,17 +346,6 @@ be specified using the verbose_name attribute.
         """
         return ListModelProxy(objects)
 
-    def get_search_identifiers(self, obj):
-        """Create a dict of identifiers to be used in search boxes.
-        The keys are Qt roles."""
-        search_identifiers = {}
-        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), str(obj))
-        # Use user role for object to avoid display role / edit role confusion
-        search_identifiers[Qt.ItemDataRole.UserRole] = obj
-        search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
-
-        return search_identifiers
-
     def get_entity_admin(self, entity):
         """deprecated : use get_related_admin"""
         return self.app_admin.get_related_admin(entity)
