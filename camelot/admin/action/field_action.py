@@ -88,13 +88,7 @@ class EditFieldAction(Action):
         state = super().get_state(model_context)
         # editability at the level of the field
         state.enabled = model_context.field_attributes.get('editable', False)
-        # editability at the level of the entity admin
-        admin = model_context.field_attributes.get('admin')
-        if (admin is not None) and not admin.is_editable():
-            state.visible = False
-            state.enabled = False
         return state
-
 
 class SelectObject(EditFieldAction):
     """Allows the user to select an object, and set the selected object as
@@ -322,6 +316,15 @@ class AddNewObject(AddNewObjectMixin, EditFieldAction):
         By default, the given model_context's admin is used.
         """
         return model_context.field_attributes.get('admin')
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, FieldActionModelContext)
+        state = super().get_state(model_context)
+        admin = model_context.field_attributes.get('admin')
+        if (admin is not None) and not admin.is_editable():
+            state.visible = False
+            state.enabled = False
+        return state
 
 add_new_object = AddNewObject()
 
