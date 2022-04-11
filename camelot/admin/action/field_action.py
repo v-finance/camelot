@@ -117,31 +117,6 @@ class SelectObject(EditFieldAction):
         state.visible = (model_context.value is None)
         return state
 
-class NewObject(SelectObject):
-    """Open a form for the creation of a new object, and set this
-    object as the new value of the editor"""
-
-    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    tooltip = _('create new')
-    name = 'new_object'
-
-    def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-        field_admin = model_context.field_attributes.get('admin')
-        if field_admin is not None:
-            new_object = field_admin.entity()
-            # Give the default fields their value
-            field_admin.add(new_object)
-            field_admin.set_defaults(new_object)
-            model_context.admin.set_field_value(
-                model_context.obj, model_context.field, new_object
-            )
-            yield action_steps.OpenFormView(
-                new_object,
-                field_admin.get_proxy([new_object]),
-                field_admin
-            )
-
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
 
