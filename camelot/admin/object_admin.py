@@ -782,7 +782,6 @@ be specified using the verbose_name attribute.
                 field_attributes['actions'] = [
                     field_action.ClearObject(),
                     field_action.SelectObject(),
-                    field_action.NewObject(),
                     field_action.OpenObject()
                 ]
             field_attributes['admin'] = related_admin
