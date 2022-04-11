@@ -1161,6 +1161,8 @@ class AddNewObjectMixin(object):
         )
         if create_inline is False:
             yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
+            # Scroll to last row so that the user sees the newly added object in the list.
+            yield action_steps.ToLastRow()
 
 class AddNewObject( AddNewObjectMixin, EditAction ):
     """Add a new object to a collection. Depending on the
