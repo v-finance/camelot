@@ -153,6 +153,7 @@ class Completion(ActionStep, DataclassSerializable):
             # the editors state being updated twice
             #child.setData(self.prefix, CompletionPrefixRole)
             completions = [{
+                # Use user role for object to avoid display role / edit role confusion
                 Qt.ItemDataRole.UserRole: completion['route'],
                 Qt.ItemDataRole.DisplayRole: completion['verbose_name'],
                 Qt.ItemDataRole.ToolTipRole: completion['tooltip']} for completion in step['completions']]
