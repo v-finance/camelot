@@ -242,15 +242,6 @@ and used as a custom action.
     def get_verbose_search_identifier(self, obj):
         return self.get_verbose_object_name(obj)
 
-    def get_search_identifiers(self, obj):
-        search_identifiers = {}
-        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s' % (str(obj))
-        # Use user role for object to avoid display role / edit role confusion
-        search_identifiers[Qt.ItemDataRole.UserRole] = obj
-        search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
-
-        return search_identifiers
-
     @register_list_actions('_admin_route', '_shared_toolbar_actions')
     def _get_shared_toolbar_actions( self ):
         return [
