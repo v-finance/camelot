@@ -136,6 +136,8 @@ class Created(ActionStep, UpdateMixin):
         self.changed_ranges = changed_ranges
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         # appending new items to the model will increase the rowcount, so
         # there is no need to set the rowcount explicitly
         self.update_item_model(item_model) 

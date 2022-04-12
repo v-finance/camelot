@@ -957,8 +957,8 @@ class ApplicationActionsCase(
         profile_case = test_core.ProfileCase('setUp')
         profile_case.setUp()
         profile_store = profile_case.test_profile_store()
-        action = application_action.SelectProfile(profile_store)
-        generator = self.gui_run(action, self.gui_context)
+        action = application_action.SelectProfileMixin(profile_store)
+        generator = action.select_profile()
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
                 generator.send(profile_store.get_last_profile())
