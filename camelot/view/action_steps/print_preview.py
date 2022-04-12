@@ -35,6 +35,28 @@ from camelot.view.action_steps.open_file import OpenFile
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.utils import resize_widget_to_screen
 
+import logging
+
+LOGGER = logging.getLogger(__name__)
+
+
+def check_document_thread_affinity(document, print_thread=None):
+    if isinstance(document, QtCore.QObject):
+        if document.thread() != QtCore.QThread.currentThread():
+            LOGGER.error('Document thread affinity error:')
+            LOGGER.error('    document thread: {}'.format(document.thread()))
+            LOGGER.error('    current thread:  {}'.format(QtCore.QThread.currentThread()))
+            LOGGER.error('    print_thread:    {}'.format(print_thread))
+            LOGGER.error('    GUI thread:      {}'.format(QtCore.QCoreApplication.instance().thread()))
+        assert document.thread() == QtCore.QThread.currentThread()
+
+def check_documents_thread_affinity(documents, print_thread=None):
+    if isinstance(documents, QtCore.QObject):
+        check_document_thread_affinity(documents, print_thread)
+    elif isinstance(documents, list):
+        for document in documents:
+            check_document_thread_affinity(document, print_thread)
+
 
 class PrintPreview( ActionStep ):
     """
@@ -88,9 +110,16 @@ class PrintPreview( ActionStep ):
     .. image:: /_static/simple_report.png
         """
     
-    def __init__( self, document ):
+    def __init__( self, document, print_thread=None ):
         self.document = document
-        self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
+        # document must be in current thread
+        # (so it can be moved to the correct thread below)
+        # note: a QObject can only be moved to another thread if it lives in the current thread
+        check_documents_thread_affinity(self.document, print_thread)
+        if print_thread is not None:
+            self.document.moveToThread(print_thread)
+        else:
+            self.document.moveToThread( QtCore.QCoreApplication.instance().thread() )
         self.printer = None
         self.margin_left = None
         self.margin_top = None
@@ -117,6 +146,8 @@ class PrintPreview( ActionStep ):
             printer.setPageMargins( self.margin_left, self.margin_top, self.margin_right, self.margin_bottom, self.margin_unit )
 
     def paint_on_printer( self, printer ):
+        # document must be in current thread
+        check_document_thread_affinity(self.document, QtCore.QThread.currentThread())
         self.document.print_(printer)
 
     def render( self, gui_context ):
