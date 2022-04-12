@@ -221,9 +221,13 @@ class Storage( object ):
         ( handle, to_path ) = self._create_tempfile( suffix, prefix )
         logger.debug(u'checkin stream to %s'%to_path)
         file = os.fdopen( handle, 'wb' )
+        logger.debug('opened file')
         file.write( stream.read() )
+        logger.debug('written contents to file')
         file.flush()
+        logger.debug('flushed file')
         file.close()
+        logger.debug('closed file')
         return self.stored_file_implementation( self, os.path.basename( to_path ) )
 
     def checkout( self, stored_file ):
