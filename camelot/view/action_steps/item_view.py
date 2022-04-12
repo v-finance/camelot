@@ -326,8 +326,3 @@ class RefreshItemView(ActionStep, DataclassSerializable):
         model = gui_context.get_item_model()
         if model is not None:
             model.refresh()
-            # this should reset the sort, since a refresh might cause
-            # new row to appear, and so the proxy needs to be reindexed
-            # this sorting of reset is not implemented, therefor, we simply
-            # sort on the first column to force reindexing
-            model.sort(0, Qt.SortOrder.AscendingOrder)
