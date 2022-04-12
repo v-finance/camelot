@@ -396,8 +396,8 @@ class ChangeObjects(UpdateTableView):
         self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
         if self.validate:
-            validator = self.admin.get_validator()
-            for row, obj in enumerate(self.objects):
+            validator = admin.get_validator()
+            for row, obj in enumerate(value):
                 for _message in validator.validate_object(obj):
                     self.invalid_rows.add(row)
                     break
