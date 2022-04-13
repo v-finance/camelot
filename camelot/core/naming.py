@@ -750,7 +750,7 @@ class DatetimeNamingContext(EndpointNamingContext):
     Represents a stateless endpoint naming context, which handles resolving ´datetime.datetime´ objects/values.
     """
 
-    _format = '%Y-%m-%d'
+    _format = '%Y-%m-%d %H:%M:%S'
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
@@ -778,7 +778,7 @@ class DateNamingContext(DatetimeNamingContext):
     Represents a stateless endpoint naming context, which handles resolving ´datetime.date´ objects/values.
     """
 
-    _format = '%Y-%m-%d %H:%M:%S'
+    _format = '%Y-%m-%d'
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:

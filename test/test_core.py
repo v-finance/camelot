@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+import datetime
 import os
 import tempfile
 import unittest
@@ -8,7 +9,8 @@ from .test_model import ExampleModelMixinCase
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
-    AlreadyBoundException, BindingType, ConstantNamingContext, EntityNamingContext,
+    AlreadyBoundException, BindingType, ConstantNamingContext,
+    DateNamingContext, DatetimeNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
 )
@@ -758,7 +760,6 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
     def test_resolve(self):
         super().test_resolve()
-
         # Verify that incompatible names raise a NameNotFoundException:
         for incompatible_name in self.incompatible_names:
             with self.assertRaises(NameNotFoundException) as exc:
@@ -795,6 +796,33 @@ class DecimalNamingContextCase(AbstractNamingContextCase, ConstantNamingContextC
 
     incompatible_names = ['', 'x', 'True', 'test']
     compatible_names = [('-1', Decimal(-1)), ('0', Decimal(0)), ('2', Decimal(2)), ('1.5', Decimal(1.5))]
+
+class DatetimeNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
+
+    context_name = ('datetime',)
+
+    incompatible_names = ['', 'x', 'True', 'test', '2022-04-13', '13/04/2022 14:17:12', '2022-04-13 14:17:12.063786']
+    compatible_names = [
+        ('2021-02-07 12:12:01', datetime.datetime(2021, 2, 7, 12, 12, 1)),
+        ('2022-04-13 13:51:46', datetime.datetime(2022, 4, 13, 13, 51, 46)),
+    ]
+
+    def new_context(self):
+        return DatetimeNamingContext()
+
+class DateNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
+
+    context_name = ('date',)
+
+    incompatible_names = ['', 'x', 'True', 'test', '13/04/2022', '2022-04-13 14:17:12', '2022-04-13 14:17:12.063786']
+    compatible_names = [
+        ('2021-02-07', datetime.date(2021, 2, 7)),
+        ('2022-04-13', datetime.date(2022, 4, 13)),
+    ]
+
+    def new_context(self):
+        return DateNamingContext()
+
 
 class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
