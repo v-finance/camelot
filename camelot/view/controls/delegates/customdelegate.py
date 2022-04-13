@@ -38,7 +38,8 @@ from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
 from ....core.serializable import json_encoder
 from ....core.item_model import (
-    ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
+    ActionRoutesRole, ActionStatesRole,
+    ChoicesRole, FieldAttributesRole, ProxyDict
 )
 from ..action_widget import ActionToolbutton
 
@@ -188,7 +189,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
             choices = [(initial_naming_context._bind_object(obj), verbose_name) for obj, verbose_name in choices]
-        item.setData(py_to_variant(choices), Qt.ItemDataRole.ChoicesRole)
+        item.setData(py_to_variant(choices), ChoicesRole)
         return item
 
     def createEditor(self, parent, option, index):
