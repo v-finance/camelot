@@ -407,12 +407,16 @@ class ChangeObjects(UpdateTableView):
             RouteWithRenderHint(action.route, action.render_hint) for action in admin.get_related_toolbar_actions('onetomany')
         ]
 
-    def get_objects( self ):
+    def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
 
         :return: the object to change
         """
-        return self.objects
+        return self.value
+
+    def get_admin(self):
+        """Use this method to get access to the admin in unit tests"""
+        return initial_naming_context.resolve(self.admin_route)
 
     @classmethod
     def render(cls, step):
