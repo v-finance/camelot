@@ -4,7 +4,6 @@ import os
 import tempfile
 import unittest
 
-from .test_model import ExampleModelMixinCase
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (

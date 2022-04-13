@@ -148,16 +148,13 @@ class UpdateActions(Action):
         yield action_steps.UpdateActionsState(model_context, actions_state)
 
 
-class SelectProfile( Action ):
+class SelectProfileMixin:
     """Select the application profile to use
     
     :param profile_store: an object of type
         :class:`camelot.core.profile.ProfileStore`
-    This action is also useable as an action step, which will return the
-    selected profile.
     """
 
-    name = 'select_profile'
     new_icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     save_icon = Icon('save') # 'tango/16x16/actions/document-save.png'
     load_icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
@@ -170,11 +167,7 @@ class SelectProfile( Action ):
         self.profile_store = profile_store
         self.selected_profile = None
     
-    def gui_run(self, gui_context):
-        super(SelectProfile, self).gui_run(gui_context)
-        return self.selected_profile
-        
-    def model_run( self, model_context, mode ):
+    def select_profile(self):
         from camelot.view import action_steps
         from camelot.view.action_steps.profile import EditProfiles
 
@@ -359,6 +352,7 @@ class ShowAbout(Action):
             text = about,
             title = ugettext('About'),
             standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok],
+            hide_progress=True
         )
 
 class Backup( Action ):

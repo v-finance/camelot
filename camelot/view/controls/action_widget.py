@@ -33,8 +33,8 @@ from ...core.qt import QtGui, QtCore, QtWidgets, QtQuick, QtQml, variant_to_py
 from ...admin.icon import Icon
 from ...admin.action import Mode, State
 #from ...admin.action.form_action import FormActionGuiContext
-#from ...admin.action.list_action import ListActionGuiContext
-#from camelot.view.model_thread import post
+from ...admin.action.list_action import ListActionGuiContext
+from camelot.view.model_thread import post
 from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
@@ -57,6 +57,10 @@ class AbstractActionWidget( object ):
             gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
             gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
         """
+        # VFIN-1852: Still needed for CustomerAccount's OpenEntriesFilter
+        # (and possibly other actions using ChangeObject)
+        if isinstance( gui_context, ListActionGuiContext ):
+            post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
 
     def set_state(self, state):
         self.state = state

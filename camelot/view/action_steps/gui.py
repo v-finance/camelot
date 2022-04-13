@@ -41,6 +41,7 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.qml_view import qml_action_step
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
@@ -189,6 +190,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
     standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
     informative_text: str = field(init=False)
     detailed_text: str = field(init=False)
+    hide_progress: bool = False
 
     def __post_init__(self):
         self.title = str(self.title)
@@ -210,10 +212,18 @@ class MessageBox( ActionStep, DataclassSerializable ):
         return message_box
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
+    def show_message_box(cls, step):
         message_box = cls.render(step)
         result = message_box.exec()
         if result == QtWidgets.QMessageBox.StandardButton.Cancel:
             raise CancelRequest()
         return result
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        if step['hide_progress']:
+            with hide_progress_dialog(gui_context):
+                cls.show_message_box(step)
+        else:
+            cls.show_message_box(step)
