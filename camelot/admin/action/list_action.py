@@ -1161,8 +1161,6 @@ class AddNewObjectMixin(object):
         )
         if create_inline is False:
             yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
-            # Scroll to last row so that the user sees the newly added object in the list.
-            yield action_steps.ToLastRow()
 
 class AddNewObject( AddNewObjectMixin, EditAction ):
     """Add a new object to a collection. Depending on the
@@ -1187,6 +1185,12 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
 
     def get_proxy(self, model_context, admin):
         return model_context.proxy
+
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield from super().model_run(model_context, mode)
+        # Scroll to last row so that the user sees the newly added object in the list.
+        yield action_steps.ToLastRow()
 
 add_new_object = AddNewObject()
 
