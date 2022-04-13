@@ -388,8 +388,7 @@ class ChangeObjects(UpdateTableView):
     window_title: str = field(init=False)
     title: Union[str, ugettext_lazy] = field(init=False, default= _('Data Preview'))
     subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Please review the data below.'))
-
-    icon = Icon('file-excel')
+    icon: typing.Union[Icon, None] = field(init=False, default=Icon('file-excel'))
 
     def __post_init__( self, value, admin):
         super(ChangeObjects, self).__post_init__(admin, value)
@@ -431,7 +430,13 @@ class ChangeObjects(UpdateTableView):
         dialog.setWindowTitle(step['window_title'])
         dialog.set_banner_title(step['title'])
         dialog.set_banner_subtitle(step['subtitle'])
-        #dialog.set_banner_logo_pixmap(from_admin_icon(self.icon).getQPixmap() )
+        if step['icon'] is not None:
+            icon = Icon(
+                step['icon']['name'],
+                step['icon']['pixmap_size'],
+                step['icon']['color']
+            )
+            dialog.set_banner_logo_pixmap(from_admin_icon(icon).getQPixmap())
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #
