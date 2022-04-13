@@ -4,6 +4,7 @@ Inspired by the Corba/Java NamingContext.
 """
 from __future__ import annotations
 
+import datetime
 import decimal
 import functools
 import logging
@@ -743,6 +744,58 @@ class ConstantNamingContext(EndpointNamingContext):
             return self.constant_type(name[0])
         except (ValueError, decimal.InvalidOperation):
             raise NameNotFoundException(name[0], BindingType.named_object)
+
+class DatetimeNamingContext(EndpointNamingContext):
+    """
+    Represents a stateless endpoint naming context, which handles resolving ´datetime.datetime´ objects/values.
+    """
+
+    _format = '%Y-%m-%d'
+
+    @AbstractNamingContext.check_bounded
+    def resolve(self, name: Name) -> object:
+        """
+        Resolve a name in this DatetimeNamingContext and return the bound object.
+        It will throw appropriate exceptions if the resolution failed.
+
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+
+        :return: the bound object, an instance of ´datetime.datetime´.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid.
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
+        name = self.get_composite_name(name)
+        try:
+            return datetime.datetime.strptime(name[0], self._format)
+        except ValueError:
+            raise NameNotFoundException(name[0], BindingType.named_object)
+
+class DateNamingContext(DatetimeNamingContext):
+    """
+    Represents a stateless endpoint naming context, which handles resolving ´datetime.date´ objects/values.
+    """
+
+    _format = '%Y-%m-%d %H:%M:%S'
+
+    @AbstractNamingContext.check_bounded
+    def resolve(self, name: Name) -> object:
+        """
+        Resolve a name in this DateNamingContext and return the bound object.
+        It will throw appropriate exceptions if the resolution failed.
+
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+
+        :return: the bound object, an instance of ´datetime.date´.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid.
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
+        return super().resolve(name).date()
 
 class EntityNamingContext(EndpointNamingContext):
     """
