@@ -398,7 +398,7 @@ class ChangeObjects(UpdateTableView):
             validator = admin.get_validator()
             for row, obj in enumerate(value):
                 for _message in validator.validate_object(obj):
-                    self.invalid_rows.add(row)
+                    self.invalid_rows.append(row)
                     break
 
     def _post_init_actions__(self, admin):
