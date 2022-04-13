@@ -45,7 +45,6 @@ from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
-from camelot.core.qt import Qt
 
 from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
 from sqlalchemy.ext import hybrid
@@ -239,14 +238,8 @@ and used as a custom action.
                     )
         return self.get_verbose_name()
 
-    def get_search_identifiers(self, obj):
-        search_identifiers = {}
-        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s' % (str(obj))
-        # Use user role for object to avoid display role / edit role confusion
-        search_identifiers[Qt.ItemDataRole.UserRole] = obj
-        search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
-
-        return search_identifiers
+    def get_verbose_search_identifier(self, obj):
+        return self.get_verbose_object_name(obj)
 
     @register_list_actions('_admin_route', '_shared_toolbar_actions')
     def _get_shared_toolbar_actions( self ):
