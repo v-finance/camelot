@@ -284,6 +284,16 @@ _typing_to_python_type = {
         'python_type': int,
         'delegate': delegates.MonthsDelegate,
     },
+
+    camelot.types.Color: lambda f: {
+        'delegate': delegates.ColorDelegate,
+        'python_type': str,
+        'from_string': string_from_string,
+        'editable': True,
+        'nullable': True,
+        'search_strategy': list_filter.NoSearch,
+        'filter_strategy': list_filter.NoSearch,
+    },
 }
 
 #

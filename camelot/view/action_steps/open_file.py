@@ -28,11 +28,21 @@
 #  ============================================================================
 from dataclasses import dataclass
 
+<<<<<<< HEAD
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
 from camelot.view.qml_view import qml_action_step
 
 from io import BytesIO
+=======
+import os
+
+from ...core.qt import QtCore, QtGui, QtWidgets
+  
+from camelot.admin.action import ActionStep
+from camelot.core.templates import environment
+from camelot.core.utils import ugettext
+>>>>>>> feature-freeze
 
 from ...core.serializable import DataclassSerializable
 
