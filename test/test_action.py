@@ -31,7 +31,7 @@ from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
-from camelot.core.orm import EntityBase, EntityMeta, Session
+from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import party
 from camelot.model.party import Person
@@ -56,7 +56,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
-from .test_orm import TestMetaData
+from .test_orm import TestMetaData, EntityMetaMock
 from .test_model import ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
@@ -567,7 +567,7 @@ class ListActionsCase(
         metadata = MetaData()
         Entity = declarative_base(cls = EntityBase,
                                   metadata = metadata,
-                                  metaclass = EntityMeta,
+                                  metaclass = EntityMetaMock,
                                   class_registry = dict(),
                                   constructor = None,
                                   name = 'Entity' )

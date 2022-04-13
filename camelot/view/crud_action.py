@@ -139,8 +139,7 @@ class ChangeSelection(Action):
             state = action.get_state(self.model_context)
             action_states.append(state)
         yield action_steps.ChangeSelection(self.action_routes, action_states)
-        
-        
+
 class Completion(Action):
 
     name = 'completion'
@@ -162,8 +161,14 @@ class Completion(Action):
             field_name,
             prefix,
         )
+
         # Empty if the field does not support autocompletions
-        completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else [] 
+        completions = [
+            action_steps.CompletionValue(
+                value=initial_naming_context._bind_object(obj),
+                verbose_name=admin.get_verbose_search_identifier(obj),
+                tooltip='id: %s' % (admin.primary_key(obj)))
+            for obj in completions] if completions is not None else []
         yield action_steps.Completion(row, column, prefix, completions)
 
     def __repr__(self):
@@ -541,6 +546,9 @@ class SetData(Update, ChangedObjectMixin):
                     continue
                 # update the model
                 try:
+                    if isinstance(new_value, (list, tuple)) and tuple(new_value) in initial_naming_context:
+                        # Handle only some values (completions) being named values that need resolving for now.
+                        new_value = initial_naming_context.resolve(tuple(new_value))
                     admin.set_field_value(obj, field_name, new_value)
                     #
                     # setting this attribute, might trigger a default function 
