@@ -32,6 +32,8 @@ import json
 import logging
 import dataclasses
 
+from camelot.core.naming import initial_naming_context
+
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
 from ....core.serializable import json_encoder
@@ -174,6 +176,10 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                      Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.ItemDataRole.BackgroundRole)
+        choices = model_context.field_attributes.get('choices')
+        if choices is not None:
+            choices = [(initial_naming_context._bind_object(obj), verbose_name) for obj, verbose_name in choices]
+        item.setData(py_to_variant(choices), Qt.ItemDataRole.ChoicesRole)
         return item
 
     def createEditor(self, parent, option, index):
