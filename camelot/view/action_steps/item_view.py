@@ -110,7 +110,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     search_text: Union[str, None] = field(init=False)
     title: Union[str, ugettext_lazy] = field(init=False)
     columns: List[str] = field(init=False)
-    list_action: Route = field(init=False)
+    list_action: Union[Route, None] = field(init=False)
     proxy_route: Route = field(init=False)
     actions: List[Tuple[Route, RenderHint]] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
@@ -120,9 +120,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self.value = value
         self.search_text = None
         self.title = admin.get_verbose_name_plural()
-        self.actions = admin.get_list_actions().copy()
-        self.actions.extend(admin.get_filters())
-        self.actions.extend(admin.get_list_toolbar_actions())
+        self._post_init_actions__(admin)
         self.columns = admin.get_columns()
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
@@ -130,6 +128,11 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
         self._add_action_states(admin, proxy, self.actions, self.action_states)
         self.set_filters(self.action_states, proxy)
         self.crud_actions = CrudActions(admin)
+
+    def _post_init_actions__(self, admin):
+        self.actions = admin.get_list_actions().copy()
+        self.actions.extend(admin.get_filters())
+        self.actions.extend(admin.get_list_toolbar_actions())
 
     @staticmethod
     def _add_action_states(admin, proxy, actions, action_states):
