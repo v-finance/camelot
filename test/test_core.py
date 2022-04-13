@@ -870,6 +870,12 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         self.assertEqual(self.context.resolve(('constant', 'decimal', '0')), Decimal(0))
         self.assertEqual(self.context.resolve(('constant', 'decimal', '0.0')), Decimal(0.0))
         self.assertEqual(self.context.resolve(('constant', 'decimal', '2')), Decimal(2))
+        # Datetimes
+        self.assertEqual(self.context.resolve(('constant', 'datetime', '2022-04-13 13:51:46')), datetime.datetime(2022, 4, 13, 13, 51, 46))
+        self.assertEqual(self.context.resolve(('constant', 'datetime', '2021-02-05 22:00:01')), datetime.datetime(2021, 2, 5, 22, 0, 1))
+        # Dates
+        self.assertEqual(self.context.resolve(('constant', 'date', '2022-04-13')), datetime.date(2022, 4, 13))
+        self.assertEqual(self.context.resolve(('constant', 'date', '2021-02-05')), datetime.date(2021, 2, 5))
 
         # Verify that those constants contexts are immutabe on the initial naming context:
         with self.assertRaises(ImmutableBindingException):
@@ -906,6 +912,9 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (obj2,            ('object', str(id(obj2)),)),
             (entity1,         ('entity', 'organization', 'Organization', str(entity1.id))),
             (entity2,         ('entity', 'person', 'Person', str(entity2.id))),
+
+            (datetime.datetime(2022, 4, 13, 13, 51, 46), ('constant', 'datetime', '2022-04-13 13:51:46')),
+            (datetime.date(2022, 4, 13),                 ('constant', 'date', '2022-04-13')),
             ]:
             name = self.context._bind_object(obj)
             self.assertEqual(name, expected_name)
