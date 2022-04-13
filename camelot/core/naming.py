@@ -902,6 +902,10 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             return ('constant', 'true' if obj else 'false')
         if isinstance(obj, (str, int, Decimal)):
             return ('constant', type(obj).__name__.lower(), str(obj))
+        if isinstance(obj, datetime.datetime):
+            return ('constant', 'datetime', obj.strftime(DatetimeNamingContext._format))
+        if isinstance(obj, datetime.date):
+            return ('constant', 'date', obj.strftime(DateNamingContext._format))
         if isinstance(obj, Entity):
             # TBD: possibly move the context specific object validations to the respective context?
             if not inspect(obj).persistent or obj.id is None:
