@@ -186,7 +186,7 @@ class AbstractNamingContextCaseMixin(object):
         # value   reason
         (None,    NamingException.Message.invalid_name_type),
         ('',      NamingException.Message.invalid_atomic_name_length),
-        (tuple(), NamingException.Message.invalid_composite_name_length),
+        (tuple(), NamingException.Message.multiary_name_expected),
         (('',),   NamingException.Message.invalid_atomic_name_length),
         ((None,), NamingException.Message.invalid_composite_name_parts)
     ]
@@ -743,7 +743,7 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
     # Constant naming context only allows singular names, and allows the empty string:
     invalid_names = [
         (None,             NamingException.Message.invalid_name_type),
-        (tuple(),          NamingException.Message.invalid_composite_name_length),
+        (tuple(),          NamingException.Message.multiary_name_expected),
         ((1,),             NamingException.Message.invalid_composite_name_parts),
         ((None,),          NamingException.Message.invalid_composite_name_parts),
         (('test', ''),     NamingException.Message.singular_name_expected),
@@ -944,14 +944,14 @@ class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
     invalid_names = [
         (None,             NamingException.Message.invalid_name_type),
         ('',               NamingException.Message.invalid_atomic_name_numeric),
-        (tuple(),          NamingException.Message.invalid_composite_name_length),
+        (tuple(),          NamingException.Message.multiary_name_expected),
         (('',),            NamingException.Message.invalid_atomic_name_numeric),
         ((None,),          NamingException.Message.invalid_composite_name_parts),
         ((1,),             NamingException.Message.invalid_composite_name_parts),
         ((None,),          NamingException.Message.invalid_composite_name_parts),
-        (('test', ''),     NamingException.Message.singular_name_expected),
+        (('test', ''),     NamingException.Message.invalid_composite_name_length),
         (('test', None),   NamingException.Message.invalid_composite_name_parts),
-        (('test', 'test'), NamingException.Message.singular_name_expected),
+        (('test', 'test'), NamingException.Message.invalid_composite_name_length),
     ]
     valid_names = ['0', '1', '2', '9999']
     incompatible_names = ['0', '9999']
@@ -967,7 +967,7 @@ class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
         for incompatible_name in self.incompatible_names:
             with self.assertRaises(NameNotFoundException) as exc:
                 self.context.resolve(incompatible_name)
-            self.assertEqual(exc.exception.name, incompatible_name)
+            self.assertEqual(exc.exception.name, incompatible_name[0] if isinstance(incompatible_name, tuple) else incompatible_name)
             self.assertEqual(exc.exception.binding_type, BindingType.named_object)
 
         # Verify compatible names resolve to the expected entity instances:
@@ -976,7 +976,8 @@ class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
             expected_instance = self.session.query(self.entity).get(name)
             self.assertIsNotNone(expected_instance)
             self.assertEqual(self.context.resolve(name), expected_instance)
-            self.assertEqual(self.context.resolve(tuple([name])), expected_instance)
+            if not isinstance(name, tuple):
+                self.assertEqual(self.context.resolve(tuple([name])), expected_instance)
 
 class AbstractEntityNamingContextCase(AbstractNamingContextCase, ExampleModelMixinCase):
 
@@ -1013,6 +1014,25 @@ class OrganizationEntityNamingContextCase(AbstractEntityNamingContextCase, Entit
 class EntityCompositePKNamingContextCase(AbstractEntityNamingContextCase, EntityNamingContextCaseMixin):
 
     context_name = ('organization',)
+    invalid_names = [
+        (None,             NamingException.Message.invalid_name_type),
+        ('',               NamingException.Message.invalid_atomic_name_numeric),
+        (tuple(),          NamingException.Message.multiary_name_expected),
+        (('',),            NamingException.Message.invalid_composite_name_length),
+        ((None,),          NamingException.Message.invalid_composite_name_parts),
+        ((1,),             NamingException.Message.invalid_composite_name_parts),
+        ((None,),          NamingException.Message.invalid_composite_name_parts),
+        (('test', ''),     NamingException.Message.invalid_atomic_name_numeric),
+        (('test', None),   NamingException.Message.invalid_composite_name_parts),
+        (('test', 'test'), NamingException.Message.invalid_atomic_name_numeric),
+        ('0',              NamingException.Message.invalid_composite_name_length),
+        ('1',              NamingException.Message.invalid_composite_name_length),
+        ('2',              NamingException.Message.invalid_composite_name_length),
+        ('9999',           NamingException.Message.invalid_composite_name_length),
+    ]
+    valid_names = [('0', '0'), ('1', '1'),  ('1', '2'), ('2', '2'), ('9999', '9999')]
+    incompatible_names = [('0', '0'), ('2', '2'), ('9999', '9999')]
+    compatible_names = [('1', '1'),  ('1', '2')]
 
     @classmethod
     def setUpClass(cls):
