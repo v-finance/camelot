@@ -58,6 +58,8 @@ class SearchCase( test_orm.TestMetaData ):
             value = datetime.timedelta(days=i)
         elif issubclass( definition, camelot.types.VirtualAddress ):
             value =('email', str(i))
+        elif issubclass( definition, camelot.types.Color ):
+            value = "#{:06d}".format(i)
         return value
 
     def setUp(self):
@@ -122,7 +124,7 @@ class SearchCase( test_orm.TestMetaData ):
             #         convoluted, this should work through a to_string field
             #         attribute.
             #
-            if isinstance( value, ( datetime.date, datetime.time, bool, tuple) ):
+            if isinstance( value, ( datetime.date, datetime.time, bool, tuple) ) or definition == camelot.types.Color:
                 continue
             string_value = str( i )
 

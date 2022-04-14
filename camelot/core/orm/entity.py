@@ -44,6 +44,7 @@ from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
+from ..naming import BindingType, initial_naming_context, EntityNamingContext, NameNotFoundException
 from . statements import MUTATORS
 from . import Session, options
 
@@ -149,7 +150,12 @@ class EntityMeta( DeclarativeMeta ):
     In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
-    
+
+    # Flag that configures whether the entity naming context created by this EntityMeta class is rebound to the initial naming context.
+    # IMPORTANT: This should always be False in production, so that binding under the same name twice raises the appropriate exception,
+    # but this allows unittests to define mocked behaviour that allows rebinding.
+    rebind = False
+
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -224,6 +230,10 @@ class EntityMeta( DeclarativeMeta ):
                         rank_col = rank_col.prop.columns[0]
                     assert isinstance(rank_col.type, Integer), 'The first column/attributes of the ranked by definition, indicating the rank column, should be of type Integer'
 
+                order_search_by = entity_args.get('order_search_by')
+                if order_search_by is not None:
+                    order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity' and dict_.get('__tablename__') is not None:
@@ -236,6 +246,22 @@ class EntityMeta( DeclarativeMeta ):
                 table = dict_.get('__table__', None)
                 if table is None or table.primary_key.issubset([]):
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
+
+            # Bind an EntityNamingContext to the initial naming context for the entity class.
+            # As multiple entity classes can be defined with the same name, they are bound under a subcontext with their tablename.
+            try:
+                ctxt = initial_naming_context.resolve_context(('entity', _class.__tablename__))
+            except NameNotFoundException:
+                ctxt = initial_naming_context.bind_new_context(('entity', _class.__tablename__))
+
+            if not cls.rebind:
+                initial_naming_context.bind_context(('entity', _class.__tablename__, _class.__name__), EntityNamingContext(_class))
+            else:
+                # Rebinding should only be allowed in test scenario's.
+                if _class.__name__ in ctxt._bindings[BindingType.named_context]:
+                    LOGGER.error('An entity naming context was already bound under the name {}. This should only happen in tests.'.format(
+                        initial_naming_context.verbose_name(('entity', _class.__tablename__, _class.__name__))))
+                initial_naming_context.rebind_context(('entity', _class.__tablename__, _class.__name__), EntityNamingContext(_class))
 
         return _class
 
@@ -300,6 +326,20 @@ class EntityMeta( DeclarativeMeta ):
             ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
             rank_cols = [getattr(cls, rank_col.key) if isinstance(rank_col, sql.schema.Column) else rank_col for rank_col in ranked_by]
             return tuple(rank_cols)
+
+    def get_order_search_by(cls):
+        order_search_by = cls._get_entity_arg('order_search_by')
+        if order_search_by is not None:
+            order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+            order_by_clauses = []
+            for order_by in order_search_by:
+                if isinstance(order_by, sql.schema.Column):
+                    order_by_clauses.append(getattr(cls, order_by.key))
+                elif isinstance(order_by, hybrid.hybrid_property):
+                    order_by_clauses.append(getattr(cls, order_by.fget.__name__))
+                else:
+                    order_by_clauses.append(order_by)
+            return tuple(order_by_clauses)
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it

@@ -199,13 +199,13 @@ class AbstractFilterStrategy(object):
 
     def get_search_clause(self, query, text):
         """
-        Constracut a search filter clause for the given query based on the given search text, if the search is applicable for this strategy.
+        Construct a search filter clause for the given query based on the given search text, if the search is applicable for this strategy.
         This method is a shortcut for (and equivalent to using) the get_clause method with this strategy's search operator,
         and the corresponding operand converted from the given search text.
         If the from-string-conversion for this strategy fails, the resulting clause will be undefined.
 
-        :param admin: The entity admin that will use the resulting search clause as part of its search query.
-        :param session: The session in which the search query takes place.
+        :param query: the query the filter clause should be constructed for (and could be applied on if desired).
+        :param text: the search text operand on which the resulting search clause should filter on.
         """
         try:
             operand = self.from_string(query, text)
@@ -678,6 +678,7 @@ class SearchFilter(Action, AbstractModelFilter):
     render_hint = RenderHint.SEARCH_BUTTON
     name = 'search_filter'
     shortcut = QtGui.QKeySequence.StandardKey.Find
+    _order_by_decorator = lambda x,text:x
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
@@ -695,13 +696,15 @@ class SearchFilter(Action, AbstractModelFilter):
                         clauses.append(filter_clause)
                 query = query.filter(sql.or_(*clauses))
 
-                # Sort search query if configured in the entity's entity_args:
+                # If a search order is configured in the entity's entity_args,
+                # sort the query based on the corresponding search strategies order by clauses.
                 entity = query._mapper_zero().entity
-                order_search_by = entity._get_entity_arg('order_search_by')
+                order_search_by = entity.get_order_search_by()
                 if order_search_by is not None:
+                    order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+                    # Reset any default ordering for the configured search order to take effect.
                     query = query.order_by(None)
-                    query = query.order_by(order_search_by(search_text))
-
+                    query = query.order_by(sql.func.least(*[cls._order_by_decorator(order_by, search_text) for order_by in order_search_by]))
         return query
 
     def gui_run(self, gui_context):

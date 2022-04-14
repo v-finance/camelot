@@ -11,6 +11,7 @@ import typing
 
 from enum import Enum
 from decimal import Decimal
+from sqlalchemy import inspect
 
 from .singleton import Singleton
 
@@ -52,6 +53,7 @@ class NamingException(Exception):
         invalid_name_type = 'name should an atomic name or a composite name'
         invalid_atomic_name = 'atomic name should be a string'
         invalid_atomic_name_length = 'atomic name should contain at least 1 character'
+        invalid_atomic_name_numeric = 'atomic name should be numeric'
         invalid_composite_name = 'composite name should be a tuple'
         invalid_composite_name_length = 'composite name should be composed of at least 1 atomic part'
         invalid_composite_name_parts = 'composite name should be composed of valid atomic parts'
@@ -671,23 +673,18 @@ class NamingContext(AbstractNamingContext):
     def list(self):
         return self._bindings[BindingType.named_object].keys()
 
-class ConstantNamingContext(AbstractNamingContext):
+class EndpointNamingContext(AbstractNamingContext):
     """
-    Represents a stateless naming context, which handles resolving objects/values of a certain immutable python type.
-    Currently, those constant values are considered to be integers, strings, booleans or float.
-    As it only implements the resolve method from the AbstractNamingContext, no subcontexts can be bound.
-    A ConstantNamingContext will thus by definition always be the 'endpoint' context in a naming hierachy.
+    Interface for a naming context that only supports binding and resolving objects/values,
+    and not subcontexts.
+    As such, they are by definition always an 'endpoint' context in a naming hierachy.
+    Because no recursive resolve is possible, names used by this context are validated to be singular.
     """
-
-    def __init__(self, constant_type):
-        super().__init__()
-        assert constant_type in (int, str, bool, float, Decimal)
-        self.constant_type = constant_type
 
     @classmethod
     def validate_atomic_name(cls, name: str) -> bool:
         """
-        Customized atomic name validation for this constant naming context.
+        Customized atomic name validation for this endpoint naming context.
         This enforces less constraints than the default validation inherited from ´camelot.core.naming.AbstractNamingContext´,
         in that it allows for the empty string as a valid atomic name,
         as that to should be able to be resolved by the corresponding String constant naming context.
@@ -701,7 +698,7 @@ class ConstantNamingContext(AbstractNamingContext):
     @classmethod
     def validate_composite_name(cls, name: CompositeName) -> bool:
         """
-        Customized composite name validation for this constant naming context.
+        Customized composite name validation for this endpoint naming context.
         This expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
         in that it only allows singular composite names, as this context by definition is an endpoint in the context hierarchy.
 
@@ -715,6 +712,17 @@ class ConstantNamingContext(AbstractNamingContext):
         if len(name) != 1:
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
 
+class ConstantNamingContext(EndpointNamingContext):
+    """
+    Represents a stateless endpoint naming context, which handles resolving objects/values of a certain immutable python type.
+    Currently, those constant values are considered to be integers, strings, booleans or float.
+    """
+
+    def __init__(self, constant_type):
+        super().__init__()
+        assert constant_type in (int, str, bool, float, Decimal)
+        self.constant_type = constant_type
+
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
         """
@@ -727,7 +735,7 @@ class ConstantNamingContext(AbstractNamingContext):
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
-            NamingException NamingException.Message.invalid_name: when the name is invalid (None or length less than 1).
+            NamingException NamingException.Message.invalid_name: when the name is invalid.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
         name = self.get_composite_name(name)
@@ -735,6 +743,56 @@ class ConstantNamingContext(AbstractNamingContext):
             return self.constant_type(name[0])
         except (ValueError, decimal.InvalidOperation):
             raise NameNotFoundException(name[0], BindingType.named_object)
+
+class EntityNamingContext(EndpointNamingContext):
+    """
+    Represents a stateless endpoint naming context, which handles resolving instances of an Entity.
+    """
+
+    def __init__(self, entity):
+        super().__init__()
+        from camelot.core.orm import EntityBase
+        assert issubclass(entity, EntityBase)
+        self.entity = entity
+
+    @classmethod
+    def validate_atomic_name(cls, name: str) -> bool:
+        """
+        Customized atomic name validation for this entity naming context that enforces
+        the atomic names used by this context to be numeric, as they are used as primary keys
+        to query entity instances with.
+
+        :raises:
+            NamingException NamingException.Message.invalid_atomic_name_numeric when the given name is not numeric.
+        """
+        super().validate_atomic_name(name)
+        if not name.isdecimal():
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
+
+    @AbstractNamingContext.check_bounded
+    def resolve(self, name: Name) -> object:
+        """
+        Resolve a name in this EntityNamingContext and return the bound object.
+        The name should be singular and its atomic form numeric, as it is used
+        as the primary key to query the corresponding instance with of the entity of this naming context.
+
+        It will throw appropriate exceptions if the resolution failed.
+
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+
+        :return: the bound object, an instance of this EntityNamingContext's entity class.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid.
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
+        from camelot.core.orm import Session
+        name = self.get_composite_name(name)
+        instance = Session().query(self.entity).get(name[0])
+        if instance is None:
+            raise NameNotFoundException(name[0], BindingType.named_object)
+        return instance
 
 class InitialNamingContext(NamingContext, metaclass=Singleton):
     """
@@ -751,12 +809,14 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         self._name = tuple()
 
         # Add immutable bindings for constants' values and contexts for each supported 'constant' python type.
-        constants = self.bind_new_context('constants', immutable=True)
+        constants = self.bind_new_context('constant', immutable=True)
         for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
             constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type), immutable=True)
         constants.bind('null', None, immutable=True)
         constants.bind('true', True, immutable=True)
         constants.bind('false', False, immutable=True)
+        self.bind_new_context('entity', immutable=True)
+        self.bind_new_context('object', immutable=True)
 
     def new_context(self) -> NamingContext:
         """
@@ -767,5 +827,36 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         :return: an instance of `camelot.core.naming.NamingContext`
         """
         return NamingContext()
+
+    def _bind_object(self, obj):
+        """
+        Helper method for binding any type of python object under the appropriate name.
+        This functionality is meant for backend binding of objects and will always perform a mutable bind.
+
+        :param obj: the object to be bound.
+
+        :return: the full qualified composite name of the bound object, relative to the initial naming context.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+        """
+        from camelot.core.orm import Entity
+        if obj is None:
+            return ('constant', 'null')
+        if isinstance(obj, bool):
+            return ('constant', 'true' if obj else 'false')
+        if isinstance(obj, (str, int, Decimal)):
+            return ('constant', type(obj).__name__.lower(), str(obj))
+        if isinstance(obj, Entity):
+            # TBD: possibly move the context specific object validations to the respective context?
+            if not inspect(obj).persistent or obj.id is None:
+                raise NotImplementedError('Only persistent entity instances are supported')
+            entity = type(obj)
+            return ('entity', entity.__tablename__, entity.__name__, str(obj.id))
+        if isinstance(obj, float):
+            raise NotImplementedError('Use Decimal instead')
+        LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
+        # TBD: possibly put objects in a seperate objects subcontext?
+        return self.rebind(('object', str(id(obj))), obj)
 
 initial_naming_context = InitialNamingContext()

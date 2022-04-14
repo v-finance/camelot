@@ -755,7 +755,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         delegate = delegates.ColorDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ColorEditor))
-        color = [255, 255, 0]
+        color = '#ffff00'
         self.grab_delegate(delegate, color)
         delegate = delegates.ColorDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)

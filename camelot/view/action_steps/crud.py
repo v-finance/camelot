@@ -1,10 +1,13 @@
-from dataclasses import dataclass
 import json
-import typing
 import logging
+import typing
 
 logger = logging.getLogger(__name__)
-    
+
+from camelot.core.naming import CompositeName
+from camelot.core.utils import ugettext_lazy
+from dataclasses import dataclass
+
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
 from ...core.serializable import DataclassSerializable
@@ -102,31 +105,60 @@ class SetColumns(ActionStep):
         item_model.settings.endGroup()
         item_model.endResetModel()    
  
+@dataclass
+class CompletionValue(DataclassSerializable):
+    """
+    Represent one of the autocompletion values.
 
-class Completion(ActionStep):
+    .. attribute:: value
+
+        A :class:`camelot.core.naming.CompositeName` that resolves to a bound completion value.
+
+    .. attribute:: verbose_name
+
+        The verbose representation of the value as it will appear to the user.
+
+    .. attribute:: tooltip
+
+        The tooltip as displayed to the user, this should be of type :class:`camelot.core.utils.ugettext_lazy`.
+
+    """
+
+    value: CompositeName
+    verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    tooltip: typing.Union[str, ugettext_lazy, None] = None
+
+@dataclass
+class Completion(ActionStep, DataclassSerializable):
     
     blocking = False
-    
-    def __init__(self, row, column, prefix, completion):
-        self.row = row
-        self.column = column
-        self.prefix = prefix
-        self.completions = completion        
-        
-    def gui_run(self, item_model):
+
+    row: int
+    column: int
+    prefix: str
+    completions: typing.List[CompletionValue]
+
+    @classmethod
+    def gui_run(self, item_model, serialized_step):
         if is_deleted(item_model):
             return
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return
-        logger.debug('begin gui update {0} completions'.format(len(self.completions)))
-        child = root_item.child(self.row, self.column)
+        step = json.loads(serialized_step)
+        logger.debug('begin gui update {0} completions'.format(len(step['completions'])))
+        child = root_item.child(step['row'], step['column'])
         if child is not None:
             # calling setData twice triggers dataChanged twice, resulting in
             # the editors state being updated twice
             #child.setData(self.prefix, CompletionPrefixRole)
-            child.setData(self.completions, CompletionsRole)
-        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
+            completions = [{
+                # Use user role for object to avoid display role / edit role confusion
+                Qt.ItemDataRole.UserRole: completion['value'],
+                Qt.ItemDataRole.DisplayRole: completion['verbose_name'],
+                Qt.ItemDataRole.ToolTipRole: completion['tooltip']} for completion in step['completions']]
+            child.setData(completions, CompletionsRole)
+        logger.debug('end gui update rows {0}, column {1}'.format(step['row'], step['column']))
 
 class Created(ActionStep, UpdateMixin):
     

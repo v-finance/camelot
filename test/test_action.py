@@ -18,10 +18,7 @@ from camelot.admin.action import (
 from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.logging import ChangeLogging
-from camelot.admin.action.field_action import (
-    ClearObject, DetachFile, NewObject, SelectObject,
-    UploadFile, add_existing_object,
-)
+from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFile, add_existing_object
 from camelot.admin.action.list_action import SetFilters, ListActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
@@ -29,7 +26,7 @@ from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.bin.meta import NewProjectOptions
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
-from camelot.core.orm import EntityBase, EntityMeta, Session
+from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import party
 from camelot.model.party import Person
@@ -54,7 +51,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
-from .test_orm import TestMetaData
+from .test_orm import TestMetaData, EntityMetaMock
 from .test_model import ExampleModelMixinCase
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
@@ -566,7 +563,7 @@ class ListActionsCase(
         metadata = MetaData()
         Entity = declarative_base(cls = EntityBase,
                                   metadata = metadata,
-                                  metaclass = EntityMeta,
+                                  metaclass = EntityMetaMock,
                                   class_registry = dict(),
                                   constructor = None,
                                   name = 'Entity' )
@@ -1027,21 +1024,6 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
                 object_selected = True
         self.assertTrue(object_selected)
         self.assertEqual(self.movie.director, person)
-
-    def test_new_object_and_clear_object(self):
-        new_object = NewObject()
-        generator = new_object.model_run(self.director_context, mode=None)
-        open_form = None
-        for step in generator:
-            if isinstance(step, action_steps.OpenFormView):
-                open_form = step
-        self.assertTrue(open_form)
-        new_object = step.get_objects()[0]
-        self.assertIsInstance(new_object, Person)
-        self.assertEqual(self.movie.director, new_object)
-        clear_object = ClearObject()
-        list(clear_object.model_run(self.director_context, mode=None))
-        self.assertEqual(self.movie.director, None)
 
     def test_upload_and_detach_file(self):
         upload_file = UploadFile()
