@@ -12,7 +12,7 @@ import typing
 
 from enum import Enum
 from decimal import Decimal
-from sqlalchemy import inspect
+from sqlalchemy import inspect, orm
 
 from .singleton import Singleton
 
@@ -907,15 +907,14 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         if isinstance(obj, datetime.date):
             return ('constant', 'date', obj.strftime(DateNamingContext._format))
         if isinstance(obj, Entity):
-            # TBD: possibly move the context specific object validations to the respective context?
             if not inspect(obj).persistent or obj.id is None:
                 raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
-            return ('entity', entity.__tablename__, entity.__name__, str(obj.id))
+            primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
+            return ('entity', entity.__tablename__, entity.__name__, *[str(key) for key in primary_key])
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
         LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
-        # TBD: possibly put objects in a seperate objects subcontext?
         return self.rebind(('object', str(id(obj))), obj)
 
 initial_naming_context = InitialNamingContext()
