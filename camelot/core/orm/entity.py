@@ -151,11 +151,6 @@ class EntityMeta( DeclarativeMeta ):
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
 
-    # Flag that configures whether the entity naming context created by this EntityMeta class is rebound to the initial naming context.
-    # IMPORTANT: This should always be False in production, so that binding under the same name twice raises the appropriate exception,
-    # but this allows unittests to define mocked behaviour that allows rebinding.
-    rebind = False
-
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -243,30 +238,22 @@ class EntityMeta( DeclarativeMeta ):
                 if table is None or table.primary_key.issubset([]):
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
-            # Auto-assign name entity argument if not configured explicitly.
+            # Auto-assign entity_args and name entity argument if not configured explicitly.
             entity_args = dict_.get('__entity_args__')
             if entity_args is None:
                 dict_['__entity_args__'] = entity_args = {}
             entity_name = dict_['__entity_args__'].get('name')
             if entity_name is None:
-                dict_['__entity_args__']['name'] = entity_name = cls._default_entity_name(classname)
+                dict_['__entity_args__']['name'] = entity_name = cls._default_entity_name(cls, classname, dict_)
             assert isinstance(entity_name, str) and len(entity_name) > 0, 'Name argument in __entity_args__ should be text-based and contain at least 1 character'
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
             # using the entity's name configured (or auto-assigned) in the __entity_args__
-            if not cls.rebind:
-                initial_naming_context.bind_context(('entity', entity_name), EntityNamingContext(_class))
-            else:
-                # Rebinding should only be allowed in test scenario's.
-                ctxt = initial_naming_context.resolve_context('entity')
-                if entity_name in ctxt._bindings[BindingType.named_context]:
-                    LOGGER.error('An entity naming context was already bound under the name {}. This should only happen in tests.'.format(
-                        initial_naming_context.verbose_name(('entity',entity_name))))
-                initial_naming_context.rebind_context(('entity', entity_name), EntityNamingContext(_class))
+            initial_naming_context.bind_context(('entity', entity_name), EntityNamingContext(_class))
 
         return _class
 
-    def _default_entity_name(classname):
+    def _default_entity_name(cls, classname, dict_):
         # The default format will split the classname by capital letters, and join the lowered result by underscore.
         # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
         return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
