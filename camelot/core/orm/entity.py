@@ -44,7 +44,7 @@ from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
-from ..naming import BindingType, initial_naming_context, EntityNamingContext, NameNotFoundException
+from ..naming import initial_naming_context, EntityNamingContext
 from . statements import MUTATORS
 from . import Session, options
 
