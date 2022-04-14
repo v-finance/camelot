@@ -56,7 +56,7 @@ class NamingException(Exception):
         invalid_atomic_name_length = 'atomic name should contain at least 1 character'
         invalid_atomic_name_numeric = 'atomic name should be numeric'
         invalid_composite_name = 'composite name should be a tuple'
-        invalid_composite_name_length = 'composite name should be composed of at least 1 atomic part'
+        invalid_composite_name_length = 'composite name should be composed of at least {} atomic parts'
         invalid_composite_name_parts = 'composite name should be composed of valid atomic parts'
         singular_name_expected = 'only atomic or singular composite names are supported by this endpoint naming context'
 
@@ -153,7 +153,7 @@ class AbstractNamingContext(object):
         if not isinstance(name, tuple):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name)
         elif len(name) == 0:
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length)
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, 1)
         elif not all([isinstance(name_part, str) for name_part in name]):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_parts)
 
@@ -799,7 +799,9 @@ class DateNamingContext(DatetimeNamingContext):
 
 class EntityNamingContext(EndpointNamingContext):
     """
-    Represents a stateless endpoint naming context, which handles resolving instances of an Entity.
+    Represents a stateless endpoint naming context, which handles resolving instances of an Entity class.
+    Names used relative to this context should have a composite dimension that is equivalent to the dimension
+    of the primary key of the entity this naming contect handles.
     """
 
     def __init__(self, entity):
@@ -822,6 +824,23 @@ class EntityNamingContext(EndpointNamingContext):
         if not name.isdecimal():
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
 
+    @classmethod
+    def validate_composite_name(cls, name: CompositeName) -> bool:
+        """
+        Customized atomic name validation for this entity naming context that expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
+        in that it only allows composite names with a numer of atomic parts that equals the dimension of entity mapper this context handles.
+
+        :raises:
+            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's numer of composed atomic parts does 
+            not equal the dimension of primary key of this context's entity mapper.
+        """
+        super().validate_composite_name(name)
+        mapper = orm.class_mapper(cls.entity)
+        if len(name) != len(mapper.primary_key):
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected, len(mapper.primary_key))
+
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
         """
@@ -842,7 +861,8 @@ class EntityNamingContext(EndpointNamingContext):
         """
         from camelot.core.orm import Session
         name = self.get_composite_name(name)
-        instance = Session().query(self.entity).get(name[0])
+        import wingdbstub
+        instance = Session().query(self.entity).get(*name)
         if instance is None:
             raise NameNotFoundException(name[0], BindingType.named_object)
         return instance
