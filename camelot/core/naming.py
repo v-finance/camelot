@@ -33,9 +33,9 @@ class NamingException(Exception):
     def __init__(self, message, *args, reason=None, **kwargs):
         assert isinstance(message, self.Message)
         assert reason is None or isinstance(reason, self.Message)
-        self.message_text = message.value.format(*args, **kwargs)
+        self.message_text = message.value.format(*args)
         if reason is not None:
-            self.message_text = self.message_text + ': ' + reason.value
+            self.message_text = self.message_text + ': ' + reason.value.format(**kwargs)
         super().__init__(self.message_text)
         self.message = message
         self.reason = reason
@@ -56,7 +56,7 @@ class NamingException(Exception):
         invalid_atomic_name_length = 'atomic name should contain at least 1 character'
         invalid_atomic_name_numeric = 'atomic name should be numeric'
         invalid_composite_name = 'composite name should be a tuple'
-        invalid_composite_name_length = 'composite name should be composed of at least {} atomic parts'
+        invalid_composite_name_length = 'composite name should be composed of at least {length} atomic parts'
         invalid_composite_name_parts = 'composite name should be composed of valid atomic parts'
         singular_name_expected = 'only atomic or singular composite names are supported by this endpoint naming context'
 
@@ -120,8 +120,7 @@ class AbstractNamingContext(object):
     def __init__(self):
         self._name = None
 
-    @classmethod
-    def validate_atomic_name(cls, name: str):
+    def validate_atomic_name(self, name: str):
         """
         Validate an atomic name for this naming context.
         This method will be used to validate names used within this context,
@@ -137,8 +136,7 @@ class AbstractNamingContext(object):
         elif len(name) == 0:
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_length)
 
-    @classmethod
-    def validate_composite_name(cls, name: CompositeName) -> bool:
+    def validate_composite_name(self, name: CompositeName) -> bool:
         """
         Validate a composite name for this naming context.
         This method will be used to validate composite names used within this context,
@@ -153,12 +151,11 @@ class AbstractNamingContext(object):
         if not isinstance(name, tuple):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name)
         elif len(name) == 0:
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, 1)
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=1)
         elif not all([isinstance(name_part, str) for name_part in name]):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_parts)
 
-    @classmethod
-    def get_composite_name(cls, name: Name) -> CompositeName:
+    def get_composite_name(self, name: Name) -> CompositeName:
         """
         Utility method that returns the composite form of the given name (atomic or composite).
         The composite result will also be generally validated for use within this context,
@@ -174,11 +171,11 @@ class AbstractNamingContext(object):
             NamingException NamingException.Message.invalid_name: The supplied name or one of its composed part is invalid for this context.
         """
         if isinstance(name, str):
-            cls.validate_atomic_name(name)
+            self.validate_atomic_name(name)
             return tuple([name])
         if isinstance(name, tuple):
-            cls.validate_composite_name(name)
-            cls.validate_atomic_name(name[0])
+            self.validate_composite_name(name)
+            self.validate_atomic_name(name[0])
             return name
         raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_name_type)
 
@@ -682,8 +679,7 @@ class EndpointNamingContext(AbstractNamingContext):
     Because no recursive resolve is possible, names used by this context are validated to be singular.
     """
 
-    @classmethod
-    def validate_atomic_name(cls, name: str) -> bool:
+    def validate_atomic_name(self, name: str) -> bool:
         """
         Customized atomic name validation for this endpoint naming context.
         This enforces less constraints than the default validation inherited from ´camelot.core.naming.AbstractNamingContext´,
@@ -696,8 +692,7 @@ class EndpointNamingContext(AbstractNamingContext):
         if not isinstance(name, str):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name)
 
-    @classmethod
-    def validate_composite_name(cls, name: CompositeName) -> bool:
+    def validate_composite_name(self, name: CompositeName) -> bool:
         """
         Customized composite name validation for this endpoint naming context.
         This expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
@@ -810,8 +805,7 @@ class EntityNamingContext(EndpointNamingContext):
         assert issubclass(entity, EntityBase)
         self.entity = entity
 
-    @classmethod
-    def validate_atomic_name(cls, name: str) -> bool:
+    def validate_atomic_name(self, name: str) -> bool:
         """
         Customized atomic name validation for this entity naming context that enforces
         the atomic names used by this context to be numeric, as they are used as primary keys
@@ -824,8 +818,7 @@ class EntityNamingContext(EndpointNamingContext):
         if not name.isdecimal():
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
 
-    @classmethod
-    def validate_composite_name(cls, name: CompositeName) -> bool:
+    def validate_composite_name(self, name: CompositeName) -> bool:
         """
         Customized atomic name validation for this entity naming context that expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
         in that it only allows composite names with a numer of atomic parts that equals the dimension of entity mapper this context handles.
@@ -837,9 +830,9 @@ class EntityNamingContext(EndpointNamingContext):
             not equal the dimension of primary key of this context's entity mapper.
         """
         super().validate_composite_name(name)
-        mapper = orm.class_mapper(cls.entity)
+        mapper = orm.class_mapper(self.entity)
         if len(name) != len(mapper.primary_key):
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected, len(mapper.primary_key))
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=len(mapper.primary_key))
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
@@ -861,7 +854,6 @@ class EntityNamingContext(EndpointNamingContext):
         """
         from camelot.core.orm import Session
         name = self.get_composite_name(name)
-        import wingdbstub
         instance = Session().query(self.entity).get(*name)
         if instance is None:
             raise NameNotFoundException(name[0], BindingType.named_object)
