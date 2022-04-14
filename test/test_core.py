@@ -13,15 +13,18 @@ from camelot.core.naming import (
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
 )
-from camelot.core.orm import Session
+from camelot.core.orm import EntityBase, Session
 from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 from camelot.core.singleton import QSingleton
 from camelot.model import party
 
 from decimal import Decimal
+from sqlalchemy import MetaData, schema, types
+from sqlalchemy.ext.declarative import declarative_base
 
 from .test_model import ExampleModelMixinCase
+from .test_orm import EntityMetaMock
 
 memento_id_counter = 0
 
@@ -1006,3 +1009,40 @@ class OrganizationEntityNamingContextCase(AbstractEntityNamingContextCase, Entit
         org2 = party.Organization( name = 'Test2' )
         cls.session.flush()
         cls.compatible_names = [str(org1.id), str(org2.id)]
+
+class EntityCompositePKNamingContextCase(AbstractEntityNamingContextCase, EntityNamingContextCaseMixin):
+
+    context_name = ('organization',)
+
+    @classmethod
+    def setUpClass(cls):
+        AbstractEntityNamingContextCase.setUpClass()
+
+        cls.metadata = MetaData()
+        cls.class_registry = dict()
+        cls.Entity = declarative_base( cls = EntityBase,
+                                        metadata = cls.metadata,
+                                        metaclass = EntityMetaMock,
+                                        class_registry = cls.class_registry,
+                                        constructor = None,
+                                        name = 'Entity' )
+        cls.metadata.bind = 'sqlite://'
+        cls.session = Session()
+
+        class CompositePKEntity(cls.Entity):
+
+            id_1 = schema.Column(types.Integer, primary_key=True)
+            id_2 = schema.Column(types.Integer, primary_key=True)
+
+        cls.metadata.create_all()
+        cls.entity = CompositePKEntity
+        a1 = CompositePKEntity(id_1=1, id_2=1)
+        a2 = CompositePKEntity(id_1=1, id_2=2)
+        cls.session.flush()
+        cls.compatible_names = [(str(a1.id_1), str(a1.id_2)), (str(a2.id_1), str(a2.id_2))]
+
+    @classmethod
+    def tearDownCls(cls):
+        AbstractEntityNamingContextCase.tearDownClass()
+        cls.metadata.drop_all()
+        cls.metadata.clear()
