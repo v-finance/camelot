@@ -267,6 +267,16 @@ and used as a custom action.
             None if no toolbar should be created.
         """
         toolbar_actions = super(EntityAdmin, self).get_select_list_toolbar_actions()
+        if self.is_editable():
+            return [
+                list_action.close_list,
+                list_action.list_label,
+                list_action.add_new_object,
+                list_action.delete_selection,
+                list_action.duplicate_selection,
+                list_action.to_first_row,
+                list_action.to_last_row,
+                ] + self._get_shared_toolbar_actions()
         return toolbar_actions + self._get_shared_toolbar_actions()
 
     @register_list_actions('_admin_route')

@@ -40,8 +40,8 @@ class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     editor = editors.ColorEditor
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(ColorDelegate, cls).get_standard_item(locale, value, fa_values)
-        color = editors.ColorEditor.to_qcolor(value, Qt.transparent)
-        item.setData(color, Qt.BackgroundColorRole)
+    def get_standard_item(cls, locale, model_context):
+        item = super(ColorDelegate, cls).get_standard_item(locale, model_context)
+        color = editors.ColorEditor.to_qcolor(model_context.value, Qt.GlobalColor.transparent)
+        item.setData(color, Qt.ItemDataRole.BackgroundRole)
         return item

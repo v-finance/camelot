@@ -1186,6 +1186,12 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     def get_proxy(self, model_context, admin):
         return model_context.proxy
 
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield from super().model_run(model_context, mode)
+        # Scroll to last row so that the user sees the newly added object in the list.
+        yield action_steps.ToLastRow()
+
 add_new_object = AddNewObject()
 
 class RemoveSelection(DeleteSelection):

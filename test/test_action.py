@@ -20,10 +20,7 @@ from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
-from camelot.admin.action.field_action import (
-    ClearObject, DetachFile, NewObject, SelectObject,
-    UploadFile, add_existing_object,
-)
+from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFile, add_existing_object
 from camelot.admin.action.list_action import SetFilters, ListActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
@@ -1050,21 +1047,6 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
                 object_selected = True
         self.assertTrue(object_selected)
         self.assertEqual(self.movie.director, person)
-
-    def test_new_object_and_clear_object(self):
-        new_object = NewObject()
-        generator = new_object.model_run(self.director_context, mode=None)
-        open_form = None
-        for step in generator:
-            if isinstance(step, action_steps.OpenFormView):
-                open_form = step
-        self.assertTrue(open_form)
-        new_object = step.get_objects()[0]
-        self.assertIsInstance(new_object, Person)
-        self.assertEqual(self.movie.director, new_object)
-        clear_object = ClearObject()
-        list(clear_object.model_run(self.director_context, mode=None))
-        self.assertEqual(self.movie.director, None)
 
     def test_upload_and_detach_file(self):
         upload_file = UploadFile()

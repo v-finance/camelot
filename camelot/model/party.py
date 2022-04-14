@@ -101,6 +101,10 @@ class GeographicBoundary( Entity ):
         ),
     )
 
+    __entity_args__ = {
+        'editable': False
+    }
+
     full_name = orm.column_property(code + ' ' + name)
 
     def __str__(self):

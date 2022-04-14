@@ -220,6 +220,16 @@ _sqlalchemy_to_python_type_ = {
             field_action.SaveFile()
         ],
     },
+
+    camelot.types.Color: lambda f: {
+        'delegate': delegates.ColorDelegate,
+        'python_type': str,
+        'from_string': string_from_string,
+        'editable': True,
+        'nullable': True,
+        'search_strategy': list_filter.NoFilter,
+        'filter_strategy': list_filter.NoFilter,
+    },
 }
 
 _typing_to_python_type = {
@@ -283,16 +293,6 @@ _typing_to_python_type = {
     Months:{
         'python_type': int,
         'delegate': delegates.MonthsDelegate,
-    },
-
-    camelot.types.Color: lambda f: {
-        'delegate': delegates.ColorDelegate,
-        'python_type': str,
-        'from_string': string_from_string,
-        'editable': True,
-        'nullable': True,
-        'search_strategy': list_filter.NoSearch,
-        'filter_strategy': list_filter.NoSearch,
     },
 }
 
