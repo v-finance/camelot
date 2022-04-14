@@ -56,9 +56,10 @@ class NamingException(Exception):
         invalid_atomic_name_length = 'atomic name should contain at least 1 character'
         invalid_atomic_name_numeric = 'atomic name should be numeric'
         invalid_composite_name = 'composite name should be a tuple'
-        invalid_composite_name_length = 'composite name should be composed of at least {length} atomic parts'
+        multiary_name_expected = 'composite name should be composed of at least 1 atomic parts'
         invalid_composite_name_parts = 'composite name should be composed of valid atomic parts'
         singular_name_expected = 'only atomic or singular composite names are supported by this endpoint naming context'
+        invalid_composite_name_length = 'composite name should be composed of exactly {length} atomic parts'
 
 class UnboundException(NamingException):
     """A NamingException that is thrown when a NamingContext bound to another NamingContext yet."""
@@ -145,13 +146,13 @@ class AbstractNamingContext(object):
 
         :raises:
             NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
-            NamingException NamingException.Message.invalid_composite_name_length when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
             NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
         """
         if not isinstance(name, tuple):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name)
         elif len(name) == 0:
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=1)
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.multiary_name_expected)
         elif not all([isinstance(name_part, str) for name_part in name]):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_parts)
 
@@ -172,7 +173,9 @@ class AbstractNamingContext(object):
         """
         if isinstance(name, str):
             self.validate_atomic_name(name)
-            return tuple([name])
+            composite_name = tuple([name])
+            self.validate_composite_name(composite_name)
+            return composite_name
         if isinstance(name, tuple):
             self.validate_composite_name(name)
             self.validate_atomic_name(name[0])
@@ -700,7 +703,7 @@ class EndpointNamingContext(AbstractNamingContext):
 
         :raises:
             NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
-            NamingException NamingException.Message.invalid_composite_name_length when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
             NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
             NamingException NamingException.Message.singular_name_expected when the given composite name is not singular.
         """
@@ -825,11 +828,12 @@ class EntityNamingContext(EndpointNamingContext):
 
         :raises:
             NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
             NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
             NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's numer of composed atomic parts does 
             not equal the dimension of primary key of this context's entity mapper.
         """
-        super().validate_composite_name(name)
+        super(EndpointNamingContext, self).validate_composite_name(name)
         mapper = orm.class_mapper(self.entity)
         if len(name) != len(mapper.primary_key):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=len(mapper.primary_key))
@@ -854,7 +858,7 @@ class EntityNamingContext(EndpointNamingContext):
         """
         from camelot.core.orm import Session
         name = self.get_composite_name(name)
-        instance = Session().query(self.entity).get(*name)
+        instance = Session().query(self.entity).get(name)
         if instance is None:
             raise NameNotFoundException(name[0], BindingType.named_object)
         return instance
