@@ -13,10 +13,11 @@ from camelot.core.naming import (
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
 )
-from camelot.core.orm import EntityBase, Session
+from camelot.core.orm import Entity, EntityBase, Session
 from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 from camelot.core.singleton import QSingleton
+from camelot.core.sql import metadata
 from camelot.model import party
 
 from decimal import Decimal
@@ -838,6 +839,16 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         cls.load_example_data()
         cls.session = Session()
 
+        class CompositePKEntity(Entity):
+
+            id_1 = schema.Column(types.Integer, primary_key=True)
+            id_2 = schema.Column(types.Integer, primary_key=True)
+
+        metadata.create_all()
+        cls.binary_entity_1 = CompositePKEntity(id_1=1, id_2=1)
+        cls.binary_entity_2 = CompositePKEntity(id_1=1, id_2=2)
+        cls.session.flush()
+
     @classmethod
     def tearDownClass(cls):
         cls.tear_down_sample_model()
@@ -851,6 +862,9 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
     def test_resolve(self):
         super().test_resolve()
+        entity1 = party.Organization(name='1')
+        entity2 = party.Person(first_name='Test', last_name='Dummy')
+        self.session.flush()
 
         # Verify that the constant naming contexts are available by default on the initial context:
         # * Boolean values
@@ -878,12 +892,18 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         # Dates
         self.assertEqual(self.context.resolve(('constant', 'date', '2022-04-13')), datetime.date(2022, 4, 13))
         self.assertEqual(self.context.resolve(('constant', 'date', '2021-02-05')), datetime.date(2021, 2, 5))
+        # Entities
+        self.assertEqual(self.context.resolve(('entity', 'organization', 'Organization', str(entity1.id))), entity1)
+        self.assertEqual(self.context.resolve(('entity', 'person', 'Person', str(entity2.id))), entity2)
+        self.assertEqual(self.context.resolve(('entity', 'compositepkentity', 'CompositePKEntity', str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))), self.binary_entity_1)
+        self.assertEqual(self.context.resolve(('entity', 'compositepkentity', 'CompositePKEntity', str(self.binary_entity_2.id_1), str(self.binary_entity_2.id_2))), self.binary_entity_2)
 
-        # Verify that those constants contexts are immutabe on the initial naming context:
-        with self.assertRaises(ImmutableBindingException):
-            self.context.rebind_context('constant', NamingContext())
-        with self.assertRaises(ImmutableBindingException):
-            self.context.unbind_context('constant')
+        # Verify that subcontexts and/or values are immutabe on the initial naming context:
+        for subcontext in ['constant', 'entity', 'object']:
+            with self.assertRaises(ImmutableBindingException):
+                self.context.rebind_context(subcontext, NamingContext())
+            with self.assertRaises(ImmutableBindingException):
+                self.context.unbind_context(subcontext)
 
         constants = self.context.resolve_context('constant')
         with self.assertRaises(ImmutableBindingException):
@@ -914,6 +934,8 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (obj2,            ('object', str(id(obj2)),)),
             (entity1,         ('entity', 'organization', 'Organization', str(entity1.id))),
             (entity2,         ('entity', 'person', 'Person', str(entity2.id))),
+            (self.binary_entity_1, ('entity', 'compositepkentity', 'CompositePKEntity', str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))),
+            (self.binary_entity_2, ('entity', 'compositepkentity', 'CompositePKEntity', str(self.binary_entity_2.id_1), str(self.binary_entity_2.id_2))),
 
             (datetime.datetime(2022, 4, 13, 13, 51, 46), ('constant', 'datetime', '2022-04-13 13:51:46')),
             (datetime.date(2022, 4, 13),                 ('constant', 'date', '2022-04-13')),

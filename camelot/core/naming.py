@@ -923,10 +923,10 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         if isinstance(obj, datetime.date):
             return ('constant', 'date', obj.strftime(DateNamingContext._format))
         if isinstance(obj, Entity):
-            if not inspect(obj).persistent or obj.id is None:
+            primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
+            if not inspect(obj).persistent or None in primary_key:
                 raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
-            primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
             return ('entity', entity.__tablename__, entity.__name__, *[str(key) for key in primary_key])
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
