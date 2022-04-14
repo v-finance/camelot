@@ -1011,28 +1011,19 @@ class OrganizationEntityNamingContextCase(AbstractEntityNamingContextCase, Entit
         cls.session.flush()
         cls.compatible_names = [str(org1.id), str(org2.id)]
 
-class EntityCompositePKNamingContextCase(AbstractEntityNamingContextCase, EntityNamingContextCaseMixin):
+class AbstractCompositePKEntityNamingContextCase(AbstractEntityNamingContextCase):
 
-    context_name = ('organization',)
     invalid_names = [
-        (None,             NamingException.Message.invalid_name_type),
-        ('',               NamingException.Message.invalid_atomic_name_numeric),
-        (tuple(),          NamingException.Message.multiary_name_expected),
-        (('',),            NamingException.Message.invalid_composite_name_length),
-        ((None,),          NamingException.Message.invalid_composite_name_parts),
-        ((1,),             NamingException.Message.invalid_composite_name_parts),
-        ((None,),          NamingException.Message.invalid_composite_name_parts),
-        (('test', ''),     NamingException.Message.invalid_atomic_name_numeric),
-        (('test', None),   NamingException.Message.invalid_composite_name_parts),
-        (('test', 'test'), NamingException.Message.invalid_atomic_name_numeric),
-        ('0',              NamingException.Message.invalid_composite_name_length),
-        ('1',              NamingException.Message.invalid_composite_name_length),
-        ('2',              NamingException.Message.invalid_composite_name_length),
-        ('9999',           NamingException.Message.invalid_composite_name_length),
+        (None,                 NamingException.Message.invalid_name_type),
+        ('',                   NamingException.Message.invalid_atomic_name_numeric),
+        (tuple(),              NamingException.Message.multiary_name_expected),
+        ((None,),              NamingException.Message.invalid_composite_name_parts),
+        ((1,),                 NamingException.Message.invalid_composite_name_parts),
+        ((None,),              NamingException.Message.invalid_composite_name_parts),
+        (('test', None),       NamingException.Message.invalid_composite_name_parts),
+        (('',),                NamingException.Message.invalid_composite_name_length),
+        (('1', '1', '1', '1'), NamingException.Message.invalid_composite_name_length),
     ]
-    valid_names = [('0', '0'), ('1', '1'),  ('1', '2'), ('2', '2'), ('9999', '9999')]
-    incompatible_names = [('0', '0'), ('2', '2'), ('9999', '9999')]
-    compatible_names = [('1', '1'),  ('1', '2')]
 
     @classmethod
     def setUpClass(cls):
@@ -1049,20 +1040,76 @@ class EntityCompositePKNamingContextCase(AbstractEntityNamingContextCase, Entity
         cls.metadata.bind = 'sqlite://'
         cls.session = Session()
 
-        class CompositePKEntity(cls.Entity):
-
-            id_1 = schema.Column(types.Integer, primary_key=True)
-            id_2 = schema.Column(types.Integer, primary_key=True)
-
-        cls.metadata.create_all()
-        cls.entity = CompositePKEntity
-        a1 = CompositePKEntity(id_1=1, id_2=1)
-        a2 = CompositePKEntity(id_1=1, id_2=2)
-        cls.session.flush()
-        cls.compatible_names = [(str(a1.id_1), str(a1.id_2)), (str(a2.id_1), str(a2.id_2))]
-
     @classmethod
     def tearDownCls(cls):
         AbstractEntityNamingContextCase.tearDownClass()
         cls.metadata.drop_all()
         cls.metadata.clear()
+
+class BinaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCase, EntityNamingContextCaseMixin):
+
+    context_name = ('entity2',)
+    invalid_names = AbstractCompositePKEntityNamingContextCase.invalid_names + [
+        ('0',              NamingException.Message.invalid_composite_name_length),
+        ('1',              NamingException.Message.invalid_composite_name_length),
+        ('2',              NamingException.Message.invalid_composite_name_length),
+        ('9999',           NamingException.Message.invalid_composite_name_length),
+        (('test', ''),     NamingException.Message.invalid_atomic_name_numeric),
+        (('test', 'test'), NamingException.Message.invalid_atomic_name_numeric),
+    ]
+    valid_names = [('0', '0'), ('1', '1'),  ('1', '2'), ('2', '2'), ('9999', '9999')]
+    incompatible_names = [('0', '0'), ('2', '2'), ('9999', '9999')]
+    compatible_names = [('1', '1'),  ('1', '2')]
+
+    @classmethod
+    def setUpClass(cls):
+        AbstractCompositePKEntityNamingContextCase.setUpClass()
+
+        class PK2Entity(cls.Entity):
+
+            id_1 = schema.Column(types.Integer, primary_key=True)
+            id_2 = schema.Column(types.Integer, primary_key=True)
+
+        cls.metadata.create_all()
+        cls.entity = PK2Entity
+        a1 = PK2Entity(id_1=1, id_2=1)
+        a2 = PK2Entity(id_1=1, id_2=2)
+        cls.session.flush()
+        cls.compatible_names = [(str(a1.id_1), str(a1.id_2)), (str(a2.id_1), str(a2.id_2))]
+
+class TernaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCase, EntityNamingContextCaseMixin):
+
+    context_name = ('entity3',)
+    invalid_names = AbstractCompositePKEntityNamingContextCase.invalid_names + [
+        ('0',              NamingException.Message.invalid_composite_name_length),
+        ('1',              NamingException.Message.invalid_composite_name_length),
+        ('2',              NamingException.Message.invalid_composite_name_length),
+        ('9999',           NamingException.Message.invalid_composite_name_length),
+        (('0', '0'),       NamingException.Message.invalid_composite_name_length),
+        (('1', '1'),       NamingException.Message.invalid_composite_name_length),
+        (('1', '2'),       NamingException.Message.invalid_composite_name_length),
+        (('2', '2'),       NamingException.Message.invalid_composite_name_length),
+        (('9999', '9999'), NamingException.Message.invalid_composite_name_length),
+        (('test', ''),     NamingException.Message.invalid_composite_name_length),
+        (('test', 'test'), NamingException.Message.invalid_composite_name_length),
+    ]
+    valid_names = [('0', '0', '0'), ('1', '1', '1'),  ('1', '2', '3'), ('2', '2', '2'), ('9999', '9999', '9999')]
+    incompatible_names = [('0', '0', '0'), ('2', '2', '2'), ('9999', '9999', '9999')]
+    compatible_names = [('1', '1', '1'),  ('1', '2', '3')]
+
+    @classmethod
+    def setUpClass(cls):
+        AbstractCompositePKEntityNamingContextCase.setUpClass()
+
+        class PK3Entity(cls.Entity):
+
+            id_1 = schema.Column(types.Integer, primary_key=True)
+            id_2 = schema.Column(types.Integer, primary_key=True)
+            id_3 = schema.Column(types.Integer, primary_key=True)
+
+        cls.metadata.create_all()
+        cls.entity = PK3Entity
+        a1 = PK3Entity(id_1=1, id_2=1, id_3=1)
+        a2 = PK3Entity(id_1=1, id_2=2, id_3=3)
+        cls.session.flush()
+        cls.compatible_names = [(str(a1.id_1), str(a1.id_2), str(a1.id_3)), (str(a2.id_1), str(a2.id_2), str(a2.id_3))]
