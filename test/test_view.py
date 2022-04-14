@@ -25,7 +25,7 @@ from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import FieldAttributesRole, PreviewRole
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model.party import City, Person
+from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import forms
 from camelot.view.action_steps import OpenFormView
@@ -39,7 +39,7 @@ from camelot.view.controls.exception import ExceptionDialog, register_exception
 from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.search import SimpleSearchControl
-from camelot.view.controls.tableview import ColumnGroupsWidget, HeaderWidget, RowsWidget, TableView, TableWidget
+from camelot.view.controls.tableview import ColumnGroupsWidget, TableWidget
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
 from camelot_example.application_admin import MyApplicationAdmin
@@ -824,17 +824,6 @@ class ControlsTest(
     def tearDown(self):
         super().tearDown()
 
-    def test_table_view(self):
-        gui_context = GuiContext()
-        widget = TableView(gui_context, self.admin_route)
-        self.grab_widget(widget)
-
-    def test_rows_widget(self):
-        city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin.get_admin_route())
-        table.set_admin()
-        RowsWidget(table.gui_context)
-
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
 
@@ -842,9 +831,9 @@ class ControlsTest(
             list_display = ['first_name', 'suffix']
 
         admin = SmallColumnsAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route())
-        widget.set_admin()
-        model = widget.get_model()
+        widget = TableWidget()
+        model = CollectionProxy(admin.get_admin_route())
+        widget.setModel(model)
         model.set_value(ProxyRegistry.register(self.proxy))
         list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
@@ -852,7 +841,7 @@ class ControlsTest(
         self.grab_widget( widget )
         model.timeout_slot()
         self.process()
-        widget.table.horizontalHeader()
+        widget.horizontalHeader()
 
         first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
         suffix_width = self._header_data(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
@@ -870,18 +859,17 @@ class ControlsTest(
             # end column width
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route())
-        widget.set_admin()
-        model = widget.get_model()
+        widget = TableWidget()
+        model = CollectionProxy(admin.get_admin_route())
+        widget.setModel(model)
         model.set_value(ProxyRegistry.register(self.proxy))
         list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
         self.process()
         self.grab_widget(widget)
-        model = widget.get_model()
         model.timeout_slot()
         self.process()
-        widget.table.horizontalHeader()
+        widget.horizontalHeader()
 
         first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
         suffix_width = self._header_data(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
@@ -897,8 +885,7 @@ class ControlsTest(
                              ]
             #end column group
 
-        admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route())
+        widget = TableWidget()
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
 
@@ -944,13 +931,6 @@ class ControlsTest(
         filter_action = SearchFilter()
         search = SimpleSearchControl(filter_action, self.gui_context, None)
         self.grab_widget(search)
-
-    def test_header_widget(self):
-        city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin.get_admin_route())
-        table.set_admin()
-        header = HeaderWidget(gui_context=table.gui_context, parent=None)
-        self.grab_widget(header)
 
     def test_column_groups_widget(self):
         table = VisitorsPerDirector.Admin.list_display
