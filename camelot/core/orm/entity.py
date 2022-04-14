@@ -249,10 +249,8 @@ class EntityMeta( DeclarativeMeta ):
                 dict_['__entity_args__'] = entity_args = {}
             entity_name = dict_['__entity_args__'].get('name')
             if entity_name is None:
-                # The default format will split the classname by capital letters, and join the lowered result by underscore.
-                # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
-                dict_['__entity_args__']['name'] = entity_name = '_'.join(re.findall('.[^A-Z]*', classname)).lower()
-            assert isinstance(entity_name, str) and len(entity_name) > 2, 'Name argument in __entity_args__ should be text-based and contain at least 2 characters'
+                dict_['__entity_args__']['name'] = entity_name = cls._default_entity_name(classname)
+            assert isinstance(entity_name, str) and len(entity_name) > 0, 'Name argument in __entity_args__ should be text-based and contain at least 1 character'
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
             # using the entity's name configured (or auto-assigned) in the __entity_args__
@@ -267,6 +265,11 @@ class EntityMeta( DeclarativeMeta ):
                 initial_naming_context.rebind_context(('entity', entity_name), EntityNamingContext(_class))
 
         return _class
+
+    def _default_entity_name(classname):
+        # The default format will split the classname by capital letters, and join the lowered result by underscore.
+        # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
+        return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
 
     def get_cls_by_type(cls, _type):
         """
