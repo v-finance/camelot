@@ -4,6 +4,7 @@ Inspired by the Corba/Java NamingContext.
 """
 from __future__ import annotations
 
+import datetime
 import decimal
 import functools
 import logging
@@ -744,6 +745,58 @@ class ConstantNamingContext(EndpointNamingContext):
         except (ValueError, decimal.InvalidOperation):
             raise NameNotFoundException(name[0], BindingType.named_object)
 
+class DatetimeNamingContext(EndpointNamingContext):
+    """
+    Represents a stateless endpoint naming context, which handles resolving ´datetime.datetime´ objects/values.
+    """
+
+    _format = '%Y-%m-%d %H:%M:%S'
+
+    @AbstractNamingContext.check_bounded
+    def resolve(self, name: Name) -> object:
+        """
+        Resolve a name in this DatetimeNamingContext and return the bound object.
+        It will throw appropriate exceptions if the resolution failed.
+
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+
+        :return: the bound object, an instance of ´datetime.datetime´.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid.
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
+        name = self.get_composite_name(name)
+        try:
+            return datetime.datetime.strptime(name[0], self._format)
+        except ValueError:
+            raise NameNotFoundException(name[0], BindingType.named_object)
+
+class DateNamingContext(DatetimeNamingContext):
+    """
+    Represents a stateless endpoint naming context, which handles resolving ´datetime.date´ objects/values.
+    """
+
+    _format = '%Y-%m-%d'
+
+    @AbstractNamingContext.check_bounded
+    def resolve(self, name: Name) -> object:
+        """
+        Resolve a name in this DateNamingContext and return the bound object.
+        It will throw appropriate exceptions if the resolution failed.
+
+        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+
+        :return: the bound object, an instance of ´datetime.date´.
+
+        :raises:
+            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NamingException NamingException.Message.invalid_name: when the name is invalid.
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
+        return super().resolve(name).date()
+
 class EntityNamingContext(EndpointNamingContext):
     """
     Represents a stateless endpoint naming context, which handles resolving instances of an Entity.
@@ -812,6 +865,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         constants = self.bind_new_context('constant', immutable=True)
         for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
             constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type), immutable=True)
+        constants.bind_context('datetime', DatetimeNamingContext(), immutable=True)
+        constants.bind_context('date', DateNamingContext(), immutable=True)
         constants.bind('null', None, immutable=True)
         constants.bind('true', True, immutable=True)
         constants.bind('false', False, immutable=True)
@@ -847,6 +902,10 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             return ('constant', 'true' if obj else 'false')
         if isinstance(obj, (str, int, Decimal)):
             return ('constant', type(obj).__name__.lower(), str(obj))
+        if isinstance(obj, datetime.datetime):
+            return ('constant', 'datetime', obj.strftime(DatetimeNamingContext._format))
+        if isinstance(obj, datetime.date):
+            return ('constant', 'date', obj.strftime(DateNamingContext._format))
         if isinstance(obj, Entity):
             # TBD: possibly move the context specific object validations to the respective context?
             if not inspect(obj).persistent or obj.id is None:
