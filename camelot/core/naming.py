@@ -721,8 +721,8 @@ constant = collections.namedtuple(
 
 class Constant(Enum):
     """
-    Enumeration that described a set of constant name resolution strategies the ´camelot.core.naming.ConstantNamingContext´ supports.
-    Constant in this situation means that a certain names used within the constant naming context will always result in the same
+    Enumeration that describes a set of constant types and their corresponding name resolution strategies the ´camelot.core.naming.ConstantNamingContext´ supports.
+    Constant in this context means that names used within the constant naming context will always result in the same
     (immutable) object being resolved.
     The members of this enumeration configure the types of objects supported and the elements needed for resolving them with a CompositeName:
       * composite_type: the python type of the object that composite name should resolve to.
@@ -753,24 +753,26 @@ class Constant(Enum):
 
 class ConstantNamingContext(EndpointNamingContext):
     """
-    Represents a stateless endpoint naming context, which handles resolving objects/values of a certain immutable python type.
-    Currently, those constant values are considered to be integers, strings, booleans or float.
+    Represents a stateless endpoint naming context, that resolves objects using a constant name resolution strategy.
+    Constant here indicates that names used within this context will always resolve to the same python object that is considered to be immutable.
+    The supported constant types are described by the ´camelot.core.naming.Constant´ enumeration.
+    Because of this context idempotent resolving nature, this context does not (need to) implement object binding and does not store any physical bindings.
     """
 
     def __init__(self, constant_type):
         super().__init__()
-        assert constant_type in (int, str, bool, float, Decimal, datetime.datetime, datetime.date)
+        assert isinstance(constant, Constant)
         self.constant_type = constant_type
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
         """
-        Resolve a name in this ConstantNamingContext and return the bound object.
+        Resolve a name in this ConstantNamingContext.
         It will throw appropriate exceptions if the resolution failed.
 
-        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+        :param name: name to resolve, atomic or composite, and relative to this naming context.
 
-        :return: the bound object, an instance of this ConstantNamingContext's constant_type.
+        :return: the resolved object, an instance of this ConstantNamingContext's constant_type.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -779,9 +781,41 @@ class ConstantNamingContext(EndpointNamingContext):
         """
         name = self.get_composite_name(name)
         try:
-            return self.constant_type(*name)
+            # Convert atomic parts if the composite type does not support it itself.
+            if self.constant_type.atomic_type != str:
+                name = [self.constant_type.atomic_type(atomic_name) for atomic_name in name]
+            return self.constant_type.composite_type(*name)
         except (ValueError, decimal.InvalidOperation):
             raise NameNotFoundException(name[0], BindingType.named_object)
+
+    def validate_atomic_name(self, name: str) -> bool:
+        """
+        Customized atomic name validation for this constant naming context that enforces more constraint on the atomic names used by this context
+        if this context's constant composite type does not support string conversion itself.
+
+        :raises:
+            NamingException NamingException.Message.invalid_atomic_name_numeric when the given name is not numeric when it is expected to by the constant type definition.
+        """
+        super().validate_atomic_name(name)
+        if self.constant_type.atomic_type == int and not name.isdecimal():
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
+
+    def validate_composite_name(self, name: CompositeName) -> bool:
+        """
+        Customized atomic name validation for this constant naming context that expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
+        in that it only allows composite names with a number of atomic parts that is equal to the arity of this context's constant name resolution strategy.
+
+        :raises:
+            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's number of composed atomic parts does not equal that of the contant composite type arity.
+        """
+        super(EndpointNamingContext, self).validate_composite_name(name)
+        if len(name) < self.constant_type.arity.minimum or len(name) > self.constant_type.arity.maximum:
+            if self.constant_type.arity == Arity.unary:
+                raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=self.constant_type.arity.minimum)
 
 class DatetimeNamingContext(ConstantNamingContext):
     """
@@ -789,7 +823,7 @@ class DatetimeNamingContext(ConstantNamingContext):
     """
 
     def __init__(self):
-        super().__init__(datetime.datetime)
+        super().__init__(Constant.datetime)
 
     def validate_atomic_name(self, name: str) -> bool:
         """
