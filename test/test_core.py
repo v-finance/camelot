@@ -8,8 +8,7 @@ import unittest
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
-    AlreadyBoundException, BindingType, Constant, ConstantNamingContext,
-    DateNamingContext, DatetimeNamingContext, EntityNamingContext,
+    AlreadyBoundException, BindingType, Constant, ConstantNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
 )
