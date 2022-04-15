@@ -783,10 +783,11 @@ class ConstantNamingContext(EndpointNamingContext):
         try:
             # Convert atomic parts if the composite type does not support it itself.
             if self.constant_type.atomic_type != str:
-                name = [self.constant_type.atomic_type(atomic_name) for atomic_name in name]
+                converted_name = [self.constant_type.atomic_type(atomic_name) for atomic_name in name]
+                return self.constant_type.composite_type(*converted_name)
             return self.constant_type.composite_type(*name)
         except (ValueError, decimal.InvalidOperation):
-            raise NameNotFoundException(name[0], BindingType.named_object)
+            raise NameNotFoundException(name, BindingType.named_object)
 
     def validate_atomic_name(self, name: str) -> bool:
         """
@@ -816,22 +817,6 @@ class ConstantNamingContext(EndpointNamingContext):
             if self.constant_type.arity == Arity.unary:
                 raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=self.constant_type.arity.minimum)
-
-class DatetimeNamingContext(ConstantNamingContext):
-    """
-    Represents a stateless endpoint naming context, which handles resolving ´datetime.datetime´ objects/values.
-    """
-
-    def __init__(self):
-        super().__init__(Constant.datetime)
-
-class DateNamingContext(ConstantNamingContext):
-    """
-    Represents a stateless endpoint naming context, which handles resolving ´datetime.date´ objects/values.
-    """
-
-    def __init__(self):
-        super().__init__(Constant.date)
 
 class EntityNamingContext(EndpointNamingContext):
     """
