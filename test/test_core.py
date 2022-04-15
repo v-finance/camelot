@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+import datetime
 import os
 import tempfile
 import unittest
@@ -7,7 +8,8 @@ import unittest
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
-    AlreadyBoundException, BindingType, ConstantNamingContext, EntityNamingContext,
+    AlreadyBoundException, BindingType, ConstantNamingContext,
+    DateNamingContext, DatetimeNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
 )
@@ -757,7 +759,6 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
     def test_resolve(self):
         super().test_resolve()
-
         # Verify that incompatible names raise a NameNotFoundException:
         for incompatible_name in self.incompatible_names:
             with self.assertRaises(NameNotFoundException) as exc:
@@ -794,6 +795,33 @@ class DecimalNamingContextCase(AbstractNamingContextCase, ConstantNamingContextC
 
     incompatible_names = ['', 'x', 'True', 'test']
     compatible_names = [('-1', Decimal(-1)), ('0', Decimal(0)), ('2', Decimal(2)), ('1.5', Decimal(1.5))]
+
+class DatetimeNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
+
+    context_name = ('datetime',)
+
+    incompatible_names = ['', 'x', 'True', 'test', '2022-04-13', '13/04/2022 14:17:12', '2022-04-13 14:17:12.063786']
+    compatible_names = [
+        ('2021-02-07 12:12:01', datetime.datetime(2021, 2, 7, 12, 12, 1)),
+        ('2022-04-13 13:51:46', datetime.datetime(2022, 4, 13, 13, 51, 46)),
+    ]
+
+    def new_context(self):
+        return DatetimeNamingContext()
+
+class DateNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
+
+    context_name = ('date',)
+
+    incompatible_names = ['', 'x', 'True', 'test', '13/04/2022', '2022-04-13 14:17:12', '2022-04-13 14:17:12.063786']
+    compatible_names = [
+        ('2021-02-07', datetime.date(2021, 2, 7)),
+        ('2022-04-13', datetime.date(2022, 4, 13)),
+    ]
+
+    def new_context(self):
+        return DateNamingContext()
+
 
 class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
@@ -841,6 +869,12 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         self.assertEqual(self.context.resolve(('constant', 'decimal', '0')), Decimal(0))
         self.assertEqual(self.context.resolve(('constant', 'decimal', '0.0')), Decimal(0.0))
         self.assertEqual(self.context.resolve(('constant', 'decimal', '2')), Decimal(2))
+        # Datetimes
+        self.assertEqual(self.context.resolve(('constant', 'datetime', '2022-04-13 13:51:46')), datetime.datetime(2022, 4, 13, 13, 51, 46))
+        self.assertEqual(self.context.resolve(('constant', 'datetime', '2021-02-05 22:00:01')), datetime.datetime(2021, 2, 5, 22, 0, 1))
+        # Dates
+        self.assertEqual(self.context.resolve(('constant', 'date', '2022-04-13')), datetime.date(2022, 4, 13))
+        self.assertEqual(self.context.resolve(('constant', 'date', '2021-02-05')), datetime.date(2021, 2, 5))
 
         # Verify that those constants contexts are immutabe on the initial naming context:
         with self.assertRaises(ImmutableBindingException):
@@ -877,6 +911,9 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (obj2,            ('object', str(id(obj2)),)),
             (entity1,         ('entity', 'organization', 'Organization', str(entity1.id))),
             (entity2,         ('entity', 'person', 'Person', str(entity2.id))),
+
+            (datetime.datetime(2022, 4, 13, 13, 51, 46), ('constant', 'datetime', '2022-04-13 13:51:46')),
+            (datetime.date(2022, 4, 13),                 ('constant', 'date', '2022-04-13')),
             ]:
             name = self.context._bind_object(obj)
             self.assertEqual(name, expected_name)
