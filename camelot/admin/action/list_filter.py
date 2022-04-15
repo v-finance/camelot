@@ -49,6 +49,7 @@ from sqlalchemy.sql.operators import between_op
 from ...core.utils import ugettext, ugettext_lazy as _
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import QtGui
+from ...core.utils import Arity
 
 from .base import Action, Mode, RenderHint
 
