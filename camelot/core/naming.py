@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 # Composite name represents a sequence of composed atomic names
 CompositeName = typing.Tuple[str, ...]
-# Unified name that can be either an atomic name or a composte name.
+# Unified name that can be either an atomic name or a composite name.
 Name = typing.Union[str, CompositeName]
 
 class BindingType(Enum):
@@ -734,7 +734,6 @@ class Constant(Enum):
     #name                 name       composite_type     arity          atomic_type
     integer =   constant('int',      int,               Arity.unary,   str)
     string =    constant('str',      str,               Arity.unary,   str)
-    boolean =   constant('bool',     bool,              Arity.unary,   str)
     decimal =   constant('decimal',  Decimal,           Arity.unary,   str)
     date =      constant('date',     datetime.date,     Arity.ternary, int)
     datetime =  constant('datetime', datetime.datetime, Arity.senary,  int)
