@@ -8,7 +8,7 @@ import unittest
 from camelot.core.conf import SimpleSettings, settings
 from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
-    AlreadyBoundException, BindingType, ConstantNamingContext,
+    AlreadyBoundException, BindingType, Constant, ConstantNamingContext,
     DateNamingContext, DatetimeNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
     NameNotFoundException, NamingContext, NamingException, UnboundException
@@ -767,7 +767,7 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
         for incompatible_name in self.incompatible_names:
             with self.assertRaises(NameNotFoundException) as exc:
                 self.context.resolve(incompatible_name)
-            self.assertEqual(exc.exception.name, incompatible_name)
+            self.assertEqual(exc.exception.name, self.context.get_composite_name(incompatible_name))
             self.assertEqual(exc.exception.binding_type, BindingType.named_object)
 
         # Verify compatible names resolve to the expected objects:
@@ -780,7 +780,7 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 class StringNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
     context_name = ('str',)
-    constant_type = str
+    constant_type = Constant.string
 
     incompatible_names = []
     compatible_names = [(name, name) for name in ConstantNamingContextCaseMixin.valid_names]
@@ -788,7 +788,7 @@ class StringNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCa
 class IntegerNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
     context_name = ('int',)
-    constant_type = int
+    constant_type = Constant.integer
 
     incompatible_names = ['', 'x', 'True', '1.5', 'test']
     compatible_names = [('-1', -1), ('0', 0), ('2', 2)]
@@ -796,7 +796,7 @@ class IntegerNamingContextCase(AbstractNamingContextCase, ConstantNamingContextC
 class DecimalNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
     context_name = ('decimal',)
-    constant_type = Decimal
+    constant_type = Constant.decimal
 
     incompatible_names = ['', 'x', 'True', 'test']
     compatible_names = [('-1', Decimal(-1)), ('0', Decimal(0)), ('2', Decimal(2)), ('1.5', Decimal(1.5))]
@@ -804,6 +804,7 @@ class DecimalNamingContextCase(AbstractNamingContextCase, ConstantNamingContextC
 class DatetimeNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
     context_name = ('datetime',)
+    constant_type = Constant.datetime
 
     invalid_names = [
         (None,             NamingException.Message.invalid_name_type),
@@ -826,12 +827,10 @@ class DatetimeNamingContextCase(AbstractNamingContextCase, ConstantNamingContext
         (('2022','4','13','13','51','46'), datetime.datetime(2022, 4, 13, 13, 51, 46)),
     ]
 
-    def new_context(self):
-        return DatetimeNamingContext()
-
 class DateNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
     context_name = ('date',)
+    constant_type = Constant.date
 
     invalid_names = [
         (None,             NamingException.Message.invalid_name_type),
@@ -852,9 +851,6 @@ class DateNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCase
         (('2021','2','7'), datetime.date(2021, 2, 7)),
         (('2022','4','13'), datetime.date(2022, 4, 13)),
     ]
-
-    def new_context(self):
-        return DateNamingContext()
 
 class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
