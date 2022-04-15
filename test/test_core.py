@@ -963,7 +963,6 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (datetime.datetime(2022, 4, 13, 13, 51, 46), ('constant', 'datetime', '2022', '4', '13', '13', '51', '46')),
             (datetime.date(2022, 4, 13),                 ('constant', 'date', '2022', '4', '13')),
             ]:
-            import wingdbstub
             name = self.context._bind_object(obj)
             self.assertEqual(name, expected_name)
             self.assertIn(name, self.context)

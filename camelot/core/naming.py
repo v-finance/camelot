@@ -717,7 +717,7 @@ class EndpointNamingContext(AbstractNamingContext):
 
 constant = collections.namedtuple(
     'constant',
-    ('composite_type', 'arity', 'atomic_type'))
+    ('name', 'composite_type', 'arity', 'atomic_type'))
 
 class Constant(Enum):
     """
@@ -731,13 +731,17 @@ class Constant(Enum):
       * atomic_type: the python type to which each atomic part of the composite name should be converted to before constructing
         the composite type, in case it does not support string conversion itself.
     """
-    #name                composite_type     arity          atomic_type
-    integer =   constant(int,               Arity.unary,   str)
-    string =    constant(str,               Arity.unary,   str)
-    boolean =   constant(bool,              Arity.unary,   str)
-    decimal =   constant(Decimal,           Arity.unary,   str)
-    date =      constant(datetime.date,     Arity.ternary, int)
-    datetime =  constant(datetime.datetime, Arity.senary,  int)
+    #name                 name       composite_type     arity          atomic_type
+    integer =   constant('int',      int,               Arity.unary,   str)
+    string =    constant('str',      str,               Arity.unary,   str)
+    boolean =   constant('bool',     bool,              Arity.unary,   str)
+    decimal =   constant('decimal',  Decimal,           Arity.unary,   str)
+    date =      constant('date',     datetime.date,     Arity.ternary, int)
+    datetime =  constant('datetime', datetime.datetime, Arity.senary,  int)
+
+    @property
+    def name(self):
+        return self._value_.name
 
     @property
     def composite_type(self):
@@ -902,8 +906,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
 
         # Add immutable bindings for constants' values and contexts for each supported 'constant' python type.
         constants = self.bind_new_context('constant', immutable=True)
-        for constant in Constant: # Do not support floats, as vFinance uses Decimals throughout
-            constants.bind_context(constant.composite_type.__name__.lower(), ConstantNamingContext(constant), immutable=True)
+        for constant in Constant:
+            constants.bind_context(constant.name, ConstantNamingContext(constant), immutable=True)
         constants.bind('null', None, immutable=True)
         constants.bind('true', True, immutable=True)
         constants.bind('false', False, immutable=True)
@@ -938,8 +942,15 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             return ('constant', 'null')
         if isinstance(obj, bool):
             return ('constant', 'true' if obj else 'false')
-        if isinstance(obj, tuple([constant.composite_type for constant in Constant])):
-            return ('constant', type(obj).__name__.lower(), str(obj))
+        if isinstance(obj, (int, str, Decimal, datetime.date, datetime.datetime)):
+            base_name = ('constant', type(obj).__name__.lower())
+            # Important to put the check on datetime first here, before the date check
+            # as datetimes are also dates.
+            if isinstance(obj, datetime.datetime):
+                return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day, obj.hour, obj.minute, obj.second]])
+            if isinstance(obj, datetime.date):
+                return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day]])
+            return (*base_name, str(obj))
         if isinstance(obj, Entity):
             primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
             if not inspect(obj).persistent or None in primary_key:
