@@ -59,7 +59,7 @@ class NamingException(Exception):
         multiary_name_expected = 'composite name should be composed of at least 1 atomic parts'
         invalid_composite_name_parts = 'composite name should be composed of valid atomic parts'
         singular_name_expected = 'only atomic or singular composite names are supported by this endpoint naming context'
-        invalid_composite_name_length = 'composite name should be composed of exactly {length} atomic parts'
+        invalid_composite_name_length = 'composite name should be composed of {length} atomic parts'
 
 class UnboundException(NamingException):
     """A NamingException that is thrown when a NamingContext bound to another NamingContext yet."""
@@ -719,7 +719,7 @@ class ConstantNamingContext(EndpointNamingContext):
 
     def __init__(self, constant_type):
         super().__init__()
-        assert constant_type in (int, str, bool, float, Decimal)
+        assert constant_type in (int, str, bool, float, Decimal, datetime.datetime, datetime.date)
         self.constant_type = constant_type
 
     @AbstractNamingContext.check_bounded
@@ -739,61 +739,79 @@ class ConstantNamingContext(EndpointNamingContext):
         """
         name = self.get_composite_name(name)
         try:
-            return self.constant_type(name[0])
+            return self.constant_type(*name)
         except (ValueError, decimal.InvalidOperation):
             raise NameNotFoundException(name[0], BindingType.named_object)
 
-class DatetimeNamingContext(EndpointNamingContext):
+class DatetimeNamingContext(ConstantNamingContext):
     """
     Represents a stateless endpoint naming context, which handles resolving ´datetime.datetime´ objects/values.
     """
 
-    _format = '%Y-%m-%d %H:%M:%S'
+    def __init__(self):
+        super().__init__(datetime.datetime)
 
-    @AbstractNamingContext.check_bounded
-    def resolve(self, name: Name) -> object:
+    def validate_atomic_name(self, name: str) -> bool:
         """
-        Resolve a name in this DatetimeNamingContext and return the bound object.
-        It will throw appropriate exceptions if the resolution failed.
-
-        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
-
-        :return: the bound object, an instance of ´datetime.datetime´.
+        Customized atomic name validation for this datetime naming context that enforces
+        the atomic names used by this context to be numeric, as they are used as parts of a datetime (year, month, day, hour, etc.).
 
         :raises:
-            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
-            NamingException NamingException.Message.invalid_name: when the name is invalid.
-            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            NamingException NamingException.Message.invalid_atomic_name_numeric when the given name is not numeric.
         """
-        name = self.get_composite_name(name)
-        try:
-            return datetime.datetime.strptime(name[0], self._format)
-        except ValueError:
-            raise NameNotFoundException(name[0], BindingType.named_object)
+        super().validate_atomic_name(name)
+        if not name.isdecimal():
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
 
-class DateNamingContext(DatetimeNamingContext):
+    def validate_composite_name(self, name: CompositeName) -> bool:
+        """
+        Customized atomic name validation for this datetime naming context that expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
+        in that it only allows composite names with a numer of atomic parts that is in the range of arguments needed to initialize a datetime object with.
+
+        :raises:
+            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's number of composed atomic parts does not equal the required amount.
+        """
+        super(EndpointNamingContext, self).validate_composite_name(name)
+        if len(name) < 3 or len(name) > 7:
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length='3 to 7')
+
+class DateNamingContext(ConstantNamingContext):
     """
     Represents a stateless endpoint naming context, which handles resolving ´datetime.date´ objects/values.
     """
 
-    _format = '%Y-%m-%d'
+    def __init__(self):
+        super().__init__(datetime.date)
 
-    @AbstractNamingContext.check_bounded
-    def resolve(self, name: Name) -> object:
+    def validate_atomic_name(self, name: str) -> bool:
         """
-        Resolve a name in this DateNamingContext and return the bound object.
-        It will throw appropriate exceptions if the resolution failed.
-
-        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
-
-        :return: the bound object, an instance of ´datetime.date´.
+        Customized atomic name validation for this date naming context that enforces
+        the atomic names used by this context to be numeric, as they are used as parts of a date (year, month, day, hour).
 
         :raises:
-            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
-            NamingException NamingException.Message.invalid_name: when the name is invalid.
-            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            NamingException NamingException.Message.invalid_atomic_name_numeric when the given name is not numeric.
         """
-        return super().resolve(name).date()
+        super().validate_atomic_name(name)
+        if not name.isdecimal():
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
+
+    def validate_composite_name(self, name: CompositeName) -> bool:
+        """
+        Customized atomic name validation for this date naming context that expands on the inherited composite name validation from ´camelot.core.naming.AbstractNamingContext´
+        in that it only allows composite names with 3 atomic parts which correspond with the year, month and day arguments to resolve a ´datetime.date´ object with.
+
+        :raises:
+            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's number of composed atomic parts does not equal the required amount.
+        """
+        super().validate_composite_name(name)
+        if len(name) != 3:
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=3)
 
 class EntityNamingContext(EndpointNamingContext):
     """
@@ -910,6 +928,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NotImplementedError: if trying to bind an object which is not supported.
         """
         from camelot.core.orm import Entity
         if obj is None:
