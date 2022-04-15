@@ -4,6 +4,7 @@ Inspired by the Corba/Java NamingContext.
 """
 from __future__ import annotations
 
+import collections
 import datetime
 import decimal
 import functools
@@ -11,6 +12,9 @@ import logging
 import typing
 
 from enum import Enum
+
+from camelot.utils import Arity
+
 from decimal import Decimal
 from sqlalchemy import inspect, orm
 
@@ -710,6 +714,42 @@ class EndpointNamingContext(AbstractNamingContext):
         super().validate_composite_name(name)
         if len(name) != 1:
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
+
+constant = collections.namedtuple(
+    'constant',
+    ('operator', 'arity', 'verbose_name', 'prefix', 'infix', 'pre_condition'))
+
+class Constant(Enum):
+    """
+    Enumeration that described a set of constant name resolution strategies the ´camelot.core.naming.ConstantNamingContext´ supports.
+    Constant in this situation means that a certain names used within the constant naming context will always result in the same
+    (immutable) object being resolved.
+    The members of this enumeration configure the types of objects supported and the elements needed for resolving them with a CompositeName:
+      * composite_type: the python type of the object that composite name should resolve to.
+      * arity : the number of arguments the composite type needs for construction and will be equal to the allowed number
+        of atomic parts of the composite names used.
+      * atomic_type: the python type to which each atomic part of the composite name should be converted to before constructing
+        the composite type, in case it does not support string conversion itself.
+    """
+    #name              composite_type     arity          atomic_type
+    integer = constant(int,               Arity.unary,   str)
+    string =  constant(str,               Arity.unary,   str)
+    boolean = constant(bool,              Arity.unary,   str)
+    decimal = constant(Decimal,           Arity.unary,   str)
+    date =    constant(datetime.date,     Arity.ternary, int)
+    datime =  constant(datetime.datetime, Arity.senary,  int)
+
+    @property
+    def composite_type(self):
+        return self._value_.composite_type
+
+    @property
+    def arity(self):
+        return self._value_.arity
+
+    @property
+    def atomic_type(self):
+        return self._value_.atomic_type
 
 class ConstantNamingContext(EndpointNamingContext):
     """
