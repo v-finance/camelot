@@ -731,7 +731,7 @@ class Constant(Enum):
       * atomic_type: the python type to which each atomic part of the composite name should be converted to before constructing
         the composite type, in case it does not support string conversion itself.
     """
-    #name              composite_type     arity          atomic_type
+    #name                composite_type     arity          atomic_type
     integer =   constant(int,               Arity.unary,   str)
     string =    constant(str,               Arity.unary,   str)
     boolean =   constant(bool,              Arity.unary,   str)
@@ -938,12 +938,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             return ('constant', 'null')
         if isinstance(obj, bool):
             return ('constant', 'true' if obj else 'false')
-        if isinstance(obj, (str, int, Decimal)):
+        if isinstance(obj, tuple([constant.composite_type for constant in Constant])):
             return ('constant', type(obj).__name__.lower(), str(obj))
-        if isinstance(obj, datetime.datetime):
-            return ('constant', 'datetime', obj.strftime(DatetimeNamingContext._format))
-        if isinstance(obj, datetime.date):
-            return ('constant', 'date', obj.strftime(DateNamingContext._format))
         if isinstance(obj, Entity):
             primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
             if not inspect(obj).persistent or None in primary_key:

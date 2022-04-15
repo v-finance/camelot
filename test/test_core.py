@@ -911,11 +911,11 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         self.assertEqual(self.context.resolve(('constant', 'decimal', '0.0')), Decimal(0.0))
         self.assertEqual(self.context.resolve(('constant', 'decimal', '2')), Decimal(2))
         # Datetimes
-        self.assertEqual(self.context.resolve(('constant', 'datetime', '2022-04-13 13:51:46')), datetime.datetime(2022, 4, 13, 13, 51, 46))
-        self.assertEqual(self.context.resolve(('constant', 'datetime', '2021-02-05 22:00:01')), datetime.datetime(2021, 2, 5, 22, 0, 1))
+        self.assertEqual(self.context.resolve(('constant', 'datetime', '2022', '04', '13', '13', '51', '46')), datetime.datetime(2022, 4, 13, 13, 51, 46))
+        self.assertEqual(self.context.resolve(('constant', 'datetime', '2021', '02', '05', '22', '00', '01')), datetime.datetime(2021, 2, 5, 22, 0, 1))
         # Dates
-        self.assertEqual(self.context.resolve(('constant', 'date', '2022-04-13')), datetime.date(2022, 4, 13))
-        self.assertEqual(self.context.resolve(('constant', 'date', '2021-02-05')), datetime.date(2021, 2, 5))
+        self.assertEqual(self.context.resolve(('constant', 'date', '2022', '04', '13')), datetime.date(2022, 4, 13))
+        self.assertEqual(self.context.resolve(('constant', 'date', '2021', '02', '05')), datetime.date(2021, 2, 5))
         # Entities
         self.assertEqual(self.context.resolve(('entity', 'organization', str(entity1.id))), entity1)
         self.assertEqual(self.context.resolve(('entity', 'person', str(entity2.id))), entity2)
@@ -960,10 +960,10 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (entity2,         ('entity', 'person', str(entity2.id))),
             (self.binary_entity_1, ('entity', 'composite_pk_entity', str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))),
             (self.binary_entity_2, ('entity', 'composite_pk_entity', str(self.binary_entity_2.id_1), str(self.binary_entity_2.id_2))),
-
-            (datetime.datetime(2022, 4, 13, 13, 51, 46), ('constant', 'datetime', '2022-04-13 13:51:46')),
-            (datetime.date(2022, 4, 13),                 ('constant', 'date', '2022-04-13')),
+            (datetime.datetime(2022, 4, 13, 13, 51, 46), ('constant', 'datetime', '2022', '4', '13', '13', '51', '46')),
+            (datetime.date(2022, 4, 13),                 ('constant', 'date', '2022', '4', '13')),
             ]:
+            import wingdbstub
             name = self.context._bind_object(obj)
             self.assertEqual(name, expected_name)
             self.assertIn(name, self.context)
