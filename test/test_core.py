@@ -774,7 +774,8 @@ class ConstantNamingContextCaseMixin(AbstractNamingContextCaseMixin):
         # Both string names as singular composite names should be allowed:
         for name, expected in self.compatible_names:
             self.assertEqual(self.context.resolve(name), expected)
-            self.assertEqual(self.context.resolve(tuple([name])), expected)
+            if not isinstance(name, tuple):
+                self.assertEqual(self.context.resolve(tuple([name])), expected)
 
 class StringNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
@@ -804,10 +805,25 @@ class DatetimeNamingContextCase(AbstractNamingContextCase, ConstantNamingContext
 
     context_name = ('datetime',)
 
-    incompatible_names = ['', 'x', 'True', 'test', '2022-04-13', '13/04/2022 14:17:12', '2022-04-13 14:17:12.063786']
+    invalid_names = [
+        (None,             NamingException.Message.invalid_name_type),
+        (tuple(),          NamingException.Message.multiary_name_expected),
+        ((1,),             NamingException.Message.invalid_composite_name_parts),
+        ((None,),          NamingException.Message.invalid_composite_name_parts),
+        (('test', ''),     NamingException.Message.invalid_composite_name_length),
+        (('test', None),   NamingException.Message.invalid_composite_name_parts),
+        (('test', 'test'), NamingException.Message.invalid_composite_name_length),
+        ('',               NamingException.Message.invalid_atomic_name_numeric),
+        ('x',              NamingException.Message.invalid_atomic_name_numeric),
+        (('2021',),        NamingException.Message.invalid_composite_name_length),
+        (('2021', '5'),    NamingException.Message.invalid_composite_name_length),
+    ]
+    valid_names = [('2021','2','7','12','12','1'), ('2022','4','13','13','51','46'), ('2021','02','7','12','12','1'), ('2021', '13', '33', '12', '00', '10')]
+    incompatible_names = [('2021', '13', '33', '12', '00', '10')]
     compatible_names = [
-        ('2021-02-07 12:12:01', datetime.datetime(2021, 2, 7, 12, 12, 1)),
-        ('2022-04-13 13:51:46', datetime.datetime(2022, 4, 13, 13, 51, 46)),
+        (('2021','2','7','12','12','1'), datetime.datetime(2021, 2, 7, 12, 12, 1)),
+        (('2021','02','7','12','12','1'), datetime.datetime(2021, 2, 7, 12, 12, 1)),
+        (('2022','4','13','13','51','46'), datetime.datetime(2022, 4, 13, 13, 51, 46)),
     ]
 
     def new_context(self):
@@ -817,15 +833,28 @@ class DateNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCase
 
     context_name = ('date',)
 
-    incompatible_names = ['', 'x', 'True', 'test', '13/04/2022', '2022-04-13 14:17:12', '2022-04-13 14:17:12.063786']
+    invalid_names = [
+        (None,             NamingException.Message.invalid_name_type),
+        (tuple(),          NamingException.Message.multiary_name_expected),
+        ((1,),             NamingException.Message.invalid_composite_name_parts),
+        ((None,),          NamingException.Message.invalid_composite_name_parts),
+        (('test', ''),     NamingException.Message.invalid_composite_name_length),
+        (('test', None),   NamingException.Message.invalid_composite_name_parts),
+        (('test', 'test'), NamingException.Message.invalid_composite_name_length),
+        ('',               NamingException.Message.invalid_atomic_name_numeric),
+        ('x',              NamingException.Message.invalid_atomic_name_numeric),
+        (('2021',),        NamingException.Message.invalid_composite_name_length),
+        (('2021', '5'),    NamingException.Message.invalid_composite_name_length),
+    ]
+    valid_names = [('2021','2','7'), ('2022','4','13'), ('2021', '13', '33')]
+    incompatible_names = [('2021', '13', '33')]
     compatible_names = [
-        ('2021-02-07', datetime.date(2021, 2, 7)),
-        ('2022-04-13', datetime.date(2022, 4, 13)),
+        (('2021','2','7'), datetime.date(2021, 2, 7)),
+        (('2022','4','13'), datetime.date(2022, 4, 13)),
     ]
 
     def new_context(self):
         return DateNamingContext()
-
 
 class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
