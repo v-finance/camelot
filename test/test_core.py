@@ -803,7 +803,7 @@ class DecimalNamingContextCase(AbstractNamingContextCase, ConstantNamingContextC
 class DatetimeNamingContextCase(AbstractNamingContextCase, ConstantNamingContextCaseMixin):
 
     context_name = ('datetime',)
-    constant_type = Constant.datetime
+    constant_type = Constant.time
 
     invalid_names = [
         (None,             NamingException.Message.invalid_name_type),

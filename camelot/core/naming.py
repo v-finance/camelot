@@ -715,9 +715,7 @@ class EndpointNamingContext(AbstractNamingContext):
         if len(name) != 1:
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
 
-constant = collections.namedtuple(
-    'constant',
-    ('name', 'composite_type', 'arity', 'atomic_type'))
+constant = collections.namedtuple('constant', ('name', 'composite_type', 'arity', 'atomic_type'))
 
 class Constant(Enum):
     """
@@ -732,11 +730,11 @@ class Constant(Enum):
         the composite type, in case it does not support string conversion itself.
     """
     #name                 name       composite_type     arity          atomic_type
-    integer =   constant('int',      int,               Arity.unary,   str)
-    string =    constant('str',      str,               Arity.unary,   str)
-    decimal =   constant('decimal',  Decimal,           Arity.unary,   str)
-    date =      constant('date',     datetime.date,     Arity.ternary, int)
-    datetime =  constant('datetime', datetime.datetime, Arity.senary,  int)
+    integer = constant('int',      int,               Arity.unary,   str)
+    string =  constant('str',      str,               Arity.unary,   str)
+    decimal = constant('decimal',  Decimal,           Arity.unary,   str)
+    time =    constant('datetime', datetime.datetime, Arity.senary,  int)
+    date =    constant('date',     datetime.date,     Arity.ternary, int)
 
     @property
     def name(self):
@@ -941,15 +939,16 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             return ('constant', 'null')
         if isinstance(obj, bool):
             return ('constant', 'true' if obj else 'false')
-        if isinstance(obj, (int, str, Decimal, datetime.date, datetime.datetime)):
-            base_name = ('constant', type(obj).__name__.lower())
-            # Important to put the check on datetime first here, before the date check
-            # as datetimes are also dates.
-            if isinstance(obj, datetime.datetime):
-                return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day, obj.hour, obj.minute, obj.second]])
-            if isinstance(obj, datetime.date):
-                return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day]])
-            return (*base_name, str(obj))
+        for constant_type in Constant:
+            if isinstance(obj, constant_type.composite_type):
+                base_name = ('constant', constant_type.name)
+                # Important to put the check on datetime first here, before the date check
+                # as datetimes are also dates.
+                if isinstance(obj, Constant.time.composite_type):
+                    return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day, obj.hour, obj.minute, obj.second]])
+                if isinstance(obj, Constant.date.composite_type):
+                    return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day]])
+                return (*base_name, str(obj))
         if isinstance(obj, Entity):
             primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
             if not inspect(obj).persistent or None in primary_key:
