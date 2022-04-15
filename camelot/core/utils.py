@@ -163,15 +163,18 @@ class Arity(enum.Enum):
     are composed of a minimum and a maximum arity, with None representing a varyable value.
     """
 
-    # Never applicable in its current sole use with filter strategies, where always
-    # at least 1 operand is defined in the form of the filtered attribute.
-    # But it may become for future application.
-    #nullary = arity(0, 0)
-
-    unary =    arity(1, 1)
-    binary =   arity(2, 2)
-    ternary =  arity(3, 3)
-    multiary = arity(2, None)
+    nullary =    arity(0, 0)
+    unary =      arity(1, 1)
+    binary =     arity(2, 2)
+    ternary =    arity(3, 3)
+    quaternary = arity(4, 4)
+    quinary =    arity(5, 5)
+    senary =     arity(6, 6)
+    septenary =  arity(7, 7)
+    octonary =   arity(8, 8)
+    novenary =   arity(9, 9)
+    denary =     arity(10, 10)
+    multiary =   arity(2, None)
 
     @property
     def minimum(self):
