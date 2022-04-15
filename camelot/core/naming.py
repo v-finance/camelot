@@ -758,6 +758,11 @@ class ConstantNamingContext(EndpointNamingContext):
     Constant here indicates that names used within this context will always resolve to the same python object that is considered to be immutable.
     The supported constant types are described by the ´camelot.core.naming.Constant´ enumeration.
     Because of this context idempotent resolving nature, this context does not (need to) implement object binding and does not store any physical bindings.
+
+    :param constant_type: an instance of ´camelot.core.naming.Constant´, which described name resolution strategy of this constant naming context to use.
+
+    :raises:
+            AssertionError: if the provided constant_type is not a valid instance of ´camelot.core.naming.Constant´.
     """
 
     def __init__(self, constant_type):
@@ -782,7 +787,7 @@ class ConstantNamingContext(EndpointNamingContext):
         """
         name = self.get_composite_name(name)
         try:
-            # Convert atomic parts if the composite type does not support it itself.
+            # Convert atomic parts if the composite type does not support string-conversion of its arguments.
             if self.constant_type.atomic_type != str:
                 converted_name = [self.constant_type.atomic_type(atomic_name) for atomic_name in name]
                 return self.constant_type.composite_type(*converted_name)
@@ -821,9 +826,18 @@ class ConstantNamingContext(EndpointNamingContext):
 
 class EntityNamingContext(EndpointNamingContext):
     """
-    Represents a stateless endpoint naming context, which handles resolving instances of an Entity class.
+    Represents a stateless endpoint naming context, which handles resolving instances of a ´camelot.core.orm.entity.Entity´ class.
     Names used relative to this context should have a composite dimension that is equivalent to the dimension
     of the primary key of the entity this naming contect handles.
+    This also closely resembles the ´ConstantNamingContext´ in that it too resolves objects using a constant-like resolution strategy.
+    and do not implement object binding or store any physical bindings.
+    But in contrast to constant naming contexts, entity naming context's resolution process is not guaranteed to be idempotent,
+    as it relies on querying the database for its supported entity, which by nature is a mutable backend.
+
+    :param constant_type: the entity class this naming context should handle, a subclass of ´camelot.core.orm.entity.Entity´
+
+    :raises:
+            AssertionError: if the provided entity class is not a subclass of ´camelot.core.orm.entity.Entity´
     """
 
     def __init__(self, entity):
