@@ -35,7 +35,7 @@ These classes can be reused if a custom base class is needed.
 """
 
 import logging
-
+import re
 
 from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
@@ -44,7 +44,7 @@ from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
-from ..naming import BindingType, initial_naming_context, EntityNamingContext, NameNotFoundException
+from ..naming import initial_naming_context, EntityNamingContext
 from . statements import MUTATORS
 from . import Session, options
 
@@ -151,11 +151,6 @@ class EntityMeta( DeclarativeMeta ):
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
 
-    # Flag that configures whether the entity naming context created by this EntityMeta class is rebound to the initial naming context.
-    # IMPORTANT: This should always be False in production, so that binding under the same name twice raises the appropriate exception,
-    # but this allows unittests to define mocked behaviour that allows rebinding.
-    rebind = False
-
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -181,11 +176,7 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__mapper_args__', dict())
             
-            for base in bases:
-                if hasattr(base, '__entity_args__'):
-                    break
-            else:
-                dict_.setdefault('__entity_args__', dict())
+            dict_.setdefault('__entity_args__', dict())
             
             for base in bases:
                 if hasattr(base, '__types__'):
@@ -247,23 +238,25 @@ class EntityMeta( DeclarativeMeta ):
                 if table is None or table.primary_key.issubset([]):
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
-            # Bind an EntityNamingContext to the initial naming context for the entity class.
-            # As multiple entity classes can be defined with the same name, they are bound under a subcontext with their tablename.
-            try:
-                ctxt = initial_naming_context.resolve_context(('entity', _class.__tablename__))
-            except NameNotFoundException:
-                ctxt = initial_naming_context.bind_new_context(('entity', _class.__tablename__))
+            # Auto-assign entity_args and name entity argument if not configured explicitly.
+            entity_args = dict_.get('__entity_args__')
+            if entity_args is None:
+                dict_['__entity_args__'] = entity_args = {}
+            entity_name = dict_['__entity_args__'].get('name')
+            if entity_name is None:
+                dict_['__entity_args__']['name'] = entity_name = cls._default_entity_name(cls, classname, dict_)
+            assert isinstance(entity_name, str) and len(entity_name) > 0, 'Name argument in __entity_args__ should be text-based and contain at least 1 character'
 
-            if not cls.rebind:
-                initial_naming_context.bind_context(('entity', _class.__tablename__, _class.__name__), EntityNamingContext(_class))
-            else:
-                # Rebinding should only be allowed in test scenario's.
-                if _class.__name__ in ctxt._bindings[BindingType.named_context]:
-                    LOGGER.error('An entity naming context was already bound under the name {}. This should only happen in tests.'.format(
-                        initial_naming_context.verbose_name(('entity', _class.__tablename__, _class.__name__))))
-                initial_naming_context.rebind_context(('entity', _class.__tablename__, _class.__name__), EntityNamingContext(_class))
+            # Bind an EntityNamingContext to the initial naming context for the entity class
+            # using the entity's name configured (or auto-assigned) in the __entity_args__
+            initial_naming_context.bind_context(('entity', entity_name), EntityNamingContext(_class))
 
         return _class
+
+    def _default_entity_name(cls, classname, dict_):
+        # The default format will split the classname by capital letters, and join the lowered result by underscore.
+        # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
+        return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
 
     def get_cls_by_type(cls, _type):
         """

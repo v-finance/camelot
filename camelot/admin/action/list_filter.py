@@ -49,40 +49,14 @@ from sqlalchemy.sql.operators import between_op
 from ...core.utils import ugettext, ugettext_lazy as _
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import QtGui
+from ...core.utils import Arity
 
 from .base import Action, Mode, RenderHint
-
-arity = collections.namedtuple('arity', ('minimum', 'maximum'))
 
 class PriorityLevel(enum.Enum):
 
     HIGH = 1
     MEDIUM = 2
-
-class Arity(enum.Enum):
-    """
-    Enum that represents the arity (e.g. number of arguments or operands) of a certain operation or function.
-    To support operations with a varying arity that accept a variable number of arguments, the arity values
-    are composed of a minimum and a maximum arity, with None representing a varyable value.
-    """
-
-    # Never applicable in its current sole use with filter strategies, where always
-    # at least 1 operand is defined in the form of the filtered attribute.
-    # But it may become for future application.
-    #nullary = arity(0, 0)
-
-    unary =    arity(1, 1)
-    binary =   arity(2, 2)
-    ternary =  arity(3, 3)
-    multiary = arity(2, None)
-
-    @property
-    def minimum(self):
-        return self._value_.minimum
-
-    @property
-    def maximum(self):
-        return self._value_.maximum
 
 filter_operator = collections.namedtuple(
     'filter_operator',
