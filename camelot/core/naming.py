@@ -13,7 +13,7 @@ import typing
 
 from enum import Enum
 
-from camelot.utils import Arity
+from camelot.core.utils import Arity
 
 from decimal import Decimal
 from sqlalchemy import inspect, orm
@@ -717,7 +717,7 @@ class EndpointNamingContext(AbstractNamingContext):
 
 constant = collections.namedtuple(
     'constant',
-    ('operator', 'arity', 'verbose_name', 'prefix', 'infix', 'pre_condition'))
+    ('composite_type', 'arity', 'atomic_type'))
 
 class Constant(Enum):
     """
@@ -732,12 +732,12 @@ class Constant(Enum):
         the composite type, in case it does not support string conversion itself.
     """
     #name              composite_type     arity          atomic_type
-    integer = constant(int,               Arity.unary,   str)
-    string =  constant(str,               Arity.unary,   str)
-    boolean = constant(bool,              Arity.unary,   str)
-    decimal = constant(Decimal,           Arity.unary,   str)
-    date =    constant(datetime.date,     Arity.ternary, int)
-    datime =  constant(datetime.datetime, Arity.senary,  int)
+    integer =   constant(int,               Arity.unary,   str)
+    string =    constant(str,               Arity.unary,   str)
+    boolean =   constant(bool,              Arity.unary,   str)
+    decimal =   constant(Decimal,           Arity.unary,   str)
+    date =      constant(datetime.date,     Arity.ternary, int)
+    datetime =  constant(datetime.datetime, Arity.senary,  int)
 
     @property
     def composite_type(self):
@@ -761,7 +761,7 @@ class ConstantNamingContext(EndpointNamingContext):
 
     def __init__(self, constant_type):
         super().__init__()
-        assert isinstance(constant, Constant)
+        assert isinstance(constant_type, Constant)
         self.constant_type = constant_type
 
     @AbstractNamingContext.check_bounded
@@ -825,67 +825,13 @@ class DatetimeNamingContext(ConstantNamingContext):
     def __init__(self):
         super().__init__(Constant.datetime)
 
-    def validate_atomic_name(self, name: str) -> bool:
-        """
-        Customized atomic name validation for this datetime naming context that enforces
-        the atomic names used by this context to be numeric, as they are used as parts of a datetime (year, month, day, hour, etc.).
-
-        :raises:
-            NamingException NamingException.Message.invalid_atomic_name_numeric when the given name is not numeric.
-        """
-        super().validate_atomic_name(name)
-        if not name.isdecimal():
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
-
-    def validate_composite_name(self, name: CompositeName) -> bool:
-        """
-        Customized atomic name validation for this datetime naming context that expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
-        in that it only allows composite names with a numer of atomic parts that is in the range of arguments needed to initialize a datetime object with.
-
-        :raises:
-            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
-            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
-            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
-            NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's number of composed atomic parts does not equal the required amount.
-        """
-        super(EndpointNamingContext, self).validate_composite_name(name)
-        if len(name) < 3 or len(name) > 7:
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length='3 to 7')
-
 class DateNamingContext(ConstantNamingContext):
     """
     Represents a stateless endpoint naming context, which handles resolving ´datetime.date´ objects/values.
     """
 
     def __init__(self):
-        super().__init__(datetime.date)
-
-    def validate_atomic_name(self, name: str) -> bool:
-        """
-        Customized atomic name validation for this date naming context that enforces
-        the atomic names used by this context to be numeric, as they are used as parts of a date (year, month, day, hour).
-
-        :raises:
-            NamingException NamingException.Message.invalid_atomic_name_numeric when the given name is not numeric.
-        """
-        super().validate_atomic_name(name)
-        if not name.isdecimal():
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
-
-    def validate_composite_name(self, name: CompositeName) -> bool:
-        """
-        Customized atomic name validation for this date naming context that expands on the inherited composite name validation from ´camelot.core.naming.AbstractNamingContext´
-        in that it only allows composite names with 3 atomic parts which correspond with the year, month and day arguments to resolve a ´datetime.date´ object with.
-
-        :raises:
-            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
-            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
-            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
-            NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's number of composed atomic parts does not equal the required amount.
-        """
-        super().validate_composite_name(name)
-        if len(name) != 3:
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=3)
+        super().__init__(Constant.date)
 
 class EntityNamingContext(EndpointNamingContext):
     """
@@ -971,10 +917,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
 
         # Add immutable bindings for constants' values and contexts for each supported 'constant' python type.
         constants = self.bind_new_context('constant', immutable=True)
-        for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
-            constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type), immutable=True)
-        constants.bind_context('datetime', DatetimeNamingContext(), immutable=True)
-        constants.bind_context('date', DateNamingContext(), immutable=True)
+        for constant in Constant: # Do not support floats, as vFinance uses Decimals throughout
+            constants.bind_context(constant.composite_type.__name__.lower(), ConstantNamingContext(constant), immutable=True)
         constants.bind('null', None, immutable=True)
         constants.bind('true', True, immutable=True)
         constants.bind('false', False, immutable=True)
