@@ -4,6 +4,7 @@ Inspired by the Corba/Java NamingContext.
 """
 from __future__ import annotations
 
+import collections
 import datetime
 import decimal
 import functools
@@ -11,8 +12,11 @@ import logging
 import typing
 
 from enum import Enum
+
+from camelot.core.utils import Arity
+
 from decimal import Decimal
-from sqlalchemy import inspect
+from sqlalchemy import inspect, orm
 
 from .singleton import Singleton
 
@@ -20,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 # Composite name represents a sequence of composed atomic names
 CompositeName = typing.Tuple[str, ...]
-# Unified name that can be either an atomic name or a composte name.
+# Unified name that can be either an atomic name or a composite name.
 Name = typing.Union[str, CompositeName]
 
 class BindingType(Enum):
@@ -33,9 +37,9 @@ class NamingException(Exception):
     def __init__(self, message, *args, reason=None, **kwargs):
         assert isinstance(message, self.Message)
         assert reason is None or isinstance(reason, self.Message)
-        self.message_text = message.value.format(*args, **kwargs)
+        self.message_text = message.value.format(*args)
         if reason is not None:
-            self.message_text = self.message_text + ': ' + reason.value
+            self.message_text = self.message_text + ': ' + reason.value.format(**kwargs)
         super().__init__(self.message_text)
         self.message = message
         self.reason = reason
@@ -56,9 +60,10 @@ class NamingException(Exception):
         invalid_atomic_name_length = 'atomic name should contain at least 1 character'
         invalid_atomic_name_numeric = 'atomic name should be numeric'
         invalid_composite_name = 'composite name should be a tuple'
-        invalid_composite_name_length = 'composite name should be composed of at least 1 atomic part'
+        multiary_name_expected = 'composite name should be composed of at least 1 atomic parts'
         invalid_composite_name_parts = 'composite name should be composed of valid atomic parts'
         singular_name_expected = 'only atomic or singular composite names are supported by this endpoint naming context'
+        invalid_composite_name_length = 'composite name should be composed of {length} atomic parts'
 
 class UnboundException(NamingException):
     """A NamingException that is thrown when a NamingContext bound to another NamingContext yet."""
@@ -120,8 +125,7 @@ class AbstractNamingContext(object):
     def __init__(self):
         self._name = None
 
-    @classmethod
-    def validate_atomic_name(cls, name: str):
+    def validate_atomic_name(self, name: str):
         """
         Validate an atomic name for this naming context.
         This method will be used to validate names used within this context,
@@ -137,8 +141,7 @@ class AbstractNamingContext(object):
         elif len(name) == 0:
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_length)
 
-    @classmethod
-    def validate_composite_name(cls, name: CompositeName) -> bool:
+    def validate_composite_name(self, name: CompositeName) -> bool:
         """
         Validate a composite name for this naming context.
         This method will be used to validate composite names used within this context,
@@ -147,18 +150,17 @@ class AbstractNamingContext(object):
 
         :raises:
             NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
-            NamingException NamingException.Message.invalid_composite_name_length when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
             NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
         """
         if not isinstance(name, tuple):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name)
         elif len(name) == 0:
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length)
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.multiary_name_expected)
         elif not all([isinstance(name_part, str) for name_part in name]):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_parts)
 
-    @classmethod
-    def get_composite_name(cls, name: Name) -> CompositeName:
+    def get_composite_name(self, name: Name) -> CompositeName:
         """
         Utility method that returns the composite form of the given name (atomic or composite).
         The composite result will also be generally validated for use within this context,
@@ -174,11 +176,13 @@ class AbstractNamingContext(object):
             NamingException NamingException.Message.invalid_name: The supplied name or one of its composed part is invalid for this context.
         """
         if isinstance(name, str):
-            cls.validate_atomic_name(name)
-            return tuple([name])
+            self.validate_atomic_name(name)
+            composite_name = tuple([name])
+            self.validate_composite_name(composite_name)
+            return composite_name
         if isinstance(name, tuple):
-            cls.validate_composite_name(name)
-            cls.validate_atomic_name(name[0])
+            self.validate_composite_name(name)
+            self.validate_atomic_name(name[0])
             return name
         raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_name_type)
 
@@ -682,8 +686,7 @@ class EndpointNamingContext(AbstractNamingContext):
     Because no recursive resolve is possible, names used by this context are validated to be singular.
     """
 
-    @classmethod
-    def validate_atomic_name(cls, name: str) -> bool:
+    def validate_atomic_name(self, name: str) -> bool:
         """
         Customized atomic name validation for this endpoint naming context.
         This enforces less constraints than the default validation inherited from ´camelot.core.naming.AbstractNamingContext´,
@@ -696,8 +699,7 @@ class EndpointNamingContext(AbstractNamingContext):
         if not isinstance(name, str):
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name)
 
-    @classmethod
-    def validate_composite_name(cls, name: CompositeName) -> bool:
+    def validate_composite_name(self, name: CompositeName) -> bool:
         """
         Customized composite name validation for this endpoint naming context.
         This expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
@@ -705,7 +707,7 @@ class EndpointNamingContext(AbstractNamingContext):
 
         :raises:
             NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
-            NamingException NamingException.Message.invalid_composite_name_length when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
             NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
             NamingException NamingException.Message.singular_name_expected when the given composite name is not singular.
         """
@@ -713,26 +715,70 @@ class EndpointNamingContext(AbstractNamingContext):
         if len(name) != 1:
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
 
+constant = collections.namedtuple('constant', ('name', 'composite_type', 'arity', 'atomic_type'))
+
+class Constant(Enum):
+    """
+    Enumeration that describes a set of constant types and their corresponding name resolution strategies the ´camelot.core.naming.ConstantNamingContext´ supports.
+    Constant in this context means that names used within the constant naming context will always result in the same
+    (immutable) object being resolved.
+    The members of this enumeration configure the types of objects supported and the elements needed for resolving them with a CompositeName:
+      * composite_type: the python type of the object that composite name should resolve to.
+      * arity : the number of arguments the composite type needs for construction and will be equal to the allowed number
+        of atomic parts of the composite names used.
+      * atomic_type: the python type to which each atomic part of the composite name should be converted to before constructing
+        the composite type, in case it does not support string conversion itself.
+    """
+    #name                 name       composite_type     arity          atomic_type
+    integer = constant('int',      int,               Arity.unary,   str)
+    string =  constant('str',      str,               Arity.unary,   str)
+    decimal = constant('decimal',  Decimal,           Arity.unary,   str)
+    time =    constant('datetime', datetime.datetime, Arity.senary,  int)
+    date =    constant('date',     datetime.date,     Arity.ternary, int)
+
+    @property
+    def name(self):
+        return self._value_.name
+
+    @property
+    def composite_type(self):
+        return self._value_.composite_type
+
+    @property
+    def arity(self):
+        return self._value_.arity
+
+    @property
+    def atomic_type(self):
+        return self._value_.atomic_type
+
 class ConstantNamingContext(EndpointNamingContext):
     """
-    Represents a stateless endpoint naming context, which handles resolving objects/values of a certain immutable python type.
-    Currently, those constant values are considered to be integers, strings, booleans or float.
+    Represents a stateless endpoint naming context, that resolves objects using a constant name resolution strategy.
+    Constant here indicates that names used within this context will always resolve to the same python object that is considered to be immutable.
+    The supported constant types are described by the ´camelot.core.naming.Constant´ enumeration.
+    Because of this context idempotent resolving nature, this context does not (need to) implement object binding and does not store any physical bindings.
+
+    :param constant_type: an instance of ´camelot.core.naming.Constant´, which described name resolution strategy of this constant naming context to use.
+
+    :raises:
+            AssertionError: if the provided constant_type is not a valid instance of ´camelot.core.naming.Constant´.
     """
 
     def __init__(self, constant_type):
         super().__init__()
-        assert constant_type in (int, str, bool, float, Decimal)
+        assert isinstance(constant_type, Constant)
         self.constant_type = constant_type
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
         """
-        Resolve a name in this ConstantNamingContext and return the bound object.
+        Resolve a name in this ConstantNamingContext.
         It will throw appropriate exceptions if the resolution failed.
 
-        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
+        :param name: name to resolve, atomic or composite, and relative to this naming context.
 
-        :return: the bound object, an instance of this ConstantNamingContext's constant_type.
+        :return: the resolved object, an instance of this ConstantNamingContext's constant_type.
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
@@ -741,65 +787,57 @@ class ConstantNamingContext(EndpointNamingContext):
         """
         name = self.get_composite_name(name)
         try:
-            return self.constant_type(name[0])
+            # Convert atomic parts if the composite type does not support string-conversion of its arguments.
+            if self.constant_type.atomic_type != str:
+                converted_name = [self.constant_type.atomic_type(atomic_name) for atomic_name in name]
+                return self.constant_type.composite_type(*converted_name)
+            return self.constant_type.composite_type(*name)
         except (ValueError, decimal.InvalidOperation):
-            raise NameNotFoundException(name[0], BindingType.named_object)
+            raise NameNotFoundException(name, BindingType.named_object)
 
-class DatetimeNamingContext(EndpointNamingContext):
-    """
-    Represents a stateless endpoint naming context, which handles resolving ´datetime.datetime´ objects/values.
-    """
-
-    _format = '%Y-%m-%d %H:%M:%S'
-
-    @AbstractNamingContext.check_bounded
-    def resolve(self, name: Name) -> object:
+    def validate_atomic_name(self, name: str) -> bool:
         """
-        Resolve a name in this DatetimeNamingContext and return the bound object.
-        It will throw appropriate exceptions if the resolution failed.
-
-        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
-
-        :return: the bound object, an instance of ´datetime.datetime´.
+        Customized atomic name validation for this constant naming context that enforces more constraint on the atomic names used by this context
+        if this context's constant composite type does not support string conversion itself.
 
         :raises:
-            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
-            NamingException NamingException.Message.invalid_name: when the name is invalid.
-            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            NamingException NamingException.Message.invalid_atomic_name_numeric when the given name is not numeric when it is expected to by the constant type definition.
         """
-        name = self.get_composite_name(name)
-        try:
-            return datetime.datetime.strptime(name[0], self._format)
-        except ValueError:
-            raise NameNotFoundException(name[0], BindingType.named_object)
+        super().validate_atomic_name(name)
+        if self.constant_type.atomic_type == int and not name.isdecimal():
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
 
-class DateNamingContext(DatetimeNamingContext):
-    """
-    Represents a stateless endpoint naming context, which handles resolving ´datetime.date´ objects/values.
-    """
-
-    _format = '%Y-%m-%d'
-
-    @AbstractNamingContext.check_bounded
-    def resolve(self, name: Name) -> object:
+    def validate_composite_name(self, name: CompositeName) -> bool:
         """
-        Resolve a name in this DateNamingContext and return the bound object.
-        It will throw appropriate exceptions if the resolution failed.
-
-        :param name: name under which the object should have been bound, atomic or composite, and relative to this naming context.
-
-        :return: the bound object, an instance of ´datetime.date´.
+        Customized atomic name validation for this constant naming context that expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
+        in that it only allows composite names with a number of atomic parts that is equal to the arity of this context's constant name resolution strategy.
 
         :raises:
-            UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
-            NamingException NamingException.Message.invalid_name: when the name is invalid.
-            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's number of composed atomic parts does not equal that of the contant composite type arity.
         """
-        return super().resolve(name).date()
+        super(EndpointNamingContext, self).validate_composite_name(name)
+        if len(name) < self.constant_type.arity.minimum or len(name) > self.constant_type.arity.maximum:
+            if self.constant_type.arity == Arity.unary:
+                raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=self.constant_type.arity.minimum)
 
 class EntityNamingContext(EndpointNamingContext):
     """
-    Represents a stateless endpoint naming context, which handles resolving instances of an Entity.
+    Represents a stateless endpoint naming context, which handles resolving instances of a ´camelot.core.orm.entity.Entity´ class.
+    Names used relative to this context should have a composite dimension that is equivalent to the dimension
+    of the primary key of the entity this naming contect handles.
+    This also closely resembles the ´ConstantNamingContext´ in that it too resolves objects using a constant-like resolution strategy.
+    and do not implement object binding or store any physical bindings.
+    But in contrast to constant naming contexts, entity naming context's resolution process is not guaranteed to be idempotent,
+    as it relies on querying the database for its supported entity, which by nature is a mutable backend.
+
+    :param constant_type: the entity class this naming context should handle, a subclass of ´camelot.core.orm.entity.Entity´
+
+    :raises:
+            AssertionError: if the provided entity class is not a subclass of ´camelot.core.orm.entity.Entity´
     """
 
     def __init__(self, entity):
@@ -808,8 +846,7 @@ class EntityNamingContext(EndpointNamingContext):
         assert issubclass(entity, EntityBase)
         self.entity = entity
 
-    @classmethod
-    def validate_atomic_name(cls, name: str) -> bool:
+    def validate_atomic_name(self, name: str) -> bool:
         """
         Customized atomic name validation for this entity naming context that enforces
         the atomic names used by this context to be numeric, as they are used as primary keys
@@ -821,6 +858,23 @@ class EntityNamingContext(EndpointNamingContext):
         super().validate_atomic_name(name)
         if not name.isdecimal():
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
+
+    def validate_composite_name(self, name: CompositeName) -> bool:
+        """
+        Customized atomic name validation for this entity naming context that expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
+        in that it only allows composite names with a numer of atomic parts that equals the dimension of entity mapper this context handles.
+
+        :raises:
+            NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
+            NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
+            NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's numer of composed atomic parts does 
+            not equal the dimension of primary key of this context's entity mapper.
+        """
+        super(EndpointNamingContext, self).validate_composite_name(name)
+        mapper = orm.class_mapper(self.entity)
+        if len(name) != len(mapper.primary_key):
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=len(mapper.primary_key))
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
@@ -842,7 +896,7 @@ class EntityNamingContext(EndpointNamingContext):
         """
         from camelot.core.orm import Session
         name = self.get_composite_name(name)
-        instance = Session().query(self.entity).get(name[0])
+        instance = Session().query(self.entity).get(name)
         if instance is None:
             raise NameNotFoundException(name[0], BindingType.named_object)
         return instance
@@ -863,10 +917,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
 
         # Add immutable bindings for constants' values and contexts for each supported 'constant' python type.
         constants = self.bind_new_context('constant', immutable=True)
-        for constant_type in (str, int, Decimal): # Do not support floats, as vFinance uses Decimals throughout
-            constants.bind_context(constant_type.__name__.lower(), ConstantNamingContext(constant_type), immutable=True)
-        constants.bind_context('datetime', DatetimeNamingContext(), immutable=True)
-        constants.bind_context('date', DateNamingContext(), immutable=True)
+        for constant in Constant:
+            constants.bind_context(constant.name, ConstantNamingContext(constant), immutable=True)
         constants.bind('null', None, immutable=True)
         constants.bind('true', True, immutable=True)
         constants.bind('false', False, immutable=True)
@@ -894,28 +946,32 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
 
         :raises:
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
+            NotImplementedError: if trying to bind an object which is not supported.
         """
         from camelot.core.orm import Entity
         if obj is None:
             return ('constant', 'null')
         if isinstance(obj, bool):
             return ('constant', 'true' if obj else 'false')
-        if isinstance(obj, (str, int, Decimal)):
-            return ('constant', type(obj).__name__.lower(), str(obj))
-        if isinstance(obj, datetime.datetime):
-            return ('constant', 'datetime', obj.strftime(DatetimeNamingContext._format))
-        if isinstance(obj, datetime.date):
-            return ('constant', 'date', obj.strftime(DateNamingContext._format))
+        for constant_type in Constant:
+            if isinstance(obj, constant_type.composite_type):
+                base_name = ('constant', constant_type.name)
+                # Important to put the check on datetime first here, before the date check
+                # as datetimes are also dates.
+                if isinstance(obj, Constant.time.composite_type):
+                    return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day, obj.hour, obj.minute, obj.second]])
+                if isinstance(obj, Constant.date.composite_type):
+                    return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day]])
+                return (*base_name, str(obj))
         if isinstance(obj, Entity):
-            # TBD: possibly move the context specific object validations to the respective context?
-            if not inspect(obj).persistent or obj.id is None:
+            primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
+            if not inspect(obj).persistent or None in primary_key:
                 raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
-            return ('entity', entity.__tablename__, entity.__name__, str(obj.id))
+            return ('entity', entity._get_entity_arg('name'), *[str(key) for key in primary_key])
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
         LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
-        # TBD: possibly put objects in a seperate objects subcontext?
         return self.rebind(('object', str(id(obj))), obj)
 
 initial_naming_context = InitialNamingContext()
