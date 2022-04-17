@@ -42,7 +42,7 @@ from .item_view import (
     RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
-                         OpenString, OpenJinjaTemplate, WordJinjaTemplate )
+                         OpenString, WordJinjaTemplate )
 from .orm import (
     CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
     UpdateObjects
@@ -76,7 +76,6 @@ __all__ = [
     NavigationPanel.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
-    OpenJinjaTemplate.__name__,
     OpenStream.__name__,
     OpenString.__name__,
     OpenTableView.__name__,
