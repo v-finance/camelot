@@ -52,10 +52,10 @@ class SelectObjects( OpenTableView ):
     verbose_name_plural: str = field(init=False)
 
 
-    def __post_init__(self, admin, value):
+    def __post_init__(self, admin, value, search_text):
         if value is None:
             value = admin.get_query()
-        super(SelectObjects, self).__post_init__(admin, value)
+        super(SelectObjects, self).__post_init__(admin, value, search_text)
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
         self.actions = admin.get_list_actions().copy()
         self.actions.extend(admin.get_filters())
