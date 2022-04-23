@@ -171,20 +171,6 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             model.filter(action, values)
 
     @classmethod
-    def update_table_view(cls, table_view, step):
-        from camelot.view.controls.search import SimpleSearchControl
-        table_view.set_admin()
-        model = table_view.get_model()
-        list(model.add_columns(step['columns']))
-        table_view.set_value(step['proxy_route'])
-        table_view.list_action = initial_naming_context.resolve(tuple(step['list_action']))
-        table_view.set_actions(step['actions'], step['action_states'])
-        if step['search_text'] is not None:
-            search_control = table_view.findChild(SimpleSearchControl)
-            search_control.setText(step['search_text'])
-            search_control.start_search()
-
-    @classmethod
     def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
         cls.update_table_view(gui_context.view, step)
