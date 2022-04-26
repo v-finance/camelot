@@ -225,7 +225,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
             if model is not None:
                 collection_count = model.rowCount()
                 proxy = model.get_value()
-            response = qml_action_step(self, 'GetSelection', keep_context_id=True)
+            response = qml_action_step(self, 'GetSelection')
             selection_count = response['selection_count']
             current_row = response['current_row']
             for i in range(len(response['selected_rows']) // 2):

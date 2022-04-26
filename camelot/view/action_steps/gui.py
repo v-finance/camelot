@@ -160,7 +160,7 @@ class CloseView(ActionStep, DataclassSerializable):
             if view is not None and not is_deleted(view):
                 view.close_view( step["accept"] )
         else:
-            qml_action_step(gui_context, 'CloseView', serialized_step, keep_context_id=True)
+            qml_action_step(gui_context, 'CloseView', serialized_step)
 
 
 @dataclass
