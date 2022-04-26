@@ -35,11 +35,12 @@ the `ListActionGuiContext`.
 from dataclasses import dataclass, InitVar, field
 from typing import Union, List, Tuple
 import json
+import logging
 
 from ...admin.admin_route import Route
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
-from ...admin.action.list_filter import Filter, All
+from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...core.item_model import ProxyRegistry
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt
@@ -51,6 +52,7 @@ from ..proxy.collection_proxy import (
 )
 from ..qml_view import qml_action_step
 
+LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class Sort( ActionStep, DataclassSerializable ):
@@ -107,7 +109,7 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
 
     admin: InitVar
     value: InitVar
-    search_text: Union[str, None] = field(init=False)
+    search_text: InitVar[Union[str, None]] = None
     title: Union[str, ugettext_lazy] = field(init=False)
     columns: List[str] = field(init=False)
     list_action: Union[Route, None] = field(init=False)
@@ -116,14 +118,24 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     crud_actions: CrudActions = field(init=False)
 
-    def __post_init__( self, admin, value ):
+    def __post_init__(self, admin, value, search_text):
         self.value = value
-        self.search_text = None
         self.title = admin.get_verbose_name_plural()
         self._post_init_actions__(admin)
         self.columns = admin.get_columns()
         self.list_action = admin.get_list_action()
         proxy = admin.get_proxy(value)
+        if search_text is not None:
+            for action_route in self.actions:
+                action = initial_naming_context.resolve(action_route.route)
+                if isinstance(action, SearchFilter):
+                    search_strategies = list(admin._get_search_fields(search_text))
+                    search_value = (search_text, *search_strategies)
+                    proxy.filter(action, search_value)
+                    break
+            else:
+                LOGGER.warn('No SearchFilter found to apply search text')
+
         self.proxy_route = ProxyRegistry.register(proxy)
         self._add_action_states(admin, proxy, self.actions, self.action_states)
         self.set_filters(self.action_states, proxy)
@@ -159,20 +171,6 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             model.filter(action, values)
 
     @classmethod
-    def update_table_view(cls, table_view, step):
-        from camelot.view.controls.search import SimpleSearchControl
-        table_view.set_admin()
-        model = table_view.get_model()
-        list(model.add_columns(step['columns']))
-        table_view.set_value(step['proxy_route'])
-        table_view.list_action = initial_naming_context.resolve(tuple(step['list_action']))
-        table_view.set_actions(step['actions'], step['action_states'])
-        if step['search_text'] is not None:
-            search_control = table_view.findChild(SimpleSearchControl)
-            search_control.setText(step['search_text'])
-            search_control.start_search()
-
-    @classmethod
     def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
         cls.update_table_view(gui_context.view, step)
@@ -201,8 +199,8 @@ class OpenTableView( UpdateTableView ):
     new_tab: bool = False
     admin_route: Route = field(init=False)
 
-    def __post_init__( self, admin, value ):
-        super(OpenTableView, self).__post_init__(admin, value)
+    def __post_init__(self, admin, value, search_text):
+        super(OpenTableView, self).__post_init__(admin, value, search_text)
         self.admin_route = admin.get_admin_route()
 
     @classmethod
@@ -246,8 +244,8 @@ class OpenQmlTableView(OpenTableView):
         
     """
 
-    def __init__(self, admin, value):
-        super().__init__(admin, value)
+    def __init__(self, admin, value, search_text=None):
+        super().__init__(admin, value, search_text=search_text)
         self.list_action = admin.get_list_action()
 
     @classmethod
