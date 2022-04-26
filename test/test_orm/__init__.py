@@ -7,10 +7,14 @@ from camelot.core.orm import EntityBase, EntityMeta, Session
 
 class EntityMetaMock(EntityMeta):
     """
-    Specialized EntityMeta mock used for testing that enables rebinding of entity naming contexts.
-    This allows test cases to define multiple Entities with the same name on the same table.
+    Specialized EntityMeta mock used for testing that overwrites the default assignment of
+    the __entity_args__ entity name argument in a way that allows test cases to define multiple Entities
+    with the same name.
     """
-    rebind = True
+
+    def _default_entity_name(cls, classname, dict_):
+        entity_name = super()._default_entity_name(cls, classname, dict_)
+        return '{}_{}'.format(entity_name, id(entity_name))
 
 class TestMetaData( unittest.TestCase ):
     """Test case that provides setUp and tearDown
