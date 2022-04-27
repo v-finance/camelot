@@ -162,7 +162,9 @@ def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
     global qml_action_dispatch
-    if gui_context.context_id is None:
+    if gui_context is None:
+        context_id = 0
+    elif gui_context.context_id is None:
         context_id = qml_action_dispatch.register(gui_context, model)
     else:
         context_id = gui_context.context_id
