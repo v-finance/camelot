@@ -38,6 +38,7 @@ from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
+from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
@@ -113,7 +114,7 @@ class SelectItem(ActionStep, DataclassSerializable):
     """
 
     items: List[CompletionValue]
-    value: str = None
+    value: str = initial_naming_context._bind_object(None)
     autoaccept: bool = True
 
     title: Union[str, ugettext_lazy] = field(init=False, default= _('Please select'))

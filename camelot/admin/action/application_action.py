@@ -33,7 +33,6 @@ import os
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
-from ...view.art import ColorScheme
 from .base import RenderHint
 from camelot.admin.icon import Icon, CompletionValue
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
