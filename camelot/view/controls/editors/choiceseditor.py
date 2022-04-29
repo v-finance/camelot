@@ -29,17 +29,19 @@
 
 import logging
 
-
-
+from ....core.naming import initial_naming_context
 from ....core.qt import (
     QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py, is_deleted
 )
 from camelot.view.proxy import ValueLoading
-from camelot.admin.icon import Icon
-from ...art import from_admin_icon, ColorScheme
+from ....admin.icon import CompletionValue
+from ...art import ColorScheme, FontIcon
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
+
+none_name = initial_naming_context._bind_object(None)
+none_item = CompletionValue.asdict(CompletionValue(none_name, verbose_name=' '))
 
 class ChoicesEditor(CustomEditor):
     """A ComboBox aka Drop Down box that can be assigned a list of
@@ -63,7 +65,7 @@ class ChoicesEditor(CustomEditor):
         self.setLayout(layout)
         self.setObjectName( field_name )
         # make sure None is in the list of choices
-        self.set_choices([(None, '')])
+        self.set_choices([none_item])
         self.setLayout(layout)
         self.add_actions(kwargs['action_routes'], layout)
 
@@ -76,13 +78,28 @@ class ChoicesEditor(CustomEditor):
     @staticmethod
     def append_item(model, data):
         """Append an item in a combobox model
-        :param data: a dictionary mapping roles to values
+
+        :param data: a `CompletionValue` dict
         """
-        item = QtGui.QStandardItem(data[Qt.ItemDataRole.DisplayRole])
+        item = QtGui.QStandardItem()
         for role, value in data.items():
-            if isinstance(value, Icon):
-                value = from_admin_icon(value).getQIcon()
-            item.setData(py_to_variant(value), role)
+            if value is not None:
+                if role == 'verbose_name':
+                    item.setText(str(value))
+                elif role == 'value':
+                    item.setData(value, Qt.ItemDataRole.UserRole)
+                elif role == 'tooltip':
+                    item.setToolTip(str(value))
+                elif role == 'foreground':
+                    item.setForeground(QtGui.QBrush(QtGui.QColor(value)))
+                elif role == 'icon':
+                    item.setIcon(FontIcon(**value).getQIcon())
+                elif role == 'virtual':
+                    item.setData(value, Qt.ItemDataRole.UserRole+1)
+                elif role == 'background':
+                    item.setBackground(QtGui.QBrush(QtGui.QColor(value)))
+                else:
+                    LOGGER.error('Unhandled role in item : {}'.format(role))
         model.appendRow(item)
 
     @classmethod
@@ -92,18 +109,11 @@ class ChoicesEditor(CustomEditor):
         """
         none_available = False
         for choice in choices:
-            if not isinstance(choice, dict):
-                (value, name) = choice
-                choice = {Qt.ItemDataRole.DisplayRole: str(name),
-                          Qt.ItemDataRole.UserRole: value}
-            else:
-                value = choice[Qt.ItemDataRole.UserRole]
             cls.append_item(model, choice)
-            if value is None:
+            if tuple(choice['value']) == none_name:
                 none_available = True
         if not none_available:
-            cls.append_item(model, {Qt.ItemDataRole.DisplayRole: ' ',
-                                    Qt.ItemDataRole.UserRole: None})        
+            cls.append_item(model, none_item)
         
     @classmethod
     def value_at_row(cls, model, row):
@@ -128,11 +138,11 @@ class ChoicesEditor(CustomEditor):
         # set
         if display_role is None:
             display_role = str(value)
-        cls.append_item(model,
-                        {Qt.ItemDataRole.DisplayRole: display_role,
-                         Qt.ItemDataRole.BackgroundRole: QtGui.QBrush(ColorScheme.VALIDATION_ERROR),
-                         Qt.ItemDataRole.UserRole: value,
-                         Qt.ItemDataRole.UserRole+1: True})
+        cls.append_item(model, CompletionValue.asdict(CompletionValue(
+            value = value, verbose_name=display_role,
+            background = ColorScheme.VALIDATION_ERROR.name(),
+            virtual = True
+        )))
         return rows
             
     def set_choices( self, choices ):
@@ -164,7 +174,8 @@ class ChoicesEditor(CustomEditor):
         # deleted before the combobox is deleted
         if is_deleted(model):
             return
-        self.append_choices(model, choices)
+        if choices is not None:
+            self.append_choices(model, choices)
         # to prevent loops in the onetomanychoices editor, only set the value
         # again when it's not valueloading
         if current_value != ValueLoading:
@@ -173,8 +184,6 @@ class ChoicesEditor(CustomEditor):
     def set_field_attributes(self, **fa):
         super(ChoicesEditor, self).set_field_attributes(**fa)
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
-        if fa.get('choices') is not None:
-            self.set_choices(fa['choices'])
         combobox.setEnabled(fa.get('editable', True))
         combobox.setToolTip(str(fa.get('tooltip') or ''))
 

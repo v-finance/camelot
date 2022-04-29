@@ -32,9 +32,8 @@ logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
-
-
-from ....core.item_model import PreviewRole, FieldAttributesRole
+from ....core.item_model import PreviewRole, FieldAttributesRole, ChoicesRole
+from ....core.naming import initial_naming_context
 from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
 
@@ -45,6 +44,10 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super(ComboBoxDelegate, cls).get_standard_item(locale, model_context)
+        value_name = initial_naming_context._bind_object(model_context.value)
+        # eventually, all values should be names, so this should happen in the
+        # custom delegate class
+        item.setData(py_to_variant(value_name), Qt.ItemDataRole.EditRole)
         choices = model_context.field_attributes.get('choices', [])
         for key, verbose in choices:
             if key == model_context.value:
@@ -60,7 +63,9 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return item
 
     def setEditorData(self, editor, index):
+        choices = variant_to_py(index.data(ChoicesRole))
         value = variant_to_py(index.data(Qt.ItemDataRole.EditRole))
+        editor.set_choices(choices)
         field_attributes = variant_to_py(index.data(FieldAttributesRole))
         editor.set_field_attributes(**(field_attributes or {}))
         editor.set_value(value)

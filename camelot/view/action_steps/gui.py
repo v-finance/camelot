@@ -43,7 +43,6 @@ from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.qml_view import qml_action_step
-from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from .crud import CompletionValue
@@ -127,7 +126,7 @@ class SelectItem(ActionStep, DataclassSerializable):
     def render(cls, serialized_step):
         step = json.loads(serialized_step)
         dialog = ItemSelectionDialog(autoaccept = bool(step['autoaccept']))
-        dialog.set_choices([(item['value'], item['verbose_name']) for item in step['items']])
+        dialog.set_choices(step['items'])
         dialog.set_value(step['value'])
         dialog.setWindowTitle(step['title'])
         dialog.set_banner_subtitle(step['subtitle'])
@@ -143,7 +142,7 @@ class SelectItem(ActionStep, DataclassSerializable):
 
     @classmethod
     def deserialize_result(cls, gui_context, serialized_result):
-        return initial_naming_context.resolve(tuple(serialized_result))
+        return tuple(serialized_result)
 
 @dataclass
 class CloseView(ActionStep, DataclassSerializable):

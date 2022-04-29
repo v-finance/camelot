@@ -33,9 +33,9 @@ import os
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
-#from ...view.art import ColorScheme
+from ...view.art import ColorScheme
 from .base import RenderHint
-from camelot.admin.icon import Icon
+from camelot.admin.icon import Icon, CompletionValue
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
@@ -161,9 +161,6 @@ class SelectProfileMixin:
         :class:`camelot.core.profile.ProfileStore`
     """
 
-    new_icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    save_icon = Icon('save') # 'tango/16x16/actions/document-save.png'
-    load_icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     file_name_filter = _('Profiles file (*.ini)')
     
     def __init__( self, profile_store):
@@ -185,37 +182,33 @@ class SelectProfileMixin:
                 profiles.sort()
                 last_profile = self.profile_store.get_last_profile()
                 last_profile_name = initial_naming_context._bind_object(None)
-                # color = ColorScheme.aluminium_0.name()
-                items = [action_steps.CompletionValue(
+                items = [CompletionValue(
                     value = initial_naming_context._bind_object(None),
                     verbose_name = '',
                 )]
                 for profile in profiles:
                     profile_name = store_context.bind(profile.name, profile)
-                    items.append(action_steps.CompletionValue(
+                    items.append(CompletionValue(
                         value = profile_name,
                         verbose_name = profile.name,
                     ))
                     if profile == last_profile:
                         last_profile_name = profile_name
-                items.append(action_steps.CompletionValue(
+                items.append(CompletionValue(
                     value = new_profile_name,
-                    #Qt.ItemDataRole.ForegroundRole: color,
                     verbose_name = ugettext('new/edit profile'),
-                    #Qt.ItemDataRole.DecorationRole: self.new_icon
+                    icon = Icon('plus-circle'),
                 ))
                 if len(profiles):
-                    items.append(action_steps.CompletionValue(
+                    items.append(CompletionValue(
                         value = save_profiles_name,
-                        #Qt.ItemDataRole.ForegroundRole: color,
                         verbose_name = ugettext('save profiles'),
-                        #Qt.ItemDataRole.DecorationRole: self.save_icon
+                        icon = Icon('save')
                     ))
-                items.append(action_steps.CompletionValue(
+                items.append(CompletionValue(
                     value = load_profiles_name,
-                    #Qt.ItemDataRole.ForegroundRole: color,
                     verbose_name = ugettext('load profiles'),
-                    #Qt.ItemDataRole.DecorationRole: self.load_icon
+                    icon = Icon('folder-open')
                 ))
                 select_profile = action_steps.SelectItem(items)
                 
@@ -232,7 +225,8 @@ class SelectProfileMixin:
                     select_profile.value = None
                 else:
                     select_profile.value = load_profiles_name
-                selected_profile = yield select_profile
+                selected_name = yield select_profile
+                selected_profile = initial_naming_context.resolve(selected_name)
                 if selected_profile is new_profile:
                     edit_profile_name = ''
                     while selected_profile is new_profile:
