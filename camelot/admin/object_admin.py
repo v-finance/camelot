@@ -265,6 +265,8 @@ be specified using the verbose_name attribute.
     form_size = None
     form_actions = []
     related_toolbar_actions = []
+    onetomany_field_actions = [field_action.add_new_object]
+    manytomany_field_actions = [field_action.add_existing_object]
     field_attributes = {}
     form_state = None
     icon = None # Default
@@ -763,9 +765,9 @@ be specified using the verbose_name attribute.
                 #
                 if field_attributes.get('actions') is None:
                     if direction == 'onetomany':
-                        field_attributes['actions'] = [field_action.add_new_object]
+                        field_attributes['actions'] = self.onetomany_field_actions
                     if direction == 'manytomany':
-                        field_attributes['actions'] = [field_action.add_existing_object]
+                        field_attributes['actions'] = self.manytomany_field_actions
                 if field_attributes.get('list_actions') is None:
                     field_attributes['list_actions'] = [
                         route_with_render_hint for route_with_render_hint in related_admin.get_related_toolbar_actions(direction)
