@@ -392,7 +392,7 @@ class ListActionsCase(
         generator = restore_export_mapping.model_run(model_context, None)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
-                generator.send('mapping 1')
+                generator.send(step.items[1].value)
 
         self.assertEqual(model_context.selection[0].field, 'field_1')
 
