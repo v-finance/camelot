@@ -186,7 +186,7 @@ class SelectProfileMixin:
                     verbose_name = '',
                 )]
                 for profile in profiles:
-                    profile_name = store_context.bind(profile.name, profile)
+                    profile_name = store_context.rebind(profile.name, profile)
                     items.append(CompletionValue(
                         value = profile_name,
                         verbose_name = profile.name,
