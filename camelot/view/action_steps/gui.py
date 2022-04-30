@@ -32,19 +32,21 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 import functools
 import json
-from typing import List, Tuple
+from typing import List, Union
 
 from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.naming import initial_naming_context
+from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.qml_view import qml_action_step
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
+from .crud import CompletionValue
 
 
 @dataclass
@@ -99,7 +101,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
             return combobox.set_value(value)
 
 @dataclass
-class SelectItem(ActionStep):
+class SelectItem(ActionStep, DataclassSerializable):
     """This action step pops up a single combobox dialog in which the user can
     select one item from a list of items.
 
@@ -111,30 +113,37 @@ class SelectItem(ActionStep):
        :guilabel:`OK` first.
     """
 
-    items: List[Tuple]
-    value: str = None
+    items: List[CompletionValue]
+    value: str = initial_naming_context._bind_object(None)
+    autoaccept: bool = True
 
-    title = _('Please select')
-    subtitle = _('Make a selection and press the OK button')
+    title: Union[str, ugettext_lazy] = field(init=False, default= _('Please select'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Make a selection and press the OK button.'))
 
     def __post_init__(self):
         self.autoaccept = True
 
-    def render(self):
-        dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
-        dialog.set_choices(self.items)
-        dialog.set_value(self.value)
-        dialog.setWindowTitle( str( self.title ) )
-        dialog.set_banner_subtitle( str( self.subtitle ) )
+    @classmethod
+    def render(cls, serialized_step):
+        step = json.loads(serialized_step)
+        dialog = ItemSelectionDialog(autoaccept = bool(step['autoaccept']))
+        dialog.set_choices(step['items'])
+        dialog.set_value(step['value'])
+        dialog.setWindowTitle(step['title'])
+        dialog.set_banner_subtitle(step['subtitle'])
         return dialog
 
-    def gui_run(self, gui_context):
-        dialog = self.render()
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        dialog = cls.render(serialized_step)
         result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_value()
 
+    @classmethod
+    def deserialize_result(cls, gui_context, serialized_result):
+        return tuple(serialized_result)
 
 @dataclass
 class CloseView(ActionStep, DataclassSerializable):

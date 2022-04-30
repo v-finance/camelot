@@ -30,14 +30,13 @@
 import logging
 import os
 
-
+from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from .base import RenderHint
-from camelot.admin.icon import Icon
+from camelot.admin.icon import Icon, CompletionValue
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
-from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
@@ -147,6 +146,12 @@ class UpdateActions(Action):
             actions_state[action] = action.get_state(model_context)
         yield action_steps.UpdateActionsState(model_context, actions_state)
 
+new_profile, save_profiles, load_profiles = object(), object(), object()
+profiles_context = initial_naming_context.bind_new_context('profiles')
+new_profile_name = profiles_context.bind('new_profile', new_profile)
+save_profiles_name = profiles_context.bind('save_profiles', save_profiles)
+load_profiles_name = profiles_context.bind('load_profiles', load_profiles)
+store_context = profiles_context.bind_new_context('store')
 
 class SelectProfileMixin:
     """Select the application profile to use
@@ -155,9 +160,6 @@ class SelectProfileMixin:
         :class:`camelot.core.profile.ProfileStore`
     """
 
-    new_icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    save_icon = Icon('save') # 'tango/16x16/actions/document-save.png'
-    load_icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     file_name_filter = _('Profiles file (*.ini)')
     
     def __init__( self, profile_store):
@@ -171,32 +173,44 @@ class SelectProfileMixin:
         from camelot.view import action_steps
         from camelot.view.action_steps.profile import EditProfiles
 
-        # dummy profiles
-        new_profile, save_profiles, load_profiles = object(), object(), object()
-        selected_profile = new_profile
+        selected_profile = new_profile_name
         try:
-            while selected_profile in (None, new_profile, 
-                                       save_profiles, load_profiles):
+            while selected_profile in (None, new_profile_name, 
+                                       save_profiles_name, load_profiles_name):
                 profiles = self.profile_store.read_profiles()
                 profiles.sort()
-                items = [(None,'')] + [(p,p.name) for p in profiles]
-                font = QtGui.QFont()
-                font.setItalic(True)
-                items.append({Qt.ItemDataRole.UserRole: new_profile, Qt.ItemDataRole.FontRole: font,
-                              Qt.ItemDataRole.DisplayRole: ugettext('new/edit profile'),
-                              Qt.ItemDataRole.DecorationRole: self.new_icon
-                              })
-                if len(profiles):
-                    items.append({Qt.ItemDataRole.UserRole: save_profiles, Qt.ItemDataRole.FontRole: font,
-                                  Qt.ItemDataRole.DisplayRole: ugettext('save profiles'),
-                                  Qt.ItemDataRole.DecorationRole: self.save_icon
-                                  })
-                items.append({Qt.ItemDataRole.UserRole: load_profiles, Qt.ItemDataRole.FontRole: font,
-                              Qt.ItemDataRole.DisplayRole: ugettext('load profiles'),
-                              Qt.ItemDataRole.DecorationRole: self.load_icon
-                              })
-                select_profile = action_steps.SelectItem( items )
                 last_profile = self.profile_store.get_last_profile()
+                last_profile_name = initial_naming_context._bind_object(None)
+                items = [CompletionValue(
+                    value = initial_naming_context._bind_object(None),
+                    verbose_name = '',
+                )]
+                for profile in profiles:
+                    profile_name = store_context.bind(profile.name, profile)
+                    items.append(CompletionValue(
+                        value = profile_name,
+                        verbose_name = profile.name,
+                    ))
+                    if profile == last_profile:
+                        last_profile_name = profile_name
+                items.append(CompletionValue(
+                    value = new_profile_name,
+                    verbose_name = ugettext('new/edit profile'),
+                    icon = Icon('plus-circle'),
+                ))
+                if len(profiles):
+                    items.append(CompletionValue(
+                        value = save_profiles_name,
+                        verbose_name = ugettext('save profiles'),
+                        icon = Icon('save')
+                    ))
+                items.append(CompletionValue(
+                    value = load_profiles_name,
+                    verbose_name = ugettext('load profiles'),
+                    icon = Icon('folder-open')
+                ))
+                select_profile = action_steps.SelectItem(items)
+                
                 select_profile.title = ugettext('Profile Selection')
                 if len(profiles):
                     subtitle = ugettext('Select a stored profile:')
@@ -205,12 +219,13 @@ class SelectProfileMixin:
                                         ''' create a new profile''')
                 select_profile.subtitle = subtitle
                 if last_profile in profiles:
-                    select_profile.value = last_profile
+                    select_profile.value = last_profile_name
                 elif len(profiles):
                     select_profile.value = None
                 else:
-                    select_profile.value = load_profiles
-                selected_profile = yield select_profile
+                    select_profile.value = load_profiles_name
+                selected_name = yield select_profile
+                selected_profile = initial_naming_context.resolve(selected_name)
                 if selected_profile is new_profile:
                     edit_profile_name = ''
                     while selected_profile is new_profile:
