@@ -81,33 +81,6 @@ class Application( Action ):
         application.setOrganizationDomain(self.application_admin.get_organization_domain())
         application.setApplicationName(self.application_admin.get_name())
         application.setWindowIcon(self.application_admin.get_icon())
-        stylesheet = self.application_admin.get_stylesheet()
-        if stylesheet:
-            application.setStyleSheet(stylesheet)
-
-    #def pre_initialization(self):
-        #"""Method that is called before the model thread is started, while the app is still
-        #running single threaded.
-
-        #The default implementation verifies if the database_selection attribute is set to
-        #True on the ApplicationAdmin, and if this is the case, present the user with a
-        #database selection wizard.
-        #"""
-        #if self.application_admin.database_selection:
-            ##
-            ## in case of profile selection, load the system locale translations for
-            ## the profile dialog.  These might be different from the final translations
-            ## that are specified in the profile
-            ##
-            #locale_name = QtCore.QLocale().name()
-            #language_name = locale_name.split('_')[0]
-            #camelot_translator = self.application_admin._load_translator_from_file( 'camelot', 
-                                                                                    #'camelot',
-                                                                                    #'art/translations/%s/LC_MESSAGES/'%language_name )
-            #if camelot_translator:
-                #QtCore.QCoreApplication.instance().installTranslator( camelot_translator )
-            #from camelot.view.database_selection import select_database
-            #select_database(self.application_admin)
 
     def model_run( self, model_context, mode ):
         """
