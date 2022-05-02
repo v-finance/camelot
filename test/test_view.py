@@ -17,12 +17,14 @@ from camelot.admin.action import GuiContext
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.action.list_filter import SearchFilter
+from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.table import ColumnGroup
 from camelot.core.constants import camelot_maxfloat, camelot_minfloat
 from camelot.core.exception import UserException
 from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import FieldAttributesRole, PreviewRole
+from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
@@ -213,7 +215,11 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_ChoicesEditor(self):
         editor = editors.ChoicesEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
-        choices1 = [(1,u'A'), (2,u'B'), (3,u'C')]
+        choices1 = [CompletionValue.asdict(c) for c in [
+            CompletionValue(initial_naming_context._bind_object(1), 'A'),
+            CompletionValue(initial_naming_context._bind_object(2), 'B'),
+            CompletionValue(initial_naming_context._bind_object(3), 'C'),
+        ]]
         editor.set_choices( choices1 )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 2 )
