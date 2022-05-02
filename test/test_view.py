@@ -92,8 +92,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         #
         # The editor should remember its when its value is ValueLoading
         #
-        editor.set_value( ValueLoading )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        #editor.set_value( ValueLoading )
+        #self.assertEqual( editor.get_value(), ValueLoading )
         #
         # When a value is set, no editingFinished should be called
         #
@@ -215,45 +215,68 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_ChoicesEditor(self):
         editor = editors.ChoicesEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
-        choices1 = [CompletionValue.asdict(c) for c in [
+        # None equals space for qml compatibility
+        none_completion = CompletionValue(
+            initial_naming_context._bind_object(None), ' '
+        )
+        name_2 = initial_naming_context._bind_object(2)
+        choices1 = [c._to_dict() for c in [
             CompletionValue(initial_naming_context._bind_object(1), 'A'),
-            CompletionValue(initial_naming_context._bind_object(2), 'B'),
+            CompletionValue(name_2, 'B'),
             CompletionValue(initial_naming_context._bind_object(3), 'C'),
         ]]
-        editor.set_choices( choices1 )
-        self.assertEqual( editor.get_value(), ValueLoading )
-        editor.set_value( 2 )
-        # None equals space for qml compatibility
-        self.assertEqual(editor.get_choices(), choices1 + [(None,' ')] )
-        self.grab_default_states( editor )
-        self.assertEqual( editor.get_value(), 2 )
+        editor.set_choices(json.loads(json.dumps(choices1)))
+        self.assertEqual(editor.get_value(), None)
+        editor.set_value(name_2)
+        self.assertEqual(editor.get_choices(), choices1 + [
+            none_completion._to_dict()
+        ])
+        self.grab_default_states(editor)
+        self.assertEqual(editor.get_value(), name_2)
         # None is not in the list of choices, but we should still be able
         # to set it's value to it
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         # now change the choices, while the current value is not in the
         # list of new choices
-        editor.set_value( 2 )
-        choices2 = [(4,u'D'), (5,u'E'), (6,u'F')]
-        editor.set_choices( choices2 )
-        self.assertEqual(editor.get_choices(), choices2 + [(None,' '), (2,u'B')])
-        editor.set_value(4)
-        self.assertEqual(editor.get_choices(), choices2 + [(None,' ')])
+        editor.set_value(name_2)
+        name_4 = initial_naming_context._bind_object(4)
+        choices2 = [c._to_dict() for c in [
+            CompletionValue(name_4, 'D'),
+            CompletionValue(initial_naming_context._bind_object(5), 'E'),
+            CompletionValue(initial_naming_context._bind_object(6), 'F'),
+        ]]
+        editor.set_choices(choices2)
+        self.assertEqual(editor.get_choices(), choices2 + [
+            none_completion._to_dict(),
+            CompletionValue(name_2, 'B')._to_dict()
+        ])
+        editor.set_value(name_4)
+        self.assertEqual(editor.get_choices(), choices2 + [
+            none_completion._to_dict()
+        ])
         # set a value that is not in the list, the value should be
         # accepted, to prevent damage to the actual data
-        editor.set_value(33)
-        self.assertEqual(editor.get_value(), 33)
+        name_33 = initial_naming_context._bind_object(33)
+        editor.set_value(name_33)
+        self.assertEqual(editor.get_value(), name_33)
         number_of_choices = len(editor.get_choices())
         # set the value back to valid one, the invalid one should be no longer
         # in the list of choices
-        editor.set_value(4)
+        editor.set_value(name_4)
         self.assertEqual(number_of_choices-1, len(editor.get_choices()))
         # try strings as keys
         editor = editors.ChoicesEditor(parent=None, **self.editable_kwargs)
-        editor.set_choices( [('a',u'A'), ('b',u'B'), ('c',u'C')] )
-        editor.set_value( 'c' )
-        self.assertEqual( editor.get_value(), 'c' )
-        self.assert_valid_editor( editor, 'c' )
+        name_c = initial_naming_context._bind_object('c')
+        choices3 = [c._to_dict() for c in [
+            CompletionValue(initial_naming_context._bind_object('a'), 'A'),
+            CompletionValue(initial_naming_context._bind_object('b'), 'A'),
+            CompletionValue(name_c, 'C'),
+        ]]
+        editor.set_choices(choices3)
+        editor.set_value(name_c)
+        self.assertEqual(editor.get_value(), name_c)
+        self.assert_valid_editor(editor, name_c)
 
     def test_FileEditor(self):
         editor = editors.FileEditor(parent=None, **self.editable_kwargs)
