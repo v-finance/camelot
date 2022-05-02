@@ -188,12 +188,24 @@ class ChoicesEditor(CustomEditor):
         combobox.setToolTip(str(fa.get('tooltip') or ''))
 
     def get_choices(self):
+        """This method is only useful for unittest purpose, as it does not
+        return an exact copy of the set_choices values.
         """
-    :rtype: a list of (value,name) tuples
-    """
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
-        return [(variant_to_py(combobox.itemData(i)),
-                 str(combobox.itemText(i))) for i in range(combobox.count())]
+        model = combobox.model()
+        choices = []
+        for row in range(model.rowCount()):
+            index = model.index(row, 0)
+            choices.append({
+                'value': model.data(index, Qt.ItemDataRole.UserRole),
+                'verbose_name': model.data(index, Qt.ItemDataRole.DisplayRole),
+                'tooltip': model.data(index, Qt.ItemDataRole.ToolTipRole),
+                'icon': model.data(index, Qt.ItemDataRole.DecorationRole),
+                'foreground': model.data(index, Qt.ItemDataRole.ForegroundRole),
+                'background': None,
+                'virtual': None,
+            })
+        return choices
 
     def set_value(self, value, display_role=None):
         """Set the current value of the combobox where value, the name displayed
