@@ -39,7 +39,10 @@ from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
 
-none_name = initial_naming_context._bind_object(None)
+# since this is gui code, we assume all names are lists,
+# as the original tuple has been serialized/deserialized
+
+none_name = list(initial_naming_context._bind_object(None))
 none_item = CompletionValue(none_name, verbose_name=' ')._to_dict()
 
 class ChoicesEditor(CustomEditor):
@@ -109,7 +112,7 @@ class ChoicesEditor(CustomEditor):
         none_available = False
         for choice in choices:
             cls.append_item(model, choice)
-            if tuple(choice['value']) == none_name:
+            if choice['value'] == none_name:
                 none_available = True
         if not none_available:
             cls.append_item(model, none_item)
@@ -135,7 +138,7 @@ class ChoicesEditor(CustomEditor):
         # method has not happened yet or the choices don't contain the value
         # set
         if display_role is None:
-            display_role = str(value)
+            display_role = str(value[-1]) if value is not None else ''
         cls.append_item(model, CompletionValue.asdict(CompletionValue(
             value = value, verbose_name=display_role,
             background = ColorScheme.VALIDATION_ERROR.name(),
@@ -210,7 +213,7 @@ class ChoicesEditor(CustomEditor):
             the value is not in the list of choices.  If this is `None`, the string
             representation of the value is used.
         """
-        value = list(value) if value is not None else value
+        value = list(value if value is not None else none_name)
         self.setProperty( 'value', py_to_variant(value) )
         self.valueChanged.emit()
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
@@ -221,6 +224,5 @@ class ChoicesEditor(CustomEditor):
         """Get the current value of the combobox"""
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         value = self.value_at_row(combobox.model(), combobox.currentIndex())
-        value = tuple(value) if value is not None else value
         return value
 

@@ -226,17 +226,17 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
             CompletionValue(initial_naming_context._bind_object(3), 'C'),
         ]]
         editor.set_choices(json.loads(json.dumps(choices1)))
-        self.assertEqual(editor.get_value(), None)
+        self.assertEqual(editor.get_value(), ['constant', 'null'])
         editor.set_value(name_2)
         self.assertEqual(editor.get_choices(), choices1 + [
             none_completion._to_dict()
         ])
         self.grab_default_states(editor)
-        self.assertEqual(editor.get_value(), name_2)
+        self.assertEqual(editor.get_value(), list(name_2))
         # None is not in the list of choices, but we should still be able
         # to set it's value to it
-        editor.set_value( None )
-        self.assertEqual( editor.get_value(), None )
+        editor.set_value(None )
+        self.assertEqual(editor.get_value(), ['constant', 'null'])
         # now change the choices, while the current value is not in the
         # list of new choices
         editor.set_value(name_2)
@@ -259,7 +259,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         # accepted, to prevent damage to the actual data
         name_33 = initial_naming_context._bind_object(33)
         editor.set_value(name_33)
-        self.assertEqual(editor.get_value(), name_33)
+        self.assertEqual(editor.get_value(), list(name_33))
         number_of_choices = len(editor.get_choices())
         # set the value back to valid one, the invalid one should be no longer
         # in the list of choices
@@ -275,7 +275,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         ]]
         editor.set_choices(choices3)
         editor.set_value(name_c)
-        self.assertEqual(editor.get_value(), name_c)
+        self.assertEqual(editor.get_value(), list(name_c))
         self.assert_valid_editor(editor, name_c)
 
     def test_FileEditor(self):
