@@ -8,7 +8,6 @@ import openpyxl
 
 import camelot.types
 
-from camelot.admin.admin_route import AdminRoute
 from camelot.core.exception import UserException
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.admin.action import Action, ActionStep, State
@@ -18,7 +17,6 @@ from camelot.admin.action import (
 )
 from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
-from camelot.admin.action.base import GuiContext
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFile, add_existing_object
 from camelot.admin.action.list_action import SetFilters, ListActionModelContext
@@ -41,7 +39,7 @@ from camelot.view.action_steps.change_object import ChangeObject, ChangeField
 from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls import actionsbox, delegates, tableview
 from camelot.view.controls.action_widget import ActionPushButton
-from camelot.view.controls.tableview import TableView
+from camelot.view.controls.view import AbstractView
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.view.qml_view import get_qml_root_backend
@@ -223,7 +221,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         action_steps.OpenString(b'1, 2, 3, 4')
         context = { 'columns':['width', 'height'],
                     'table':[[1,2],[3,4]] }
-        action_steps.OpenJinjaTemplate( 'list.html', context )
         action_steps.WordJinjaTemplate( 'list.html', context )
 
     def test_update_progress( self ):
@@ -290,13 +287,15 @@ class ListActionsCase(
         self.movie_admin = app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
         self._load_data(self.item_model)
-        table_view = tableview.TableView(ApplicationActionGuiContext(), self.admin_route)
-        table_view.set_admin()
-        table_view.table.setModel(self.item_model)
+        table_view = tableview.TableWidget()
+        table_view.setModel(self.item_model)
         # select the first row
-        table_view.table.setCurrentIndex(self.item_model.index(0, 0))
-        self.gui_context = table_view.gui_context
+        table_view.setCurrentIndex(self.item_model.index(0, 0))
+        self.gui_context = list_action.ListActionGuiContext()
+        self.gui_context.item_view = table_view
+        self.gui_context.view = AbstractView()
         self.gui_context.admin_route = self.admin_route
+        self.gui_context.view.gui_context = self.gui_context
         self.model_context = self.gui_context.create_model_context()
         # create a model context
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
@@ -707,23 +706,6 @@ class ListActionsCase(
         self.grab_widget(action_box)
         return action_box
 
-    def test_filter_list_in_table_view(self):
-        gui_context = GuiContext()
-        gui_context.action_routes = {}
-        person_admin = Person.Admin(app_admin, Person)
-        table_view = TableView(gui_context, person_admin.get_admin_route())
-        filters = [self.group_box_filter,
-                   self.combo_box_filter]
-        filter_routes = []
-        filter_states = []
-        for action in filters:
-            action_route = AdminRoute._register_list_action_route(person_admin.get_admin_route(), action)
-            filter_routes.append(action_route)
-            action_state = State()._to_dict() # use default state
-            filter_states.append((action_route, action_state))
-        table_view.set_admin()
-        table_view.set_filters(filter_routes, filter_states)
-
     def test_orm( self ):
 
         class UpdatePerson( Action ):
@@ -979,11 +961,6 @@ class ApplicationActionsCase(
                 generator.send(['unittest-backup.db'])
                 file_selected = True
         self.assertTrue(file_selected)
-
-    def test_open_table_view(self):
-        person_admin = app_admin.get_related_admin( Person )
-        open_table_view_action = application_action.OpenTableView(person_admin)
-        list(self.gui_run(open_table_view_action, self.gui_context))
 
     def test_open_new_view( self ):
         person_admin = app_admin.get_related_admin(Person)

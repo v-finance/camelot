@@ -656,6 +656,12 @@ class SearchFilter(Action, AbstractModelFilter):
 
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
+        current_value = model_context.proxy.get_filter(self)
+        if current_value is not None:
+            search_text = current_value[0]
+            state.modes = [FilterMode(
+                search_text, search_text, checked=True
+            )]
         return state
 
     @classmethod
@@ -692,7 +698,7 @@ class SearchFilter(Action, AbstractModelFilter):
         old_value = model_context.proxy.get_filter(self)
         value = None
         if search_text is not None and len(search_text) > 0:
-            search_strategies = [search_strategy for search_strategy in model_context.admin._get_search_fields(search_text)]
+            search_strategies = list(model_context.admin._get_search_fields(search_text))
             value = (search_text, *search_strategies)
         if old_value != value:
             model_context.proxy.filter(self, value)
