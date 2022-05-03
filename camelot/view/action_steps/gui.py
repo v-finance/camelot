@@ -32,11 +32,13 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 import functools
 import json
+import typing
 from typing import List, Union
 
 from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
+from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
@@ -46,6 +48,7 @@ from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.qml_view import qml_action_step
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
+from ..art import FontIcon
 from .crud import CompletionValue
 
 
@@ -192,9 +195,9 @@ class MessageBox( ActionStep, DataclassSerializable ):
 
     """
 
-    text: _
-    icon: QtWidgets.QMessageBox.Icon = QtWidgets.QMessageBox.Icon.Information
-    title: _ = _('Message')
+    text: typing.Union[str, ugettext_lazy]
+    icon: Icon = Icon('info')
+    title: typing.Union[str, ugettext_lazy] = _('Message')
     standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
     informative_text: str = field(init=False)
     detailed_text: str = field(init=False)
@@ -210,11 +213,12 @@ class MessageBox( ActionStep, DataclassSerializable ):
     def render(cls, step):
         """create the message box. this method is used to unit test
         the action step."""
-        message_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Icon(step["icon"]),
-                                            step["title"],
-                                            step["text"],
-                                            QtWidgets.QMessageBox.StandardButton(
-                                                functools.reduce(lambda a, b: a | b, step["standard_buttons"])))
+        message_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Icon.NoIcon, step["title"], step["text"],
+            QtWidgets.QMessageBox.StandardButton(
+                functools.reduce(lambda a, b: a | b, step["standard_buttons"])
+            ))
+        message_box.setIconPixmap(FontIcon(**step["icon"]).getQPixmap())
         message_box.setInformativeText(str(step["informative_text"]))
         message_box.setDetailedText(str(step["detailed_text"]))
         return message_box
@@ -232,6 +236,6 @@ class MessageBox( ActionStep, DataclassSerializable ):
         step = json.loads(serialized_step)
         if step['hide_progress']:
             with hide_progress_dialog(gui_context):
-                cls.show_message_box(step)
+                return cls.show_message_box(step)
         else:
-            cls.show_message_box(step)
+            return cls.show_message_box(step)
