@@ -124,8 +124,7 @@ class SelectItem(ActionStep, DataclassSerializable):
         self.autoaccept = True
 
     @classmethod
-    def render(cls, serialized_step):
-        step = json.loads(serialized_step)
+    def render(cls, step):
         dialog = ItemSelectionDialog(autoaccept = bool(step['autoaccept']))
         dialog.set_choices(step['items'])
         dialog.set_value(step['value'])
@@ -135,7 +134,7 @@ class SelectItem(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        dialog = cls.render(serialized_step)
+        dialog = cls.render(step = json.loads(serialized_step))
         result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()

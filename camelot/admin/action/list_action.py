@@ -897,9 +897,18 @@ class ImportFromFile( EditAction ):
         
 import_from_file = ImportFromFile()
 
+class FieldValue(object):
+    """
+    Abstract helper class for the `ReplaceFieldContents` action to configure
+    the field values for a certain delegate.
+    """
+
+    def __init__(self, value):
+        self.value = value
+
 class ReplaceFieldContents( EditAction ):
     """Select a field an change the content for a whole selection"""
-    
+
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
     icon = Icon('edit') # 'tango/16x16/actions/edit-find-replace.png'
@@ -908,24 +917,41 @@ class ReplaceFieldContents( EditAction ):
     shortcut = QtGui.QKeySequence.StandardKey.Replace
     name = 'replace'
 
-    def model_run( self, model_context, mode ):
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        if model_context.selection_count <= 0:
+            state.enabled = False
+            return state
+        state.modes = []
+        for key, attributes in model_context.admin.get_all_fields_and_attributes().items():
+            if attributes.get('change_value_admin') is None:
+                continue
+            state.modes.append(Mode(key, attributes['name']))
+        return state
+
+    def model_run( self, model_context, selected_field ):
         from camelot.view import action_steps
-        super().model_run(model_context, mode)
-        field_name, value = yield action_steps.ChangeField(
-            model_context.admin,
-            field_name = model_context.current_field_name
-        )
-        yield action_steps.UpdateProgress( text = _('Replacing field') )
-        dynamic_field_attributes = model_context.admin.get_dynamic_field_attributes
-        with model_context.session.begin():
-            for obj in model_context.get_selection():
-                dynamic_fa = list(dynamic_field_attributes(obj, [field_name]))[0]
-                if dynamic_fa.get('editable', True) == False:
-                    raise UserException(self.message, resolution=self.resolution)
-                setattr( obj, field_name, value )
-                # dont rely on the session to update the gui, since the objects
-                # might not be in a session
-            yield action_steps.UpdateObjects(model_context.get_selection())
+        super().model_run(model_context, selected_field)
+        if selected_field is not None:
+            admin = model_context.admin
+            field_attributes = admin.get_field_attributes(selected_field)
+            field_value = FieldValue(None)
+            change_object = action_steps.ChangeObject(
+                field_value, field_attributes['change_value_admin']
+            )
+            change_object.title = _('Replace field contents')
+            yield change_object
+            yield action_steps.UpdateProgress(text=_('Replacing field'))
+            dynamic_field_attributes = admin.get_dynamic_field_attributes
+            with model_context.session.begin():
+                for obj in model_context.get_selection():
+                    dynamic_fa = list(dynamic_field_attributes(obj, [selected_field]))[0]
+                    if dynamic_fa.get('editable', True) == False:
+                        raise UserException(self.message, resolution=self.resolution)
+                    admin.set_field_value(obj, selected_field, field_value.value)
+                    # dont rely on the session to update the gui, since the objects
+                    # might not be in a session
+                yield action_steps.UpdateObjects(model_context.get_selection())
             yield action_steps.FlushSession(model_context.session)
 
 replace_field_contents = ReplaceFieldContents()

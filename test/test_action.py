@@ -9,6 +9,7 @@ import openpyxl
 import camelot.types
 
 from camelot.core.exception import UserException
+from camelot.core.naming import initial_naming_context
 from camelot.core.item_model import ListModelProxy, ObjectRole
 from camelot.admin.action import Action, ActionStep, State
 from camelot.admin.action import (
@@ -21,6 +22,7 @@ from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFile, add_existing_object
 from camelot.admin.action.list_action import SetFilters, ListActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.bin.meta import NewProjectOptions
@@ -35,7 +37,7 @@ from camelot.test.action import MockListActionGuiContext, MockModelContext
 from camelot.view import action_steps, import_utils, utils
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
-from camelot.view.action_steps.change_object import ChangeObject, ChangeField
+from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls import actionsbox, delegates, tableview
 from camelot.view.controls.action_widget import ActionPushButton
@@ -192,10 +194,21 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         class SendDocumentAction( Action ):
 
             def model_run( self, model_context, mode ):
-                methods = [ ('email', 'By E-mail'),
-                            ('fax',   'By Fax'),
-                            ('post',  'By postal mail') ]
-                method = yield SelectItem( methods, value='email' )
+                methods = [
+                    CompletionValue(
+                        initial_naming_context._bind_object('email'),
+                        'By E-mail'),
+                    CompletionValue(
+                        initial_naming_context._bind_object('email'),
+                        'By Fax'),
+                    CompletionValue(
+                        initial_naming_context._bind_object('email'),
+                        'By postal mail')
+                ]
+                method = yield SelectItem(
+                    methods,
+                    value=initial_naming_context._bind_object('email')
+                )
                 # handle sending of the document
                 LOGGER.info('selected {}'.format(method))
 
@@ -203,8 +216,8 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
 
         action = SendDocumentAction()
         for step in self.gui_run(action, self.gui_context):
-            if isinstance(step, ActionStep):
-                dialog = step.render()
+            if isinstance(step, tuple):
+                dialog = SelectItem.render(step[1])
                 self.grab_widget(dialog)
         self.assertTrue(dialog)
 
@@ -379,7 +392,7 @@ class ListActionsCase(
         generator = restore_export_mapping.model_run(model_context, None)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
-                generator.send('mapping 1')
+                generator.send(step.items[1].value)
 
         self.assertEqual(model_context.selection[0].field, 'field_1')
 
@@ -446,15 +459,11 @@ class ListActionsCase(
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        steps = action.model_run(self.gui_context.create_model_context(), None)
+        steps = action.model_run(self.gui_context.create_model_context(), 'first_name')
         for step in steps:
-            if isinstance(step, ChangeField):
-                dialog = step.render()
-                field_editor = dialog.findChild(QtWidgets.QWidget, 'field_choice')
-                field_editor.set_value('first_name')
-                dialog.show()
-                self.grab_widget( dialog )
-                steps.send(('first_name', 'known'))
+            if isinstance(step, ChangeObject):
+                field_value = step.get_object()
+                field_value.value = 'known'
 
     def test_open_form_view( self ):
         # sort and filter the original model
@@ -940,7 +949,7 @@ class ApplicationActionsCase(
         generator = action.select_profile()
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
-                generator.send(profile_store.get_last_profile())
+                generator.send(step.items[1].value)
                 profile_selected = True
         self.assertTrue(profile_selected)
 
