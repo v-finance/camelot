@@ -6,6 +6,7 @@ Note = NewType('Note', Union[str, ugettext_lazy])
 Directory = NewType('Directory', str)
 File = NewType('File', str)
 Months = NewType('Months', int)
+Color = NewType('Color', str)
 
 def is_optional_type(field_type):
     return isinstance(field_type, _GenericAlias) and \
