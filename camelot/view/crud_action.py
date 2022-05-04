@@ -5,10 +5,10 @@ logger = logging.getLogger(__name__)
 
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
-from ..admin.admin_route import AdminRoute
-from ..core.qt import Qt, QtGui, py_to_variant, variant_to_py
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
 from ..core.exception import log_programming_error
+from ..core.naming import initial_naming_context
+from ..core.qt import Qt, QtGui, py_to_variant, variant_to_py
 from .item_model.cache import ValueCache
 
 
@@ -36,6 +36,17 @@ def strip_data_from_object( obj, columns ):
 
 
 class UpdateMixin(object):
+
+    @classmethod
+    def field_action_model_context(cls, model_context, obj, field_attributes):
+        field_name = field_attributes['field_name']
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.admin = model_context.admin
+        field_action_model_context.field = field_name
+        field_action_model_context.value = strip_data_from_object(obj, [field_name])[0]
+        field_action_model_context.field_attributes = field_attributes
+        field_action_model_context.obj = obj
+        return field_action_model_context
 
     def add_data(self, model_context, row, columns, obj, data):
         """Add data from object o at a row in the cache
@@ -80,11 +91,9 @@ class UpdateMixin(object):
                 # to not editable for objects that are not persistent
                 field_attributes.update(dynamic_field_attributes[column])
                 delegate = field_attributes['delegate']
-                value = row_data[column]
-                field_action_model_context = FieldActionModelContext()
-                field_action_model_context.field = field_attributes['field_name']
-                field_action_model_context.value = value
-                field_action_model_context.field_attributes = field_attributes
+                field_action_model_context = self.field_action_model_context(
+                    model_context, obj, field_attributes
+                )
                 item = delegate.get_standard_item(locale, field_action_model_context)
                 items.append((column, item))
             try:
@@ -126,12 +135,11 @@ class ChangeSelection(Action):
         from camelot.view import action_steps
         action_states = []
         for action_route in self.action_routes:
-            action = AdminRoute.action_for(action_route)
+            action = initial_naming_context.resolve(action_route)
             state = action.get_state(self.model_context)
             action_states.append(state)
         yield action_steps.ChangeSelection(self.action_routes, action_states)
-        
-        
+
 class Completion(Action):
 
     name = 'completion'
@@ -153,8 +161,14 @@ class Completion(Action):
             field_name,
             prefix,
         )
+
         # Empty if the field does not support autocompletions
-        completions = [admin.get_search_identifiers(e) for e in completions] if completions is not None else [] 
+        completions = [
+            action_steps.CompletionValue(
+                value=initial_naming_context._bind_object(obj),
+                verbose_name=admin.get_verbose_search_identifier(obj),
+                tooltip='id: %s' % (admin.primary_key(obj)))
+            for obj in completions] if completions is not None else []
         yield action_steps.Completion(row, column, prefix, completions)
 
     def __repr__(self):
@@ -368,7 +382,38 @@ class RowData(Update):
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
 
-    
+class RunFieldAction(Action):
+
+    name = 'field_action'
+
+    def model_run(self, model_context, mode):
+        row = mode['row']
+        column = mode['column']
+        obj_id = mode['object']
+        action_route = mode['action_route']
+        action_mode = mode['action_mode']
+        object_slice = list(model_context.proxy[row:row+1])
+        if not len(object_slice):
+            logger.error('Cannot run field action : no object in row {0}'.format(row))
+            return
+        obj = object_slice[0]
+        if not (id(obj)==obj_id):
+            logger.warn('Cannot run field action : object in row {0} is inconsistent with view, {1} vs {2}'.format(row, id(obj), obj_id))
+            return
+        action = initial_naming_context.resolve(tuple(action_route))
+        static_field_attributes = model_context.static_field_attributes[column]
+        field_action_model_context = FieldActionModelContext()
+        field_action_model_context.field = static_field_attributes['field_name']
+        field_action_model_context.value = getattr(
+            obj, static_field_attributes['field_name']
+        )
+        # @todo : should include dynamic field attributes, but those are not
+        # yet used in any of the field actions
+        field_action_model_context.field_attributes = static_field_attributes
+        yield from action.model_run(field_action_model_context, action_mode)
+
+run_field_action = RunFieldAction()
+
 class SetColumns(Action):
 
     name = 'set_columns'
@@ -390,9 +435,44 @@ class SetColumns(Action):
             #included_attrs = ['name', 'field_name', 'editable', 'nullable', 'colmn_width']
             #static_field_attributes.append({attr: fa[attr] for attr in included_attrs})
         yield action_steps.SetColumns(model_context.static_field_attributes)
-        
-        
-class SetData(Update):
+
+
+class ChangedObjectMixin(object):
+
+    def add_changed_object(
+        self, model_context, depending_objects_before_change,
+        obj,
+        created_objects, updated_objects, deleted_objects):
+        """
+        Add the changed object and row to the changed_ranges, created_objects etc.
+        """
+        from sqlalchemy.exc import DatabaseError
+        admin = model_context.admin
+        subsystem_obj = admin.get_subsystem_object(obj)
+        for message in model_context.validator.validate_object(obj):
+            break
+        else:
+            # save the state before the update
+            was_persistent = admin.is_persistent(obj)
+            try:
+                admin.flush(obj)
+            except DatabaseError as e:
+                #@todo: when flushing fails ??
+                logger.error( 'Programming Error, could not flush object', exc_info = e )
+            if was_persistent is False:
+                created_objects.add(subsystem_obj)
+        updated_objects.add(subsystem_obj)
+        updated_objects.add(obj)
+        depending_objects = depending_objects_before_change.union(set(admin.get_depending_objects(obj)))
+        for depending_object in depending_objects:
+            related_admin = admin.get_related_admin(type(depending_object))
+            if related_admin.is_deleted(depending_object):
+                deleted_objects.update({depending_object})
+            else:
+                updated_objects.update({depending_object})
+
+
+class SetData(Update, ChangedObjectMixin):
 
     name = 'set_data'
 
@@ -409,9 +489,6 @@ class SetData(Update):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        created_objects = None
-        updated_objects = None  
-        changed_ranges = []
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
         for row, obj_id, column, value in self.updates:
@@ -437,7 +514,6 @@ class SetData(Update):
                 static_field_attributes = model_context.static_field_attributes[column]
                 field_name = static_field_attributes['field_name']
 
-                from sqlalchemy.exc import DatabaseError
                 new_value = variant_to_py(value)
                 logger.debug( 'set data for row %s;col %s' % ( row, column ) )
 
@@ -470,6 +546,9 @@ class SetData(Update):
                     continue
                 # update the model
                 try:
+                    if isinstance(new_value, (list, tuple)) and tuple(new_value) in initial_naming_context:
+                        # Handle only some values (completions) being named values that need resolving for now.
+                        new_value = initial_naming_context.resolve(tuple(new_value))
                     admin.set_field_value(obj, field_name, new_value)
                     #
                     # setting this attribute, might trigger a default function 
@@ -483,34 +562,18 @@ class SetData(Update):
                     pass
                 changed = value_changed or changed
             if changed:
-                subsystem_obj = admin.get_subsystem_object(obj)
-                for message in model_context.validator.validate_object(obj):
-                    break
-                else:
-                    # save the state before the update
-                    was_persistent = admin.is_persistent(obj)
-                    try:
-                        admin.flush(obj)
-                    except DatabaseError as e:
-                        #@todo: when flushing fails ??
-                        logger.error( 'Programming Error, could not flush object', exc_info = e )
-                    if was_persistent is False:
-                        created_objects.add(subsystem_obj)
-                # update the cache
-                columns = tuple(range(len(model_context.static_field_attributes)))
-                changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-                updated_objects.add(subsystem_obj)
-                depending_objects = depending_objects_before_set.union(set(admin.get_depending_objects(obj)))
-                for depending_object in depending_objects:
-                    related_admin = admin.get_related_admin(type(depending_object))
-                    if related_admin.is_deleted(depending_object):
-                        deleted_objects.update({depending_object})
-                    else:
-                        updated_objects.update({depending_object})
+                self.add_changed_object(
+                    model_context, depending_objects_before_set, obj,
+                    created_objects, updated_objects, deleted_objects
+                )
         created_objects = tuple(created_objects)
         updated_objects = tuple(updated_objects)
         deleted_objects = tuple(deleted_objects)
-        yield action_steps.SetData(changed_ranges, created_objects, updated_objects, deleted_objects)
+        yield action_steps.CreateUpdateDelete(
+            objects_created=created_objects,
+            objects_updated=updated_objects,
+            objects_deleted=deleted_objects,
+        )
 
 
 class Sort(RowCount):
@@ -525,3 +588,51 @@ class Sort(RowCount):
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
+
+
+class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
+
+    name = 'field_action'
+
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        row = mode['row']
+        column = mode['column']
+        obj_id = mode['object']
+        action_route = mode['action_route']
+        action_mode = mode['action_mode']
+        object_slice = list(model_context.proxy[row:row+1])
+        if not len(object_slice):
+            logger.error('Cannot run field action : no object in row {0}'.format(row))
+            return
+        obj = object_slice[0]
+        if not (id(obj)==obj_id):
+            logger.warn('Cannot run field action : object in row {0} is inconsistent with view, {1} vs {2}'.format(row, id(obj), obj_id))
+            return
+        depending_objects_before_change = set(model_context.admin.get_depending_objects(obj))
+        static_field_attributes = model_context.static_field_attributes[column]
+        action = initial_naming_context.resolve(tuple(action_route))
+        # @todo : should include dynamic field attributes, but those are not
+        # yet used in any of the field actions
+        field_action_model_context = self.field_action_model_context(
+            model_context, obj, static_field_attributes
+        )
+        field_action_model_context.field_attributes = static_field_attributes
+        yield from action.model_run(field_action_model_context, action_mode)
+        new_value = getattr(obj, static_field_attributes['field_name'])
+        if field_action_model_context.value != new_value:
+            updated_objects, created_objects, deleted_objects = set(), set(), set()
+            self.add_changed_object(
+                model_context, depending_objects_before_change, obj,
+                created_objects, updated_objects, deleted_objects
+            )
+            created_objects = tuple(created_objects)
+            updated_objects = tuple(updated_objects)
+            deleted_objects = tuple(deleted_objects)
+            yield action_steps.CreateUpdateDelete(
+                objects_created=created_objects,
+                objects_updated=updated_objects,
+                objects_deleted=deleted_objects,
+            )
+
+run_field_action = RunFieldAction()

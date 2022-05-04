@@ -53,6 +53,8 @@ CompletionPrefixRole = Qt.ItemDataRole.UserRole + 7
 CompletionsRole = Qt.ItemDataRole.UserRole + 8
 ActionRoutesRole = Qt.ItemDataRole.UserRole + 9
 ActionStatesRole = Qt.ItemDataRole.UserRole + 10
+ActionModeRole = Qt.ItemDataRole.UserRole + 11
+ChoicesRole = Qt.ItemDataRole.UserRole + 12
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent

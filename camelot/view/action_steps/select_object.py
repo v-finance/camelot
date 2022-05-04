@@ -27,66 +27,14 @@
 #
 #  ============================================================================
 
+
 from dataclasses import dataclass, InitVar, field
-import json
 
-from ...core.qt import QtWidgets
-
-from camelot.admin.admin_route import RouteWithRenderHint, AdminRoute
-from camelot.admin.action import ActionStep, Action
-from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext as _
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.controls.tableview import TableView
+from camelot.view.qml_view import qml_action_dispatch
 
-from .item_view import OpenTableView
-
-@dataclass
-class SetSelectedObjects(ActionStep):
-
-    objects: list
-
-    def gui_run(self, gui_context):
-        dialog = gui_context.view.parent()
-        dialog.objects = self.objects
-        dialog.accept()
-
-class ConfirmSelection(Action):
-
-    verbose_name = _('OK')
-    name = 'confirm_selection'
-    icon = Icon('check') # 'tango/16x16/emblems/emblem-symbolic-link.png'
-
-    def model_run(self, model_context, mode):
-        yield SetSelectedObjects(list(model_context.get_selection()))
-
-confirm_selection = ConfirmSelection()
-
-class CancelSelection(Action):
-
-    verbose_name = _('Cancel')
-    name = 'cancel_selection'
-
-    def gui_run(self, gui_context):
-        gui_context.view.parent().reject()
-
-cancel_selection = CancelSelection()
-
-class SelectDialog(QtWidgets.QDialog):
-    
-    def __init__(self, gui_context, admin_route, verbose_name, parent = None):
-        super( SelectDialog, self ).__init__( parent )
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins( 0, 0, 0, 0 )
-        layout.setSpacing( 0 )
-        self.setWindowTitle( _('Select %s') % verbose_name )
-        self.setSizeGripEnabled(True)
-        table = TableView(gui_context, admin_route, parent=self)
-        table.setObjectName('table_view')
-        layout.addWidget(table)
-        self.setLayout( layout )
-        self.objects = []
+from .item_view import OpenTableView, OpenQmlTableView
 
 @dataclass
 class SelectObjects( OpenTableView ):
@@ -104,39 +52,36 @@ class SelectObjects( OpenTableView ):
     verbose_name_plural: str = field(init=False)
 
 
-    def __post_init__(self, admin, value):
+    def __post_init__(self, admin, value, search_text):
         if value is None:
             value = admin.get_query()
-        super(SelectObjects, self).__post_init__(admin, value)
+        super(SelectObjects, self).__post_init__(admin, value, search_text)
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
-        # actions
-        self.actions = [
-            RouteWithRenderHint(AdminRoute._register_list_action_route(admin.get_admin_route(), action),
-                                action.render_hint) for action in [cancel_selection, confirm_selection]
-        ]
+        self.actions = admin.get_list_actions().copy()
+        self.actions.extend(admin.get_filters())
         self.actions.extend(admin.get_select_list_toolbar_actions())
         self.action_states = list()
         self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
-        # list_action
-        self.list_action = AdminRoute._register_list_action_route(admin.get_admin_route(), confirm_selection)
-
-    @classmethod
-    def render(cls, gui_context, step):
-        dialog = SelectDialog(gui_context, tuple(step['admin_route']), step['verbose_name_plural'])
-        table_view = dialog.findChild(QtWidgets.QWidget, 'table_view')
-        cls.update_table_view(table_view, step)
-        return dialog
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        dialog = cls.render(gui_context, step)
         with hide_progress_dialog(gui_context):
-            # strange things happen on windows 7 and later with maximizing
-            # this dialog, maximizing it here appears to work
-            dialog.showMaximized()
-            if dialog.exec() == QtWidgets.QDialog.DialogCode.Rejected:
+            response, model = OpenQmlTableView.render(gui_context, 'SelectObjects', serialized_step)
+            if not response['selection_count']:
                 raise CancelRequest()
-            return dialog.objects
+            return response
 
-
+    @classmethod
+    def deserialize_result(cls, gui_context, response):
+        objects = []
+        list_gui_context = qml_action_dispatch.get_context(response['context_id'])
+        model = list_gui_context.get_item_model()
+        if model is not None:
+            proxy = model.get_value()
+            selected_rows = response['selected_rows']
+            for i in range(len(selected_rows) // 2):
+                first_row = selected_rows[2 * i]
+                last_row = selected_rows[2 * i + 1]
+                for obj in proxy[first_row:last_row + 1]:
+                    objects.append(obj)
+        return objects

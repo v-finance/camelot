@@ -73,6 +73,7 @@ def genre_choices( entity_instance ):
 class BurnToDisk( Action ):
     
     verbose_name = _('Burn to disk')
+    name = 'burn'
     
     def model_run( self, model_context ):
         yield action_steps.UpdateProgress( 0, 3, _('Formatting disk') )
@@ -149,8 +150,6 @@ class Movie( Entity ):
         # be visible in the table view
         list_display = ['cover', 'title', 'releasedate', 'rating',]
         lines_per_row = 5
-        # define filters to be available in the table view
-        list_filter = ['genre', list_filter.ComboBoxFilter('director.full_name')]
         # if the search function needs to look in related object attributes,
         # those should be specified within list_search
         list_search = ['director.full_name']
@@ -200,6 +199,12 @@ class Movie( Entity ):
 
     def __unicode__(self):
         return self.title or ''
+
+# define filters to be available in the table view
+Movie.Admin.list_filter = [
+    list_filter.GroupBoxFilter(Movie.genre),
+    list_filter.GroupBoxFilter(Person.full_name, joins=[Movie.director])
+]
 
 class Cast( Entity ):
     

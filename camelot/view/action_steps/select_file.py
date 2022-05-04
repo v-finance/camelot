@@ -26,18 +26,18 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import json
-import os
+import typing
 
 from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
+from camelot.view.qml_view import qml_action_step
 
 from dataclasses import dataclass, field
 
 from ...core.serializable import DataclassSerializable
-from ...core.qt import QtWidgets, variant_to_py, py_to_variant, QtCore
+from ...core.qt import QtWidgets
 
 @dataclass
 class SelectFile( ActionStep, DataclassSerializable ):
@@ -66,48 +66,17 @@ class SelectFile( ActionStep, DataclassSerializable ):
     """
 
     file_name_filter: str = ''
-    single: bool = field(init=False)
+    single: bool = True
 
     caption = _('Open')
 
-    def __post_init__(self):
-        self.single = True
-
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        settings = QtCore.QSettings()
-        datasource = settings.value('datasource')
-        # we have no guarantee on what is inside datasource
-        try:
-            directory = str(variant_to_py(datasource))
-            directory = os.path.dirname(directory)
-        except TypeError:
-            directory = ''
-        if step["single"]:
-            get_filename = QtWidgets.QFileDialog.getOpenFileName
-        else:
-            get_filename = QtWidgets.QFileDialog.getOpenFileNames
-        with hide_progress_dialog( gui_context ):
-            selected = get_filename(parent=gui_context.workspace,
-                                    caption=str(cls.caption),
-                                    directory=directory,
-                                    filter=step["file_name_filter"])
-            selected = selected[0]
-            # selected is an empty string if cancel is pressed
+        with hide_progress_dialog(gui_context):
+            response = qml_action_step(gui_context, 'SelectFile', serialized_step)
+            selected = response['selected']
             if selected:
-                if step["single"]:
-                    settings.setValue(
-                        'datasource',
-                        py_to_variant(str(selected))
-                    )
-                    return [str(selected)]
-                else:
-                    settings.setValue(
-                        'datasource',
-                        py_to_variant(str(selected[0]))
-                    )
-                    return [str(fn) for fn in selected]
+                return selected
             else:
                 raise CancelRequest()
 
@@ -134,28 +103,17 @@ class SaveFile( ActionStep, DataclassSerializable ):
     """
 
     file_name_filter: str = ''
-    file_name: str = None
+    file_name: typing.Optional[str] = None
 
     caption = _('Save')
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        settings = QtCore.QSettings()
-        directory = str(variant_to_py(settings.value('datasource')))
-        directory = os.path.dirname(directory)
-        if step["file_name"] is not None:
-            directory = os.path.join(directory, step["file_name"])
-        get_filename = QtWidgets.QFileDialog.getSaveFileName
-        with hide_progress_dialog( gui_context ):
-            selected = get_filename(parent=gui_context.workspace,
-                                    caption=str(cls.caption),
-                                    directory=directory,
-                                    filter=step["file_name_filter"])
-            selected = selected[0]
+        with hide_progress_dialog(gui_context):
+            response = qml_action_step(gui_context, 'SaveFile', serialized_step)
+            selected = response['selected']
             if selected:
-                settings.setValue('datasource', py_to_variant(selected))
-                return str(selected)
+                return selected
             else:
                 raise CancelRequest()
 
@@ -174,26 +132,17 @@ class SelectDirectory(ActionStep, DataclassSerializable):
 
     """
 
-    caption = _('Select directory')
+    directory: typing.Optional[str] = None
+    options: list = field(default_factory=lambda: [QtWidgets.QFileDialog.Option.ShowDirsOnly])
 
-    def __post_init__(self):
-        self.options = QtWidgets.QFileDialog.Options.ShowDirsOnly
-        self.directory = None
+    caption = _('Select directory')
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        settings = QtCore.QSettings()
-        if step["directory"] is not None:
-            directory = step["directory"]
-        else:
-            directory = str(variant_to_py(settings.value('datasource')))
-        get_directory = QtWidgets.QFileDialog.getExistingDirectory
-        with hide_progress_dialog( gui_context ):
-            selected = get_directory(parent=gui_context.workspace,
-                                     caption=str(cls.caption),
-                                     directory=directory,
-                                     options=step["options"])
+        with hide_progress_dialog(gui_context):
+            response = qml_action_step(gui_context, 'SelectDirectory', serialized_step)
+            selected = response['selected']
             if selected:
-                settings.setValue('datasource', py_to_variant(selected))
-            return str(selected)
+                return selected
+            else:
+                raise CancelRequest()

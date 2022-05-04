@@ -32,13 +32,15 @@ import json
 import logging
 import dataclasses
 
+from camelot.core.naming import initial_naming_context
+
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
 from ....core.serializable import json_encoder
 from ....core.item_model import (
-    ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
+    ActionRoutesRole, ActionStatesRole,
+    ChoicesRole, FieldAttributesRole, ProxyDict
 )
-from ....admin.action.field_action import FieldAction
 from ..action_widget import ActionToolbutton
 
 LOGGER = logging.getLogger(__name__)
@@ -153,11 +155,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         routes = model_context.field_attributes.get('action_routes', [])
         states = []
         for action in model_context.field_attributes.get('actions', []):
-            if isinstance(action, FieldAction):
-                state = action.get_state(model_context)
-                states.append(dataclasses.asdict(state))
-            else:
-                states.append(None)
+            state = action.get_state(model_context)
+            states.append(dataclasses.asdict(state))
         #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
         if len(routes) != len(states):
             LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
@@ -169,6 +168,15 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         serialized_action_states = json_encoder.encode(states)
         item = QtGui.QStandardItem()
         item.setData(py_to_variant(model_context.value), Qt.ItemDataRole.EditRole)
+        # NOTE: one of the goals is to serialize the field attributes, which currently
+        # still comprises a large variety of elements, some of which should still be made serializable,
+        # while others may only be used at the model side and should not be included in the serialization.
+        # That exact set of elements that should be included is still a TODO, as many editors still rely
+        # on the field attributes being passes as kwargs as part of their initialization.
+        # As a transition phase, custom ItemData roles are introduced to store those elements
+        # that are already made serializable, as to gradually get towards the final goal.
+        # Eventually, when the final set of serializable field attributes is known, those roles
+        # may be combined again somehow, but this is still TBD.
         item.setData(serialized_action_routes, ActionRoutesRole)
         item.setData(serialized_action_states, ActionStatesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.ItemDataRole.TextAlignmentRole)
@@ -178,6 +186,10 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                      Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.ItemDataRole.BackgroundRole)
+        choices = model_context.field_attributes.get('choices')
+        if choices is not None:
+            choices = [(initial_naming_context._bind_object(obj), verbose_name) for obj, verbose_name in choices]
+        item.setData(py_to_variant(choices), ChoicesRole)
         return item
 
     def createEditor(self, parent, option, index):
@@ -229,7 +241,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         #
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
-
         # update actions
         self.update_field_action_states(editor, index)
 
@@ -238,9 +249,12 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         action_routes = json.loads(index.model().data(index, ActionRoutesRole))
         if len(action_routes) == 0:
             return
-        for action_widget in editor.findChildren(ActionToolbutton):
+        for action_widget in editor.findChildren(QtWidgets.QToolButton):
+            action_route = action_widget.property('action_route')
+            if not action_route:
+                continue
             try:
-                action_index = action_routes.index(list(action_widget.action_route))
+                action_index = action_routes.index(list(action_route))
             except ValueError:
                 LOGGER.error('action route not found {}, available routes'.format(
                     action_widget.action_route
@@ -250,7 +264,9 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                 continue
             state = action_states[action_index]
             if state is not None:
-                action_widget.set_state_v2(state)
+                ActionToolbutton.set_toolbutton_state(
+                    action_widget, state, editor.action_menu_triggered
+                )
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))

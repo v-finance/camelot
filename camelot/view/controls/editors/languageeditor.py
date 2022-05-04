@@ -36,6 +36,7 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
     as its value the ISO code of the language"""
 
     editingFinished = QtCore.qt_signal()
+    actionTriggered = QtCore.qt_signal(list, object)
     language_choices = []
     
     def __init__(self, parent=None, languages=[], field_name='language', **kwargs):

@@ -41,6 +41,7 @@ from camelot.admin.action import field_action, list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
 from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
+from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, EntityMeta
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
@@ -264,6 +265,8 @@ be specified using the verbose_name attribute.
     form_size = None
     form_actions = []
     related_toolbar_actions = []
+    onetomany_field_actions = [field_action.add_new_object]
+    manytomany_field_actions = [field_action.add_existing_object]
     field_attributes = {}
     form_state = None
     icon = None # Default
@@ -330,23 +333,20 @@ be specified using the verbose_name attribute.
         """
         return str(obj)
 
+    def get_verbose_search_identifier(self, obj):
+        """
+        Create an identifier for an object that is interpretable when
+        searching; e.g. : the primary key of an object.
+        By default, this returns the same value as ´get_verbose_identifier´.
+        """
+        return self.get_verbose_identifier(obj)
+
     def get_proxy(self, objects):
         """
         :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
             instance for the given objects.
         """
         return ListModelProxy(objects)
-
-    def get_search_identifiers(self, obj):
-        """Create a dict of identifiers to be used in search boxes.
-        The keys are Qt roles."""
-        search_identifiers = {}
-        search_identifiers[Qt.ItemDataRole.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), str(obj))
-        # Use user role for object to avoid display role / edit role confusion
-        search_identifiers[Qt.ItemDataRole.UserRole] = obj
-        search_identifiers[Qt.ItemDataRole.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
-
-        return search_identifiers
 
     def get_entity_admin(self, entity):
         """deprecated : use get_related_admin"""
@@ -420,7 +420,10 @@ be specified using the verbose_name attribute.
 
         :return: by default returns the route for the `list_action` attribute
         """
-        return AdminRoute._register_list_action_route(self._admin_route, self.list_action)
+        if self.list_action is not None:
+            return AdminRoute._register_list_action_route(
+                self._admin_route, self.list_action
+            )
 
     def get_depending_objects(self, obj):
         """Overwrite this function to generate a list of objects that depend on a given
@@ -579,6 +582,10 @@ be specified using the verbose_name attribute.
             if (admin is not None) and (session is not None):
                 query = admin.get_query(session)
                 if not (prefix is None or len(prefix.strip())==0):
+                    for action_route in admin.get_list_toolbar_actions():
+                        search_filter = initial_naming_context.resolve(action_route.route)
+                        if isinstance(search_filter, list_filter.SearchFilter):
+                            query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]))
                     query = admin.decorate_search_query(query, prefix)
                 return [e for e in query.limit(20).all()]
 
@@ -746,9 +753,24 @@ be specified using the verbose_name attribute.
             python_type = field_attributes.get('python_type')
             if direction.endswith('many') and python_type == list and related_admin:
                 field_attributes['columns'] = related_admin.get_columns()
+                # the xtomany field has 2 kinds of actions
+                #
+                #  * the field actions, as every other field, these have access
+                #    to the FieldActionModelContext (parent object, dynamid field attributes etc.)
+                #    and their state is updated when the parent object is updated
+                #
+                #  * the list_actions, that operate on a selection of rows, these
+                #    actions have access to the ListActionModelContext (selection)
+                #    and their state is updated when the selection changes.
+                #
                 if field_attributes.get('actions') is None:
-                    field_attributes['actions'] = [
-                        AdminRoute.action_for(action.route) for action in related_admin.get_related_toolbar_actions(direction)
+                    if direction == 'onetomany':
+                        field_attributes['actions'] = self.onetomany_field_actions
+                    if direction == 'manytomany':
+                        field_attributes['actions'] = self.manytomany_field_actions
+                if field_attributes.get('list_actions') is None:
+                    field_attributes['list_actions'] = [
+                        route_with_render_hint for route_with_render_hint in related_admin.get_related_toolbar_actions(direction)
                     ]
                 if column_width is None:
                     table = related_admin.get_table()
@@ -762,7 +784,6 @@ be specified using the verbose_name attribute.
                 field_attributes['actions'] = [
                     field_action.ClearObject(),
                     field_action.SelectObject(),
-                    field_action.NewObject(),
                     field_action.OpenObject()
                 ]
             field_attributes['admin'] = related_admin
@@ -802,12 +823,12 @@ be specified using the verbose_name attribute.
         descriptor = self._get_entity_descriptor(field_name)
         attribute =  descriptor if descriptor is not None else field_name
         filter_strategy = field_attributes['filter_strategy']
-        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.FieldFilter):
+        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.AbstractFilterStrategy):
             field_attributes['filter_strategy'] = filter_strategy(attribute, **field_attributes)
         search_strategy = field_attributes['search_strategy']
-        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.FieldFilter):
-            field_attributes['search_strategy'] = search_strategy(attribute)
-    
+        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.AbstractFilterStrategy):
+            field_attributes['search_strategy'] = search_strategy(attribute, **field_attributes)
+
     def _get_entity_descriptor(self, field_name):
         return getattr(self.entity, field_name, None)
     
@@ -1067,16 +1088,18 @@ be specified using the verbose_name attribute.
         """Set the given discriminator value on the provided obj."""
         pass
     
-    def get_field_filters(self):
+    def get_field_filters(self, priority_level=None):
         """
         Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.
         This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoFilter strategies and concrete field strategies are not applicable for regular objects.
         The resulting dictionary is cached so that the conversion is not executed needlessly.
         """
         if self._field_filters is None:
-            self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies() if not isinstance(strategy, list_filter.NoFilter)}
+            self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies(priority_level) if not isinstance(strategy, list_filter.NoFilter)}
         return self._field_filters
 
-    def _get_field_strategies(self):
+    def _get_field_strategies(self, priority_level=None):
         """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""
+        if priority_level is not None:
+            return [strategy for strategy in self.field_filter if strategy.priority_level == priority_level]
         return self.field_filter

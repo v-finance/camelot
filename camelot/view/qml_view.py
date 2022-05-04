@@ -1,8 +1,10 @@
 import logging
+import itertools
+import json
 
-from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml
+from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py, is_deleted
 from camelot.core.exception import UserException
-from camelot.view.controls.view import AbstractView
+from camelot.core.naming import initial_naming_context
 
 LOGGER = logging.getLogger(__name__)
 
@@ -52,32 +54,114 @@ def create_qml_item(url, initial_properties={}, engine=None):
     return item
 
 
-class QmlView(AbstractView):
+def get_qml_engine():
     """
-    A QML view.
-
-    This creates the main QML widget to which all QML items should be added.
+    Get the QQmlEngine that was created in C++. This engine contains the Font
+    Awesome image provider plugin.
     """
+    app = QtWidgets.QApplication.instance()
+    engine = app.findChild(QtQml.QQmlEngine, 'cpp_qml_engine')
+    return engine
 
-    def __init__(self, gui_context, url, initial_properties={}):
-        super().__init__()
-        self.setObjectName('qml_view')
-        self.gui_context = gui_context
-        self.quick_view = QtQuick.QQuickView()
-        self.quick_view.engine().addImportPath(':/')
-        self.quick_view.setInitialProperties(initial_properties)
-        self.quick_view.setSource(url)
-        check_qml_errors(self.quick_view, url)
-        self.quick_view.setResizeMode(QtQuick.QQuickView.ResizeMode.SizeRootObjectToView)
-        container = QtWidgets.QWidget.createWindowContainer(self.quick_view)
-        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.BottomToTop)
-        layout.addWidget(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
+def get_qml_root_backend():
+    """
+    Get the root backend that is used to communicate between python and C++/QML.
+    """
+    app = QtWidgets.QApplication.instance()
+    backend = app.findChild(QtCore.QObject, 'cpp_qml_root_backend')
+    return backend
 
-    @QtCore.qt_slot()
-    def close(self):
-        return False
+def get_qml_window():
+    """
+    Get the QQuickView that was created in C++.
+    """
+    app = QtWidgets.QApplication.instance()
+    for widget in app.allWindows():
+        if widget.objectName() == 'cpp_qml_window':
+            return widget
 
-    def refresh(self):
-        pass
+# FIXME: add timeout + keep-alive on client
+class QmlActionDispatch(QtCore.QObject):
+
+    _context_ids = itertools.count()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.gui_contexts = {}
+        self.models = {}
+        root_backend = get_qml_root_backend()
+        if root_backend is not None:
+            root_backend.runAction.connect(self.run_action)
+        # register None gui_context as with context_id 0
+        self.register(None)
+
+    def register(self, gui_context, model=None):
+        if gui_context is None:
+            context_id = self._context_ids.__next__()
+            self.gui_contexts[context_id] = gui_context
+            return context_id
+        if gui_context.context_id is not None:
+            if id(self.gui_contexts[gui_context.context_id]) == id(gui_context):
+                return gui_context.context_id
+        context_id = self._context_ids.__next__()
+        self.gui_contexts[context_id] = gui_context
+        if model is not None:
+            self.models[context_id] = model
+            model.destroyed.connect(self.remove_model)
+        gui_context.context_id = context_id
+        return context_id
+
+    @QtCore.qt_slot(QtCore.QObject)
+    def remove_model(self):
+        for context_id, model in list(self.models.items()):
+            if is_deleted(model):
+                del self.models[context_id]
+
+    def has_context(self, gui_context):
+        if gui_context is None:
+            return True
+        if gui_context.context_id is None:
+            return False
+        return gui_context.context_id in self.gui_contexts
+
+    def get_context(self, context_id):
+        return self.gui_contexts[context_id]
+
+    def get_model(self, context_id):
+        return self.models.get(context_id)
+
+    def run_action(self, context_id, route, args):
+        LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(context_id, route, args))
+        if context_id not in self.gui_contexts:
+            raise UserException(
+                'Could not find gui_context for context id: {}'.format(context_id),
+                detail='run_action({}, {})'.format(route, args)
+            )
+        action = initial_naming_context.resolve(tuple(route.split('/')))
+
+        gui_context = self.gui_contexts[context_id].copy()
+
+        if isinstance(args, QtQml.QJSValue):
+            args = variant_to_py(args.toVariant())
+        if isinstance(args, list):
+            action.gui_run( gui_context, args )
+        else:
+            gui_context.mode_name = args
+            action.gui_run( gui_context )
+
+qml_action_dispatch = QmlActionDispatch()
+
+
+def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, keep_context_id=False, model=None):
+    """
+    Register the gui_context and execute the action step by specifying a name and serialized action step.
+    """
+    global qml_action_dispatch
+    if keep_context_id:
+        assert gui_context.context_id is not None
+        context_id = gui_context.context_id
+    else:
+        context_id = qml_action_dispatch.register(gui_context, model)
+    backend = get_qml_root_backend()
+    response = backend.actionStep(context_id, name, step, props)
+    return json.loads(response.data())

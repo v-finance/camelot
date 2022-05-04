@@ -158,22 +158,22 @@ class Many2OneEditor(CustomEditor):
         obj = index.data(Qt.ItemDataRole.UserRole)
         self._last_highlighted_entity_getter = variant_to_py(obj)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_updated(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_updated(self, objects):
         value = self.get_value()
         for obj in objects:
             if obj is value:
                 self.set_object(obj, False)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_deleted(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_deleted(self, objects):
         value = self.get_value()
         for obj in objects:
             if obj is value:
                 self.set_object(None, False)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_created(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_created(self, objects):
         for obj in objects:
             if obj is self.new_value:
                 self.new_value = None

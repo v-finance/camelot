@@ -38,10 +38,10 @@ LOGGER = logging.getLogger('camelot.view.controls.formview')
 from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
                         variant_to_py)
 
-from camelot.admin.admin_route import AdminRoute
+from ...core.item_model import ActionModeRole
 from camelot.admin.action.base import State
-from camelot.admin.action.application_action import Refresh
 from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.core.naming import initial_naming_context
 from camelot.view.crud_action import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.action_widget import AbstractActionWidget
@@ -53,7 +53,7 @@ class FormEditors(QtCore.QObject):
     option = None
     bold_font = None
 
-    def __init__(self, parent, columns, admin):
+    def __init__(self, parent, columns):
         """
         A class that holds the editors used on a form
 
@@ -69,7 +69,6 @@ class FormEditors(QtCore.QObject):
             # a form view and not on a table view
             self.option.version = 5
 
-        self._admin = admin
         self._field_attributes = dict()
         self._index = dict()
         for i, (field_name, field_attributes ) in enumerate( columns):
@@ -115,15 +114,39 @@ class FormEditors(QtCore.QObject):
             editor.set_label(widget_label)
         return widget_label
 
+
+class FormDataWidgetMapper(QtWidgets.QDataWidgetMapper):
+    """
+    Custom data widget mapper, to handle actions being triggered.
+    """
+
+    def setItemDelegate(self, delegate):
+        super().setItemDelegate(delegate)
+        delegate.actionTriggered.connect(self.actionTriggered)
+
+    @QtCore.qt_slot(list, object, QtWidgets.QWidget)
+    def actionTriggered(self, action_route, mode, widget):
+        column = self.mappedSection(widget)
+        if column == -1:
+            return
+        model = self.model()
+        if model is None:
+            return
+        if is_deleted(model):
+            return
+        index = model.index(self.currentIndex(), column)
+        model.setData(index, json.dumps([action_route, mode]), ActionModeRole)
+
+
 class FormWidget(QtWidgets.QWidget):
     """A form widget comes inside a form view"""
 
     changed_signal = QtCore.qt_signal( int )
 
-    def __init__(self, admin, model, form_display, columns, parent):
+    def __init__(self, admin_route, model, form_display, columns, parent):
         QtWidgets.QWidget.__init__(self, parent)
-        self.columns, self.form_display, self.admin = columns, form_display, admin
-        widget_mapper = QtWidgets.QDataWidgetMapper(self)
+        self.columns, self.form_display, self.admin_route = columns, form_display, admin_route
+        widget_mapper = FormDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(parent=self))
         widget_mapper.currentIndexChanged.connect( self.current_index_changed )
@@ -182,9 +205,8 @@ class FormWidget(QtWidgets.QWidget):
                     widget_mapper,
                     self.columns,
                     # Serialize the admin's form display again when the layout has changed, e.g. to pick up different tab labels with different locales.
-                    #self.form_display,
-                    self.admin.get_form_display()._to_bytes(),
-                    self.admin
+                    self.form_display,
+                    #self.admin.get_form_display()._to_bytes(),
                 )
             # after a layout change, the row we want to display might be there
             if widget_mapper.currentIndex() < 0:
@@ -212,10 +234,10 @@ class FormWidget(QtWidgets.QWidget):
         if widget_mapper:
             widget_mapper.submit()
 
-    def create_widgets(self, widget_mapper, columns, form_display, admin):
+    def create_widgets(self, widget_mapper, columns, form_display):
         """Create value and label widgets"""
         LOGGER.debug( 'begin creating widgets' )
-        widgets = FormEditors(self, columns, admin)
+        widgets = FormEditors(self, columns)
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         if isinstance(form_display, bytes):
@@ -248,8 +270,9 @@ class FormView(AbstractView):
 
     form_widget = FormWidget
 
-    def __init__(self, title, admin, model, form_display, columns,
-                 index, parent = None):
+    def __init__(
+        self, title, admin_route, form_close_route, model, form_display,
+        columns, index, parent = None):
         AbstractView.__init__( self, parent )
 
         layout = QtWidgets.QVBoxLayout()
@@ -261,12 +284,14 @@ class FormView(AbstractView):
         layout.addLayout( form_and_actions_layout )
 
         self.model = model
-        self.admin = admin
+        self.admin_route = admin_route
         self.title_prefix = title
-        self.refresh_action = Refresh()
+        self.form_close_route = form_close_route
 
-        form = FormWidget(admin=admin, model=model, form_display=form_display,
-                          columns=columns, parent=self)
+        form = FormWidget(
+            admin_route=admin_route, model=model, form_display=form_display,
+            columns=columns, parent=self
+        )
         form.setObjectName( 'form' )
         form.changed_signal.connect( self.update_title )
         form.set_index(index)
@@ -274,7 +299,7 @@ class FormView(AbstractView):
 
         self.gui_context = FormActionGuiContext()
         self.gui_context.workspace = self
-        self.gui_context.admin = admin
+        self.gui_context.admin_route = admin_route
         self.gui_context.view = self
         self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
@@ -285,8 +310,8 @@ class FormView(AbstractView):
         self.gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
         self.gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
 
-        if hasattr(admin, 'form_size') and admin.form_size:
-            self.setMinimumSize(admin.form_size[0], admin.form_size[1])
+        #if hasattr(admin, 'form_size') and admin.form_size:
+            #self.setMinimumSize(admin.form_size[0], admin.form_size[1])
 
         self.accept_close_event = False
 
@@ -319,7 +344,7 @@ class FormView(AbstractView):
             actions_widget = ActionsBox(parent=self)
             actions_widget.setObjectName('actions')
             for action_route in action_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(action, actions_widget)
                 self.model.add_action_route(tuple(action_route))
                 state = route2state.get(tuple(action_route))
@@ -340,7 +365,7 @@ class FormView(AbstractView):
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
             for action_route in action_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(action, toolbar)
                 self.model.add_action_route(tuple(action_route))
                 state = route2state.get(tuple(action_route))
@@ -349,15 +374,10 @@ class FormView(AbstractView):
                 toolbar.addWidget(action_widget)
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
-            # @todo : this show is needed on OSX or the form window
-            # is hidden after the toolbar is added, maybe this can
-            # be solved using windowflags, since this causes some
-            # flicker
-            self.show()
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):
-        action = AdminRoute.action_for(route)
+        action = initial_naming_context.resolve(route)
         action_name = self.gui_context.action_routes[action]
         action_widget = self.findChild(AbstractActionWidget, action_name)
         action_widget.set_state(state)
@@ -376,7 +396,8 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot()
     def validate_close( self ):
-        self.admin.form_close_action.gui_run( self.gui_context )
+        action = initial_naming_context.resolve(self.form_close_route)
+        action.gui_run(self.gui_context)
 
     def close_view( self, accept ):
         self.accept_close_event = accept

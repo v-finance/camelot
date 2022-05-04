@@ -32,7 +32,7 @@ Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 import functools
 import json
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 from dataclasses import dataclass, field
 
@@ -41,31 +41,11 @@ from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from camelot.view.action_runner import hide_progress_dialog
+from camelot.view.qml_view import qml_action_step
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 
-
-@dataclass
-class UpdateEditor(ActionStep):
-    """This step should be used in the context of an editor action.  It
-    will update an attribute of the editor.
-
-    :param attribute: the name of the attribute of the editor to update
-    :param value: the new value of the attribute
-    :param propagate: set to `True` if the editor should notify the underlying
-       model of it's change, so that the changes can be written to the model
-    """
-
-    attribute: str
-    value: Any
-    propagate: bool = False
-    
-    def gui_run(self, gui_context):
-        if is_deleted(gui_context.editor):
-            return
-        setattr(gui_context.editor, self.attribute, self.value)
-        if self.propagate:
-            gui_context.editor.editingFinished.emit()
 
 @dataclass
 class Refresh( ActionStep, DataclassSerializable ):
@@ -155,34 +135,6 @@ class SelectItem(ActionStep):
             raise CancelRequest()
         return dialog.get_value()
 
-class SelectSubclass(SelectItem):
-    """Allow the user to select a subclass out of a class hierarchy.  If the
-    hierarch has only one class, this step returns immediately.
-
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
-
-    yielding this step will return the admin for the subclass selected by the
-    user.
-    """
-
-    def __init__(self, admin):
-        self.admin = admin
-        items = []
-        self._append_subclass_tree_to_items(items, admin.get_subclass_tree())
-        super().__init__(items)
-
-    def _append_subclass_tree_to_items(self, items, subclass_tree):
-        for admin, tree in subclass_tree:
-            if len(tree):
-                self._append_subclass_tree_to_items(items, tree)
-            else:
-                items.append((admin, admin.get_verbose_name_plural()))
-
-    def gui_run(self, gui_context):
-        if not len(self.items):
-            return self.admin
-        return super().gui_run(gui_context)
-
 
 @dataclass
 class CloseView(ActionStep, DataclassSerializable):
@@ -201,10 +153,15 @@ class CloseView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run( cls, gui_context, serialized_step ):
-        step = json.loads(serialized_step)
-        view = gui_context.view
-        if view != None:
-            view.close_view( step["accept"] )
+        if gui_context.context_id is None:
+            # python implementation, still used for FormView
+            step = json.loads(serialized_step)
+            view = gui_context.view
+            if view is not None and not is_deleted(view):
+                view.close_view( step["accept"] )
+        else:
+            qml_action_step(gui_context, 'CloseView', serialized_step, keep_context_id=True)
+
 
 @dataclass
 class MessageBox( ActionStep, DataclassSerializable ):
@@ -233,6 +190,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
     standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
     informative_text: str = field(init=False)
     detailed_text: str = field(init=False)
+    hide_progress: bool = False
 
     def __post_init__(self):
         self.title = str(self.title)
@@ -254,10 +212,18 @@ class MessageBox( ActionStep, DataclassSerializable ):
         return message_box
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
+    def show_message_box(cls, step):
         message_box = cls.render(step)
         result = message_box.exec()
         if result == QtWidgets.QMessageBox.StandardButton.Cancel:
             raise CancelRequest()
         return result
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        if step['hide_progress']:
+            with hide_progress_dialog(gui_context):
+                cls.show_message_box(step)
+        else:
+            cls.show_message_box(step)

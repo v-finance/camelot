@@ -320,7 +320,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a1 = self.collection[1]
         a1.y = None
-        self.item_model.objects_updated(None, (a1,))
+        self.item_model.objects_updated((a1,))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidRole, self.item_model), False)
@@ -399,6 +399,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self._set_data( 0, 0, 8, self.item_model )
         self.item_model.timeout_slot()
         self.process()
+        self.item_model.timeout_slot()
+        self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
         for changed_range in self.signal_register.data_changes:
             for index in changed_range:
@@ -412,7 +414,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a0 = self.collection[0]
         a0.y = 10
-        self.item_model.objects_updated(None, (a0,))
+        self.item_model.objects_updated((a0,))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
@@ -432,7 +434,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         a0 = self.collection[0]
         a0.x = 9
         a0.y = 10
-        self.item_model.objects_updated(None, (a0,))
+        self.item_model.objects_updated((a0,))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
@@ -442,7 +444,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_updated(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_updated(None, (object(),))
+        self.item_model.objects_updated((object(),))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -455,7 +457,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a5 = self.A(5)
         self.collection.append(a5)
-        self.item_model.objects_created(None, (a5,))
+        self.item_model.objects_created((a5,))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual(len(self.signal_register.header_changes), 1)
@@ -465,7 +467,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_created(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_created(None, (object(),))
+        self.item_model.objects_created((object(),))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -481,7 +483,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         # emitting the deleted signal happens before the object is
         # deleted
-        self.item_model.objects_deleted(None, (a,))
+        self.item_model.objects_deleted((a,))
         # but removing an object should go through the item_model or there is no
         # way the item_model can be aware.
         self.item_model.get_value().remove(a)
@@ -500,7 +502,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_deleted(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_deleted(None, (object(),))
+        self.item_model.objects_deleted((object(),))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -644,7 +646,7 @@ class QueryQStandardItemModelCase(
         self.thread.post(self.insert_object)
         self.process()
         person = self.person
-        self.item_model.objects_created(None, (person,))
+        self.item_model.objects_created((person,))
         self.item_model.timeout_slot()
         self.process()
         new_rowcount = self.item_model.rowCount()
@@ -685,7 +687,7 @@ class QueryQStandardItemModelCase(
         start = self.query_counter
         item_model = CollectionProxy(self.admin_route)
         item_model.set_value(ProxyRegistry.register(self.proxy))
-        item_model.set_filter(SingleItemFilter('id'), self.first_person_id)
+        item_model.set_filter(SingleItemFilter(Person.id), self.first_person_id)
         list(item_model.add_columns(self.columns))
         self._load_data(item_model)
         self.assertEqual(item_model.columnCount(), 2)

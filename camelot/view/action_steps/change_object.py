@@ -29,16 +29,16 @@
 import typing
 
 from dataclasses import InitVar, dataclass, field
-from typing import Any, List, Dict, Tuple
+import json
+from typing import Any, List, Dict, Tuple, Union
 
 from camelot.admin.action import ActionStep, Action, State
-from camelot.admin.action.list_action import ListActionModelContext
-from camelot.admin.action.field_action import FieldActionModelContext, FieldAction
 from camelot.admin.action.form_action import FormActionGuiContext, FormActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
+from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
@@ -48,11 +48,13 @@ from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
+
+from .item_view import UpdateTableView
 from ..controls.action_widget import ActionPushButton
 from ..controls.delegates import ComboBoxDelegate
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
-from ...admin.admin_route import AdminRoute, Route
+from ...admin.admin_route import AdminRoute, Route, RouteWithRenderHint
 from ...admin.object_admin import ObjectAdmin
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 
@@ -91,7 +93,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(
-            admin=admin, model=model, form_display=form_display,
+            admin_route=admin_route, model=model, form_display=form_display,
             columns=columns, parent=self
         )
         note_layout = QtWidgets.QVBoxLayout()
@@ -109,7 +111,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
 
         self.gui_context = FormActionGuiContext()
         self.gui_context.workspace = self
-        self.gui_context.admin = admin
+        self.gui_context.admin_route = admin_route
         self.gui_context.view = self
         self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
@@ -147,7 +149,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             actions_widget = ActionsBox(parent = self)
             actions_widget.setObjectName('actions')
             for action_route in action_routes:
-                action = AdminRoute.action_for(tuple(action_route))
+                action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(action, actions_widget)
                 state = None
                 for action_state in action_states:
@@ -198,8 +200,8 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   admin_route,
                   columns,
                   action_routes,
-                  action_states,
                   invalid_rows,
+                  action_states,
                   parent = None,
                   flags = QtCore.Qt.WindowType.Window ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
@@ -209,8 +211,8 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
             parent = self,
             create_inline = True,
             columns=columns,
-            action_routes=action_routes,
-            action_states=action_states,
+            # assume all actions are list actions and no field action,
+            list_actions=action_routes,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -226,6 +228,11 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         self.main_widget().setLayout( layout )
         self.set_default_buttons()
         self.update_complete(model)
+        for route, state in action_states:
+            table_widget.action_state_changed(
+                '/'.join(route),
+                QtCore.QByteArray(json.dumps(state).encode('utf-8'))
+            )
 
     @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
@@ -301,7 +308,7 @@ class ChangeObject(ActionStep):
         model_context.admin = admin
         model_context.proxy = proxy
         for action_route in actions:
-            action = AdminRoute.action_for(action_route.route)
+            action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
 
@@ -340,7 +347,7 @@ class ChangeObject(ActionStep):
 
 
 @dataclass
-class ChangeObjects( ActionStep ):
+class ChangeObjects(UpdateTableView):
     """
     Pop up a list for the user to change objects
 
@@ -374,71 +381,62 @@ class ChangeObjects( ActionStep ):
 
     """
 
-    objects: list
-    admin: ObjectAdmin
     validate: bool = True
+
+    invalid_rows: List = field(init=False, default_factory=list)
     admin_route: AdminRoute = field(init=False)
     window_title: str = field(init=False)
-    columns: List[str] = field(init=False)
-    action_routes: List[Action] = field(init=False)
-    action_states: List[Tuple[Route, State]] = field(init=False)
+    title: Union[str, ugettext_lazy] = field(init=False, default= _('Data Preview'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Please review the data below.'))
+    icon: typing.Union[Icon, None] = field(init=False, default=Icon('file-excel'))
 
-    title = _('Data Preview')
-    subtitle = _('Please review the data below.')
-    icon = Icon('file-excel')
-
-    def __post_init__(self):
-        self.invalid_rows = set()
-        self.admin_route = self.admin.get_admin_route()
-        self.window_title = self.admin.get_verbose_name_plural()
-        self.columns = self.admin.get_columns()
-        self.action_routes = [
-            action.route for action in self.admin.get_related_toolbar_actions('onetomany')
-        ]
-        self.action_states = list()
-        self._add_action_states(self.admin, self.admin.get_proxy(self.objects), self.action_routes, self.action_states)
+    def __post_init__( self, value, admin, search_text):
+        super(ChangeObjects, self).__post_init__(admin, value, search_text)
+        self.admin_route = admin.get_admin_route()
+        self.window_title = admin.get_verbose_name_plural()
         if self.validate:
-            validator = self.admin.get_validator()
-            for row, obj in enumerate(self.objects):
-                for message in validator.validate_object(obj):
-                    self.invalid_rows.add(row)
+            validator = admin.get_validator()
+            for row, obj in enumerate(value):
+                for _message in validator.validate_object(obj):
+                    self.invalid_rows.append(row)
                     break
 
-    @staticmethod
-    def _add_action_states(admin, proxy, action_routes, action_states):
-        field_model_context = FieldActionModelContext()
-        field_model_context.value = proxy
-        list_model_context = ListActionModelContext()
-        list_model_context.admin = admin
-        list_model_context.proxy = proxy
-        for action_route in action_routes:
-            action = AdminRoute.action_for(action_route)
-            if isinstance(action, FieldAction):
-                state = action.get_state(field_model_context)
-            else:
-                state = action.get_state(list_model_context)
-            action_states.append((action_route, state))
+    def _post_init_actions__(self, admin):
+        self.actions = [
+            RouteWithRenderHint(action.route, action.render_hint) for action in admin.get_related_toolbar_actions('onetomany')
+        ]
 
-    def get_objects( self ):
+    def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
 
         :return: the object to change
         """
-        return self.objects
+        return self.value
 
-    def render( self ):
+    def get_admin(self):
+        """Use this method to get access to the admin in unit tests"""
+        return initial_naming_context.resolve(self.admin_route)
+
+    @classmethod
+    def render(cls, step):
         """create the dialog. this method is used to unit test
         the action step."""
-        dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
-                                     self.admin_route,
-                                     self.columns,
-                                     self.action_routes,
-                                     self.action_states,
-                                     self.invalid_rows)
-        dialog.setWindowTitle( str( self.window_title ) )
-        dialog.set_banner_title( str( self.title ) )
-        dialog.set_banner_subtitle( str( self.subtitle ) )
-        dialog.set_banner_logo_pixmap( from_admin_icon(self.icon).getQPixmap() )
+        dialog = ChangeObjectsDialog(
+            ProxyRegistry.pop(step['proxy_route']),
+            tuple(step['admin_route']), step['columns'],
+            [RouteWithRenderHint(tuple(rwrh['route']), RenderHint(rwrh['render_hint'])) for rwrh in step['actions']],
+            set(step['invalid_rows']), step['action_states'],
+        )
+        dialog.setWindowTitle(step['window_title'])
+        dialog.set_banner_title(step['title'])
+        dialog.set_banner_subtitle(step['subtitle'])
+        if step['icon'] is not None:
+            icon = Icon(
+                step['icon']['name'],
+                step['icon']['pixmap_size'],
+                step['icon']['color']
+            )
+            dialog.set_banner_logo_pixmap(from_admin_icon(icon).getQPixmap())
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #
@@ -448,13 +446,15 @@ class ChangeObjects( ActionStep ):
                        available_geometry.height() * 0.75 )
         return dialog
 
-    def gui_run( self, gui_context ):
-        dialog = self.render()
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        dialog = cls.render(step)
         with hide_progress_dialog( gui_context ):
             result = dialog.exec()
             if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
-            return self.objects
+
 
 class ChangeFieldDialog(StandaloneWizardPage):
     """A dialog to change a field of  an object.
@@ -585,7 +585,7 @@ class ChangeField( ActionStep ):
     def render( self ):
         """create the dialog. this method is used to unit test
         the action step."""
-        admin = AdminRoute.admin_for(tuple(self.admin_route))
+        admin = initial_naming_context.resolve(tuple(self.admin_route))
         dialog = ChangeFieldDialog(
             admin, admin.get_all_fields_and_attributes(), self.field_name, self.field_value
         )

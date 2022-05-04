@@ -25,6 +25,7 @@ from camelot.admin.field_admin import FieldAdmin
 from camelot.admin.not_editable_admin import not_editable_admin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.dataclasses import dataclass
+from camelot.core.naming import initial_naming_context
 from camelot.core.sql import metadata
 from camelot.model.i18n import Translation
 from camelot.model.party import Person, Address
@@ -92,8 +93,8 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         # make sure the routes are different
         #
         self.assertNotEqual(new_admin.get_admin_route(), original_admin.get_admin_route())
-        self.assertEqual(ObjectAdmin.admin_for(new_admin.get_admin_route()), new_admin)
-        self.assertEqual(ObjectAdmin.admin_for(original_admin.get_admin_route()), original_admin)
+        self.assertEqual(initial_naming_context.resolve(new_admin.get_admin_route()), new_admin)
+        self.assertEqual(initial_naming_context.resolve(original_admin.get_admin_route()), original_admin)
         self.assertNotEqual(new_related_admin.get_admin_route(), original_related_admin.get_admin_route())
 
         #
@@ -758,6 +759,9 @@ class EntityAdminCase(TestMetaData):
 
             class Admin(EntityAdmin):
                 list_display = ['one2many_col']
+                field_attributes = {
+                    'one2many_col': {'filter_strategy': list_filter.One2ManyFilter}
+                }
 
         class C(self.Entity):
 

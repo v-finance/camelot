@@ -35,14 +35,16 @@ These classes can be reused if a custom base class is needed.
 """
 
 import logging
-
+import re
 
 from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
+from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
+from ..naming import initial_naming_context, EntityNamingContext
 from . statements import MUTATORS
 from . import Session, options
 
@@ -50,54 +52,96 @@ LOGGER = logging.getLogger('camelot.core.orm.entity')
 
 class EntityMeta( DeclarativeMeta ):
     """
-    Subclass of :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
-    This metaclass processes the Property and ClassMutator objects.
-    
-    Facade class registration
-    -------------------------
-    This metaclass also provides type-based entity classes with a means to configure facade behaviour by registering one of its type-based columns as the discriminator.
-    Facade classes (See documentation on EntityFacadeMeta) are then able to register themselves for a specific type, type group (or a default one for multiple types), to allow type-specific facade and related Admin behaviour.
-    To set the discriminator column, the '__facade_args' property is used on both the Entity class for which specific facade classes are needed, as on the facade classes.
-    This column should be an Enumeration type column, which defines the types that are allowed registering classes for.
-    In order to register a facade class: see documentation on EntityFacadeMeta.
-    
-    :example: | class SomeClass(Entity):
-              |     __tablename__ = 'some_tablename'
-              |     ...
-              |     described_by = Column(IntEnum(some_class_types), ...)
-              |     ...
-              |     __facade_args__ = {
-              |         'discriminator': described_by
-              |     }
-              |     ...
-              |
-              | class SomeFacadeClass(EntityFacade)
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass,
-              |         'type': some_class_types.certain_type.name
-              |     }
-              |     ...
-              |
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass, 
-              |         'group': allowed_type_groups.certain_type_group.name
-              |     }
-              |     ...
-              |
-              | class DefaultFacadeClass(EntityFacade)
-              |     __facade_args__ = {
-              |         'subsystem_cls': SomeClass,
-              |         'default': True
-              |     }
-              |     ...
-    
-    This metaclass also provides each entity class with a way to generically retrieve a registered classes for a specific type with the 'get_cls_by_type' method.
-    This will return the registered class for a specific given type or type group, if any are registered on the class (or its Base). See its documentation for more details.
-    
-    :example: | SomeClass.get_cls_by_type(some_class_types.certain_type.name) == SomeFacadeClass
-              | SomeClass.get_cls_by_type(some_class_types.unregistered_type.name) == DefaultFacadeClass
-              | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
-    
+    Specialized metaclass for Entity classes that inherits from :class:`sqlalchmey.ext.declarative.DeclarativeMeta`.
+    It provides entities with the following behaviour and/or functionality:
+
+    Auto-setting of primary key column
+    ----------------------------------
+    If no primary key column is defined in an entity's class definition yet, an primary key column named 'id' will be set on the class.
+    NOTE: this behaviour is deprecated, and should be replaced by explicity primary column definitions in the entity classes themselves
+    before switching to SQLAlchemy version 1.4. In that SQLA version, the `sqlalchemy.ext.declarative` package is integrated into `sqlalchemy.orm`
+    and the declarative mapping registry style is changed, which impacts this primary key column setting.
+
+    Entity args
+    -----------
+    This metaclass also provides entity classes with a means to configure options or register traits, which can be used to facilitate various use cases involving the entity.
+    These options can be passed through via the __entity_args__ class attribute,
+    that supports arguments that reference locally mapped columns directly from within the class declaration (as seen in the examples below).
+    Currently, the following entity args are supported:
+
+    * 'discriminator'
+       The discriminator entity argument registers one of the entity's type based columns as one by which entity instances can be categorized by,
+       on a more broader basis than the primary key identity.
+       This column should be an Enumeration type column, which defines the types that are allowed as values for the discriminator column.
+       The enumeration's types and/or type_groups are extracted from its definition and set as class attributes on the entity class.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     described_by = Column(IntEnum(some_class_types), ...)
+       |     ...
+       |     __entity_args__ = {
+       |         'discriminator': described_by,
+       |     }
+       |     ...
+       |
+       | SomeClass.__types__ == some_class_types
+
+       This metaclass will also provide entity classes with the `get_cls_discriminator` method, which returns the registered discriminator property,
+       and `set_discriminator_value` to set the discriminator value one a provided entity instance.
+       In unison with discriminator entity argument, the metaclass also imparts an entity class with the ability to register and later retrieve classes for a specify discriminator type or type group.
+       These registered classes are stored in the __cls_for_type__ class argument and registered classes can be retrieved for a specific type (group) with the 'get_cls_by_type' method.
+       See its documentation for more details.
+
+       All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
+       NOTE: this class registration system could possibly be moved to the level of the facade, to not be limited to a single hierarchy for each entity class.
+
+    * 'ranked_by'
+       This entity argument allows registering a rank-based entity class its ranking definition.
+       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
+       which should be an Integer type column that holds the numeric rank value.
+       The registered rank definition can be retrieved on an entity class pos- declaration using the provided `get_ranked_by` method.
+       See its documentation for more details.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     rank = Column(Integer())
+       |     ...
+       |     __entity_args__ = {
+       |         'ranked_by': rank,
+       |     }
+       |     ...
+       |
+       | SomeClass.get_ranked_by() == (SomeClass.rank,)
+
+       Because the ranking dimension of an entity may be more complex than a single ranking column, e.g. for financial roles the ranking dimension is seperated for each role type. 
+       Therefor, the registration also supports a tuple of columns, whereby the first item should be the column that holds the rank value,
+       while the remaining columns act as discriminator of the ranking dimension.
+       This may well include, but not limited to, the discriminator column.
+
+       :example:
+       | class SomeClass(Entity):
+       |     __tablename__ = 'some_tablename'
+       |     ...
+       |     described_by = Column(IntEnum(some_class_types), ...)
+       |     rank = Column(Integer())
+       |     ...
+       |     __entity_args__ = {
+       |         'ranked_by': (rank, described_by),
+       |     }
+       |     ...
+       |
+       | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
+
+    * 'editable'
+       This entity argument is a flag that when set to False will register the entity class as globally non-editable.
+
+    * 'editable_fields'
+       List of field_names that should be excluded from the globally non-editable registration, if present.
+
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
@@ -106,7 +150,7 @@ class EntityMeta( DeclarativeMeta ):
     In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
-    
+
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -132,11 +176,7 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__mapper_args__', dict())
             
-            for base in bases:
-                if hasattr(base, '__facade_args__'):
-                    break
-            else:
-                dict_.setdefault('__facade_args__', dict())
+            dict_.setdefault('__entity_args__', dict())
             
             for base in bases:
                 if hasattr(base, '__types__'):
@@ -156,9 +196,9 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__cls_for_type__', dict())
         
-            facade_args = dict_.get('__facade_args__')
-            if facade_args is not None:
-                discriminator = facade_args.get('discriminator')
+            entity_args = dict_.get('__entity_args__')
+            if entity_args is not None:
+                discriminator = entity_args.get('discriminator')
                 if discriminator is not None:
                     assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator must be a sql.schema.Column or an InstrumentedAttribute'
                     discriminator_col = discriminator
@@ -170,7 +210,21 @@ class EntityMeta( DeclarativeMeta ):
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
-            
+
+                ranked_by = entity_args.get('ranked_by')
+                if ranked_by is not None:
+                    ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
+                    for col in ranked_by:
+                        assert isinstance(col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Ranked by definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute` or a tuple of those instances'
+                    rank_col = ranked_by[0]
+                    if isinstance(rank_col, orm.attributes.InstrumentedAttribute):
+                        rank_col = rank_col.prop.columns[0]
+                    assert isinstance(rank_col.type, Integer), 'The first column/attributes of the ranked by definition, indicating the rank column, should be of type Integer'
+
+                order_search_by = entity_args.get('order_search_by')
+                if order_search_by is not None:
+                    order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity' and dict_.get('__tablename__') is not None:
@@ -184,32 +238,25 @@ class EntityMeta( DeclarativeMeta ):
                 if table is None or table.primary_key.issubset([]):
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
-        cls.register_class(cls, _class, dict_)
+            # Auto-assign entity_args and name entity argument if not configured explicitly.
+            entity_args = dict_.get('__entity_args__')
+            if entity_args is None:
+                dict_['__entity_args__'] = entity_args = {}
+            entity_name = dict_['__entity_args__'].get('name')
+            if entity_name is None:
+                dict_['__entity_args__']['name'] = entity_name = cls._default_entity_name(cls, classname, dict_)
+            assert isinstance(entity_name, str) and len(entity_name) > 0, 'Name argument in __entity_args__ should be text-based and contain at least 1 character'
+
+            # Bind an EntityNamingContext to the initial naming context for the entity class
+            # using the entity's name configured (or auto-assigned) in the __entity_args__
+            initial_naming_context.bind_context(('entity', entity_name), EntityNamingContext(_class))
+
         return _class
 
-    def register_class(cls, _class, dict_):
-        facade_args = dict_.get('__facade_args__')
-        if facade_args is not None:
-            _type = facade_args.get('type')
-            if _type is not None:
-                assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
-                assert _type in _class.__types__.__members__, 'The type this class registers for is not a member of the types that are allowed.'
-                assert _type not in _class.__cls_for_type__, 'Already a class defined for type {0}'.format(_type)
-                _class.__cls_for_type__[_type] = _class
-            _default = facade_args.get('default')
-            if _default == True:
-                assert _class.__types__ is not None, 'This class has no types defined to register classes for.'
-                assert _type is None, 'Can not register this class for a specific type and as the default class'
-                assert None not in _class.__cls_for_type__, 'Already a default class defined for types {}: {}'.format(_class.__types__, _class.__cls_for_type__[None])
-                _class.__cls_for_type__[None] = _class
-            _group = facade_args.get('type_group')
-            if _group is not None:
-                assert _class.__type_groups__ is not None, 'This class has no type groups defined to register classes for.'
-                assert _type is None, 'Can not register this class for both a specific type and for a specific type group'
-                assert _default is None, 'Can not register this class as both the default class and for a specific type group'
-                assert _group in _class.__type_groups__.__members__, 'The type group this class registers for is not a member of the type groups that are allowed.'
-                assert _group not in _class.__cls_for_type__, 'Already a class defined for type group {0}'.format(_group)
-                _class.__cls_for_type__[_group] = _class
+    def _default_entity_name(cls, classname, dict_):
+        # The default format will split the classname by capital letters, and join the lowered result by underscore.
+        # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
+        return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
 
     def get_cls_by_type(cls, _type):
         """
@@ -246,17 +293,46 @@ class EntityMeta( DeclarativeMeta ):
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
     
-    def _get_facade_arg(cls, key):
+    def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
-            if hasattr(cls_, '__facade_args__') and key in cls_.__facade_args__:
-                return cls_.__facade_args__[key]
+            if hasattr(cls_, '__entity_args__') and key in cls_.__entity_args__:
+                return cls_.__entity_args__[key]
     
     def get_cls_discriminator(cls):
-        discriminator = cls._get_facade_arg('discriminator')
+        discriminator = cls._get_entity_arg('discriminator')
         if discriminator is not None:
             if isinstance(discriminator, sql.schema.Column):
                 return getattr(cls, discriminator.key)
             return discriminator
+
+    def set_discriminator_value(cls, entity_instance, discriminator_value):
+        """Set the given entity instance's discriminator with the provided discriminator value."""
+        assert isinstance(entity_instance, cls)
+        discriminator = cls.get_cls_discriminator()
+        if discriminator is not None:
+            assert discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(discriminator_value)
+            discriminator.__set__(entity_instance, discriminator_value)
+
+    def get_ranked_by(cls):
+        ranked_by = cls._get_entity_arg('ranked_by')
+        if ranked_by is not None:
+            ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
+            rank_cols = [getattr(cls, rank_col.key) if isinstance(rank_col, sql.schema.Column) else rank_col for rank_col in ranked_by]
+            return tuple(rank_cols)
+
+    def get_order_search_by(cls):
+        order_search_by = cls._get_entity_arg('order_search_by')
+        if order_search_by is not None:
+            order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+            order_by_clauses = []
+            for order_by in order_search_by:
+                if isinstance(order_by, sql.schema.Column):
+                    order_by_clauses.append(getattr(cls, order_by.key))
+                elif isinstance(order_by, hybrid.hybrid_property):
+                    order_by_clauses.append(getattr(cls, order_by.fget.__name__))
+                else:
+                    order_by_clauses.append(order_by)
+            return tuple(order_by_clauses)
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
