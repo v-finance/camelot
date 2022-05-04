@@ -643,6 +643,7 @@ be specified using the verbose_name attribute.
         elif isinstance(field_type, typing._GenericAlias) and field_type.__origin__ == list and issubclass(field_type.__args__[0].__class__, EntityMeta):
             return {'delegate':delegates.One2ManyDelegate,
                     'target':field_type.__args__[0],
+                    'python_type': list,
                     }
         return {}
     
