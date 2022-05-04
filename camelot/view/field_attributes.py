@@ -41,7 +41,7 @@ import datetime
 from .controls import delegates
 from ..admin.action import list_filter, field_action
 from camelot.core import constants
-from camelot.types.typing import Note, Directory, File, Months
+from camelot.types.typing import Color, Note, Directory, File, Months
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
@@ -294,6 +294,13 @@ _typing_to_python_type = {
         'python_type': int,
         'delegate': delegates.MonthsDelegate,
     },
+
+    Color: {
+        'python_type': str,
+        'delegate': delegates.ColorDelegate,
+        'from_string': string_from_string,
+    },
+
 }
 
 #
