@@ -33,15 +33,17 @@ from ....core.naming import initial_naming_context
 from ....core.qt import (
     QtGui, QtCore, QtWidgets, Qt, py_to_variant, variant_to_py, is_deleted
 )
-from camelot.view.proxy import ValueLoading
 from ....admin.icon import CompletionValue
 from ...art import ColorScheme, FontIcon
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.ChoicesEditor')
 
-none_name = initial_naming_context._bind_object(None)
-none_item = CompletionValue.asdict(CompletionValue(none_name, verbose_name=' '))
+# since this is gui code, we assume all names are lists,
+# as the original tuple has been serialized/deserialized
+
+none_name = list(initial_naming_context._bind_object(None))
+none_item = CompletionValue(none_name, verbose_name=' ')._to_dict()
 
 class ChoicesEditor(CustomEditor):
     """A ComboBox aka Drop Down box that can be assigned a list of
@@ -110,7 +112,7 @@ class ChoicesEditor(CustomEditor):
         none_available = False
         for choice in choices:
             cls.append_item(model, choice)
-            if tuple(choice['value']) == none_name:
+            if choice['value'] == none_name:
                 none_available = True
         if not none_available:
             cls.append_item(model, none_item)
@@ -118,10 +120,9 @@ class ChoicesEditor(CustomEditor):
     @classmethod
     def value_at_row(cls, model, row):
         if row >= 0:
-            value = variant_to_py(model.data(model.index(row, 0), Qt.ItemDataRole.UserRole))
+            return variant_to_py(model.data(model.index(row, 0), Qt.ItemDataRole.UserRole))
         else:
-            value = ValueLoading
-        return value
+            return None
 
     @classmethod
     def row_with_value(cls, model, value, display_role):
@@ -137,7 +138,7 @@ class ChoicesEditor(CustomEditor):
         # method has not happened yet or the choices don't contain the value
         # set
         if display_role is None:
-            display_role = str(value)
+            display_role = str(value[-1]) if value is not None else ''
         cls.append_item(model, CompletionValue.asdict(CompletionValue(
             value = value, verbose_name=display_role,
             background = ColorScheme.VALIDATION_ERROR.name(),
@@ -176,10 +177,7 @@ class ChoicesEditor(CustomEditor):
             return
         if choices is not None:
             self.append_choices(model, choices)
-        # to prevent loops in the onetomanychoices editor, only set the value
-        # again when it's not valueloading
-        if current_value != ValueLoading:
-            self.set_value(current_value, current_display_role)
+        self.set_value(current_value, current_display_role)
 
     def set_field_attributes(self, **fa):
         super(ChoicesEditor, self).set_field_attributes(**fa)
@@ -188,12 +186,24 @@ class ChoicesEditor(CustomEditor):
         combobox.setToolTip(str(fa.get('tooltip') or ''))
 
     def get_choices(self):
+        """This method is only useful for unittest purpose, as it does not
+        return an exact copy of the set_choices values.
         """
-    :rtype: a list of (value,name) tuples
-    """
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
-        return [(variant_to_py(combobox.itemData(i)),
-                 str(combobox.itemText(i))) for i in range(combobox.count())]
+        model = combobox.model()
+        choices = []
+        for row in range(model.rowCount()):
+            index = model.index(row, 0)
+            choices.append({
+                'value': model.data(index, Qt.ItemDataRole.UserRole),
+                'verbose_name': model.data(index, Qt.ItemDataRole.DisplayRole),
+                'tooltip': model.data(index, Qt.ItemDataRole.ToolTipRole),
+                'icon': model.data(index, Qt.ItemDataRole.DecorationRole),
+                'foreground': model.data(index, Qt.ItemDataRole.ForegroundRole),
+                'background': None,
+                'virtual': None,
+            })
+        return choices
 
     def set_value(self, value, display_role=None):
         """Set the current value of the combobox where value, the name displayed
@@ -203,17 +213,16 @@ class ChoicesEditor(CustomEditor):
             the value is not in the list of choices.  If this is `None`, the string
             representation of the value is used.
         """
-        value = super(ChoicesEditor, self).set_value(value)
+        value = list(value if value is not None else none_name)
         self.setProperty( 'value', py_to_variant(value) )
         self.valueChanged.emit()
-        if not variant_to_py(self.property('value_loading')) and value != NotImplemented:
-            combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
-            row = self.row_with_value(combobox.model(), value, display_role)
-            combobox.setCurrentIndex(row)
+        combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
+        row = self.row_with_value(combobox.model(), value, display_role)
+        combobox.setCurrentIndex(row)
 
     def get_value(self):
         """Get the current value of the combobox"""
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         value = self.value_at_row(combobox.model(), combobox.currentIndex())
-        return super(ChoicesEditor, self).get_value() or value
+        return value
 

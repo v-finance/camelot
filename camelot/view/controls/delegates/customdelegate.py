@@ -189,9 +189,10 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                      Qt.ItemDataRole.BackgroundRole)
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
-            choices = [CompletionValue.asdict(CompletionValue(
+            choices = [CompletionValue(
                 value=initial_naming_context._bind_object(obj),
-                verbose_name=verbose_name)) for obj, verbose_name in choices]
+                verbose_name=verbose_name
+                )._to_dict() for obj, verbose_name in choices]
         item.setData(py_to_variant(choices), ChoicesRole)
         return item
 
