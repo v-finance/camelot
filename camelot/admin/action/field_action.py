@@ -179,7 +179,7 @@ class UploadFile(EditFieldAction):
             if model_context.field_attributes.get('remove_original'):
                 reply = yield action_steps.MessageBox(
                     text = _('Do you want to remove the original file?'),
-                    icon = QtWidgets.QMessageBox.Icon.Warning,
+                    icon = Icon('question'),
                     title = _('The file will be stored.'),
                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes]
                     )

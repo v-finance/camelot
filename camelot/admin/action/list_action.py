@@ -869,7 +869,7 @@ class ImportFromFile( EditAction ):
             #
             # Ask confirmation
             #
-            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Icon.Warning, 
+            yield action_steps.MessageBox( icon = Icon('question'),
                                            title = _('Proceed with import'), 
                                            text = _('Importing data cannot be undone,\n'
                                                     'are you sure you want to continue') )
