@@ -612,6 +612,14 @@ class EntityAdminCase(TestMetaData):
         self.assertEqual( fa_5['filter_strategy'], list_filter.NoFilter )
         self.assertEqual( fa_5['search_strategy'], list_filter.NoFilter)
 
+        column_6 = schema.Column( camelot.types.Months, nullable=False)
+        fa_6 = EntityAdmin.get_sql_field_attributes( [column_6] )
+        self.assertEqual( fa_6['delegate'], delegates.MonthsDelegate )
+        self.assertEqual( fa_6['filter_strategy'], list_filter.MonthsFilter )
+        self.assertEqual( fa_6['search_strategy'], list_filter.MonthsFilter)
+        self.assertTrue( fa_6['editable'] )
+        self.assertFalse( fa_6['nullable'] )
+
     def test_field_admin( self ):
 
         class A(self.Entity):
