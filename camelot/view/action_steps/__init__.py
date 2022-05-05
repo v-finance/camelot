@@ -38,7 +38,7 @@ from .gui import (
     CloseView, MessageBox, Refresh, SelectItem
 )
 from .item_view import (
-    Sort, OpenTableView, UpdateTableView, ClearSelection,
+    Sort, OpenTableView, UpdateTableView, ClearSelection, SetSelection,
     RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
@@ -60,6 +60,7 @@ __all__ = [
     ChangeObjects.__name__,
     ChangeSelection.__name__,
     ClearSelection.__name__,
+    SetSelection.__name__,
     CloseView.__name__,
     Completion.__name__,
     CompletionValue.__name__,
