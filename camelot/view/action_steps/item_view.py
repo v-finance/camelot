@@ -315,6 +315,16 @@ class ClearSelection(ActionStep, DataclassSerializable):
             qml_action_step(gui_context, 'ClearSelection', serialized_step)
 
 @dataclass
+class SetSelection(ActionStep, DataclassSerializable):
+    """Set selection."""
+
+    rows: List[int] = field(default_factory=list)
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        qml_action_step(gui_context, 'SetSelection', serialized_step)
+
+@dataclass
 class RefreshItemView(ActionStep, DataclassSerializable):
     """
     Refresh only the current item view
