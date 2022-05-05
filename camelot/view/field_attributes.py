@@ -132,6 +132,17 @@ _sqlalchemy_to_python_type_ = {
         'filter_strategy': list_filter.DecimalFilter,
     },
 
+    camelot.types.Months: lambda f: {
+        'python_type': int,
+        'delegate': delegates.MonthsDelegate,
+        'editable': True,
+        'nullable': True,
+        'from_string': int_from_string,
+        'to_string': str,
+        'search_strategy': list_filter.MonthsFilter,
+        'filter_strategy': list_filter.MonthsFilter,
+    },
+
     sqlalchemy.types.Integer: lambda f: {
         'python_type': int,
         'editable': True,
