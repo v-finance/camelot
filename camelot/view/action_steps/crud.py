@@ -4,11 +4,10 @@ import typing
 
 logger = logging.getLogger(__name__)
 
-from camelot.core.naming import CompositeName
-from camelot.core.utils import ugettext_lazy
 from dataclasses import dataclass
 
 from ...admin.action.base import ActionStep
+from ...admin.icon import CompletionValue
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
 from ...core.serializable import DataclassSerializable
 from ...core.item_model import FieldAttributesRole, CompletionsRole
@@ -103,30 +102,7 @@ class SetColumns(ActionStep):
             item_model.setHorizontalHeaderItem( i, header_item )
         item_model.settings.endGroup()
         item_model.settings.endGroup()
-        item_model.endResetModel()    
- 
-@dataclass
-class CompletionValue(DataclassSerializable):
-    """
-    Represent one of the autocompletion values.
-
-    .. attribute:: value
-
-        A :class:`camelot.core.naming.CompositeName` that resolves to a bound completion value.
-
-    .. attribute:: verbose_name
-
-        The verbose representation of the value as it will appear to the user.
-
-    .. attribute:: tooltip
-
-        The tooltip as displayed to the user, this should be of type :class:`camelot.core.utils.ugettext_lazy`.
-
-    """
-
-    value: CompositeName
-    verbose_name: typing.Union[str, ugettext_lazy, None] = None
-    tooltip: typing.Union[str, ugettext_lazy, None] = None
+        item_model.endResetModel()
 
 @dataclass
 class Completion(ActionStep, DataclassSerializable):

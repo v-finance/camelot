@@ -33,6 +33,8 @@ from typing import List
 
 from dataclasses import dataclass
 
+import sqlalchemy.dialects
+
 from ...core.profile import Profile
 from ...core.qt import QtCore, QtWidgets, QtNetwork, Qt
 
@@ -40,7 +42,7 @@ from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 from camelot.view import art
-from camelot.view.controls.editors import ChoicesEditor, TextLineEditor, LanguageEditor
+from camelot.view.controls.editors import TextLineEditor, LanguageEditor
 from camelot.view.controls.standalone_wizard_page import HSeparator, StandaloneWizardPage
 
 logger = logging.getLogger('camelot.view.action_steps.profile')
@@ -136,8 +138,10 @@ allow all languages
         # 32767 is Qt max length for string
         # should be more than enough for folders
         # http://doc.qt.nokia.com/latest/qlineedit.html#maxLength-prop
-        self.dialect_editor = ChoicesEditor(parent=self, action_routes=[])
-        self.dialect_editor.set_value(None)
+        self.dialect_editor = QtWidgets.QComboBox(parent=self)
+        for _importer, name, is_package in pkgutil.iter_modules(sqlalchemy.dialects.__path__):
+            self.dialect_editor.addItem(name, name)
+        self.dialect_editor.addItem('', '')
         self.host_editor = TextLineEditor(self, length=32767, action_routes=[])
         self.host_editor.set_value('')
         self.port_editor = TextLineEditor(self, action_routes=[])
@@ -203,18 +207,7 @@ allow all languages
 
     def set_widgets_values(self):
         self.profile_editor.clear()
-        self.dialect_editor.set_value(None)
-
-        if self.dialects:
-            dialects = self.dialects
-        else:
-            import sqlalchemy.dialects
-            dialects = [name for _importer, name, is_package in \
-                        pkgutil.iter_modules(sqlalchemy.dialects.__path__) \
-                        if is_package]
-        self.dialect_editor.set_choices([(dialect, dialect.capitalize()) \
-            for dialect in dialects])
-
+        self.dialect_editor.setCurrentText('')
         self.profile_editor.insertItems(1, [''] + list(self.profiles.keys()))
         self.profile_editor.setFocus()
         self.update_wizard_values()
@@ -222,7 +215,7 @@ allow all languages
     def connect_widgets(self):
         self.profile_editor.editTextChanged.connect(self.toggle_ok_button)
         self.profile_editor.currentIndexChanged.connect(self.update_wizard_values)
-        self.dialect_editor.editingFinished.connect(self.toggle_ok_button)
+        self.dialect_editor.currentIndexChanged.connect(self.toggle_ok_button)
 
     def create_buttons(self):
         self.cancel_button = QtWidgets.QPushButton(_('Cancel'))
@@ -262,7 +255,7 @@ allow all languages
 
     @QtCore.qt_slot()
     def toggle_ok_button(self):
-        enabled = bool(self.profile_editor.currentText()) and bool(self.dialect_editor.get_value())
+        enabled = bool(self.profile_editor.currentText()) and bool(self.dialect_editor.currentText())
         self.ok_button.setEnabled(enabled)
 
     def current_profile(self):
@@ -270,7 +263,7 @@ allow all languages
         return text
 
     def set_current_profile(self, profile_name):
-        self.profile_editor.lineEdit().setText(profile_name)
+        self.profile_editor.setCurrentText(profile_name)
         self.update_wizard_values()
 
     def update_wizard_values(self):
@@ -278,7 +271,7 @@ allow all languages
         # self.dialect_editor.set_value(self.get_profile_value('dialect') or 'mysql')
         # self.host_editor.setText(self.get_profile_value('host') or '127.0.0.1')
         # self.port_editor.setText(self.get_profile_value('port') or '3306')
-        self.dialect_editor.set_value(self.get_profile_value('dialect') or None)
+        self.dialect_editor.setCurrentText(self.get_profile_value('dialect') or '')
         self.host_editor.set_value(self.get_profile_value('host'))
         self.port_editor.set_value(self.get_profile_value('port'))
         # self.port_editor.setText(self.get_profile_value('port') or self._related_default_port(self.dialect_editor))
@@ -332,7 +325,7 @@ allow all languages
         logger.info('collecting new database profile info')
         info = {}
         info['name'] = self.current_profile()
-        info['dialect'] = self.dialect_editor.get_value()
+        info['dialect'] = self.dialect_editor.currentText()
         info['host'] = self.host_editor.get_value()
         info['port'] = self.port_editor.get_value()
         info['database'] = self.database_name_editor.get_value()
