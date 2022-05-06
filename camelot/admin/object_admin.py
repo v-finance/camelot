@@ -487,6 +487,11 @@ be specified using the verbose_name attribute.
             logger.warn('no related admin found for %s' % (cls.__name__))
         return related_admin
 
+    def _static_attributes(self, field_attributes):
+        for name, value in field_attributes.items():
+            if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
+                yield name, value
+
     def get_static_field_attributes(self, field_names):
         """
         Convenience function to get all the field attributes
@@ -503,9 +508,8 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
-            for name, value in field_attributes.items():
-                if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
-                    static_field_attributes[name] = value
+            for name, value in self._static_attributes(field_attributes):
+                static_field_attributes[name] = value
             yield static_field_attributes
 
     def get_dynamic_field_attributes(self, obj, field_names):
@@ -804,6 +808,32 @@ be specified using the verbose_name attribute.
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
+        #
+        # If no admin is defined to change the value of the field, define one
+        #
+        if (field_attributes.get('change_value_admin') is None) and \
+           (field_attributes.get('direction', None) not in ('onetomany', 'manytomany')) and \
+           (field_attributes.get('editable', False) != False):
+
+            value_attributes = dict(self._static_attributes(field_attributes))
+            value_attributes.update({
+                'field_name': 'value',
+                'editable': True,
+                # actions on the field would expect another model context
+                'actions': [],
+                'filter_strategy': None,
+                'search_strategy': None,
+            })
+
+            class ChangeValueAdmin(ObjectAdmin):
+                verbose_name = ugettext_lazy('Change')
+                list_display = ['value']
+                field_attributes = {'value': value_attributes}
+
+            field_attributes['change_value_admin'] = ChangeValueAdmin(
+                self, object
+            )
+
         #
         # Convert field actions to action routes
         #

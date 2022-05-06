@@ -44,7 +44,6 @@ class ApplicationAdminCase(unittest.TestCase):
         self.assertTrue( app_admin.get_splashscreen() )
         self.assertTrue( app_admin.get_organization_name() )
         self.assertTrue( app_admin.get_organization_domain() )
-        self.assertTrue( app_admin.get_stylesheet() )
         self.assertTrue( app_admin.get_about() )
         with self.assertRaises(Exception):
             app_admin.get_related_admin(1)
