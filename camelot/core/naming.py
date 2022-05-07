@@ -678,6 +678,9 @@ class NamingContext(AbstractNamingContext):
     def list(self):
         return self._bindings[BindingType.named_object].keys()
 
+    def __len__(self):
+        return len(self._bindings[BindingType.named_object])
+
 class EndpointNamingContext(AbstractNamingContext):
     """
     Interface for a naming context that only supports binding and resolving objects/values,

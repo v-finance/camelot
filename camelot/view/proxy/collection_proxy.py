@@ -477,6 +477,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                 'received {0} objects updated'.format(len(objects))
             )
             self._append_request(Update(), {'objects': objects})
+            self.timeout_slot()
 
     @QtCore.qt_slot(list)
     def objects_deleted(self, objects):
@@ -491,6 +492,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                 'objects': objects,
                 'rows': super(CollectionProxy, self).rowCount()
             })
+            self.timeout_slot()
 
     @QtCore.qt_slot(list)
     def objects_created(self, objects):
@@ -502,7 +504,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                 'received {0} objects created'.format(len(objects))
             )
             self._append_request(Created(), {'objects': objects})
-
+            self.timeout_slot()
 
     def add_columns(self, field_names):
         """

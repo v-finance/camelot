@@ -48,14 +48,19 @@ Or use introspection of the SQLAlchemy session to update the GUI :
 from dataclasses import dataclass, field, InitVar
 import itertools
 import json
+import logging
 import typing
 
+from ...admin.action.application_action import unbind
 from ...admin.action.base import ActionStep
 from ...core.naming import CompositeName, initial_naming_context
 from ...core.serializable import DataclassSerializable
+from ..action_runner import ActionRunner
 from ..crud_signals import CrudSignalHandler
 
 leases = initial_naming_context.resolve_context('leases')
+
+LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class CreateUpdateDelete(ActionStep, DataclassSerializable):
@@ -77,6 +82,12 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
             self.updated = leases.bind(str(next(self._lease_counter)), objects_updated)
         if len(objects_created):
             self.created = leases.bind(str(next(self._lease_counter)), objects_created)
+        if len(leases) > 10:
+            LOGGER.warn('Number of leases is growing to {}'.format(len(leases)))
+
+    @classmethod
+    def create_model_context(cls):
+        return None
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
@@ -85,12 +96,21 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
         # which results in a unwanted round-trip to the model thread / server.
         #super(CreateUpdateDelete, self).gui_run(gui_context)
         crud_signal_handler = CrudSignalHandler()
+        leases = []
         if step['deleted'] is not None:
             crud_signal_handler.objects_deleted.emit(step['deleted'])
+            leases.append(step['deleted'])
         if step['updated'] is not None:
             crud_signal_handler.objects_updated.emit(step['updated'])
+            leases.append(step['updated'])
         if step['created'] is not None:
             crud_signal_handler.objects_created.emit(step['created'])
+            leases.append(step['created'])
+        if len(leases):
+            cls.mode_name = leases
+            runner = ActionRunner(unbind.model_run, cls)
+            cls.mode_name = None
+            runner.exec()
 
 
 class FlushSession(CreateUpdateDelete):

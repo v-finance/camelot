@@ -477,6 +477,17 @@ Restore the database to disk
             for step in super(Restore, self).model_run(model_context, mode):
                 yield step
 
+
+class Unbind(Action):
+
+    name = 'unbind'
+
+    def model_run(self, model_context, mode):
+        for lease in mode:
+            initial_naming_context.unbind(tuple(lease))
+
+unbind = Unbind()
+
 class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging
     purposes, to evaluate where an application spends its time.
