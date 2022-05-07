@@ -43,9 +43,10 @@ class CrudSignalHandler(QtCore.QObject, metaclass=QSingleton):
     on the network of the change.
      """
 
-    objects_updated = QtCore.qt_signal(tuple)
-    objects_deleted = QtCore.qt_signal(tuple)
-    objects_created = QtCore.qt_signal(tuple)
+    # this is gui code, composite names are supposed to be lists in the gui
+    objects_updated = QtCore.qt_signal(list)
+    objects_deleted = QtCore.qt_signal(list)
+    objects_created = QtCore.qt_signal(list)
 
     def connect_signals(self, obj):
         """Connect the SignalHandlers its signals to the slots of obj"""

@@ -924,6 +924,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         constants.bind('false', False, immutable=True)
         self.bind_new_context('entity', immutable=True)
         self.bind_new_context('object', immutable=True)
+        self.bind_new_context('leases', immutable=True)
 
     def new_context(self) -> NamingContext:
         """

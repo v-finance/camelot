@@ -321,7 +321,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a1 = self.collection[1]
         a1.y = None
-        self.item_model.objects_updated((a1,))
+        self.item_model.objects_updated(initial_naming_context._bind_object((a1,)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidRole, self.item_model), False)
@@ -415,7 +415,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a0 = self.collection[0]
         a0.y = 10
-        self.item_model.objects_updated((a0,))
+        self.item_model.objects_updated(initial_naming_context._bind_object((a0,)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
@@ -435,7 +435,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         a0 = self.collection[0]
         a0.x = 9
         a0.y = 10
-        self.item_model.objects_updated((a0,))
+        self.item_model.objects_updated(initial_naming_context._bind_object((a0,)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
@@ -445,7 +445,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_updated(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_updated((object(),))
+        self.item_model.objects_updated(initial_naming_context._bind_object((object(),)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -458,7 +458,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a5 = self.A(5)
         self.collection.append(a5)
-        self.item_model.objects_created((a5,))
+        self.item_model.objects_created(initial_naming_context._bind_object((a5,)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual(len(self.signal_register.header_changes), 1)
@@ -468,7 +468,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_created(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_created((object(),))
+        self.item_model.objects_created(initial_naming_context._bind_object((object(),)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -484,7 +484,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         # emitting the deleted signal happens before the object is
         # deleted
-        self.item_model.objects_deleted((a,))
+        self.item_model.objects_deleted(initial_naming_context._bind_object((a,)))
         # but removing an object should go through the item_model or there is no
         # way the item_model can be aware.
         self.item_model.get_value().remove(a)
@@ -503,7 +503,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_deleted(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_deleted((object(),))
+        self.item_model.objects_deleted(initial_naming_context._bind_object((object(),)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -648,7 +648,7 @@ class QueryQStandardItemModelCase(
         self.thread.post(self.insert_object)
         self.process()
         person = self.person
-        self.item_model.objects_created((person,))
+        self.item_model.objects_created(initial_naming_context._bind_object((person,)))
         self.item_model.timeout_slot()
         self.process()
         new_rowcount = self.item_model.rowCount()

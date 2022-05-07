@@ -465,7 +465,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if (self._model_context is not None):
             self._append_request(Filter(list_filter, old_value, value), None)
 
-    @QtCore.qt_slot(tuple)
+    @QtCore.qt_slot(list)
     def objects_updated(self, objects):
         """Handles the entity signal, indicating that the model is out of
             )
@@ -476,9 +476,9 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
-            self._append_request(Update(objects), None)
+            self._append_request(Update(), {'objects': objects})
 
-    @QtCore.qt_slot(tuple)
+    @QtCore.qt_slot(list)
     def objects_deleted(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
@@ -487,9 +487,12 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
-            self._append_request(Deleted(objects, super(CollectionProxy, self).rowCount()), None)
+            self._append_request(Deleted(), {
+                'objects': objects,
+                'rows': super(CollectionProxy, self).rowCount()
+            })
 
-    @QtCore.qt_slot(tuple)
+    @QtCore.qt_slot(list)
     def objects_created(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
@@ -498,7 +501,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
-            self._append_request(Created(objects), None)
+            self._append_request(Created(), {'objects': objects})
 
 
     def add_columns(self, field_names):
