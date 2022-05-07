@@ -238,8 +238,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if (rows == 0) and (self._model_context is not None) and self.columnCount():
             root_item = self.invisibleRootItem()
             if not root_item.isEnabled():
-                if not isinstance(self._last_request(), RowCount):
-                    self._append_request(RowCount(), None)
+                self._append_request(RowCount(), None)
+                root_item.setEnabled(True)
             return 0
         return rows
 
