@@ -28,13 +28,12 @@
 #  ============================================================================
 import typing
 
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass, field
 import json
-from typing import Any, List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union
 
 from camelot.admin.action import ActionStep, Action, State
 from camelot.admin.action.form_action import FormActionGuiContext, FormActionModelContext
-from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
@@ -42,11 +41,10 @@ from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
-from camelot.view.controls import delegates, editors
+from camelot.view.controls import editors
 from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
 
 from .item_view import UpdateTableView
@@ -454,150 +452,3 @@ class ChangeObjects(UpdateTableView):
             result = dialog.exec()
             if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
-
-
-class ChangeFieldDialog(StandaloneWizardPage):
-    """A dialog to change a field of  an object.
-    """
-
-    def __init__( self,
-                  admin,
-                  field_attributes,
-                  field_name,
-                  field_value = None,
-                  parent = None,
-                  flags=QtCore.Qt.WindowType.Dialog ):
-        super(ChangeFieldDialog, self).__init__( '', parent, flags )
-        from camelot.view.controls.editors import ChoicesEditor
-        self.field_attributes = field_attributes
-        self.field = field_name
-        self.value = None
-        self.static_field_attributes = admin.get_static_field_attributes
-        self.banner_widget().setStyleSheet('background-color: white;')
-        editor = ChoicesEditor(parent=self, action_routes=[])
-        editor.setObjectName( 'field_choice' )
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget( editor )
-        self.main_widget().setLayout( layout )
-        choices = [(field, str(attributes['name'])) for field, attributes in field_attributes.items()]
-        choices.sort( key = lambda choice:choice[1] )
-        editor.set_choices( choices + [(None,'')] )
-        editor.set_value(self.field)
-        self.field_changed(field_value)
-        editor.editingFinished.connect( self.field_changed )
-        self.set_default_buttons()
-        if self.field is not None:
-            value_editor = self.findChild(QtWidgets.QWidget, 'value_editor')
-            if value_editor is not None:
-                value_editor.setFocus()
-
-    @QtCore.qt_slot()
-    def field_changed(self, value=None):
-        selected_field = ValueLoading
-        editor = self.findChild( QtWidgets.QWidget, 'field_choice' )
-        value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
-        if editor != None:
-            selected_field = editor.get_value()
-        if value_editor != None:
-            value_editor.deleteLater()
-        if selected_field not in (None, ValueLoading):
-            self.field = selected_field
-            self.value = value
-            static_field_attributes = list(self.static_field_attributes([selected_field]))[0]
-            # if the field is displayed in this dialog, it should be editable
-            static_field_attributes['editable'] = True
-            delegate = static_field_attributes['delegate'](parent = self,
-                                                            **static_field_attributes)
-            option = QtWidgets.QStyleOptionViewItem()
-            option.version = 5
-            value_editor = delegate.createEditor( self, option, None )
-            value_editor.setObjectName( 'value_editor' )
-            value_editor.set_field_attributes( **static_field_attributes )
-            self.main_widget().layout().addWidget( value_editor )
-            value_editor.editingFinished.connect( self.value_changed )
-            value_editor.set_value(value)
-            self.value_changed( value_editor )
-
-    def value_changed(self, value_editor=None):
-        if not value_editor:
-            value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
-        if value_editor != None:
-            self.value = value_editor.get_value()
-
-@dataclass
-class ChangeField( ActionStep ):
-    """
-    Pop up a list of fields from an object a user can change.  When the
-    user selects a field, an appropriate widget is shown to change the
-    value of that field.
-
-    :param admin: the admin of the object of which to change the field
-    :param field_attributes: a list of field attributes of the fields that
-        can be changed.  If `None` is given, all editable fields are shown.
-    :param field_name: the name of the selected field when opening the dialog
-    :param field_value: the value of the selected field when opening the dialog
-
-    This action step returns a tuple with the name of the selected field, and
-    its new value.
-
-    This action step can be customised using these attributes :
-
-    .. attribute:: window_title
-
-        the window title of the dialog shown
-
-    .. attribute:: title
-
-        the title of the dialog shown
-
-    .. attribute:: subtitle
-
-        the subtitle of the dialog shown
-
-    """
-
-    admin: InitVar[ApplicationAdmin]
-    field_attributes: InitVar = None
-    field_name: str = None
-    field_value: Any = None
-    window_title: str = field(init=False)
-
-    admin_route: AdminRoute = field(init=False)
-
-    title = _('Replace field contents')
-    subtitle = _('Select the field to update and enter its new value')
-
-    def __post_init__(self, admin, field_attributes):
-        super( ChangeField, self ).__init__()
-        self.admin_route = admin.get_admin_route()
-        if field_attributes is None:
-            field_attributes = dict(admin.get_all_fields_and_attributes())
-            not_editable_fields = []
-            for key, attributes in field_attributes.items():
-                if not attributes.get('editable', False):
-                    not_editable_fields.append(key)
-                elif attributes.get('delegate', None) in (delegates.One2ManyDelegate,):
-                    not_editable_fields.append(key)
-            for key in not_editable_fields:
-                field_attributes.pop(key)
-        self.window_title = admin.get_verbose_name_plural()
-    
-    def render( self ):
-        """create the dialog. this method is used to unit test
-        the action step."""
-        admin = initial_naming_context.resolve(tuple(self.admin_route))
-        dialog = ChangeFieldDialog(
-            admin, admin.get_all_fields_and_attributes(), self.field_name, self.field_value
-        )
-        dialog.setWindowTitle( str( self.window_title ) )
-        dialog.set_banner_title( str( self.title ) )
-        dialog.set_banner_subtitle( str( self.subtitle ) )
-        return dialog
-    
-    def gui_run( self, gui_context ):
-        dialog = self.render()
-        with hide_progress_dialog( gui_context ):
-            result = dialog.exec()
-            if result == QtWidgets.QDialog.DialogCode.Rejected:
-                raise CancelRequest()
-            return (dialog.field, dialog.value)

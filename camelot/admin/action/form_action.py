@@ -251,7 +251,7 @@ class CloseForm( Action ):
             #
             message = action_steps.MessageBox(
                 '\n'.join( messages ),
-                QtWidgets.QMessageBox.Icon.Warning,
+                Icon('recycle'),
                 _('Invalid form'),
                 [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Discard] )
             reply = yield message
