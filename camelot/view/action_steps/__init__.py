@@ -31,7 +31,7 @@ from .application import (
     MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
     MainMenu, UpdateActionsState
 )
-from .change_object import ChangeField, ChangeObject, ChangeObjects
+from .change_object import ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
 from .gui import (
@@ -55,7 +55,6 @@ from .crud import (
 )
 
 __all__ = [
-    ChangeField.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
     ChangeSelection.__name__,

@@ -45,7 +45,6 @@ from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import QtCore
 from camelot.admin.action import application_action, form_action, list_action
-from camelot.view import art
 
 #
 # The translations data needs to be kept alive during the
@@ -426,35 +425,10 @@ shortcut confusion and reduce the number of status updates.
         if self.help_url:
             return QtCore.QUrl( self.help_url )
 
-    def get_stylesheet(self):
-        """
-        :return: a string with the content of a qt stylesheet to be used for 
-        this application as a string or None if no stylesheet needed.
-
-        Camelot comes with a couple of default stylesheets :
-
-         * stylesheet/office2007_blue.qss
-         * stylesheet/office2007_black.qss
-         * stylesheet/office2007_silver.qss
-
-        Have a look at the default implementation to use another stylesheet.
-        """
-        #
-        # Try to load a custom QStyle, if that fails use a stylesheet from
-        # a file
-        #
-        try:
-            from PyTitan import QtnOfficeStyle
-            QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
-        except:
-            pass
-        return art.read('stylesheet/office2007_blue.qss').decode('utf-8')
-
-
     @classmethod
     def _load_translator_from_file( cls, 
                                     module_name, 
-                                    file_name, 
+                                    file_name,
                                     directory = '', 
                                     search_delimiters = '_', 
                                     suffix = '.qm' ):
