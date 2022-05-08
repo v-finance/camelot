@@ -127,18 +127,22 @@ class ChangeSelection(Action):
 
     name = 'change_selection'
 
-    def __init__(self, action_routes, model_context):
-        self.action_routes = action_routes
-        self.model_context = model_context
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         action_states = []
-        for action_route in self.action_routes:
+        model_context.current_row = mode['current_row']
+        model_context.current_column = mode['current_column']
+        model_context.current_field_name = mode['current_field_name']
+        model_context.selected_rows = mode['selected_rows']
+        model_context.collection_count = len(model_context.proxy)
+        model_context.selection_count = 0
+        for row_range in mode['selected_rows']:
+            model_context.selection_count += (row_range[1] - row_range[0]) + 1
+        for action_route in mode['action_routes']:
             action = initial_naming_context.resolve(action_route)
-            state = action.get_state(self.model_context)
+            state = action.get_state(model_context)
             action_states.append(state)
-        yield action_steps.ChangeSelection(self.action_routes, action_states)
+        yield action_steps.ChangeSelection(mode['action_routes'], action_states)
 
 class Completion(Action):
 
