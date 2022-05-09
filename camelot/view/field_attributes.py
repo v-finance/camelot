@@ -41,7 +41,7 @@ import datetime
 from .controls import delegates
 from ..admin.action import list_filter, field_action
 from camelot.core import constants
-from camelot.types.typing import Note, Directory, File, Months
+from camelot.types.typing import Color, Note, Directory, File, Months
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
@@ -130,6 +130,17 @@ _sqlalchemy_to_python_type_ = {
         'decimal':True,
         'search_strategy': list_filter.DecimalFilter,
         'filter_strategy': list_filter.DecimalFilter,
+    },
+
+    camelot.types.Months: lambda f: {
+        'python_type': int,
+        'delegate': delegates.MonthsDelegate,
+        'editable': True,
+        'nullable': True,
+        'from_string': int_from_string,
+        'to_string': str,
+        'search_strategy': list_filter.MonthsFilter,
+        'filter_strategy': list_filter.MonthsFilter,
     },
 
     sqlalchemy.types.Integer: lambda f: {
@@ -294,6 +305,13 @@ _typing_to_python_type = {
         'python_type': int,
         'delegate': delegates.MonthsDelegate,
     },
+
+    Color: {
+        'python_type': str,
+        'delegate': delegates.ColorDelegate,
+        'from_string': string_from_string,
+    },
+
 }
 
 #

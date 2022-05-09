@@ -30,8 +30,7 @@ from camelot.core.sql import metadata
 from camelot.model.i18n import Translation
 from camelot.model.party import Person, Address
 from camelot.view.controls import delegates
-from camelot.types.typing import Note, Directory, File
-
+from camelot.types.typing import Color, Directory, File, Note
 
 class ApplicationAdminCase(unittest.TestCase):
 
@@ -220,6 +219,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
                 self._test_file = None
                 self._test_entity = None
                 self._test_entitylist = list()
+                self._test_color = '#fff'
     
             @property
             def test_int(self) -> int:
@@ -303,8 +303,16 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         
             @test_entitylist.setter
             def test_entitylist(self, value):
-                self._test_entitylist = value              
-                
+                self._test_entitylist = value
+
+            @property
+            def test_color(self) -> Color:
+                return self._test_color
+
+            @test_color.setter
+            def test_color(self, value):
+                self._test_color = value
+
             class Admin(ObjectAdmin):
                 
                 def get_session(self, obj):
@@ -373,7 +381,12 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['editable'], True)
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.One2ManyDelegate) 
-        self.assertEqual(fa['target'], Address)               
+        self.assertEqual(fa['target'], Address)
+
+        fa = admin.get_field_attributes('test_color')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.ColorDelegate)
 
     def test_set_defaults(self):
 
@@ -436,6 +449,7 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
             test_entity: Address = field(default = None, init = False)
             test_initvar: InitVar[int] = None
             test_entitylist: List[Address] = field(default_factory = list, init = False)
+            test_color: Color = field(default = '#000', init=False)
             
             def __post_init__(self, test_initvar):
                 self.test_int = test_initvar
@@ -523,7 +537,12 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.One2ManyDelegate) 
         self.assertEqual(fa['target'], Address)        
-        
+
+        fa = admin.get_field_attributes('test_color')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.ColorDelegate)
+
         test1 = TestDataClass()
         self.assertEqual(test1.test_int, None)
         test2 = TestDataClass(test_initvar = 10)
@@ -591,6 +610,14 @@ class EntityAdminCase(TestMetaData):
         self.assertEqual( fa_5['delegate'], delegates.FileDelegate )
         self.assertEqual( fa_5['filter_strategy'], list_filter.NoFilter )
         self.assertEqual( fa_5['search_strategy'], list_filter.NoFilter)
+
+        column_6 = schema.Column( camelot.types.Months, nullable=False)
+        fa_6 = EntityAdmin.get_sql_field_attributes( [column_6] )
+        self.assertEqual( fa_6['delegate'], delegates.MonthsDelegate )
+        self.assertEqual( fa_6['filter_strategy'], list_filter.MonthsFilter )
+        self.assertEqual( fa_6['search_strategy'], list_filter.MonthsFilter)
+        self.assertTrue( fa_6['editable'] )
+        self.assertFalse( fa_6['nullable'] )
 
     def test_field_admin( self ):
 

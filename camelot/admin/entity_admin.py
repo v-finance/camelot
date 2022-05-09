@@ -324,7 +324,9 @@ and used as a custom action.
                             class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
                         columns = []
-                        if isinstance(class_attribute, sql.elements.Label):
+                        if isinstance(class_attribute, orm.attributes.InstrumentedAttribute):
+                            columns = [class_attribute]
+                        elif isinstance(class_attribute, sql.elements.Label):
                             columns = [class_attribute]
                         elif isinstance(class_attribute, sql.Select):
                             columns = class_attribute.columns
