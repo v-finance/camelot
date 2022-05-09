@@ -229,7 +229,7 @@ class EntityMeta( DeclarativeMeta ):
 
                 retention_level = entity_args.get('retention_level')
                 if retention_level is not None:
-                    assert retention_level in cls.retentions_levels.values(), 'Unsupported retention level'
+                    assert retention_level in cls.retention_levels.values(), 'Unsupported retention level'
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
@@ -339,6 +339,10 @@ class EntityMeta( DeclarativeMeta ):
                 else:
                     order_by_clauses.append(order_by)
             return tuple(order_by_clauses)
+
+    @property
+    def retention_level(cls):
+        return cls._get_entity_arg('retention_level')
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
