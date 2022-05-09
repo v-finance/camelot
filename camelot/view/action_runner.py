@@ -41,7 +41,8 @@ from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.controls.exception import ExceptionDialog
 from camelot.view.model_thread import post
 
-LOGGER = logging.getLogger( 'camelot.view.action_runner' )
+LOGGER = logging.getLogger('camelot.view.action_runner')
+REQUEST_LOGGER = logging.getLogger('camelot.view.action_runner.request')
 
 @contextlib.contextmanager
 def hide_progress_dialog( gui_context ):
@@ -92,6 +93,8 @@ class ActionRunner( QtCore.QEventLoop ):
         self._non_blocking_cancel_request = False
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
         self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
+        if REQUEST_LOGGER.isEnabledFor(logging.DEBUG):
+            REQUEST_LOGGER.debug('{} : {}'.format(generator_function, gui_context.mode_name))
         post(self._initiate_generator, self.generator, self.exception, args=(gui_context.mode_name,))
     
     def exit( self, return_code = 0 ):

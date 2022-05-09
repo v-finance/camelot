@@ -1,6 +1,7 @@
 import datetime
 import gc
 import io
+import json
 import logging
 import os
 import unittest
@@ -486,14 +487,14 @@ class ListActionsCase(
 
     @staticmethod
     def track_crud_steps(action, model_context):
-        created = updated = None
+        created, updated = [], []
         steps = []
         for step in action.model_run(model_context, None):
             steps.append(type(step))
             if isinstance(step, action_steps.CreateObjects):
-                created = step.objects_created if created is None else created.extend(step.objects_created)
+                created.extend(initial_naming_context.resolve(step.created) if step.created else [])
             elif isinstance(step, action_steps.UpdateObjects):
-                updated = step.objects_updated if updated is None else updated.extend(step.objects_updated)
+                updated.extend(initial_naming_context.resolve(step.updated) if step.updated else [])
         return steps, created, updated
 
     def test_duplicate_selection( self ):
@@ -520,8 +521,8 @@ class ListActionsCase(
         model_context.selection = []
         model_context.selection_count = 0
         steps, created, updated = self.track_crud_steps(action, model_context)
-        self.assertIsNone(created)
-        self.assertIsNone(updated)
+        self.assertEqual(created, [])
+        self.assertEqual(updated, [])
         self.assertNotIn(action_steps.FlushSession, steps)
 
         # Verify the valid duplication of a single selection.
@@ -547,7 +548,7 @@ class ListActionsCase(
         model_context.selection = [person]
         steps, created, updated = self.track_crud_steps(action, model_context)
         self.assertEqual(len(created), 1)
-        self.assertIsNone(updated)
+        self.assertEqual(updated, [])
         self.assertIn(action_steps.OpenFormView, steps)
         self.assertNotIn(action_steps.FlushSession, steps)
         copied_obj = created[0]
@@ -750,13 +751,17 @@ class ListActionsCase(
 
         # end manual update
 
-        action_step = None
+        updated, created = False, False
         update_person = UpdatePerson()
         for step in self.gui_run(update_person, self.gui_context):
-            if isinstance(step, ActionStep):
-                action_step = step
-                action_step.gui_run(self.gui_context)
-        self.assertTrue(action_step)
+            if isinstance(step, tuple) and step[0] == 'UpdateObjects':
+                action_steps.UpdateObjects.gui_run(self.gui_context, json.dumps(step[1]))
+                updated = True
+            if isinstance(step, tuple) and step[0] == 'CreateObjects':
+                action_steps.CreateObjects.gui_run(self.gui_context, json.dumps(step[1]))
+                created = True
+        self.assertTrue(updated)
+        self.assertTrue(created)
 
         # begin auto update
 
@@ -787,13 +792,13 @@ class ListActionsCase(
 
         # end auto update
 
-        action_step = None
+        flush_session = False
         update_person = UpdatePerson()
         for step in self.gui_run(update_person, self.gui_context):
-            if isinstance(step, ActionStep):
-                action_step = step
-                action_step.gui_run(self.gui_context)
-        self.assertTrue(action_step)
+            if isinstance(step, tuple) and step[0] == 'FlushSession':
+                action_steps.FlushSession.gui_run(self.gui_context, json.dumps(step[1]))
+                flush_session = True
+        self.assertTrue(flush_session)
 
 
 class FormActionsCase(
@@ -937,8 +942,8 @@ class ApplicationActionsCase(
         #
         generator = self.gui_run(refresh_action, self.gui_context)
         for step in generator:
-            if isinstance(step, action_steps.UpdateObjects):
-                updates = step.get_objects()
+            if isinstance(step, tuple) and step[0] == 'UpdateObjects':
+                updates = initial_naming_context.resolve(tuple(step[1]['updated']))
         self.assertTrue(len(updates))
 
     def test_select_profile(self):

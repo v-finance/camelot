@@ -678,6 +678,9 @@ class NamingContext(AbstractNamingContext):
     def list(self):
         return self._bindings[BindingType.named_object].keys()
 
+    def __len__(self):
+        return len(self._bindings[BindingType.named_object])
+
 class EndpointNamingContext(AbstractNamingContext):
     """
     Interface for a naming context that only supports binding and resolving objects/values,
@@ -924,6 +927,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         constants.bind('false', False, immutable=True)
         self.bind_new_context('entity', immutable=True)
         self.bind_new_context('object', immutable=True)
+        self.bind_new_context('leases', immutable=True)
 
     def new_context(self) -> NamingContext:
         """

@@ -409,7 +409,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor = editors.Many2OneEditor(parent=None, **self.editable_kwargs)
         self.assert_vertical_size( editor )
         self.grab_default_states( editor )
-        self.assert_valid_editor( editor, lambda:object )
+        self.assert_valid_editor(editor, initial_naming_context._bind_object(3))
 
     def test_RichTextEditor(self):
         editor = editors.RichTextEditor(parent=None)
