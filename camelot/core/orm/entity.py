@@ -151,6 +151,8 @@ class EntityMeta( DeclarativeMeta ):
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
 
+    retention_levels = util.OrderedProperties()
+
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
         #
@@ -224,6 +226,10 @@ class EntityMeta( DeclarativeMeta ):
                 order_search_by = entity_args.get('order_search_by')
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+
+                retention_level = entity_args.get('retention_level')
+                if retention_level is not None:
+                    assert retention_level in cls.retentions_levels.values(), 'Unsupported retention level'
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
