@@ -14,6 +14,7 @@ from camelot.core.item_model import (AbstractModelProxy, ActionRoutesRole, Actio
                                        CompletionsRole, FieldAttributesRole, ObjectRole, ValidMessageRole, ValidRole,
                                        VerboseIdentifierRole)
 from camelot.core.item_model.query_proxy import QueryModelProxy
+from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, delete, py_to_variant, variant_to_py
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
@@ -320,7 +321,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a1 = self.collection[1]
         a1.y = None
-        self.item_model.objects_updated((a1,))
+        self.item_model.objects_updated(initial_naming_context._bind_object((a1,)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidRole, self.item_model), False)
@@ -414,7 +415,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a0 = self.collection[0]
         a0.y = 10
-        self.item_model.objects_updated((a0,))
+        self.item_model.objects_updated(initial_naming_context._bind_object((a0,)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
@@ -434,7 +435,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         a0 = self.collection[0]
         a0.x = 9
         a0.y = 10
-        self.item_model.objects_updated((a0,))
+        self.item_model.objects_updated(initial_naming_context._bind_object((a0,)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
@@ -444,7 +445,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_updated(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_updated((object(),))
+        self.item_model.objects_updated(initial_naming_context._bind_object((object(),)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -457,7 +458,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         a5 = self.A(5)
         self.collection.append(a5)
-        self.item_model.objects_created((a5,))
+        self.item_model.objects_created(initial_naming_context._bind_object((a5,)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual(len(self.signal_register.header_changes), 1)
@@ -467,7 +468,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_created(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_created((object(),))
+        self.item_model.objects_created(initial_naming_context._bind_object((object(),)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -483,7 +484,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         # emitting the deleted signal happens before the object is
         # deleted
-        self.item_model.objects_deleted((a,))
+        self.item_model.objects_deleted(initial_naming_context._bind_object((a,)))
         # but removing an object should go through the item_model or there is no
         # way the item_model can be aware.
         self.item_model.get_value().remove(a)
@@ -502,7 +503,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_no_objects_deleted(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
-        self.item_model.objects_deleted((object(),))
+        self.item_model.objects_deleted(initial_naming_context._bind_object((object(),)))
         self.item_model.timeout_slot()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
@@ -551,7 +552,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
 
     def test_completion(self):
         self._load_data(self.item_model)
-        self.assertIsInstance(self._data(0, 4, self.item_model, role=Qt.ItemDataRole.EditRole), B)
+        name = self._data(0, 4, self.item_model, role=Qt.ItemDataRole.EditRole)
+        self.assertIsInstance(initial_naming_context.resolve(name), B)
         self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
         self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
         self.item_model.timeout_slot()
@@ -646,7 +648,7 @@ class QueryQStandardItemModelCase(
         self.thread.post(self.insert_object)
         self.process()
         person = self.person
-        self.item_model.objects_created((person,))
+        self.item_model.objects_created(initial_naming_context._bind_object((person,)))
         self.item_model.timeout_slot()
         self.process()
         new_rowcount = self.item_model.rowCount()

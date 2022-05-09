@@ -127,18 +127,22 @@ class ChangeSelection(Action):
 
     name = 'change_selection'
 
-    def __init__(self, action_routes, model_context):
-        self.action_routes = action_routes
-        self.model_context = model_context
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         action_states = []
-        for action_route in self.action_routes:
+        model_context.current_row = mode['current_row']
+        model_context.current_column = mode['current_column']
+        model_context.current_field_name = mode['current_field_name']
+        model_context.selected_rows = mode['selected_rows']
+        model_context.collection_count = len(model_context.proxy)
+        model_context.selection_count = 0
+        for row_range in mode['selected_rows']:
+            model_context.selection_count += (row_range[1] - row_range[0]) + 1
+        for action_route in mode['action_routes']:
             action = initial_naming_context.resolve(action_route)
-            state = action.get_state(self.model_context)
+            state = action.get_state(model_context)
             action_states.append(state)
-        yield action_steps.ChangeSelection(self.action_routes, action_states)
+        yield action_steps.ChangeSelection(mode['action_routes'], action_states)
 
 class Completion(Action):
 
@@ -193,13 +197,11 @@ class Update(Action, UpdateMixin):
 
     name = 'update'
 
-    def __init__(self, objects):
-        self.objects = objects
-
     def model_run(self, model_context, mode):
         changed_ranges = []
         from camelot.view import action_steps
-        for obj in self.objects:
+        objects = initial_naming_context.resolve(tuple(mode['objects']))
+        for obj in objects:
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
@@ -217,10 +219,8 @@ class Update(Action, UpdateMixin):
             changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         yield action_steps.Update(changed_ranges)
 
-
     def __repr__(self):
-        return '{0.__class__.__name__}({1} objects)'.format(self, len(self.objects))
-
+        return '{0.__class__.__name__}'.format(self)
 
 class Created(Action, UpdateMixin):
     """
@@ -233,20 +233,13 @@ class Created(Action, UpdateMixin):
 
     name = 'created'
 
-    def __init__(self, objects):
-        self.objects = objects
-
-    def __repr__(self):
-        return '{0.__class__.__name__}({1} objects)'.format(
-            self, len(self.objects)
-        )
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         # the proxy cannot return it's length including the new object before
         # the new object has been indexed
+        objects = initial_naming_context.resolve(tuple(mode['objects']))
         changed_ranges = []
-        for obj in self.objects:
+        for obj in objects:
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
@@ -254,19 +247,13 @@ class Created(Action, UpdateMixin):
             columns = tuple(range(len(model_context.static_field_attributes)))
             changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         yield action_steps.Created(changed_ranges) 
-        
-        
+
+    def __repr__(self):
+        return '{0.__class__.__name__}'.format(self)
+
 class Deleted(RowCount, UpdateMixin):
 
     name = 'deleted'
-
-    def __init__(self, objects, rows_in_view):
-        """
-        
-        """
-        super(Deleted, self).__init__()
-        self.objects = objects
-        self.rows_in_view = rows_in_view
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -277,7 +264,8 @@ class Deleted(RowCount, UpdateMixin):
         # the object might or might not be in the proxy when the
         # deletion is handled
         #
-        for obj in self.objects:
+        objects = initial_naming_context.resolve(tuple(mode['objects']))
+        for obj in objects:
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
@@ -306,7 +294,7 @@ class Deleted(RowCount, UpdateMixin):
         # different from the one of the view
         #
         rows = len(model_context.proxy)
-        if (row is not None) or (rows != self.rows_in_view):
+        if (row is not None) or (rows != mode['rows']):
             # but updating the view is only needed if the rows changed
             yield from super(Deleted, self).model_run(model_context, mode)
 
@@ -337,9 +325,6 @@ class Filter(RowCount):
 class RowData(Update):
 
     name = 'row_data'
-
-    def __init__(self):
-        super(RowData, self).__init__(None)
 
     def offset_and_limit_rows_to_get(self, rows):
         """From the current set of rows to get, find the first
@@ -477,7 +462,7 @@ class SetData(Update, ChangedObjectMixin):
     name = 'set_data'
 
     def __init__(self, updates):
-        super(SetData, self).__init__(None)
+        super(SetData, self).__init__()
         # Copy the update requests and clear the list of requests
         self.updates = [u for u in updates]
 

@@ -740,7 +740,8 @@ be specified using the verbose_name attribute.
         derived from the given attributes.
         """
         column_width = field_attributes.get('column_width', None)
-        
+
+        related_admin = None
         target = field_attributes.get('target', None)
         if target is not None:
             # If there is a `target` field attribute, verify the `admin` attribute has been instantiated
@@ -824,6 +825,10 @@ be specified using the verbose_name attribute.
                 'filter_strategy': None,
                 'search_strategy': None,
             })
+
+            if related_admin is not None:
+                value_attributes['admin'] = type(related_admin)
+                value_attributes['actions'].append(field_action.SelectObject())
 
             class ChangeValueAdmin(ObjectAdmin):
                 verbose_name = ugettext_lazy('Change')

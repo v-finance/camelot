@@ -55,7 +55,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ...admin.action.application_action import ApplicationActionGuiContext
 from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
-from ...admin.action.form_action import FormActionModelContext
 from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
@@ -118,15 +117,7 @@ class RowModelContext(ListActionModelContext):
         self.field_attributes = dict()
         self.obj = None
         self.locale = QtCore.QLocale()
-        
-    def get_selection( self, yield_per = None ):
-        return []
-    
-    def get_collection( self, yield_per = None ):
-        return []
-            
-    def get_object( self ):
-        return self.obj
+
 
 # CollectionProxy subclasses ApplicationActionGuiContext to be able to behave
 # as a gui_context when running field actions.  To be removed later on.
@@ -238,8 +229,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if (rows == 0) and (self._model_context is not None) and self.columnCount():
             root_item = self.invisibleRootItem()
             if not root_item.isEnabled():
-                if not isinstance(self._last_request(), RowCount):
-                    self._append_request(RowCount(), None)
+                self._append_request(RowCount(), None)
+                root_item.setEnabled(True)
             return 0
         return rows
 
@@ -465,7 +456,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if (self._model_context is not None):
             self._append_request(Filter(list_filter, old_value, value), None)
 
-    @QtCore.qt_slot(tuple)
+    @QtCore.qt_slot(list)
     def objects_updated(self, objects):
         """Handles the entity signal, indicating that the model is out of
             )
@@ -476,9 +467,10 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
-            self._append_request(Update(objects), None)
+            self._append_request(Update(), {'objects': objects})
+            self.timeout_slot()
 
-    @QtCore.qt_slot(tuple)
+    @QtCore.qt_slot(list)
     def objects_deleted(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
@@ -487,9 +479,13 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
-            self._append_request(Deleted(objects, super(CollectionProxy, self).rowCount()), None)
+            self._append_request(Deleted(), {
+                'objects': objects,
+                'rows': super(CollectionProxy, self).rowCount()
+            })
+            self.timeout_slot()
 
-    @QtCore.qt_slot(tuple)
+    @QtCore.qt_slot(list)
     def objects_created(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
@@ -498,8 +494,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
-            self._append_request(Created(objects), None)
-
+            self._append_request(Created(), {'objects': objects})
+            self.timeout_slot()
 
     def add_columns(self, field_names):
         """
@@ -703,64 +699,49 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if self.get_value() is None:
             return
 
+        current_row, current_column, row_ranges = -1, None, []
+
         if selection_model is not None:
-            # Create model context based on selection
-            # model_conext.field_attributes required???
-            model_context = ListActionModelContext()
-            model_context.proxy = self.get_value()
-            model_context.admin = self.get_admin()
             if current_index.isValid():
-                model_context.current_row = current_index.row()
-                model_context.current_column = current_index.column()
-            model_context.collection_count = self.rowCount()
-            if model_context.current_column is not None:
-                model_context.current_field_name = variant_to_py(
-                    self.headerData(
-                        model_context.current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
-                    )
-                )
+                current_row = current_index.row()
+                current_column = current_index.column()
             if selection_model is not None:
                 selection = selection_model.selection()
                 for i in range( len( selection ) ):
                     selection_range = selection[i]
-                    rows_range = ( selection_range.top(), selection_range.bottom() )
-                    model_context.selected_rows.append( rows_range )
-                    model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+                    rows_range = (selection_range.top(), selection_range.bottom())
+                    row_ranges.extend(rows_range)
         else:
-            model_context = FormActionModelContext()
-            model_context.proxy = self.get_value()
-            model_context.admin = self.get_admin()
             if current_index >= 0:
-                model_context.current_row = current_index
-                model_context.selection_count = 1
+                current_row = current_index
+                row_ranges.extend((current_row, current_row))
 
-        request = ChangeSelection(self._action_routes, model_context)
-        self._append_request(request, None)
+        self.change_selection_v2(row_ranges, current_row, current_column)
 
-    @QtCore.qt_slot(list, int)
-    def change_selection_v2(self, row_ranges, current_row):
+    @QtCore.qt_slot(list, int, int)
+    def change_selection_v2(self, row_ranges, current_row, current_column):
         self.logger.debug('change_selection_v2 called')
 
-        # Create model context based on selection
-        # model_conext.field_attributes required???
-        model_context = ListActionModelContext()
-        model_context.proxy = self.get_value()
-        model_context.admin = self.get_admin()
-        if current_row != -1:
-            model_context.current_row = current_row
-            model_context.current_column = 0
-        model_context.collection_count = self.rowCount()
-        if model_context.current_column is not None:
-            model_context.current_field_name = variant_to_py(
+        if current_row < 0:
+            current_row = None
+
+        current_field_name = None
+        if current_column is not None:
+            current_field_name = variant_to_py(
                 self.headerData(
-                    model_context.current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
+                    current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
                 )
             )
         assert len(row_ranges) % 2 == 0
+        selected_rows = []
         for i in range(len(row_ranges) // 2):
-            rows_range = ( row_ranges[2 * i], row_ranges[2 * i + 1] )
-            model_context.selected_rows.append( rows_range )
-            model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+            selected_rows.append(( row_ranges[2 * i], row_ranges[2 * i + 1]))
 
-        request = ChangeSelection(self._action_routes, model_context)
-        self._append_request(request, None)
+        request = ChangeSelection()
+        self._append_request(request, {
+            'action_routes': self._action_routes,
+            'current_row': current_row,
+            'current_column': current_column,
+            'selected_rows': selected_rows,
+            'current_field_name': current_field_name,
+        })
