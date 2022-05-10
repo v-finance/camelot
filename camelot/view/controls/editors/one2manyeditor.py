@@ -33,18 +33,19 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from ....admin.action.base import RenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy, ProxyRegistry
-from ..action_widget import AbstractActionWidget, ActionToolbutton, ActionPushButton
+from ...action_runner import ActionRunner
+from ..action_widget import AbstractActionWidget
 from ..filter_widget import ComboBoxFilterWidget
+from ..view import ViewWithActionsMixin
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
 
 
-class One2ManyEditor(CustomEditor, WideEditor):
+class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     """
     :param admin: the Admin interface for the objects on the one side of the
     relation
@@ -121,19 +122,15 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
-    def render_action(self, render_hint, action_route, parent):
-        action = initial_naming_context.resolve(action_route)
-        if render_hint == RenderHint.TOOL_BUTTON:
-            # Use tool button, because this one sets the popup mode
-            # to instant if there are modes in the state
-            qobject = ActionToolbutton(action, self.list_gui_context, parent)
-        elif render_hint == RenderHint.PUSH_BUTTON:
-            qobject = ActionPushButton(action, self.list_gui_context, parent)
-        elif render_hint == RenderHint.COMBO_BOX:
-            qobject = ComboBoxFilterWidget(action, self.list_gui_context, parent)
-        else:
-            raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
-        return qobject
+    @QtCore.qt_slot(int)
+    def combobox_activated(self, index):
+        combobox = self.sender()
+        mode = [combobox.itemData(index)]
+        self.list_gui_context.mode_name = mode
+        action = initial_naming_context.resolve(combobox.property('action_route'))
+        runner = ActionRunner(action.model_run, self.list_gui_context)
+        runner.exec()
+        self.list_gui_context.model_name = None
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, action_routes, toolbar):
@@ -141,7 +138,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
             for route_with_render_hint in action_routes:
                 action_route = route_with_render_hint.route
                 self.list_gui_context.item_view.model().add_action_route(action_route)
-                qaction = self.render_action(route_with_render_hint.render_hint, action_route, toolbar)
+                qaction = self.render_action(
+                    route_with_render_hint.render_hint, action_route,
+                    self.list_gui_context, toolbar
+                )
                 qaction.action_route = action_route
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
@@ -172,7 +172,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
             if action_widget.action_route == route:
                 state = json.loads(serialized_state.data())
                 action_widget.set_state_v2(state)
-                break
+                return
+        for action_widget in self.findChildren(QtWidgets.QComboBox):
+            if action_widget.action_route == route:
+                state = json.loads(serialized_state.data())
+                ComboBoxFilterWidget._set_state_v2(action_widget, state)
+                return
 
     def get_model(self):
         """

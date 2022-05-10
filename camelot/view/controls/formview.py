@@ -345,7 +345,10 @@ class FormView(AbstractView):
             actions_widget.setObjectName('actions')
             for action_route in action_routes:
                 action = initial_naming_context.resolve(tuple(action_route))
-                action_widget = self.render_action(action, actions_widget)
+                action_widget = self.render_action(
+                    action.render_hint, action_route,
+                    self.gui_context, actions_widget
+                )
                 self.model.add_action_route(tuple(action_route))
                 state = route2state.get(tuple(action_route))
                 if state is not None:
@@ -366,7 +369,10 @@ class FormView(AbstractView):
             toolbar.setIconSize(QtCore.QSize(16,16))
             for action_route in action_routes:
                 action = initial_naming_context.resolve(tuple(action_route))
-                action_widget = self.render_action(action, toolbar)
+                action_widget = self.render_action(
+                    action.render_hint, action_route,
+                    self.gui_context, toolbar,
+                )
                 self.model.add_action_route(tuple(action_route))
                 state = route2state.get(tuple(action_route))
                 if state is not None:
@@ -377,8 +383,7 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot(tuple, State)
     def action_state_changed(self, route, state):
-        action = initial_naming_context.resolve(route)
-        action_name = self.gui_context.action_routes[action]
+        action_name = self.gui_context.action_routes[route]
         action_widget = self.findChild(AbstractActionWidget, action_name)
         action_widget.set_state(state)
 
