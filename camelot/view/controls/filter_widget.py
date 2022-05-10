@@ -31,68 +31,12 @@
 Widgets that represent Filter Actions
 """
 
-from ...core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py
 from .action_widget import AbstractActionWidget
 
-class AbstractFilterWidget(AbstractActionWidget):
-    """Overwrite some methods to avoid to many state updates"""
 
-    def current_row_changed(self, _current_row):
-        pass
-
-    def header_data_changed(self, _orientation, _first, _last):
-        pass
-
-    def set_menu(self, _state):
-        pass
-
-    def get_value(self):
-        """:return: a list of selected values"""
-        raise NotImplementedError()
-
-    def run_action(self):
-        gui_context = self.gui_context.copy()
-        value = self.get_value()
-        self.action.gui_run(gui_context, value)
-
-
-class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
+class ComboBoxFilterWidget(AbstractActionWidget):
     """Flter widget based on a QGroupBox"""
 
-    def __init__(self, action, gui_context, parent):
-        QtWidgets.QGroupBox.__init__(self, parent)
-        AbstractFilterWidget.init(self, action, gui_context)
-        layout = QtWidgets.QVBoxLayout()
-        layout.setSpacing( 2 )
-        layout.setContentsMargins( 2, 2, 2, 2 )
-        self.setFlat(True)
-        combobox = QtWidgets.QComboBox(self)
-        layout.addWidget( combobox )
-        self.setLayout(layout)
-        combobox.activated.connect(self.group_button_clicked)
-
-    def set_state(self, state):
-        AbstractFilterWidget.set_state(self, state)
-        self.setTitle(str(state.verbose_name))
-        combobox = self.findChild(QtWidgets.QComboBox)
-        if combobox is not None:
-            current_index = 0
-            for i, mode in enumerate(state.modes):
-                if mode.checked == True:
-                    current_index = i
-                combobox.insertItem(i,
-                                    str(mode.verbose_name),
-                                    py_to_variant(mode.value))
-            # setting the current index will trigger the run of the action to
-            # apply the initial filter
-            combobox.setCurrentIndex(current_index)
-
-    def set_state_v2(self, state):
-        AbstractFilterWidget.set_state_v2(self, state)
-        self.setTitle(state['verbose_name'])
-        combobox = self.findChild(QtWidgets.QComboBox)
-        if combobox is not None:
-            self._set_state_v2(combobox)
 
     @classmethod
     def _set_state_v2(cls, widget, state):
@@ -108,14 +52,3 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         # setting the current index will trigger the run of the action to
         # apply the initial filter
         widget.setCurrentIndex(current_index)
-
-    def get_value(self):
-        combobox = self.findChild(QtWidgets.QComboBox)
-        if combobox is not None:
-            index = combobox.currentIndex()
-            mode_name = variant_to_py(combobox.itemData(index))
-            return [mode_name]
-
-    @QtCore.qt_slot(int)
-    def group_button_clicked(self, index):
-        self.run_action()
