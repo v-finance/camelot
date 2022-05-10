@@ -35,7 +35,6 @@ from ...admin.action import RenderHint
 from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtGui, QtWidgets
 from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
-from .filter_widget import GroupBoxFilterWidget
 from .search import SimpleSearchControl
 
 class ViewWithActionsMixin(object):
@@ -56,8 +55,6 @@ class ViewWithActionsMixin(object):
         elif render_hint == RenderHint.COMBO_BOX:
             qobject = QtWidgets.QComboBox(parent)
             qobject.activated.connect(self.combobox_activated)
-        elif render_hint in [RenderHint.EXCLUSIVE_GROUP_BOX, RenderHint.NON_EXCLUSIVE_GROUP_BOX]:
-            qobject = GroupBoxFilterWidget(action, gui_context, parent)
         elif render_hint == RenderHint.SEARCH_BUTTON:
             qobject = SimpleSearchControl(action, gui_context, parent)
         elif render_hint == RenderHint.PUSH_BUTTON:
