@@ -299,29 +299,6 @@ class Deleted(RowCount, UpdateMixin):
             yield from super(Deleted, self).model_run(model_context, mode)
 
 
-class Filter(RowCount):
-
-    name = 'filter'
-
-    def __init__(self, action, old_value, new_value):
-        super(Filter, self).__init__()
-        self.action = action
-        self.old_value = old_value
-        self.new_value = new_value
-
-    def model_run(self, model_context, mode):
-        # comparison of old and new value can only happen in the model thread
-        if self.old_value != self.new_value:
-            model_context.proxy.filter(self.action, self.new_value)
-        yield from super(Filter, self).model_run(model_context, mode)
-
-    def __repr__(self):
-        return '{0.__class__.__name__}(action={1})'.format(
-            self,
-            type(self.action).__name__
-        )
-    
-    
 class RowData(Update):
 
     name = 'row_data'

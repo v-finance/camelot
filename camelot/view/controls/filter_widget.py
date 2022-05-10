@@ -137,8 +137,6 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
-        # run the filter action to apply the initial filter on the list
-        self.run_action()
 
     def set_state_v2(self, state):
         AbstractFilterWidget.set_state_v2(self, state)
@@ -196,17 +194,22 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         self.setTitle(state['verbose_name'])
         combobox = self.findChild(QtWidgets.QComboBox)
         if combobox is not None:
-            combobox.clear()
-            current_index = 0
-            for i, mode in enumerate(state['modes']):
-                if mode['checked'] == True:
-                    current_index = i
-                combobox.insertItem(i,
-                                    mode['verbose_name'],
-                                    mode['value'])
-            # setting the current index will trigger the run of the action to
-            # apply the initial filter
-            combobox.setCurrentIndex(current_index)
+            self._set_state_v2(combobox)
+
+    @classmethod
+    def _set_state_v2(cls, widget, state):
+        cls.set_widget_state(widget, state)
+        widget.clear()
+        current_index = 0
+        for i, mode in enumerate(state['modes']):
+            if mode['checked'] == True:
+                current_index = i
+            widget.insertItem(i,
+                              mode['verbose_name'],
+                              mode['value'])
+        # setting the current index will trigger the run of the action to
+        # apply the initial filter
+        widget.setCurrentIndex(current_index)
 
     def get_value(self):
         combobox = self.findChild(QtWidgets.QComboBox)

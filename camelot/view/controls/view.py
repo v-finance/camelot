@@ -32,12 +32,48 @@
 import itertools
 
 from ...admin.action import RenderHint
+from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtGui, QtWidgets
 from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
-from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
+from .filter_widget import GroupBoxFilterWidget
 from .search import SimpleSearchControl
 
-class AbstractView(QtWidgets.QWidget):
+class ViewWithActionsMixin(object):
+
+    _rendered_action_counter = itertools.count()
+
+    @classmethod
+    def _register_rendered_action(cls, qobject):
+        next_rendered_action = cls._rendered_action_counter.__next__()
+        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
+        qobject.setObjectName(rendered_action_name)
+        return rendered_action_name
+
+    def render_action(self, render_hint, action_route, gui_context, parent):
+        action = initial_naming_context.resolve(action_route)
+        if render_hint == RenderHint.TOOL_BUTTON:
+            qobject = ActionToolbutton(action, gui_context, parent)
+        elif render_hint == RenderHint.COMBO_BOX:
+            qobject = QtWidgets.QComboBox(parent)
+            qobject.activated.connect(self.combobox_activated)
+        elif render_hint in [RenderHint.EXCLUSIVE_GROUP_BOX, RenderHint.NON_EXCLUSIVE_GROUP_BOX]:
+            qobject = GroupBoxFilterWidget(action, gui_context, parent)
+        elif render_hint == RenderHint.SEARCH_BUTTON:
+            qobject = SimpleSearchControl(action, gui_context, parent)
+        elif render_hint == RenderHint.PUSH_BUTTON:
+            qobject = ActionPushButton(action, gui_context, parent)
+        elif render_hint == RenderHint.LABEL:
+            qobject = ActionLabel(action, gui_context, parent)
+        else:
+            raise Exception('Unhandled render hint {} for {}'.format(
+                render_hint, action_route
+            ))
+        qobject.setProperty('action_route', action_route)
+        rendered_action_name = self._register_rendered_action(qobject)
+        gui_context.action_routes[action_route] = rendered_action_name
+        return qobject
+
+class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
     """A string used to format the title of the view ::
     title_format = 'Movie rental overview'
 
@@ -47,8 +83,6 @@ class AbstractView(QtWidgets.QWidget):
 
     header_widget = None
     """
-
-    _rendered_action_counter = itertools.count()
 
     title_format = ''
     header_widget = None
@@ -76,32 +110,3 @@ class AbstractView(QtWidgets.QWidget):
     @QtCore.qt_slot(object)
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
-
-
-    @classmethod
-    def _register_rendered_action(cls, qobject):
-        next_rendered_action = cls._rendered_action_counter.__next__()
-        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
-        qobject.setObjectName(rendered_action_name)
-        return rendered_action_name
-
-    def render_action(self, action, parent):
-        if action.render_hint == RenderHint.TOOL_BUTTON:
-            qobject = ActionToolbutton(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.COMBO_BOX:
-            qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
-        elif action.render_hint in [RenderHint.EXCLUSIVE_GROUP_BOX, RenderHint.NON_EXCLUSIVE_GROUP_BOX]:
-            qobject = GroupBoxFilterWidget(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.SEARCH_BUTTON:
-            qobject = SimpleSearchControl(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.PUSH_BUTTON:
-            qobject = ActionPushButton(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.LABEL:
-            qobject = ActionLabel(action, self.gui_context, parent)
-        else:
-            raise Exception('Unhandled render hint {} for {}'.format(
-                action.render_hint, type(action)
-            ))
-        rendered_action_name = self._register_rendered_action(qobject)
-        self.gui_context.action_routes[action] = rendered_action_name
-        return qobject

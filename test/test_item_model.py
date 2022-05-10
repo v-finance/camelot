@@ -688,8 +688,8 @@ class QueryQStandardItemModelCase(
         
         start = self.query_counter
         item_model = CollectionProxy(self.admin_route)
+        self.proxy.filter(SingleItemFilter(Person.id), self.first_person_id)
         item_model.set_value(ProxyRegistry.register(self.proxy))
-        item_model.set_filter(SingleItemFilter(Person.id), self.first_person_id)
         list(item_model.add_columns(self.columns))
         self._load_data(item_model)
         self.assertEqual(item_model.columnCount(), 2)

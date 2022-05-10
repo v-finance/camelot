@@ -65,7 +65,7 @@ from ...core.item_model import (
     ActionModeRole,
 )
 from ..crud_action import (
-    ChangeSelection, Created, Completion, Deleted, Filter, RowCount, RowData,
+    ChangeSelection, Created, Completion, Deleted, RowCount, RowData,
     SetData, SetColumns, Sort, Update, run_field_action
 )
 from ..crud_signals import CrudSignalHandler
@@ -181,7 +181,6 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
         self.__time = QtCore.QDateTime.currentDateTime()
 
-        self._filters = dict()
         self._columns = []
 
         self.__crud_request_counter = itertools.count()
@@ -427,11 +426,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         # todo : remove the concept of a validator
         model_context.validator = model_context.admin.get_validator()
         self._model_context = model_context
-        #self._filters = dict()
         self._reset()
-        # filters might be applied before the value is set
-        for list_filter, value in self._filters.items():
-            self._append_request(Filter(list_filter, None, value), None)
         # the columns might be set before the value, but they might be running
         # in the model thread for a different model context as well, so
         # resubmit the set columns task for this model context
@@ -441,20 +436,6 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
     def get_value(self):
         if self._model_context is not None:
             return self._model_context.proxy
-
-    def set_filter(self, list_filter, value):
-        """
-        Set the filter mode for a specific filter
-
-        :param list_filter: a :class:`camelot.admin.action.list_filter.Filter`
-           object, used as the key to filter on
-        :param value: the value on which to filter,
-        """
-        self.logger.debug('set_filter called')
-        old_value = self._filters.get(list_filter)
-        self._filters[list_filter] = value
-        if (self._model_context is not None):
-            self._append_request(Filter(list_filter, old_value, value), None)
 
     @QtCore.qt_slot(list)
     def objects_updated(self, objects):
