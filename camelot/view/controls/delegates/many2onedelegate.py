@@ -29,9 +29,8 @@
 
 import logging
 
-
-
-from ....core.qt import QtCore, py_to_variant, variant_to_py
+from ....core.naming import initial_naming_context
+from ....core.qt import Qt, QtCore, py_to_variant, variant_to_py
 from ....core.item_model import (
     PreviewRole, CompletionPrefixRole, CompletionsRole
 )
@@ -54,19 +53,20 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     def __init__(self,
                  parent=None,
-                 admin=None,
                  editable=True,
                  **kwargs):
         logger.debug('create many2onecolumn delegate')
-        assert admin != None
         CustomDelegate.__init__(self, parent, editable, **kwargs)
-        self.admin = admin
         self._kwargs = kwargs
         self._width = self._width * 2
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super(Many2OneDelegate, cls).get_standard_item(locale, model_context)
+        value_name = initial_naming_context._bind_object(model_context.value)
+        # eventually, all values should be names, so this should happen in the
+        # custom delegate class
+        item.setData(py_to_variant(value_name), Qt.ItemDataRole.EditRole)
         if model_context.value is not None:
             admin = model_context.field_attributes['admin']
             verbose_name = admin.get_verbose_object_name(model_context.value)
@@ -74,10 +74,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return item
 
     def createEditor(self, parent, option, index):
-        editor = editors.Many2OneEditor( self.admin,
-                                         parent,
-                                         editable=self.editable,
-                                         **self._kwargs )
+        editor = editors.Many2OneEditor(parent, **self._kwargs)
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect(self.commitAndCloseEditor)

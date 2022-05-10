@@ -45,29 +45,72 @@ Or use introspection of the SQLAlchemy session to update the GUI :
    :end-before: end auto update
    
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
+import itertools
+import json
+import logging
+import typing
 
-from camelot.admin.action.base import ActionStep
+from ...admin.action.application_action import unbind
+from ...admin.action.base import ActionStep
+from ...core.naming import CompositeName, initial_naming_context
+from ...core.serializable import DataclassSerializable
+from ..action_runner import ActionRunner
 from ..crud_signals import CrudSignalHandler
 
+leases = initial_naming_context.resolve_context('leases')
+
+LOGGER = logging.getLogger(__name__)
+
 @dataclass
-class CreateUpdateDelete(ActionStep):
+class CreateUpdateDelete(ActionStep, DataclassSerializable):
 
-    objects_deleted: tuple = field(default_factory=tuple)
-    objects_updated: tuple = field(default_factory=tuple)
-    objects_created: tuple = field(default_factory=tuple)
+    _lease_counter = itertools.count()
 
-    def gui_run(self, gui_context):
+    objects_deleted: InitVar[tuple] = tuple()
+    objects_updated: InitVar[tuple] = tuple()
+    objects_created: InitVar[tuple] = tuple()
+
+    deleted: typing.Union[CompositeName, None] = field(init=False, default=None)
+    updated: typing.Union[CompositeName, None] = field(init=False, default=None)
+    created: typing.Union[CompositeName, None] = field(init=False, default=None)
+
+    def __post_init__(self, objects_deleted, objects_updated, objects_created):
+        if len(objects_deleted):
+            self.deleted = leases.bind(str(next(self._lease_counter)), objects_deleted)
+        if len(objects_updated):
+            self.updated = leases.bind(str(next(self._lease_counter)), objects_updated)
+        if len(objects_created):
+            self.created = leases.bind(str(next(self._lease_counter)), objects_created)
+        if len(leases) > 10:
+            LOGGER.warn('Number of leases is growing to {}'.format(len(leases)))
+
+    @classmethod
+    def create_model_context(cls):
+        return None
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         # Presumed to be unnecessary, as ActionStep's gui_run constructs an ActionRunner on it's (empty) model_run,
         # which results in a unwanted round-trip to the model thread / server.
         #super(CreateUpdateDelete, self).gui_run(gui_context)
         crud_signal_handler = CrudSignalHandler()
-        if len(self.objects_deleted):
-            crud_signal_handler.objects_deleted.emit(self.objects_deleted)
-        if len(self.objects_updated):
-            crud_signal_handler.objects_updated.emit(self.objects_updated)
-        if len(self.objects_created):
-            crud_signal_handler.objects_created.emit(self.objects_created)
+        leases = []
+        if step['deleted'] is not None:
+            crud_signal_handler.objects_deleted.emit(step['deleted'])
+            leases.append(step['deleted'])
+        if step['updated'] is not None:
+            crud_signal_handler.objects_updated.emit(step['updated'])
+            leases.append(step['updated'])
+        if step['created'] is not None:
+            crud_signal_handler.objects_created.emit(step['created'])
+            leases.append(step['created'])
+        if len(leases):
+            cls.mode_name = leases
+            runner = ActionRunner(unbind.model_run, cls)
+            cls.mode_name = None
+            runner.exec()
 
 
 class FlushSession(CreateUpdateDelete):
@@ -82,7 +125,6 @@ class FlushSession(CreateUpdateDelete):
     """
 
     def __init__(self, session, update_depending_objects = True):
-        super(FlushSession, self).__init__()
         #
         # @todo : deleting of objects should be moved from the collection_proxy
         #         to here, once deleting rows is reimplemented as an action
@@ -90,13 +132,13 @@ class FlushSession(CreateUpdateDelete):
         # @todo : handle the creation of new objects
         #
         # list of objects that need to receive an update signal
-        dirty_objects = set( session.dirty )
+        dirty_objects = set(session.dirty)
         
         #for dirty_object in session.dirty:
         #    obj_admin = admin.get_related_admin( type( dirty_object ) )
         #    if obj_admin:
         #        dirty_objects.update( obj_admin.get_depending_objects( dirty_object ) )
-        self.objects_deleted = tuple(session.deleted)
+        objects_deleted = tuple(session.deleted)
         #
         # Only now is the full list of dirty objects available, so the deleted
         # can be removed from them
@@ -108,7 +150,10 @@ class FlushSession(CreateUpdateDelete):
                 pass
         
         session.flush()
-        self.objects_updated = tuple(dirty_objects)
+        super(FlushSession, self).__init__(
+            objects_deleted=objects_deleted,
+            objects_updated=tuple(dirty_objects),
+        )
 
 
 class UpdateObjects(CreateUpdateDelete):
@@ -118,11 +163,11 @@ class UpdateObjects(CreateUpdateDelete):
     """
 
     def __init__(self, objects):
-        super(UpdateObjects, self).__init__()
-        self.objects_updated = tuple(objects)
+        super(UpdateObjects, self).__init__(objects_updated=tuple(objects))
 
     def get_objects(self):
-        return self.objects_updated
+        """Use this method to get access to the objects to change in unit tests"""
+        return initial_naming_context.resolve(self.updated)
 
 class DeleteObjects(CreateUpdateDelete):
     """Inform the GUI that objects are going to be deleted.
@@ -131,11 +176,11 @@ class DeleteObjects(CreateUpdateDelete):
     """
 
     def __init__( self, objects ):
-        super(DeleteObjects, self).__init__()
-        self.objects_deleted = tuple(objects)
+        super(DeleteObjects, self).__init__(objects_deleted=tuple(objects))
 
     def get_objects(self):
-        return self.objects_deleted
+        """Use this method to get access to the objects to change in unit tests"""
+        return initial_naming_context.resolve(self.deleted)
 
 class CreateObjects(CreateUpdateDelete):
     """Inform the GUI that objects were created.
@@ -144,12 +189,8 @@ class CreateObjects(CreateUpdateDelete):
     """
 
     def __init__( self, objects ):
-        super(CreateObjects, self).__init__()
-        self.objects_created = tuple(objects)
+        super(CreateObjects, self).__init__(objects_created=tuple(objects))
 
     def get_objects(self):
-        return self.objects_created
-
-
-
-
+        """Use this method to get access to the objects to change in unit tests"""
+        return initial_naming_context.resolve(self.created)

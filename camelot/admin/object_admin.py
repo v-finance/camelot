@@ -647,6 +647,7 @@ be specified using the verbose_name attribute.
         elif isinstance(field_type, typing._GenericAlias) and field_type.__origin__ == list and issubclass(field_type.__args__[0].__class__, EntityMeta):
             return {'delegate':delegates.One2ManyDelegate,
                     'target':field_type.__args__[0],
+                    'python_type': list,
                     }
         return {}
     
@@ -739,7 +740,8 @@ be specified using the verbose_name attribute.
         derived from the given attributes.
         """
         column_width = field_attributes.get('column_width', None)
-        
+
+        related_admin = None
         target = field_attributes.get('target', None)
         if target is not None:
             # If there is a `target` field attribute, verify the `admin` attribute has been instantiated
@@ -823,6 +825,10 @@ be specified using the verbose_name attribute.
                 'filter_strategy': None,
                 'search_strategy': None,
             })
+
+            if related_admin is not None:
+                value_attributes['admin'] = type(related_admin)
+                value_attributes['actions'].append(field_action.SelectObject())
 
             class ChangeValueAdmin(ObjectAdmin):
                 verbose_name = ugettext_lazy('Change')
