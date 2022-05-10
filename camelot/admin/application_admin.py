@@ -357,10 +357,13 @@ shortcut confusion and reduce the number of status updates.
             parent_menu.items.insert(parent_menu.items.index(add_before), menu)
         return menu
 
-    def add_main_action(self, action, parent_menu):
+    def add_main_action(self, action, parent_menu=None):
         assert isinstance(action, Action)
-        assert isinstance(parent_menu, MenuItem)
         action_route = self._register_action_route(self._admin_route, action)
+        if parent_menu is None:
+            parent_menu = self._main_menu
+        else:
+            assert isinstance(parent_menu, MenuItem)
         parent_menu.items.append(MenuItem(action_route=action_route))
 
     def add_main_separator(self, parent_menu):
