@@ -50,6 +50,7 @@ class MenuItem(DataclassSerializable):
     action_route: typing.Union[Route, None] = None
     role: typing.Optional[str] = None
     items: typing.List['MenuItem'] = field(default_factory=list)
+    open: bool = False
 
     def __post_init__(self, ):
         assert (self.action_route is None) or ((self.verbose_name is None) and (self.icon is None))

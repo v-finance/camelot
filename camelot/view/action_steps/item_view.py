@@ -259,6 +259,7 @@ class OpenQmlTableView(OpenTableView):
 
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.admin_route = tuple(step['admin_route'])
+        list_gui_context.context_id = None
 
         new_model = CollectionProxy(tuple(step['admin_route']))
         list(new_model.add_columns(step['columns']))
@@ -288,7 +289,7 @@ class ToFirstRow(ActionStep, DataclassSerializable):
         if gui_context.item_view is not None:
             gui_context.item_view.selectRow( 0 )
         else:
-            qml_action_step(gui_context, 'ToFirstRow', keep_context_id=True)
+            qml_action_step(gui_context, 'ToFirstRow')
 
 @dataclass
 class ToLastRow(ActionStep, DataclassSerializable):
@@ -300,7 +301,7 @@ class ToLastRow(ActionStep, DataclassSerializable):
             item_view = gui_context.item_view
             item_view.selectRow( item_view.model().rowCount() - 1 )
         else:
-            qml_action_step(gui_context, 'ToLastRow', keep_context_id=True)
+            qml_action_step(gui_context, 'ToLastRow')
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
@@ -311,7 +312,17 @@ class ClearSelection(ActionStep, DataclassSerializable):
         if gui_context.item_view is not None:
             gui_context.item_view.clearSelection()
         else:
-            qml_action_step(gui_context, 'ClearSelection', serialized_step, keep_context_id=True)
+            qml_action_step(gui_context, 'ClearSelection', serialized_step)
+
+@dataclass
+class SetSelection(ActionStep, DataclassSerializable):
+    """Set selection."""
+
+    rows: List[int] = field(default_factory=list)
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        qml_action_step(gui_context, 'SetSelection', serialized_step)
 
 @dataclass
 class RefreshItemView(ActionStep, DataclassSerializable):

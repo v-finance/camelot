@@ -92,6 +92,7 @@ class QmlActionDispatch(QtCore.QObject):
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
+            root_backend.releaseContext.connect(self.unregister)
         # register None gui_context as with context_id 0
         self.register(None)
 
@@ -110,6 +111,10 @@ class QmlActionDispatch(QtCore.QObject):
             model.destroyed.connect(self.remove_model)
         gui_context.context_id = context_id
         return context_id
+
+    def unregister(self, context_id):
+        if context_id in self.gui_contexts:
+            del self.gui_contexts[context_id]
 
     @QtCore.qt_slot(QtCore.QObject)
     def remove_model(self):
@@ -152,16 +157,17 @@ class QmlActionDispatch(QtCore.QObject):
 qml_action_dispatch = QmlActionDispatch()
 
 
-def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, keep_context_id=False, model=None):
+def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model=None):
     """
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
     global qml_action_dispatch
-    if keep_context_id:
-        assert gui_context.context_id is not None
-        context_id = gui_context.context_id
-    else:
+    if gui_context is None:
+        context_id = 0
+    elif gui_context.context_id is None:
         context_id = qml_action_dispatch.register(gui_context, model)
+    else:
+        context_id = gui_context.context_id
     backend = get_qml_root_backend()
     response = backend.actionStep(context_id, name, step, props)
     return json.loads(response.data())
