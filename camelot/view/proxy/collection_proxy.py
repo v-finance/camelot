@@ -265,7 +265,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         timer = self.findChild(QtCore.QTimer, 'timer')
         if timer is not None:
             if self._update_requests:
-                self._append_request(SetData(self._update_requests), None)
+                self._append_request(SetData(), [u for u in self._update_requests])
                 self._update_requests = list()
             if self._rows_under_request:
                 self._append_request(
@@ -633,6 +633,9 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                 logger.debug('set data called on row without object')
                 return False
             self.logger.debug('set data ({0},{1})'.format(row, column))
+            if not isinstance(value, (list, tuple)):
+                # the value is not a name, bind it
+                value = initial_naming_context._bind_object(value)
             self._update_requests.append((row, obj_id, column, value))
             # dont trigger the timer, since the item  model might be deleted
             # by the time the timout happens

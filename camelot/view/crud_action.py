@@ -8,7 +8,7 @@ from ..admin.action.field_action import FieldActionModelContext
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
 from ..core.exception import log_programming_error
 from ..core.naming import initial_naming_context
-from ..core.qt import Qt, QtGui, py_to_variant, variant_to_py
+from ..core.qt import Qt, QtGui, py_to_variant
 from .item_model.cache import ValueCache
 
 
@@ -438,22 +438,11 @@ class SetData(Update, ChangedObjectMixin):
 
     name = 'set_data'
 
-    def __init__(self, updates):
-        super(SetData, self).__init__()
-        # Copy the update requests and clear the list of requests
-        self.updates = [u for u in updates]
-
-    def __repr__(self):
-        return '{0.__class__.__name__}([{1}])'.format(
-            self,
-            ', '.join(['(row={0}, column={1})'.format(row, column) for row, _o, column, _v in self.updates])
-        )
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
-        for row, obj_id, column, value in self.updates:
+        for row, obj_id, column, value in mode:
             grouped_requests[(row, obj_id)].append((column, value))
         admin = model_context.admin
         for (row, obj_id), request_group in grouped_requests.items():
@@ -476,10 +465,10 @@ class SetData(Update, ChangedObjectMixin):
                 static_field_attributes = model_context.static_field_attributes[column]
                 field_name = static_field_attributes['field_name']
 
-                new_value = variant_to_py(value)
                 logger.debug( 'set data for row %s;col %s' % ( row, column ) )
 
-                old_value = getattr(obj, field_name )
+                new_value = initial_naming_context.resolve(tuple(value))
+                old_value = getattr(obj, field_name)
                 depending_objects_before_set = set(admin.get_depending_objects(obj))
                 value_changed = ( new_value != old_value )
                 #
@@ -508,9 +497,6 @@ class SetData(Update, ChangedObjectMixin):
                     continue
                 # update the model
                 try:
-                    if isinstance(new_value, (list, tuple)) and tuple(new_value) in initial_naming_context:
-                        # Handle only some values (completions) being named values that need resolving for now.
-                        new_value = initial_naming_context.resolve(tuple(new_value))
                     admin.set_field_value(obj, field_name, new_value)
                     #
                     # setting this attribute, might trigger a default function 
