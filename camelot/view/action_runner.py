@@ -31,8 +31,7 @@ import contextlib
 import functools
 import logging
 
-
-
+from ..core.naming import initial_naming_context, CompositeName
 from ..core.serializable import DataclassSerializable
 from ..core.qt import QtCore, is_deleted
 from camelot.admin.action import ActionStep
@@ -78,15 +77,12 @@ class ActionRunner( QtCore.QEventLoop ):
     non_blocking_action_step_signal = QtCore.qt_signal(object)
     non_blocking_serializable_action_step_signal = QtCore.qt_signal(str, bytes)
     
-    def __init__( self, generator_function, gui_context ):
+    def __init__(self, action_name: CompositeName, gui_context):
         """
-        :param generator_function: function to be called in the model thread,
-            that will return the generator
         :param gui_context: the GUI context of the generator
         """
         super( ActionRunner, self ).__init__()
         self._return_code = None
-        self._generator_function = generator_function
         self._generator = None
         self._gui_context = gui_context
         self._model_context = gui_context.create_model_context()
@@ -94,8 +90,8 @@ class ActionRunner( QtCore.QEventLoop ):
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
         self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
         if REQUEST_LOGGER.isEnabledFor(logging.DEBUG):
-            REQUEST_LOGGER.debug('{} : {}'.format(generator_function, gui_context.mode_name))
-        post(self._initiate_generator, self.generator, self.exception, args=(gui_context.mode_name,))
+            REQUEST_LOGGER.debug('{} : {}'.format(action_name, gui_context.mode_name))
+        post(self._initiate_generator, self.generator, self.exception, args=(action_name, gui_context.mode_name,))
     
     def exit( self, return_code = 0 ):
         """Reimplementation of exit to store the return code"""
@@ -112,9 +108,10 @@ class ActionRunner( QtCore.QEventLoop ):
             return super( ActionRunner, self ).exec( flags )
         return self._return_code
         
-    def _initiate_generator( self, mode ):
+    def _initiate_generator(self, action_name, mode):
         """Create the model context and start the generator"""
-        return self._generator_function( self._model_context, mode )
+        action = initial_naming_context.resolve(tuple(action_name))
+        return action.model_run(self._model_context, mode)
 
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates

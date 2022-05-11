@@ -48,8 +48,8 @@ from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy.collection_proxy import CollectionProxy
 
 from .item_view import UpdateTableView
-from ..controls.action_widget import ActionPushButton
 from ..controls.delegates import ComboBoxDelegate
+from ..controls.view import ViewWithActionsMixin
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
 from ...admin.admin_route import AdminRoute, Route, RouteWithRenderHint
@@ -57,7 +57,7 @@ from ...admin.object_admin import ObjectAdmin
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 
 
-class ChangeObjectDialog( StandaloneWizardPage ):
+class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
     """A dialog to change an object.  This differs from a FormView in that
     it does not contains Actions, and has an OK button that is enabled when
     the object is valid.
@@ -128,30 +128,28 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
         # set the actions in the actions panel
-        self.set_actions([action.route for action in form_actions], action_states)
+        self.set_actions(form_actions, action_states)
         # set the value last, so the validity can be updated
         proxy = admin.get_proxy([obj])
         model.set_value(ProxyRegistry.register(proxy))
         list(model.add_columns((fn for fn, _fa in columns)))
 
-    def render_action(self, action, parent):
-        if action.render_hint == RenderHint.PUSH_BUTTON:
-            return ActionPushButton(action, self.gui_context, parent)
-        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
-
     @QtCore.qt_slot(list, list)
-    def set_actions(self, action_routes, action_states):
+    def set_actions(self, actions, action_states):
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
-        if action_routes and layout:
+        if actions and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
             actions_widget = ActionsBox(parent = self)
             actions_widget.setObjectName('actions')
-            for action_route in action_routes:
-                action = initial_naming_context.resolve(tuple(action_route))
-                action_widget = self.render_action(action, actions_widget)
+            for action in actions:
+                self.render_action(
+                    action.render_hint, action.route,
+                    self.gui_context, actions_widget
+                )
+                action_widget = self.render_action(action.route, actions_widget)
                 state = None
                 for action_state in action_states:
-                    if action_state[0] == action_route:
+                    if action_state[0] == action.route:
                         state = action_state[1]
                         break
                 if state is not None:

@@ -39,6 +39,7 @@ from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
                         variant_to_py)
 
 from ...core.item_model import ActionModeRole
+from ..action_runner import ActionRunner
 from camelot.admin.action.base import State
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.core.naming import initial_naming_context
@@ -401,8 +402,8 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot()
     def validate_close( self ):
-        action = initial_naming_context.resolve(self.form_close_route)
-        action.gui_run(self.gui_context)
+        action_runner = ActionRunner(self.form_close_route, self.gui_context)
+        action_runner.exec()
 
     def close_view( self, accept ):
         self.accept_close_event = accept

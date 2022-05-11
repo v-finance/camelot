@@ -11,6 +11,9 @@ from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtGui, py_to_variant
 from .item_model.cache import ValueCache
 
+crud_action_context = initial_naming_context.bind_new_context(
+    'crud_action', immutable=True
+)
 
 def strip_data_from_object( obj, columns ):
     """For every column in columns, get the corresponding value from the
@@ -144,6 +147,8 @@ class ChangeSelection(Action):
             action_states.append(state)
         yield action_steps.ChangeSelection(mode['action_routes'], action_states)
 
+changeselection_name = crud_action_context.bind(ChangeSelection.name, ChangeSelection(), True)
+
 class Completion(Action):
 
     name = 'completion'
@@ -177,8 +182,10 @@ class Completion(Action):
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
-    
-    
+
+completion_name = crud_action_context.bind(Completion.name, Completion(), True)
+
+
 class RowCount(Action):
 
     name = 'row_count'
@@ -191,8 +198,10 @@ class RowCount(Action):
         model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
         model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
         yield action_steps.RowCount(rows)
-        
-   
+
+rowcount_name = crud_action_context.bind(RowCount.name, RowCount(), True)
+
+
 class Update(Action, UpdateMixin):
 
     name = 'update'
@@ -222,6 +231,9 @@ class Update(Action, UpdateMixin):
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
 
+update_name = crud_action_context.bind(Update.name, Update(), True)
+
+
 class Created(Action, UpdateMixin):
     """
     Does not subclass RowCount, because row count will reset the whole edit
@@ -250,6 +262,9 @@ class Created(Action, UpdateMixin):
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
+
+created_name = crud_action_context.bind(Created.name, Created(), True)
+
 
 class Deleted(RowCount, UpdateMixin):
 
@@ -298,6 +313,8 @@ class Deleted(RowCount, UpdateMixin):
             # but updating the view is only needed if the rows changed
             yield from super(Deleted, self).model_run(model_context, mode)
 
+deleted_name = crud_action_context.bind(Deleted.name, Deleted(), True)
+
 
 class RowData(Update):
 
@@ -344,37 +361,8 @@ class RowData(Update):
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
 
-class RunFieldAction(Action):
+rowdata_name = crud_action_context.bind(RowData.name, RowData(), True)
 
-    name = 'field_action'
-
-    def model_run(self, model_context, mode):
-        row = mode['row']
-        column = mode['column']
-        obj_id = mode['object']
-        action_route = mode['action_route']
-        action_mode = mode['action_mode']
-        object_slice = list(model_context.proxy[row:row+1])
-        if not len(object_slice):
-            logger.error('Cannot run field action : no object in row {0}'.format(row))
-            return
-        obj = object_slice[0]
-        if not (id(obj)==obj_id):
-            logger.warn('Cannot run field action : object in row {0} is inconsistent with view, {1} vs {2}'.format(row, id(obj), obj_id))
-            return
-        action = initial_naming_context.resolve(tuple(action_route))
-        static_field_attributes = model_context.static_field_attributes[column]
-        field_action_model_context = FieldActionModelContext()
-        field_action_model_context.field = static_field_attributes['field_name']
-        field_action_model_context.value = getattr(
-            obj, static_field_attributes['field_name']
-        )
-        # @todo : should include dynamic field attributes, but those are not
-        # yet used in any of the field actions
-        field_action_model_context.field_attributes = static_field_attributes
-        yield from action.model_run(field_action_model_context, action_mode)
-
-run_field_action = RunFieldAction()
 
 class SetColumns(Action):
 
@@ -397,6 +385,8 @@ class SetColumns(Action):
             #included_attrs = ['name', 'field_name', 'editable', 'nullable', 'colmn_width']
             #static_field_attributes.append({attr: fa[attr] for attr in included_attrs})
         yield action_steps.SetColumns(model_context.static_field_attributes)
+
+setcolumns_name = crud_action_context.bind(SetColumns.name, SetColumns(), True)
 
 
 class ChangedObjectMixin(object):
@@ -523,6 +513,8 @@ class SetData(Update, ChangedObjectMixin):
             objects_deleted=deleted_objects,
         )
 
+setdata_name = crud_action_context.bind(SetData.name, SetData(), True)
+
 
 class Sort(RowCount):
 
@@ -536,6 +528,8 @@ class Sort(RowCount):
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
+
+sort_name = crud_action_context.bind(Sort.name, Sort(), True)
 
 
 class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
@@ -583,4 +577,4 @@ class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
                 objects_deleted=deleted_objects,
             )
 
-run_field_action = RunFieldAction()
+runfieldaction_name = crud_action_context.bind(RunFieldAction.name, RunFieldAction(), True)

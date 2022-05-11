@@ -4,7 +4,7 @@ import json
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py, is_deleted
 from camelot.core.exception import UserException
-from camelot.core.naming import initial_naming_context
+from .action_runner import ActionRunner
 
 LOGGER = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class QmlActionDispatch(QtCore.QObject):
                 'Could not find gui_context for context id: {}'.format(context_id),
                 detail='run_action({}, {})'.format(route, args)
             )
-        action = initial_naming_context.resolve(tuple(route.split('/')))
+        action_name = tuple(route.split('/'))
 
         gui_context = self.gui_contexts[context_id].copy()
 
@@ -150,7 +150,8 @@ class QmlActionDispatch(QtCore.QObject):
             args = variant_to_py(args.toVariant())
 
         gui_context.mode_name = args
-        action.gui_run( gui_context )
+        action_runner = ActionRunner(action_name, gui_context)
+        action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()
 
