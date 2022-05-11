@@ -51,7 +51,7 @@ import json
 import logging
 import typing
 
-from ...admin.action.application_action import unbind
+from ...admin.action.application_action import unbind_name
 from ...admin.action.base import ActionStep
 from ...core.naming import CompositeName, initial_naming_context
 from ...core.serializable import DataclassSerializable
@@ -108,7 +108,7 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
             leases.append(step['created'])
         if len(leases):
             cls.mode_name = leases
-            runner = ActionRunner(unbind.model_run, cls)
+            runner = ActionRunner(unbind_name, cls)
             cls.mode_name = None
             runner.exec()
 

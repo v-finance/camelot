@@ -29,12 +29,16 @@
 
 """Main function, to be called to start the GUI interface"""
 
-import functools
+import logging
 import sys
 
+from ..core.naming import initial_naming_context
 from ..core.qt import QtCore, QtWidgets
 from ..admin.action.application import Application
 from ..admin.action.application_action import ApplicationActionGuiContext
+from ..view.action_runner import ActionRunner
+
+LOGGER = logging.getLogger(__name__)
 
 def main(application_admin):
     """shortcut main function, call this function to start the GUI interface 
@@ -63,9 +67,20 @@ def main_action(action):
     app = QtCore.QCoreApplication.instance()
     if app is None:
         app = QtWidgets.QApplication([a for a in sys.argv if a])
-    gui_context = ApplicationActionGuiContext()
-    QtCore.QTimer.singleShot(0, functools.partial(action.gui_run, 
-                                                   gui_context))
-    result = app.exec()
-    sys.exit( result )
+    try:
+        admin_route = action.application_admin.get_admin_route()
+        action.set_application_attributes()
+        main_action_name = initial_naming_context.bind(('main_action',), action)
+        gui_context = ApplicationActionGuiContext()
+        gui_context.admin_route = admin_route
+        action_runner = ActionRunner(main_action_name, gui_context)
+        action_runner.exec()
+        result = app.exec()
+        sys.exit(result)
+    except Exception as e:
+        from .controls import exception
+        exc_info = exception.register_exception(LOGGER, 'exception in initialization', e)
+        dialog = exception.ExceptionDialog(exc_info)
+        dialog.exec()
+        QtCore.QCoreApplication.exit(-1)
 

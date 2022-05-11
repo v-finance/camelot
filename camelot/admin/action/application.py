@@ -54,24 +54,6 @@ class Application( Action ):
         if application_admin is None:
             application_admin = ApplicationAdmin()
         self.application_admin = application_admin
-        self.gui_context = None
-        
-    def gui_run(self, gui_context ):
-        """The main entry point of the application, method will show the splash,
-        start the event loop, start the model thread and pass control asap to 
-        the model thread"""
-        try:
-            admin_route = self.application_admin.get_admin_route()
-            self.gui_context = gui_context
-            self.set_application_attributes()
-            self.gui_context.admin_route = admin_route
-            super(Application, self).gui_run(gui_context)
-        except Exception as e:
-            from ...view.controls import exception
-            exc_info = exception.register_exception( logger, 'exception in initialization', e )
-            dialog = exception.ExceptionDialog(exc_info)
-            dialog.exec()
-            QtCore.QCoreApplication.exit(-1)
 
     def set_application_attributes(self):
         """Sets the attributes of the QApplication object
