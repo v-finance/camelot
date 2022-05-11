@@ -222,7 +222,10 @@ the default mode.
         if self.modes:
             menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
             if self.icon is not None:
-                menu.setIcon(from_admin_icon(self.icon).getQIcon())
+                #menu.setIcon(from_admin_icon(self.icon).getQIcon())
+                # For now work work the old way until master can be merged into
+                # FF
+                menu.setIcon(self.icon.getQIcon())
             parent.addMenu(menu)
             return menu
         else:
