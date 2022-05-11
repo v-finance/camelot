@@ -764,10 +764,13 @@ class Filter(Action):
     def get_name(self):
         return '{}_{}'.format(self.name, self.attribute.key)
 
-    def gui_run(self, gui_context, value):
-        model = gui_context.get_item_model()
-        if model is not None:
-            model.set_filter(self, value)
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        new_value = mode
+        old_value = model_context.proxy.get_filter(self)
+        if old_value != new_value:
+            model_context.proxy.filter(self, new_value)
+            yield action_steps.RefreshItemView()
 
     def get_operator(self, values):
         return Operator.in_ if values else Operator.is_empty

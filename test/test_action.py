@@ -40,9 +40,10 @@ from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.action_steps.profile import EditProfiles
-from camelot.view.controls import actionsbox, delegates, tableview
+from camelot.view.controls import delegates, tableview
 from camelot.view.controls.action_widget import ActionPushButton
-from camelot.view.controls.view import AbstractView
+from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+from camelot.view.controls.filter_widget import ComboBoxFilterWidget
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.view.qml_view import get_qml_root_backend
@@ -297,6 +298,9 @@ class ListActionsCase(
         self.thread.post(self.setup_proxy)
         self.process()
         self.admin_route = self.admin.get_admin_route()
+        self.combo_box_filter_route = self.admin._register_action_route(
+            self.admin_route, self.combo_box_filter
+        )
         self.setup_item_model(self.admin_route, self.admin.get_name())
         self.movie_admin = app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
@@ -307,7 +311,7 @@ class ListActionsCase(
         table_view.setCurrentIndex(self.item_model.index(0, 0))
         self.gui_context = list_action.ListActionGuiContext()
         self.gui_context.item_view = table_view
-        self.gui_context.view = AbstractView()
+        self.gui_context.view = One2ManyEditor(admin_route=self.admin_route)
         self.gui_context.admin_route = self.admin_route
         self.gui_context.view.gui_context = self.gui_context
         self.model_context = self.gui_context.create_model_context()
@@ -692,29 +696,19 @@ class ListActionsCase(
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        widget = self.gui_context.view.render_action(self.group_box_filter, None)
-        widget.set_state(state)
-        self.assertTrue(len(widget.get_value()))
-        widget.run_action()
-        self.grab_widget(widget)
+        self.gui_run(self.group_box_filter, self.gui_context)
 
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        widget = self.gui_context.view.render_action(self.combo_box_filter, None)
-        widget.set_state(state)
-        self.assertTrue(len(widget.get_value()))
-        widget.run_action()
+        widget = self.gui_context.view.render_action(
+            self.combo_box_filter.render_hint, self.combo_box_filter_route,
+            self.gui_context, None
+        )
+        ComboBoxFilterWidget._set_state_v2(widget, state._to_dict())
+        self.assertTrue(widget.count())
+        self.gui_run(self.combo_box_filter, self.gui_context)
         self.grab_widget(widget)
-
-    def test_filter_list(self):
-        action_box = actionsbox.ActionsBox(None)
-        for action in [self.group_box_filter,
-                       self.combo_box_filter]:
-            action_widget = self.gui_context.view.render_action(action, None)
-            action_box.layout().addWidget(action_widget)
-        self.grab_widget(action_box)
-        return action_box
 
     def test_orm( self ):
 
