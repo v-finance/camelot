@@ -318,7 +318,6 @@ class ChangeObject(ActionStep):
     def render(self, gui_context):
         """create the dialog. this method is used to unit test
         the action step."""
-        super(ChangeObject, self).gui_run(gui_context)
         dialog = ChangeObjectDialog(self.obj,
                                     self.admin_route,
                                     self.admin,
