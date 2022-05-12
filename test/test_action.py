@@ -86,8 +86,7 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
         self.gui_context.admin_route = self.admin_route
 
     def test_action_step(self):
-        step = ActionStep()
-        step.gui_run(self.gui_context)
+        ActionStep()
 
     def test_action(self):
 
@@ -115,9 +114,13 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     images_path = test_view.static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        cls.action = ImportCovers()
+        cls.action_name = initial_naming_context.bind(('import_covers',), cls.action)
+
     def setUp(self):
         get_qml_root_backend().setVisible(True, False)
-        self.action = ImportCovers()
         self.admin_route = app_admin.get_admin_route()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin_route = app_admin.get_admin_route()
@@ -138,7 +141,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
                                                        state_name ) )
 
     def test_action_push_botton( self ):
-        widget = ActionPushButton( self.action,
+        widget = ActionPushButton( self.action_name,
                                    self.gui_context,
                                    self.parent )
         self.grab_widget_states( widget, 'application' )
@@ -341,10 +344,10 @@ class ListActionsCase(
 
         # the state does not change when the current row changes,
         # to make the actions usable in the main window toolbar
-        to_last.gui_run( gui_context )
+        self.gui_run(to_last.gui_run, gui_context)
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
-        to_first.gui_run( gui_context )
+        self.gui_run(to_first.gui_run, gui_context)
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
 
@@ -504,7 +507,7 @@ class ListActionsCase(
     def test_duplicate_selection( self ):
         initial_row_count = self._row_count(self.item_model)
         action = list_action.DuplicateSelection()
-        action.gui_run(self.gui_context)
+        self.gui_run(action, self.gui_context)
         self.process()
         new_row_count = self._row_count(self.item_model)
         self.assertEqual(new_row_count, initial_row_count+1)
@@ -565,7 +568,7 @@ class ListActionsCase(
         selected_object = self.model_context.get_object()
         self.assertTrue(selected_object in self.session)
         delete_selection_action = list_action.DeleteSelection()
-        delete_selection_action.gui_run( self.gui_context )
+        self.gui_run(delete_selection_action, self.gui_context)
         self.process()
         self.assertFalse(selected_object in self.session)
 
@@ -678,7 +681,7 @@ class ListActionsCase(
 
     def test_add_new_object(self):
         add_new_object_action = list_action.AddNewObject()
-        add_new_object_action.gui_run( self.gui_context )
+        self.gui_run(add_new_object_action, self.gui_context)
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
@@ -687,7 +690,7 @@ class ListActionsCase(
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        SetFilters.gui_run(self.gui_context, set_filters_step[1])
+        self.gui_run(SetFilters, self.gui_context, set_filters_step[1])
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):

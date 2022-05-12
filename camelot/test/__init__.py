@@ -41,6 +41,7 @@ import json
 
 
 from ..admin.action.base import ActionStep
+from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..view.action_steps.orm import CreateUpdateDelete
 from ..view.action_runner import ActionRunner
@@ -101,6 +102,9 @@ class GrabMixinCase(object):
         painter.end()
         outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
+# make sure the name is reserved, so we can unbind it without exception
+test_action_name = initial_naming_context.bind(('test_action',), object())
+
 class ActionMixinCase(object):
     """
     Helper methods to simulate running actions in a different thread
@@ -140,9 +144,9 @@ class ActionMixinCase(object):
 
         class IteratingActionRunner(ActionRunner):
 
-            def __init__(self, generator_function, gui_context):
+            def __init__(self, action_name, gui_context):
                 super(IteratingActionRunner, self).__init__(
-                    generator_function, gui_context
+                    action_name, gui_context
                 )
                 self.return_queue = []
                 self.exception_queue = []
@@ -192,7 +196,9 @@ class ActionMixinCase(object):
                 LOGGER.debug("iteration finished")
                 yield None
 
-        runner = IteratingActionRunner(action.model_run, gui_context)
+        initial_naming_context.unbind(test_action_name)
+        action_name = initial_naming_context.bind(('test_action',), action)
+        runner = IteratingActionRunner(action_name, gui_context)
         yield from runner.run()
 
 
