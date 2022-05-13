@@ -253,24 +253,20 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         action_routes = json.loads(index.model().data(index, ActionRoutesRole))
         if len(action_routes) == 0:
             return
-        for action_widget in editor.findChildren(QtWidgets.QToolButton):
-            action_route = action_widget.property('action_route')
-            if not action_route:
-                continue
-            try:
-                action_index = action_routes.index(list(action_route))
-            except ValueError:
-                LOGGER.error('action route not found {}, available routes'.format(
-                    action_widget.action_route
+        for action_route, action_state in zip(action_routes, action_states):
+            for action_widget in editor.findChildren(QtWidgets.QToolButton):
+                action_route_of_widget = action_widget.property('action_route')
+                if action_route_of_widget is None:
+                    continue
+                if list(action_route_of_widget)==action_route:
+                    ActionToolbutton.set_toolbutton_state(
+                        action_widget, action_state, editor.action_menu_triggered
+                    )
+                    break
+            else:
+                LOGGER.error('action route not found {} in editor'.format(
+                    action_route
                 ))
-                for route in action_routes:
-                    LOGGER.error(route)
-                continue
-            state = action_states[action_index]
-            if state is not None:
-                ActionToolbutton.set_toolbutton_state(
-                    action_widget, state, editor.action_menu_triggered
-                )
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))
