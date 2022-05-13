@@ -59,7 +59,6 @@ from camelot.model.memento import Memento
 from camelot.model.party import ( Person, Organization, 
                                   PartyCategory )
 from camelot.model.i18n import Translation
-from camelot.model.batch_job import BatchJob, BatchJobType
 
 from camelot_example.model import Movie, Tag
 
@@ -82,8 +81,6 @@ app_admin.add_navigation_entity_table(PartyCategory, relations)
 
 app_admin.add_navigation_entity_table(Memento, configuration)
 app_admin.add_navigation_entity_table(Translation, configuration)
-app_admin.add_navigation_entity_table(BatchJobType, configuration)
-app_admin.add_navigation_entity_table(BatchJob, configuration) 
 
 # end sections
     
