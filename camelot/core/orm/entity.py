@@ -41,7 +41,7 @@ from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Integer
+from sqlalchemy.types import Date, Integer
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
@@ -101,7 +101,7 @@ class EntityMeta( DeclarativeMeta ):
        This entity argument allows registering a rank-based entity class its ranking definition.
        Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
        which should be an Integer type column that holds the numeric rank value.
-       The registered rank definition can be retrieved on an entity class pos- declaration using the provided `get_ranked_by` method.
+       The registered rank definition can be retrieved on an entity class post-declaration using the provided `get_ranked_by` method.
        See its documentation for more details.
 
        :example:
@@ -135,6 +135,11 @@ class EntityMeta( DeclarativeMeta ):
        |     ...
        |
        | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
+
+    * 'application_date'
+       Registers the application date attribute of the target entity.
+       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
+       which should be of type Date.
 
     * 'editable'
        This entity argument is a flag that when set to False will register the entity class as globally non-editable.
@@ -230,6 +235,11 @@ class EntityMeta( DeclarativeMeta ):
                 order_search_by = entity_args.get('order_search_by')
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+
+                application_date = entity_args.get('application_date')
+                if application_date is not None:
+                    assert isinstance(col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
+                    assert isinstance(rank_col.type, Date), 'The application date should be of type Date'
 
                 retention_level = entity_args.get('retention_level')
                 if retention_level is not None:
