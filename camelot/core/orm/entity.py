@@ -256,7 +256,8 @@ class EntityMeta( DeclarativeMeta ):
                 # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
                 # table.primary_key returns an iterator so we can't test the length or something like that
                 table = dict_.get('__table__', None)
-                if table is None or table.primary_key.issubset([]):
+                import wingdbstub
+                if table is None or table.primary_key is None:
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
             # Auto-assign entity_args and name entity argument if not configured explicitly.
