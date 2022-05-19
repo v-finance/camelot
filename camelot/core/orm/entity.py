@@ -238,8 +238,9 @@ class EntityMeta( DeclarativeMeta ):
 
                 application_date = entity_args.get('application_date')
                 if application_date is not None:
-                    assert isinstance(col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
-                    assert isinstance(rank_col.type, Date), 'The application date should be of type Date'
+                    assert isinstance(application_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
+                    application_date_col = application_date.prop.columns[0] if isinstance(application_date, orm.attributes.InstrumentedAttribute) else application_date
+                    assert isinstance(application_date_col.type, Date), 'The application date should be of type Date'
 
                 retention_level = entity_args.get('retention_level')
                 if retention_level is not None:
