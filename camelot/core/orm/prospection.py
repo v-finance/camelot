@@ -1,4 +1,3 @@
-import functools
 import types
 
 from camelot.model.authentication import end_of_times
