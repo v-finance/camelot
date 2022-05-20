@@ -34,6 +34,7 @@ blocks for creating the :class:`camelot.core.orm.Entity`.
 These classes can be reused if a custom base class is needed.
 """
 
+import datetime
 import logging
 import re
 
@@ -557,3 +558,22 @@ class EntityBase( object ):
         session.query(MyClass).get(...)
         """
         return Session().query( cls ).get(*args, **kwargs)
+
+    def is_applicable_at(self, at):
+        """
+        Return whether this entity instance is applicable at the given date.
+        This method requires the entity class to have its application date range
+        configured by the 'application_date' __entity_args__ argument.
+        An instance is applicable at the given date when it is later than the instance's
+        application date, and the application date is not later than end_of_times.
+
+        :raises: An AssertionError when the application_date is not configured in the entity's __entity_args__.
+        """
+        from camelot.model.authentication import end_of_times
+        entity = type(self)
+        assert entity._get_entity_arg('application_date') is not None
+        assert isinstance(at, datetime.date)
+        mapper = orm.class_mapper(entity)
+        application_date_prop = mapper.get_property(entity._get_entity_arg('application_date').key)
+        application_date = application_date_prop.class_attribute.__get__(self, None)
+        return application_date is not None and not (application_date >= end_of_times() or at < application_date)

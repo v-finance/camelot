@@ -21,17 +21,13 @@ class abstract_attribute_prospection(object):
         target_cls = type(target)
         mapper = orm.class_mapper(target_cls)
         class_attribute = mapper.get_property(self.attribute.key).class_attribute
-        assert target_cls._get_entity_arg('application_date') is not None, \
-               "Defining prospective attributes requires the application_date "\
-               "to be registered in the Entity's __entity_args__."
-        application_date_prop = mapper.get_property(target_cls._get_entity_arg('application_date').key)
-        application_date = application_date_prop.class_attribute.__get__(target, None)
+
         if None not in (target, at):
             current_value = class_attribute.__get__(target, None)
             # The prospection should only be possible if the target's is applicable.
-            # Otherwise, the current value is returned.
-            if application_date is not None and not (application_date >= end_of_times() or at < application_date):
+            if target.is_applicable_at(at):
                 return self.func(target, at)
+            # Otherwise, the current value is returned.
             return current_value
 
     def __get__(self, instance, owner):
