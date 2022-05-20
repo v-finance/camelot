@@ -34,6 +34,7 @@ blocks for creating the :class:`camelot.core.orm.Entity`.
 These classes can be reused if a custom base class is needed.
 """
 
+import datetime
 import logging
 import re
 
@@ -41,7 +42,7 @@ from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Integer
+from sqlalchemy.types import Date, Integer
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
@@ -101,7 +102,7 @@ class EntityMeta( DeclarativeMeta ):
        This entity argument allows registering a rank-based entity class its ranking definition.
        Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
        which should be an Integer type column that holds the numeric rank value.
-       The registered rank definition can be retrieved on an entity class pos- declaration using the provided `get_ranked_by` method.
+       The registered rank definition can be retrieved on an entity class post-declaration using the provided `get_ranked_by` method.
        See its documentation for more details.
 
        :example:
@@ -135,6 +136,11 @@ class EntityMeta( DeclarativeMeta ):
        |     ...
        |
        | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
+
+    * 'application_date'
+       Registers the application date attribute of the target entity.
+       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
+       which should be of type Date.
 
     * 'editable'
        This entity argument is a flag that when set to False will register the entity class as globally non-editable.
@@ -231,6 +237,12 @@ class EntityMeta( DeclarativeMeta ):
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
 
+                application_date = entity_args.get('application_date')
+                if application_date is not None:
+                    assert isinstance(application_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
+                    application_date_col = application_date.prop.columns[0] if isinstance(application_date, orm.attributes.InstrumentedAttribute) else application_date
+                    assert isinstance(application_date_col.type, Date), 'The application date should be of type Date'
+
                 retention_level = entity_args.get('retention_level')
                 if retention_level is not None:
                     assert retention_level in cls.retention_levels.values(), 'Unsupported retention level'
@@ -245,7 +257,7 @@ class EntityMeta( DeclarativeMeta ):
                 # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
                 # table.primary_key returns an iterator so we can't test the length or something like that
                 table = dict_.get('__table__', None)
-                if table is None or table.primary_key.issubset([]):
+                if table is None or table.primary_key is None:
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
             # Auto-assign entity_args and name entity argument if not configured explicitly.
@@ -546,3 +558,22 @@ class EntityBase( object ):
         session.query(MyClass).get(...)
         """
         return Session().query( cls ).get(*args, **kwargs)
+
+    def is_applicable_at(self, at):
+        """
+        Return whether this entity instance is applicable at the given date.
+        This method requires the entity class to have its application date range
+        configured by the 'application_date' __entity_args__ argument.
+        An instance is applicable at the given date when it is later than the instance's
+        application date, and the application date is not later than end_of_times.
+
+        :raises: An AssertionError when the application_date is not configured in the entity's __entity_args__.
+        """
+        from camelot.model.authentication import end_of_times
+        entity = type(self)
+        assert entity._get_entity_arg('application_date') is not None
+        assert isinstance(at, datetime.date)
+        mapper = orm.class_mapper(entity)
+        application_date_prop = mapper.get_property(entity._get_entity_arg('application_date').key)
+        application_date = application_date_prop.class_attribute.__get__(self, None)
+        return application_date is not None and not (application_date >= end_of_times() or at < application_date)
