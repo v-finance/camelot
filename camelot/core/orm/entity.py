@@ -359,6 +359,16 @@ class EntityMeta( DeclarativeMeta ):
     def retention_level(cls):
         return cls._get_entity_arg('retention_level')
 
+    @property
+    def prospected_attributes(cls):
+        """Generator of this class's prospected attributes."""
+        from camelot.core.orm.prospection import abstract_attribute_prospection
+        for attribute_name in dir(cls):
+            if not attribute_name.startswith('__'):
+                attribute = getattr(cls, attribute_name)
+                if isinstance(attribute, abstract_attribute_prospection):
+                    yield attribute
+
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
     def __init__( cls, classname, bases, dict_ ):
