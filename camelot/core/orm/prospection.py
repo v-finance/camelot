@@ -1,6 +1,5 @@
 import types
 
-from camelot.model.authentication import end_of_times
 from sqlalchemy import orm, sql
 
 class abstract_attribute_prospection(object):
