@@ -42,6 +42,8 @@ class abstract_attribute_prospection(object):
         # and the descriptor has been assigned to a name.
         # At that point, we can assign the owning class.
         self.owner = owner
+        # Register this attribute prospection instance in the attribute's info
+        self.attribute.info['prospection'] = self
 
 def prospected_attribute(column_attribute):
     """
@@ -80,6 +82,7 @@ def prospected_attribute(column_attribute):
      |  ConcreteEntity(apply_from_date=datetime.date(2401,1,1), duration=24).prospected_duration(datetime.date(2012,1,1)) == 24
     """
     assert isinstance(column_attribute, (sql.schema.Column, orm.attributes.InstrumentedAttribute))
+
     class attribute_prospection(abstract_attribute_prospection):
         attribute = column_attribute
 
