@@ -40,7 +40,7 @@ import json
 
 
 
-from ..admin.action.base import ActionStep
+from ..admin.action.base import ActionStep, MetaActionStep
 from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..view.action_steps.orm import CreateUpdateDelete
@@ -174,11 +174,11 @@ class ActionMixinCase(object):
                 while isinstance(step, (ActionStep, tuple)):
                     if isinstance(step, tuple):
                         serialized_step = json.loads(step[1])
-                        gui_result = yield tuple([step[0], serialized_step])                    
-                    else:
-                        if isinstance(step, CreateUpdateDelete):
+                        if issubclass(MetaActionStep.action_steps[step[0]], CreateUpdateDelete):
                             LOGGER.debug('crud step, update view')
-                            step.gui_run(gui_context)
+                            CreateUpdateDelete.gui_run(gui_context, step[1])
+                        gui_result = yield tuple([step[0], serialized_step])
+                    else:
                         gui_result = yield step
                                             
                     LOGGER.debug('yield step {}'.format(step))

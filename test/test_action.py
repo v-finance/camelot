@@ -1,7 +1,6 @@
 import datetime
 import gc
 import io
-import json
 import logging
 import os
 import unittest
@@ -344,10 +343,10 @@ class ListActionsCase(
 
         # the state does not change when the current row changes,
         # to make the actions usable in the main window toolbar
-        self.gui_run(to_last.gui_run, gui_context)
+        list(self.gui_run(to_last.gui_run, gui_context))
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
-        self.gui_run(to_first.gui_run, gui_context)
+        list(self.gui_run(to_first.gui_run, gui_context))
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
 
@@ -507,7 +506,9 @@ class ListActionsCase(
     def test_duplicate_selection( self ):
         initial_row_count = self._row_count(self.item_model)
         action = list_action.DuplicateSelection()
-        self.gui_run(action, self.gui_context)
+        state = action.get_state(self.gui_context.create_model_context())
+        self.assertTrue(state.enabled)
+        list(self.gui_run(action, self.gui_context))
         self.process()
         new_row_count = self._row_count(self.item_model)
         self.assertEqual(new_row_count, initial_row_count+1)
@@ -568,8 +569,8 @@ class ListActionsCase(
         selected_object = self.model_context.get_object()
         self.assertTrue(selected_object in self.session)
         delete_selection_action = list_action.DeleteSelection()
-        self.gui_run(delete_selection_action, self.gui_context)
-        self.process()
+        list(self.gui_run(delete_selection_action, self.gui_context))
+        #self.process()
         self.assertFalse(selected_object in self.session)
 
     def test_remove_selection(self):
@@ -681,7 +682,7 @@ class ListActionsCase(
 
     def test_add_new_object(self):
         add_new_object_action = list_action.AddNewObject()
-        self.gui_run(add_new_object_action, self.gui_context)
+        list(self.gui_run(add_new_object_action, self.gui_context))
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
@@ -690,7 +691,7 @@ class ListActionsCase(
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        self.gui_run(SetFilters, self.gui_context, set_filters_step[1])
+        list(self.gui_run(SetFilters, self.gui_context, set_filters_step[1]))
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
@@ -699,7 +700,7 @@ class ListActionsCase(
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        self.gui_run(self.group_box_filter, self.gui_context)
+        list(self.gui_run(self.group_box_filter, self.gui_context))
 
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
@@ -710,7 +711,7 @@ class ListActionsCase(
         )
         ComboBoxFilterWidget._set_state_v2(widget, state._to_dict())
         self.assertTrue(widget.count())
-        self.gui_run(self.combo_box_filter, self.gui_context)
+        list(self.gui_run(self.combo_box_filter, self.gui_context))
         self.grab_widget(widget)
 
     def test_orm( self ):
@@ -752,10 +753,8 @@ class ListActionsCase(
         update_person = UpdatePerson()
         for step in self.gui_run(update_person, self.gui_context):
             if isinstance(step, tuple) and step[0] == 'UpdateObjects':
-                action_steps.UpdateObjects.gui_run(self.gui_context, json.dumps(step[1]))
                 updated = True
             if isinstance(step, tuple) and step[0] == 'CreateObjects':
-                action_steps.CreateObjects.gui_run(self.gui_context, json.dumps(step[1]))
                 created = True
         self.assertTrue(updated)
         self.assertTrue(created)
@@ -793,7 +792,6 @@ class ListActionsCase(
         update_person = UpdatePerson()
         for step in self.gui_run(update_person, self.gui_context):
             if isinstance(step, tuple) and step[0] == 'FlushSession':
-                action_steps.FlushSession.gui_run(self.gui_context, json.dumps(step[1]))
                 flush_session = True
         self.assertTrue(flush_session)
 
@@ -940,7 +938,7 @@ class ApplicationActionsCase(
         generator = self.gui_run(refresh_action, self.gui_context)
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'UpdateObjects':
-                updates = initial_naming_context.resolve(tuple(step[1]['updated']))
+                updates = step[1]['updated']
         self.assertTrue(len(updates))
 
     def test_select_profile(self):
