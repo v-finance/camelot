@@ -107,9 +107,7 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
             crud_signal_handler.objects_created.emit(step['created'])
             leases.append(step['created'])
         if len(leases):
-            cls.mode_name = leases
-            runner = ActionRunner(unbind_name, cls)
-            cls.mode_name = None
+            runner = ActionRunner(unbind_name, cls, leases)
             runner.exec()
 
 

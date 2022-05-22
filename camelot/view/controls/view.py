@@ -34,7 +34,6 @@ import itertools
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
 from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
-from .search import SimpleSearchControl
 
 class ViewWithActionsMixin(object):
 
@@ -53,8 +52,6 @@ class ViewWithActionsMixin(object):
         elif render_hint == RenderHint.COMBO_BOX:
             qobject = QtWidgets.QComboBox(parent)
             qobject.activated.connect(self.combobox_activated)
-        elif render_hint == RenderHint.SEARCH_BUTTON:
-            qobject = SimpleSearchControl(action_route, gui_context, parent)
         elif render_hint == RenderHint.PUSH_BUTTON:
             qobject = ActionPushButton(action_route, gui_context, parent)
         elif render_hint == RenderHint.LABEL:

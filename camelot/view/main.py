@@ -73,7 +73,7 @@ def main_action(action):
         main_action_name = initial_naming_context.bind(('main_action',), action)
         gui_context = ApplicationActionGuiContext()
         gui_context.admin_route = admin_route
-        action_runner = ActionRunner(main_action_name, gui_context)
+        action_runner = ActionRunner(main_action_name, gui_context, None)
         action_runner.exec()
         result = app.exec()
         sys.exit(result)

@@ -136,7 +136,7 @@ class ActionMixinCase(object):
         return state_register.state
 
     @classmethod
-    def gui_run(cls, action, gui_context):
+    def gui_run(cls, action, gui_context, mode):
         """
         Simulates the gui_run of an action, but instead of blocking,
         yields progress each time a message is received from the model.
@@ -144,9 +144,9 @@ class ActionMixinCase(object):
 
         class IteratingActionRunner(ActionRunner):
 
-            def __init__(self, action_name, gui_context):
+            def __init__(self, action_name, gui_context, mode):
                 super(IteratingActionRunner, self).__init__(
-                    action_name, gui_context
+                    action_name, gui_context, mode
                 )
                 self.return_queue = []
                 self.exception_queue = []
@@ -198,7 +198,7 @@ class ActionMixinCase(object):
 
         initial_naming_context.unbind(test_action_name)
         action_name = initial_naming_context.bind(('test_action',), action)
-        runner = IteratingActionRunner(action_name, gui_context)
+        runner = IteratingActionRunner(action_name, gui_context, mode)
         yield from runner.run()
 
 

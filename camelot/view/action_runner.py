@@ -29,10 +29,12 @@
 
 import contextlib
 import functools
+import json
 import logging
+import typing
 
 from ..core.naming import initial_naming_context, CompositeName
-from ..core.serializable import DataclassSerializable
+from ..core.serializable import DataclassSerializable, json_encoder
 from ..core.qt import QtCore, is_deleted
 from camelot.admin.action import ActionStep
 from camelot.admin.action.base import MetaActionStep
@@ -77,7 +79,7 @@ class ActionRunner( QtCore.QEventLoop ):
     non_blocking_action_step_signal = QtCore.qt_signal(object)
     non_blocking_serializable_action_step_signal = QtCore.qt_signal(str, bytes)
     
-    def __init__(self, action_name: CompositeName, gui_context):
+    def __init__(self, action_name: CompositeName, gui_context, mode: typing.Union[str, dict, list, int]):
         """
         :param gui_context: the GUI context of the generator
         """
@@ -89,9 +91,14 @@ class ActionRunner( QtCore.QEventLoop ):
         self._non_blocking_cancel_request = False
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
         self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
+        message = {
+            'action_name': action_name,
+            'mode': mode,
+        }
+        serialized_message = json_encoder.encode(message)
         if REQUEST_LOGGER.isEnabledFor(logging.DEBUG):
-            REQUEST_LOGGER.debug('{} : {}'.format(action_name, gui_context.mode_name))
-        post(self._initiate_generator, self.generator, self.exception, args=(action_name, gui_context.mode_name,))
+            REQUEST_LOGGER.debug(serialized_message)
+        post(self._initiate_generator, self.generator, self.exception, args=(serialized_message,))
     
     def exit( self, return_code = 0 ):
         """Reimplementation of exit to store the return code"""
@@ -108,10 +115,11 @@ class ActionRunner( QtCore.QEventLoop ):
             return super( ActionRunner, self ).exec( flags )
         return self._return_code
         
-    def _initiate_generator(self, action_name, mode):
+    def _initiate_generator(self, serialized_message):
         """Create the model context and start the generator"""
-        action = initial_naming_context.resolve(tuple(action_name))
-        return action.model_run(self._model_context, mode)
+        message = json.loads(serialized_message)
+        action = initial_naming_context.resolve(tuple(message['action_name']))
+        return action.model_run(self._model_context, message.get('mode'))
 
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates

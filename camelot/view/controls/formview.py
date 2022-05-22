@@ -402,7 +402,7 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot()
     def validate_close( self ):
-        action_runner = ActionRunner(self.form_close_route, self.gui_context)
+        action_runner = ActionRunner(self.form_close_route, self.gui_context, None)
         action_runner.exec()
 
     def close_view( self, accept ):

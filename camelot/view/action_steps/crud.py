@@ -171,5 +171,5 @@ class ChangeSelection(ActionStep):
         if is_deleted(item_model):
             return
         for i, action_route in enumerate(self.action_routes):
-            item_model.action_state_changed_signal.emit(action_route, self.action_states[i])    
+            item_model.action_state_changed_signal.emit(tuple(action_route), self.action_states[i])    
             item_model.action_state_changed_cpp_signal.emit('/'.join(action_route), self.action_states[i]._to_bytes())

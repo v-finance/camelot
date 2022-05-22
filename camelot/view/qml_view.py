@@ -149,8 +149,7 @@ class QmlActionDispatch(QtCore.QObject):
         if isinstance(args, QtQml.QJSValue):
             args = variant_to_py(args.toVariant())
 
-        gui_context.mode_name = args
-        action_runner = ActionRunner(action_name, gui_context)
+        action_runner = ActionRunner(action_name, gui_context, args)
         action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()

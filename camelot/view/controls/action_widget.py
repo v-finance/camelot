@@ -91,8 +91,7 @@ class AbstractActionWidget( object ):
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
-        gui_context.mode_name = mode
-        action_runner = ActionRunner(self.action_name ,gui_context)
+        action_runner = ActionRunner(self.action_name ,gui_context, mode)
         action_runner.exec()
 
     def set_menu(self, state, parent):

@@ -142,11 +142,10 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
             actions_widget = ActionsBox(parent = self)
             actions_widget.setObjectName('actions')
             for action in actions:
-                self.render_action(
+                action_widget = self.render_action(
                     action.render_hint, action.route,
                     self.gui_context, actions_widget
                 )
-                action_widget = self.render_action(action.route, actions_widget)
                 state = None
                 for action_state in action_states:
                     if action_state[0] == action.route:

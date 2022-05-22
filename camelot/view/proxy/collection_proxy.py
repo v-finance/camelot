@@ -274,8 +274,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                     {
                         # take a copy, since the collection might be cleared
                         # before it is processed
-                        "rows": self._rows_under_request.copy(),
-                        "columns": self._cols_under_request.copy(),
+                        "rows": list(self._rows_under_request),
+                        "columns": list(self._cols_under_request),
                     }
                 )
                 self._rows_under_request.clear()
@@ -294,12 +294,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             while len(self.__crud_requests):
                 model_context, request_id, request, mode = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
-                # dirty hack to get mode to the action runner
-                self.mode_name = mode
-                runner = ActionRunner(request, self)
+                runner = ActionRunner(request, self, mode)
                 runner.exec()
-                self.mode_name = None
-                # end of dirty hack
 
     def _start_timer(self):
         """

@@ -142,7 +142,7 @@ class ChangeSelection(Action):
         for row_range in mode['selected_rows']:
             model_context.selection_count += (row_range[1] - row_range[0]) + 1
         for action_route in mode['action_routes']:
-            action = initial_naming_context.resolve(action_route)
+            action = initial_naming_context.resolve(tuple(action_route))
             state = action.get_state(model_context)
             action_states.append(state)
         yield action_steps.ChangeSelection(mode['action_routes'], action_states)

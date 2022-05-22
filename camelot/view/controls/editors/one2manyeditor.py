@@ -126,8 +126,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     def combobox_activated(self, index):
         combobox = self.sender()
         mode = [combobox.itemData(index)]
-        self.list_gui_context.mode_name = mode
-        runner = ActionRunner(combobox.property('action_route'), self.list_gui_context)
+        runner = ActionRunner(combobox.property('action_route'), self.list_gui_context, mode)
         runner.exec()
         self.list_gui_context.model_name = None
 
