@@ -16,7 +16,6 @@ from .test_model import ExampleModelMixinCase
 from camelot.admin.action import GuiContext
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
-from camelot.admin.action.list_filter import SearchFilter
 from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.table import ColumnGroup
