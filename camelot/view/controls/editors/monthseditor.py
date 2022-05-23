@@ -41,15 +41,21 @@ class MonthsEditor(CustomEditor):
     composite months and years editor
     """
 
-    def __init__(self, parent=None, editable=True, field_name='months', **kw):
+    def __init__(self, parent=None,
+                 editable=True,
+                 field_name='months',
+                 # Min & max, defined in years.
+                 minimum = 0,
+                 maximum = 10000,
+                 **kw):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self.years_spinbox = CustomDoubleSpinBox()
         self.months_spinbox = CustomDoubleSpinBox()
-        self.years_spinbox.setRange(-1, 10000)
-        self.months_spinbox.setRange(-1, 12)
+        self.years_spinbox.setRange(minimum-1, maximum)
+        self.months_spinbox.setRange(-1, 11)
         self.years_spinbox.setSuffix(_(' years'))
         self.months_spinbox.setSuffix(_(' months'))
         

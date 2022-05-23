@@ -142,6 +142,9 @@ class EntityMeta( DeclarativeMeta ):
     * 'editable_fields'
        List of field_names that should be excluded from the globally non-editable registration, if present.
 
+    * 'retention_level'
+       Configures the data retention of the entity, e.g. how long it should be kept in the system before its final archiving or removal.
+
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
@@ -150,6 +153,9 @@ class EntityMeta( DeclarativeMeta ):
     In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
+
+    # Supported retention levels; is explicitly set in vFinance.__init__.
+    retention_levels = util.OrderedProperties()
 
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
@@ -224,6 +230,10 @@ class EntityMeta( DeclarativeMeta ):
                 order_search_by = entity_args.get('order_search_by')
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+
+                retention_level = entity_args.get('retention_level')
+                if retention_level is not None:
+                    assert retention_level in cls.retention_levels.values(), 'Unsupported retention level'
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
@@ -333,6 +343,10 @@ class EntityMeta( DeclarativeMeta ):
                 else:
                     order_by_clauses.append(order_by)
             return tuple(order_by_clauses)
+
+    @property
+    def retention_level(cls):
+        return cls._get_entity_arg('retention_level')
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
