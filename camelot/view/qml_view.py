@@ -142,7 +142,7 @@ class QmlActionDispatch(QtCore.QObject):
                 'Could not find gui_context for context id: {}'.format(context_id),
                 detail='run_action({}, {})'.format(route, args)
             )
-        action = initial_naming_context.resolve(tuple(route.split('/')))
+        action = initial_naming_context.resolve(tuple(route))
 
         gui_context = self.gui_contexts[context_id].copy()
 
