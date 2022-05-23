@@ -62,6 +62,20 @@ class Exit(ActionStep, DataclassSerializable):
 
 
 @dataclass
+class SetThemeColors(ActionStep, DataclassSerializable):
+    """
+    This action step sets the theme colors.
+    """
+
+    primary_color: str
+    accent_color: str
+
+    @classmethod
+    def gui_run(self, gui_context, serialized_step):
+        qml_action_step(gui_context, 'SetThemeColors', serialized_step)
+
+
+@dataclass
 class MainWindow(ActionStep, DataclassSerializable):
     """
     This action step also takes care of other python stuff for now

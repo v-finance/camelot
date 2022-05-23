@@ -29,7 +29,7 @@
 
 from .application import (
     MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
-    MainMenu, UpdateActionsState
+    MainMenu, UpdateActionsState, SetThemeColors
 )
 from .change_object import ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -71,6 +71,7 @@ __all__ = [
     FlushSession.__name__,
     InstallTranslator.__name__,
     MainMenu,
+    SetThemeColors.__name__,
     MainWindow.__name__,
     MessageBox.__name__,
     NavigationPanel.__name__,

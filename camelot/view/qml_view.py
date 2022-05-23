@@ -142,14 +142,13 @@ class QmlActionDispatch(QtCore.QObject):
                 'Could not find gui_context for context id: {}'.format(context_id),
                 detail='run_action({}, {})'.format(route, args)
             )
-        action_name = tuple(route.split('/'))
 
         gui_context = self.gui_contexts[context_id].copy()
 
         if isinstance(args, QtQml.QJSValue):
             args = variant_to_py(args.toVariant())
 
-        action_runner = ActionRunner(action_name, gui_context, args)
+        action_runner = ActionRunner(tuple(route), gui_context, args)
         action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()

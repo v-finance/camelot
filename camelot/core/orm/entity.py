@@ -142,6 +142,9 @@ class EntityMeta( DeclarativeMeta ):
     * 'editable_fields'
        List of field_names that should be excluded from the globally non-editable registration, if present.
 
+    * 'retention_level'
+       Configures the data retention of the entity, e.g. how long it should be kept in the system before its final archiving or removal.
+
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
@@ -151,6 +154,7 @@ class EntityMeta( DeclarativeMeta ):
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
 
+    # Supported retention levels; is explicitly set in vFinance.__init__.
     retention_levels = util.OrderedProperties()
 
     # new is called to create a new Entity class
