@@ -10,10 +10,24 @@ from ...admin.action.base import ActionStep
 from ...admin.icon import CompletionValue
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
 from ...core.serializable import DataclassSerializable
-from ...core.item_model import FieldAttributesRole, CompletionsRole
+from ...core.item_model import FieldAttributesRole, CompletionsRole, PreviewRole
 
 class UpdateMixin(object):
-    
+
+    def _to_dict(self):
+        cells = []
+        for row, header_item, items in self.changed_ranges:
+            for column, item in items:
+                cell_data = {
+                    "row": row,
+                    "column": column,
+                    "display": item.data(PreviewRole)
+                }
+                cells.append(cell_data)
+        return {
+            "cells": cells
+        }
+
     def update_item_model(self, item_model):
         if is_deleted(item_model):
             return
@@ -57,7 +71,19 @@ class SetColumns(ActionStep):
     
     def __init__(self, static_field_attributes):
         self.static_field_attributes = static_field_attributes
-        
+
+    def _to_dict(self):
+        columns = []
+        for fa in self.static_field_attributes:
+            columns.append({
+                'verbose_name': str(fa['name']),
+                'field_name': fa['field_name'],
+                'width': fa['column_width'],
+            })
+        return {
+            'columns': columns,
+        }
+
     def gui_run(self, item_model):
         if is_deleted(item_model):
             return
