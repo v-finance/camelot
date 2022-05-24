@@ -47,6 +47,10 @@ application.
 
 LOGGER = logging.getLogger( 'camelot.admin.action.application_action' )
 
+application_action_context = initial_naming_context.bind_new_context(
+    'application_action', immutable=True
+)
+
 class ApplicationActionModelContext( ModelContext ):
     """The Model context for an :class:`camelot.admin.action.Action`.  On top 
     of the attributes of the :class:`camelot.admin.action.base.ModelContext`, 
@@ -486,7 +490,7 @@ class Unbind(Action):
         for lease in mode:
             initial_naming_context.unbind(tuple(lease))
 
-unbind = Unbind()
+unbind_name = application_action_context.bind(Unbind.name, Unbind(), True)
 
 class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging

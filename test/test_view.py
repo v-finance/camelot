@@ -16,7 +16,6 @@ from .test_model import ExampleModelMixinCase
 from camelot.admin.action import GuiContext
 from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
-from camelot.admin.action.list_filter import SearchFilter
 from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.table import ColumnGroup
@@ -40,7 +39,6 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.controls.exception import ExceptionDialog, register_exception
 from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
-from camelot.view.controls.search import SimpleSearchControl
 from camelot.view.controls.tableview import ColumnGroupsWidget, TableWidget
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
@@ -955,11 +953,6 @@ class ControlsTest(
         busy_widget = BusyWidget()
         busy_widget.set_busy( True )
         self.grab_widget( busy_widget )
-
-    def test_search_control(self):
-        filter_action = SearchFilter()
-        search = SimpleSearchControl(filter_action, self.gui_context, None)
-        self.grab_widget(search)
 
     def test_column_groups_widget(self):
         table = VisitorsPerDirector.Admin.list_display

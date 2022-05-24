@@ -1,7 +1,6 @@
 import datetime
 import gc
 import io
-import json
 import logging
 import os
 import unittest
@@ -86,8 +85,7 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
         self.gui_context.admin_route = self.admin_route
 
     def test_action_step(self):
-        step = ActionStep()
-        step.gui_run(self.gui_context)
+        ActionStep()
 
     def test_action(self):
 
@@ -100,7 +98,7 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
             ]
 
         action = CustomAction()
-        list(self.gui_run(action, self.gui_context))
+        list(self.gui_run(action, self.gui_context, 'mode_1'))
         state = self.get_state(action, self.gui_context)
         self.assertTrue(state.verbose_name)
         # serialize the state of an action
@@ -115,9 +113,13 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     images_path = test_view.static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        cls.action = ImportCovers()
+        cls.action_name = initial_naming_context.bind(('import_covers',), cls.action)
+
     def setUp(self):
         get_qml_root_backend().setVisible(True, False)
-        self.action = ImportCovers()
         self.admin_route = app_admin.get_admin_route()
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin_route = app_admin.get_admin_route()
@@ -138,7 +140,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
                                                        state_name ) )
 
     def test_action_push_botton( self ):
-        widget = ActionPushButton( self.action,
+        widget = ActionPushButton( self.action_name,
                                    self.gui_context,
                                    self.parent )
         self.grab_widget_states( widget, 'application' )
@@ -217,7 +219,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         # end select item
 
         action = SendDocumentAction()
-        for step in self.gui_run(action, self.gui_context):
+        for step in self.gui_run(action, self.gui_context, None):
             if isinstance(step, tuple):
                 dialog = SelectItem.render(step[1])
                 self.grab_widget(dialog)
@@ -341,16 +343,16 @@ class ListActionsCase(
 
         # the state does not change when the current row changes,
         # to make the actions usable in the main window toolbar
-        to_last.gui_run( gui_context )
+        list(self.gui_run(to_last.gui_run, gui_context, None))
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
-        to_first.gui_run( gui_context )
+        list(self.gui_run(to_first.gui_run, gui_context, None))
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
 
     def test_export_spreadsheet( self ):
         action = list_action.ExportSpreadsheet()
-        for step in self.gui_run(action, self.gui_context):
+        for step in self.gui_run(action, self.gui_context, None):
             if isinstance(step, tuple) and step[0] == 'OpenFile':
                 filename = step[1]["path"]
         self.assertTrue(filename)
@@ -445,7 +447,7 @@ class ListActionsCase(
 
     def test_import_from_file(self, filename='import_example.csv'):
         action = list_action.ImportFromFile()
-        generator = self.gui_run(action, self.gui_context)
+        generator = self.gui_run(action, self.gui_context, None)
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SelectFile':
                 generator.send([os.path.join(self.example_folder, filename)])
@@ -504,7 +506,9 @@ class ListActionsCase(
     def test_duplicate_selection( self ):
         initial_row_count = self._row_count(self.item_model)
         action = list_action.DuplicateSelection()
-        action.gui_run(self.gui_context)
+        state = action.get_state(self.gui_context.create_model_context())
+        self.assertTrue(state.enabled)
+        list(self.gui_run(action, self.gui_context, None))
         self.process()
         new_row_count = self._row_count(self.item_model)
         self.assertEqual(new_row_count, initial_row_count+1)
@@ -565,8 +569,8 @@ class ListActionsCase(
         selected_object = self.model_context.get_object()
         self.assertTrue(selected_object in self.session)
         delete_selection_action = list_action.DeleteSelection()
-        delete_selection_action.gui_run( self.gui_context )
-        self.process()
+        list(self.gui_run(delete_selection_action, self.gui_context, None))
+        #self.process()
         self.assertFalse(selected_object in self.session)
 
     def test_remove_selection(self):
@@ -678,7 +682,7 @@ class ListActionsCase(
 
     def test_add_new_object(self):
         add_new_object_action = list_action.AddNewObject()
-        add_new_object_action.gui_run( self.gui_context )
+        list(self.gui_run(add_new_object_action, self.gui_context, None))
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
@@ -687,7 +691,7 @@ class ListActionsCase(
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        SetFilters.gui_run(self.gui_context, set_filters_step[1])
+        list(self.gui_run(SetFilters, self.gui_context, set_filters_step[1]))
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
@@ -696,7 +700,7 @@ class ListActionsCase(
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        self.gui_run(self.group_box_filter, self.gui_context)
+        list(self.gui_run(self.group_box_filter, self.gui_context, state.modes[0].value))
 
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
@@ -707,7 +711,7 @@ class ListActionsCase(
         )
         ComboBoxFilterWidget._set_state_v2(widget, state._to_dict())
         self.assertTrue(widget.count())
-        self.gui_run(self.combo_box_filter, self.gui_context)
+        list(self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value))
         self.grab_widget(widget)
 
     def test_orm( self ):
@@ -747,12 +751,10 @@ class ListActionsCase(
 
         updated, created = False, False
         update_person = UpdatePerson()
-        for step in self.gui_run(update_person, self.gui_context):
+        for step in self.gui_run(update_person, self.gui_context, None):
             if isinstance(step, tuple) and step[0] == 'UpdateObjects':
-                action_steps.UpdateObjects.gui_run(self.gui_context, json.dumps(step[1]))
                 updated = True
             if isinstance(step, tuple) and step[0] == 'CreateObjects':
-                action_steps.CreateObjects.gui_run(self.gui_context, json.dumps(step[1]))
                 created = True
         self.assertTrue(updated)
         self.assertTrue(created)
@@ -788,9 +790,8 @@ class ListActionsCase(
 
         flush_session = False
         update_person = UpdatePerson()
-        for step in self.gui_run(update_person, self.gui_context):
+        for step in self.gui_run(update_person, self.gui_context, None):
             if isinstance(step, tuple) and step[0] == 'FlushSession':
-                action_steps.FlushSession.gui_run(self.gui_context, json.dumps(step[1]))
                 flush_session = True
         self.assertTrue(flush_session)
 
@@ -841,21 +842,21 @@ class FormActionsCase(
 
     def test_previous_next( self ):
         previous_action = form_action.ToPreviousForm()
-        list(self.gui_run(previous_action, self.gui_context))
+        list(self.gui_run(previous_action, self.gui_context, None))
         next_action = form_action.ToNextForm()
-        list(self.gui_run(next_action, self.gui_context))
+        list(self.gui_run(next_action, self.gui_context, None))
         first_action = form_action.ToFirstForm()
-        list(self.gui_run(first_action, self.gui_context))
+        list(self.gui_run(first_action, self.gui_context, None))
         last_action = form_action.ToLastForm()
-        list(self.gui_run(last_action, self.gui_context))
+        list(self.gui_run(last_action, self.gui_context, None))
 
     def test_show_history( self ):
         show_history_action = form_action.ShowHistory()
-        list(self.gui_run(show_history_action, self.gui_context))
+        list(self.gui_run(show_history_action, self.gui_context, None))
 
     def test_close_form( self ):
         close_form_action = form_action.CloseForm()
-        list(self.gui_run(close_form_action, self.gui_context))
+        list(self.gui_run(close_form_action, self.gui_context, None))
 
 class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
 
@@ -883,7 +884,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
 
     def test_application(self):
         app = Application(app_admin)
-        list(self.gui_run(app, self.gui_context))
+        list(self.gui_run(app, self.gui_context, None))
 
     def test_custom_application(self):
 
@@ -896,7 +897,7 @@ class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
         # end custom application
 
         application = CustomApplication(app_admin)
-        list(self.gui_run(application, self.gui_context))
+        list(self.gui_run(application, self.gui_context, None))
 
 class ApplicationActionsCase(
     RunningThreadCase, GrabMixinCase, ExampleModelMixinCase
@@ -934,10 +935,10 @@ class ApplicationActionsCase(
         #
         # refresh the session through the action
         #
-        generator = self.gui_run(refresh_action, self.gui_context)
+        generator = self.gui_run(refresh_action, self.gui_context, None)
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'UpdateObjects':
-                updates = initial_naming_context.resolve(tuple(step[1]['updated']))
+                updates = step[1]['updated']
         self.assertTrue(len(updates))
 
     def test_select_profile(self):
@@ -954,7 +955,7 @@ class ApplicationActionsCase(
 
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()
-        generator = self.gui_run(backup_action, self.gui_context)
+        generator = self.gui_run(backup_action, self.gui_context, None)
         file_saved = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SaveFile':
@@ -962,7 +963,7 @@ class ApplicationActionsCase(
                 file_saved = True
         self.assertTrue(file_saved)
         restore_action = application_action.Restore()
-        generator = self.gui_run(restore_action, self.gui_context)
+        generator = self.gui_run(restore_action, self.gui_context, None)
         file_selected = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SelectFile':
@@ -973,7 +974,7 @@ class ApplicationActionsCase(
     def test_open_new_view( self ):
         person_admin = app_admin.get_related_admin(Person)
         open_new_view_action = application_action.OpenNewView(person_admin)
-        list(self.gui_run(open_new_view_action, self.gui_context))
+        list(self.gui_run(open_new_view_action, self.gui_context, None))
 
     def test_change_logging( self ):
         change_logging_action = ChangeLogging()
@@ -983,7 +984,7 @@ class ApplicationActionsCase(
 
     def test_segmentation_fault( self ):
         segmentation_fault = application_action.SegmentationFault()
-        list(self.gui_run(segmentation_fault, self.gui_context))
+        list(self.gui_run(segmentation_fault, self.gui_context, None))
 
 
 class FieldActionCase(TestMetaData, ExampleModelMixinCase):

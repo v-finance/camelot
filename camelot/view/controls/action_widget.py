@@ -31,11 +31,12 @@ from ...core.qt import QtGui, QtCore, QtWidgets, QtQuick, QtQml, variant_to_py
 
 from ...admin.icon import Icon
 from ...admin.action import Mode, State
+from ..action_runner import ActionRunner
 from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
 
-    def init( self, action, gui_context ):
+    def init(self, action_name, gui_context):
         """Helper class to construct widget that when triggered run an action.
         This class exists as a base class for custom ActionButton
         implementations.
@@ -44,7 +45,8 @@ class AbstractActionWidget( object ):
         in a row changes.  So listening to the vertical header changes should
         be enough to update the state of the action.
         """
-        self.action = action
+        assert isinstance(action_name, (tuple, list))
+        self.action_name = action_name
         self.gui_context = gui_context
         self.state = State()
         # REMOVE THIS...
@@ -89,12 +91,8 @@ class AbstractActionWidget( object ):
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
-        if isinstance(mode, list):
-            self.action.gui_run( gui_context, mode )
-        else:
-            gui_context.mode_name = mode
-            self.action.gui_run( gui_context )
-
+        action_runner = ActionRunner(self.action_name ,gui_context, mode)
+        action_runner.exec()
 
     def set_menu(self, state, parent):
         """This method creates a menu for an object with as its menu items
@@ -191,11 +189,9 @@ class AbstractActionWidget( object ):
 
 class ActionAction( QtGui.QAction, AbstractActionWidget ):
 
-    def __init__( self, action, gui_context, parent ):
+    def __init__( self, action_name, gui_context, parent ):
         QtGui.QAction.__init__( self, parent )
-        AbstractActionWidget.init( self, action, gui_context )
-        if action.shortcut != None:
-            self.setShortcut( action.shortcut )
+        AbstractActionWidget.init( self, action_name, gui_context )
         self.triggered.connect(self.action_triggered)
 
     @QtCore.qt_slot()
@@ -204,6 +200,8 @@ class ActionAction( QtGui.QAction, AbstractActionWidget ):
 
     @QtCore.qt_slot( object )
     def set_state( self, state ):
+        if state.shortcut != None:
+            self.setShortcut( state.shortcut )
         if state.verbose_name != None:
             self.setText( str( state.verbose_name ) )
         else:
@@ -243,7 +241,7 @@ class ActionAction( QtGui.QAction, AbstractActionWidget ):
 
 class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
-    def __init__( self, action, gui_context, parent ):
+    def __init__( self, action_name, gui_context, parent ):
         """A :class:`QtWidgets.QPushButton` that when pressed, will run an
         action.
 
@@ -251,7 +249,7 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
         """
         QtWidgets.QPushButton.__init__( self, parent )
-        AbstractActionWidget.init( self, action, gui_context )
+        AbstractActionWidget.init( self, action_name, gui_context )
         self.clicked.connect(self.action_triggered)
 
     # REMOVE THIS...
@@ -296,11 +294,11 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
 class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
 
-    def __init__( self, action, gui_context, parent ):
+    def __init__( self, action_name, gui_context, parent ):
         """A :class:`QtWidgets.QToolButton` that when pressed, will run an
         action."""
         QtWidgets.QToolButton.__init__( self, parent )
-        AbstractActionWidget.init( self, action, gui_context )
+        AbstractActionWidget.init( self, action_name, gui_context )
         self.clicked.connect(self.run_action)
 
     def set_state( self, state ):
@@ -350,11 +348,11 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
 
 class ActionLabel(QtWidgets.QLabel, AbstractActionWidget):
 
-    def __init__( self, action, gui_context, parent ):
+    def __init__( self, action_name, gui_context, parent ):
         """A :class:`QtWidgets.QLabel` that only displays the state
         of an action and alows no user interaction"""
         QtWidgets.QLabel.__init__(self, parent)
-        AbstractActionWidget.init(self, action, gui_context)
+        AbstractActionWidget.init(self, action_name, gui_context)
         font = self.font()
         font.setBold(True)
         self.setFont(font)
