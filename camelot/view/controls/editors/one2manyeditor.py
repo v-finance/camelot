@@ -163,9 +163,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     def current_row_changed(self, current=None, previous=None):
         self.update_list_action_states()
 
-    @QtCore.qt_slot(str, QtCore.QByteArray)
+    @QtCore.qt_slot('QStringList', QtCore.QByteArray)
     def action_state_changed(self, route, serialized_state):
-        route = tuple(route.split('/'))
+        route = tuple(route)
         for action_widget in self.findChildren(AbstractActionWidget):
             if action_widget.action_route == route:
                 state = json.loads(serialized_state.data())
