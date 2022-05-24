@@ -15,7 +15,7 @@ class abstract_attribute_prospection(object):
     """
 
     attribute = None
-    for_transition_types = (None,)
+    for_transition_types = None
 
     def __init__(self, func):
         assert isinstance(self.for_transition_types, tuple)
@@ -26,8 +26,11 @@ class abstract_attribute_prospection(object):
     def register(cls, self):
         column = cls.attribute.prop.columns[0] if isinstance(cls.attribute, orm.attributes.InstrumentedAttribute) else cls.attribute
         column.info.setdefault('prospection', {})
-        for transition_type in cls.for_transition_types:
-            column.info['prospection'][transition_type.name] = self
+        if cls.for_transition_types:
+            for transition_type in cls.for_transition_types:
+                column.info['prospection'][transition_type.name] = self
+        else:
+            column.info['prospection'][None] = self
 
     def __call__(self, target, at):
         target_cls = type(target)
