@@ -14,20 +14,25 @@ class abstract_attribute_prospection(object):
     def __init__(self, func):
         assert isinstance(self.for_transition_types, tuple)
         self.func = func
-        self.__class__.attribute.info.setdefault('prospection', {})
-        for transition_type in self.for_transition_types:
-            self.__class__.attribute.info['prospection'][transition_type] = self
+        self.register(self)
+
+    @classmethod
+    def register(cls, self):
+        column = cls.attribute.prop.columns[0] if isinstance(cls.attribute, orm.attributes.InstrumentedAttribute) else cls.attribute
+        column.info.setdefault('prospection', {})
+        for transition_type in cls.for_transition_types:
+            column.info['prospection'][transition_type.name] = self
         else:
-            self.__class__.attribute.info['prospection'][None] = self
+            column.info['prospection'][None] = self
 
     def __call__(self, target, at):
         target_cls = type(target)
         mapper = orm.class_mapper(target_cls)
-        class_attribute = mapper.get_property(self.attribute.key).class_attribute
+        class_attribute = mapper.get_property(self.__class__.attribute.key).class_attribute
         if self.for_transition_types:
             assert target_cls.transition_types is not None, '{} has no transition_types configured in its __entity_args__'.format(target_cls)
             for transition_type in self.for_transition_types:
-                assert transition_type in target_cls.transition_types.keys(), '{} is not a valid transition type for {}'.format(target_cls)
+                assert transition_type in target_cls.transition_types.values(), '{} is not a valid transition type for {}'.format(transition_type, target_cls)
 
         if None not in (target, at):
             current_value = class_attribute.__get__(target, None)
