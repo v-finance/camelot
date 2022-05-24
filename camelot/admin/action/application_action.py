@@ -101,7 +101,7 @@ class ApplicationActionGuiContext( GuiContext ):
     
     def __init__( self ):
         super( ApplicationActionGuiContext, self ).__init__()
-        self.context_id = None
+        self.gui_context_name = None
         self.workspace = None
         self.admin_route = None
         self.action_routes = {}
@@ -130,7 +130,7 @@ class ApplicationActionGuiContext( GuiContext ):
         
     def copy(self, base_class=None):
         new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
-        new_context.context_id = self.context_id
+        new_context.gui_context_name = self.gui_context_name
         new_context.workspace = self.workspace
         new_context.admin_route = self.admin_route
         new_context.action_routes = dict(self.action_routes)
