@@ -1,6 +1,12 @@
 import types
 
-from sqlalchemy import orm, sql
+from sqlalchemy import orm, schema, sql
+
+def is_supported_attribute(attribute):
+    return isinstance(attribute, sql.schema.Column) or \
+           isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
+           isinstance(attribute.prop, orm.properties.ColumnProperty) and \
+           isinstance(attribute.prop.columns[0], schema.Column)
 
 class abstract_attribute_prospection(object):
     """
@@ -9,7 +15,7 @@ class abstract_attribute_prospection(object):
     """
 
     attribute = None
-    for_transition_types = tuple()
+    for_transition_types = (None,)
 
     def __init__(self, func):
         assert isinstance(self.for_transition_types, tuple)
@@ -22,8 +28,6 @@ class abstract_attribute_prospection(object):
         column.info.setdefault('prospection', {})
         for transition_type in cls.for_transition_types:
             column.info['prospection'][transition_type.name] = self
-        else:
-            column.info['prospection'][None] = self
 
     def __call__(self, target, at):
         target_cls = type(target)
@@ -81,7 +85,7 @@ def prospected_attribute(column_attribute, *transition_types):
      |  ConcreteEntity(apply_from_date=datetime.date(2012,1,1), duration=24).prospected_duration(datetime.date(2011,1,1)) == 24
      |  ConcreteEntity(apply_from_date=datetime.date(2401,1,1), duration=24).prospected_duration(datetime.date(2012,1,1)) == 24
     """
-    assert isinstance(column_attribute, (sql.schema.Column, orm.attributes.InstrumentedAttribute))
+    assert is_supported_attribute(column_attribute), 'The given attribute should be a valid column attribute'
 
     class attribute_prospection(abstract_attribute_prospection):
 
@@ -89,3 +93,19 @@ def prospected_attribute(column_attribute, *transition_types):
         for_transition_types = transition_types
 
     return attribute_prospection
+
+def get_prospected_value(attribute, target, at, transition_type=None, default=None):
+    """
+    Helper method to extract the prospected value for the given instrumented attribute on a target entity, if applicable.
+
+    :param attribute: an instance of orm.attributes.InstrumentedAttribute that maps to a column of the provided target entity.
+    :param target: the entity instance to inspect the prospected value on.
+    :param at: the date on which the prospection should take place.
+    :param transition_type: optional transition type that may influence the prospection.
+    :param default: the default value to return if the given attribute has no applicable prospection, None by default.
+    """
+    if is_supported_attribute(attribute):
+        column = attribute.prop.columns[0]
+        if 'prospection' in column.info and transition_type in column.info['prospection']:
+            return column.info['prospection'][transition_type].__call__(target, at)
+    return default
