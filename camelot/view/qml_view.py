@@ -90,7 +90,6 @@ class QmlActionDispatch(QtCore.QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        #self.gui_contexts = {}
         self.models = {}
         root_backend = get_qml_root_backend()
         if root_backend is not None:
@@ -109,7 +108,6 @@ class QmlActionDispatch(QtCore.QObject):
                 return gui_context.gui_context_name
         gui_context_id = self._gui_naming_context_ids.__next__()
         gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
-        LOGGER.info('QmlActionDispatch.register: {}'.format(gui_context_name))
         if model is not None:
             self.models[gui_context_id] = model
             model.destroyed.connect(self.remove_model)
@@ -117,7 +115,6 @@ class QmlActionDispatch(QtCore.QObject):
         return gui_context_name
 
     def unregister(self, gui_context_name):
-        LOGGER.info('QmlActionDispatch.unregister: {}'.format(gui_context_name))
         initial_naming_context.unbind(tuple(gui_context_name))
 
     @QtCore.qt_slot(QtCore.QObject)
