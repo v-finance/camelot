@@ -9,17 +9,25 @@ class abstract_attribute_prospection(object):
     """
 
     attribute = None
+    for_transition_types = tuple()
 
     def __init__(self, func):
-        assert self.attribute is not None
+        assert isinstance(self.for_transition_types, tuple)
         self.func = func
-        self.owner = None
+        self.__class__.attribute.info.setdefault('prospection', {})
+        for transition_type in self.for_transition_types:
+            self.__class__.attribute.info['prospection'][transition_type] = self
+        else:
+            self.__class__.attribute.info['prospection'][None] = self
 
     def __call__(self, target, at):
-        assert isinstance(target, self.owner)
         target_cls = type(target)
         mapper = orm.class_mapper(target_cls)
         class_attribute = mapper.get_property(self.attribute.key).class_attribute
+        if self.for_transition_types:
+            assert target_cls.transition_types is not None, '{} has no transition_types configured in its __entity_args__'.format(target_cls)
+            for transition_type in self.for_transition_types:
+                assert transition_type in target_cls.transition_types.keys(), '{} is not a valid transition type for {}'.format(target_cls)
 
         if None not in (target, at):
             current_value = class_attribute.__get__(target, None)
@@ -32,15 +40,7 @@ class abstract_attribute_prospection(object):
     def __get__(self, instance, owner):
         return types.MethodType(self, instance) if instance is not None else self
 
-    def __set_name__(self, owner, name):
-        # Descriptor method available since Python 3.6+ that gets called when the owning class gets created,
-        # and the descriptor has been assigned to a name.
-        # At that point, we can assign the owning class.
-        self.owner = owner
-        # Register this attribute prospection instance in the attribute's info
-        self.attribute.info['prospection'] = self
-
-def prospected_attribute(column_attribute):
+def prospected_attribute(column_attribute, *transition_types):
     """
     Function decorator that supports registering prospected behaviour for one of the instrumented
     column attribute of an Entity class.
@@ -79,6 +79,8 @@ def prospected_attribute(column_attribute):
     assert isinstance(column_attribute, (sql.schema.Column, orm.attributes.InstrumentedAttribute))
 
     class attribute_prospection(abstract_attribute_prospection):
+
         attribute = column_attribute
+        for_transition_types = transition_types
 
     return attribute_prospection
