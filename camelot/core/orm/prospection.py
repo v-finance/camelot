@@ -15,37 +15,32 @@ class abstract_attribute_prospection(object):
     """
 
     attribute = None
-    for_transition_types = None
 
     def __init__(self, func):
-        assert isinstance(self.for_transition_types, tuple)
         self.func = func
         self.register(self)
 
     @classmethod
     def register(cls, self):
         column = cls.attribute.prop.columns[0] if isinstance(cls.attribute, orm.attributes.InstrumentedAttribute) else cls.attribute
-        column.info.setdefault('prospection', {})
-        if cls.for_transition_types:
-            for transition_type in cls.for_transition_types:
-                column.info['prospection'][transition_type.name] = self
-        else:
-            column.info['prospection'][None] = self
+        column.info['prospection'] = self
 
-    def __call__(self, target, at, **kwargs):
+    def __call__(self, target, at, transition_type=None, **kwargs):
         target_cls = type(target)
-        if self.for_transition_types:
+
+        if transition_type is not None:
+            # If the transition_type is provided, assert that the target class has
+            # its transition types defined, and that the provided one is part of those.
             assert target_cls.transition_types is not None, '{} has no transition_types configured in its __entity_args__'.format(target_cls)
-            for transition_type in self.for_transition_types:
-                assert transition_type in target_cls.transition_types.values(), '{} is not a valid transition type for {}'.format(transition_type, target_cls)
+            assert transition_type in target_cls.transition_types, '{} is not a valid transition type for {}'.format(transition_type, target_cls)
 
         if None not in (target, at):
-            return self.func(target, at, **kwargs)
+            return self.func(target, at, transition_type, **kwargs)
 
     def __get__(self, instance, owner):
         return types.MethodType(self, instance) if instance is not None else self
 
-def prospected_attribute(column_attribute, *transition_types):
+def prospected_attribute(column_attribute):
     """
     Function decorator that supports registering prospected behaviour for one of the instrumented
     column attribute of an Entity class.
@@ -72,7 +67,6 @@ def prospected_attribute(column_attribute, *transition_types):
     class attribute_prospection(abstract_attribute_prospection):
 
         attribute = column_attribute
-        for_transition_types = transition_types
 
     return attribute_prospection
 
@@ -89,8 +83,5 @@ def get_prospected_value(attribute, target, at, transition_type=None, default=No
     if is_supported_attribute(attribute):
         column = attribute.prop.columns[0]
         if 'prospection' in column.info:
-            prospection = column.info['prospection']
-            attribute_prospection = prospection.get(transition_type, prospection.get(None))
-            if attribute_prospection is not None:
-                return attribute_prospection.__call__(target, at, **kwargs)
+            return column.info['prospection'].__call__(target, at, transition_type, **kwargs)
     return default
