@@ -32,7 +32,7 @@ class abstract_attribute_prospection(object):
         else:
             column.info['prospection'][None] = self
 
-    def __call__(self, target, at):
+    def __call__(self, target, at, **kwargs):
         target_cls = type(target)
         mapper = orm.class_mapper(target_cls)
         class_attribute = mapper.get_property(self.__class__.attribute.key).class_attribute
@@ -45,7 +45,7 @@ class abstract_attribute_prospection(object):
             current_value = class_attribute.__get__(target, None)
             # The prospection should only be possible if the target's is applicable.
             if target.is_applicable_at(at):
-                return self.func(target, at)
+                return self.func(target, at, **kwargs)
             # Otherwise, the current value is returned.
             return current_value
 
@@ -97,7 +97,7 @@ def prospected_attribute(column_attribute, *transition_types):
 
     return attribute_prospection
 
-def get_prospected_value(attribute, target, at, transition_type=None, default=None):
+def get_prospected_value(attribute, target, at, transition_type=None, default=None, **kwargs):
     """
     Helper method to extract the prospected value for the given instrumented attribute on a target entity, if applicable.
 
@@ -109,6 +109,9 @@ def get_prospected_value(attribute, target, at, transition_type=None, default=No
     """
     if is_supported_attribute(attribute):
         column = attribute.prop.columns[0]
-        if 'prospection' in column.info and transition_type in column.info['prospection']:
-            return column.info['prospection'][transition_type].__call__(target, at)
+        if 'prospection' in column.info:
+            prospection = column.info['prospection']
+            attribute_prospection = prospection.get(transition_type, prospection.get(None))
+            if attribute_prospection is not None:
+                return attribute_prospection.__call__(target, at, **kwargs)
     return default
