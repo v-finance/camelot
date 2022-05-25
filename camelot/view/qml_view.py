@@ -5,6 +5,8 @@ import json
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py, is_deleted
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context, NameNotFoundException
+from .action_runner import ActionRunner
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -141,16 +143,16 @@ class QmlActionDispatch(QtCore.QObject):
         gui_context_id = int(gui_context_name[-1])
         return self.models.get(gui_context_id)
 
+
     def run_action(self, gui_context_name, route, args):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(gui_context_name, route, args))
         gui_context = initial_naming_context.resolve(tuple(gui_context_name)).copy()
-        action = initial_naming_context.resolve(tuple(route))
-
+        
         if isinstance(args, QtQml.QJSValue):
             args = variant_to_py(args.toVariant())
 
-        gui_context.mode_name = args
-        action.gui_run( gui_context )
+        action_runner = ActionRunner(tuple(route), gui_context, args)
+        action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()
 

@@ -65,8 +65,9 @@ from ...core.item_model import (
     ActionModeRole,
 )
 from ..crud_action import (
-    ChangeSelection, Created, Completion, Deleted, RowCount, RowData,
-    SetData, SetColumns, Sort, Update, run_field_action
+    changeselection_name, created_name, completion_name, deleted_name,
+    rowcount_name, rowdata_name, setdata_name, setcolumns_name, sort_name,
+    update_name, runfieldaction_name
 )
 from ..crud_signals import CrudSignalHandler
 from ..item_model.cache import ValueCache
@@ -136,7 +137,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
     """
 
     action_state_changed_signal = QtCore.qt_signal(tuple, State) # still used in python
-    action_state_changed_cpp_signal = QtCore.qt_signal(str, QtCore.QByteArray) # used in C++
+    action_state_changed_cpp_signal = QtCore.qt_signal('QStringList', QtCore.QByteArray) # used in C++
 
     max_row_count = 10000000 # display maxium 10M rows
 
@@ -228,7 +229,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if (rows == 0) and (self._model_context is not None) and self.columnCount():
             root_item = self.invisibleRootItem()
             if not root_item.isEnabled():
-                self._append_request(RowCount(), None)
+                self._append_request(rowcount_name, None)
                 root_item.setEnabled(True)
             return 0
         return rows
@@ -265,16 +266,16 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         timer = self.findChild(QtCore.QTimer, 'timer')
         if timer is not None:
             if self._update_requests:
-                self._append_request(SetData(self._update_requests), None)
+                self._append_request(setdata_name, [u for u in self._update_requests])
                 self._update_requests = list()
             if self._rows_under_request:
                 self._append_request(
-                    RowData(),
+                    rowdata_name,
                     {
                         # take a copy, since the collection might be cleared
                         # before it is processed
-                        "rows": self._rows_under_request.copy(),
-                        "columns": self._cols_under_request.copy(),
+                        "rows": list(self._rows_under_request),
+                        "columns": list(self._cols_under_request),
                     }
                 )
                 self._rows_under_request.clear()
@@ -293,12 +294,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             while len(self.__crud_requests):
                 model_context, request_id, request, mode = self.__crud_requests.popleft()
                 self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
-                # dirty hack to get mode to the action runner
-                self.mode_name = mode
-                runner = ActionRunner(request.model_run, self)
+                runner = ActionRunner(request, self, mode)
                 runner.exec()
-                self.mode_name = None
-                # end of dirty hack
 
     def _start_timer(self):
         """
@@ -430,7 +427,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         # the columns might be set before the value, but they might be running
         # in the model thread for a different model context as well, so
         # resubmit the set columns task for this model context
-        self._append_request(SetColumns(), self._columns)
+        self._append_request(setcolumns_name, self._columns)
         self.layoutChanged.emit()
     
     def get_value(self):
@@ -448,7 +445,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects updated'.format(len(objects))
             )
-            self._append_request(Update(), {'objects': objects})
+            self._append_request(update_name, {'objects': objects})
             self.timeout_slot()
 
     @QtCore.qt_slot(list)
@@ -460,7 +457,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects deleted'.format(len(objects))
                 )
-            self._append_request(Deleted(), {
+            self._append_request(deleted_name, {
                 'objects': objects,
                 'rows': super(CollectionProxy, self).rowCount()
             })
@@ -475,7 +472,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self.logger.debug(
                 'received {0} objects created'.format(len(objects))
             )
-            self._append_request(Created(), {'objects': objects})
+            self._append_request(created_name, {'objects': objects})
             self.timeout_slot()
 
     def add_columns(self, field_names):
@@ -498,7 +495,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self._columns.append(field_name)
             yield i
         if len(self._columns) and (self._model_context is not None):
-            self._append_request(SetColumns(), self._columns)
+            self._append_request(setcolumns_name, self._columns)
 
     # decorate method as a slot, to make it accessible in QML
     @QtCore.qt_slot(int, Qt.Orientation, QtCore.QVariant, int)
@@ -551,7 +548,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         self.logger.debug('sort called')
         assert object_thread( self )
-        self._append_request(Sort(), (column, order))
+        self._append_request(sort_name, (column, order))
 
     def data(self, index, role = Qt.ItemDataRole.DisplayRole):
         """:return: the data at index for the specified role
@@ -633,20 +630,23 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                 logger.debug('set data called on row without object')
                 return False
             self.logger.debug('set data ({0},{1})'.format(row, column))
+            if not isinstance(value, (list, tuple)):
+                # the value is not a name, bind it
+                value = initial_naming_context._bind_object(value)
             self._update_requests.append((row, obj_id, column, value))
             # dont trigger the timer, since the item  model might be deleted
             # by the time the timout happens
             self.timeout_slot()
         elif role == CompletionPrefixRole:
             self._append_request(
-                Completion(), {'row': index.row(), 'column': index.column(), 'prefix': value}
+                completion_name, {'row': index.row(), 'column': index.column(), 'prefix': value}
             )
         elif role == ActionModeRole:
             value = json.loads(value)
             row = index.row()
             obj_id = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
             self._append_request(
-                run_field_action, {
+                runfieldaction_name, {
                     'row': row,
                     'column': index.column(),
                     'object': obj_id,
@@ -718,7 +718,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         for i in range(len(row_ranges) // 2):
             selected_rows.append(( row_ranges[2 * i], row_ranges[2 * i + 1]))
 
-        request = ChangeSelection()
+        request = changeselection_name
         self._append_request(request, {
             'action_routes': self._action_routes,
             'current_row': current_row,

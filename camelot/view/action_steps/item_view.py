@@ -48,7 +48,7 @@ from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
-    CollectionProxy, RowCount, RowData, SetColumns
+    CollectionProxy, rowcount_name, rowdata_name, setcolumns_name
 )
 from ..qml_view import qml_action_step
 
@@ -71,10 +71,6 @@ class Sort( ActionStep, DataclassSerializable ):
         if model is not None:
             model.sort( step["column"], step["order"] )
 
-row_count_instance = RowCount()
-set_columns_instance = SetColumns()
-row_data_instance = RowData()
-
 @dataclass
 class CrudActions(DataclassSerializable):
     """
@@ -83,20 +79,10 @@ class CrudActions(DataclassSerializable):
     """
 
     admin: InitVar
-    row_count: Route = field(init=False)
-    set_columns: Route = field(init=False)
-    row_data: Route = field(init=False)
+    row_count: Route = field(init=False, default=rowcount_name)
+    set_columns: Route = field(init=False, default=setcolumns_name)
+    row_data: Route = field(init=False, default=rowdata_name)
 
-    def __post_init__(self, admin):
-        self.row_count = admin._register_action_route(
-            admin.get_admin_route(), row_count_instance
-        )
-        self.row_data = admin._register_action_route(
-            admin.get_admin_route(), row_data_instance
-        )
-        self.set_columns = admin._register_action_route(
-            admin.get_admin_route(), set_columns_instance
-        )
 
 @dataclass
 class UpdateTableView( ActionStep, DataclassSerializable ):

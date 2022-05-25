@@ -127,10 +127,10 @@ def show_top_level(view, parent, state=None):
         view.setWindowModality(parent.windowModality())
     #
     # There is a bug in certain versions of Qt5 (QTBUG-57882), that causes
-    # view.show() to unmax/min the window.
-    # Therefor show the window before moving/resizing it to its final position
+    # view.show() to unmax/min the window. This is supposed to be fixed in Qt6
+    # No longer show the window before moving/resizing it to its final position
     #
-    view.show()
     apply_form_state(view, parent, state)
+    view.show()
 
 

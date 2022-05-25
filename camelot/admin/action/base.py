@@ -297,20 +297,10 @@ return immediately and the :meth:`model_run` will not be blocked.
         this method will raise a :class:`camelot.core.exception.CancelRequest`
         exception, if the user canceled the operation.
         """
-        from camelot.view.action_runner import ActionRunner
-        runner = ActionRunner( self.model_run, gui_context )
-        runner.exec()
-        
+        raise NotImplementedError()
+
     def model_run( self, model_context, mode ):
-        """A generator that yields :class:`camelot.admin.action.ActionStep`
-        objects.  This generator can be called in the *model thread*.
-        
-        :param context:  An object of type
-            :class:`camelot.admin.action.ModelContext`, which is context 
-            of this action available in the model_thread.  What is in the 
-            context depends on how the action was called.
-        """
-        yield
+        raise Exception('This should not happen')
 
     @classmethod
     def deserialize_result(cls, gui_context, serialized_result):
@@ -471,22 +461,20 @@ with a view.
 
         return tooltip
 
+    def model_run( self, model_context, mode ):
+        """A generator that yields :class:`camelot.admin.action.ActionStep`
+        objects.  This generator can be called in the *model thread*.
+        
+        :param context:  An object of type
+            :class:`camelot.admin.action.ModelContext`, which is context 
+            of this action available in the model_thread.  What is in the 
+            context depends on how the action was called.
+        """
+        yield
 
     def gui_run( self, gui_context ):
-        """This method is called inside the GUI thread, by default it
-        executes the :meth:`model_run` in the Model thread.
-        
-        :param gui_context: the context available in the *GUI thread*,
-            of type :class:`GuiContext`
-            
-        """
-        # only create a progress dialog if there is none yet, or if the
-        # existing dialog was canceled
-        LOGGER.debug( 'action gui run started' )
-        with ProgressLevel(gui_context, str(self.verbose_name or '')):
-            super(Action, self).gui_run(gui_context)
-        LOGGER.debug( 'gui run finished' )
-        
+        raise Exception('This should not happen')
+
     def get_state( self, model_context ):
         """
         This method is called inside the Model thread to verify if

@@ -32,10 +32,8 @@
 import itertools
 
 from ...admin.action import RenderHint
-from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtGui, QtWidgets
 from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
-from .search import SimpleSearchControl
 
 class ViewWithActionsMixin(object):
 
@@ -49,18 +47,15 @@ class ViewWithActionsMixin(object):
         return rendered_action_name
 
     def render_action(self, render_hint, action_route, gui_context, parent):
-        action = initial_naming_context.resolve(action_route)
         if render_hint == RenderHint.TOOL_BUTTON:
-            qobject = ActionToolbutton(action, gui_context, parent)
+            qobject = ActionToolbutton(action_route, gui_context, parent)
         elif render_hint == RenderHint.COMBO_BOX:
             qobject = QtWidgets.QComboBox(parent)
             qobject.activated.connect(self.combobox_activated)
-        elif render_hint == RenderHint.SEARCH_BUTTON:
-            qobject = SimpleSearchControl(action, gui_context, parent)
         elif render_hint == RenderHint.PUSH_BUTTON:
-            qobject = ActionPushButton(action, gui_context, parent)
+            qobject = ActionPushButton(action_route, gui_context, parent)
         elif render_hint == RenderHint.LABEL:
-            qobject = ActionLabel(action, gui_context, parent)
+            qobject = ActionLabel(action_route, gui_context, parent)
         else:
             raise Exception('Unhandled render hint {} for {}'.format(
                 render_hint, action_route

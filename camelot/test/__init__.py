@@ -40,7 +40,8 @@ import json
 
 
 
-from ..admin.action.base import ActionStep
+from ..admin.action.base import ActionStep, MetaActionStep
+from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..view.action_steps.orm import CreateUpdateDelete
 from ..view.action_runner import ActionRunner
@@ -101,6 +102,9 @@ class GrabMixinCase(object):
         painter.end()
         outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
+# make sure the name is reserved, so we can unbind it without exception
+test_action_name = initial_naming_context.bind(('test_action',), object())
+
 class ActionMixinCase(object):
     """
     Helper methods to simulate running actions in a different thread
@@ -132,7 +136,7 @@ class ActionMixinCase(object):
         return state_register.state
 
     @classmethod
-    def gui_run(cls, action, gui_context):
+    def gui_run(cls, action, gui_context, mode):
         """
         Simulates the gui_run of an action, but instead of blocking,
         yields progress each time a message is received from the model.
@@ -140,9 +144,9 @@ class ActionMixinCase(object):
 
         class IteratingActionRunner(ActionRunner):
 
-            def __init__(self, generator_function, gui_context):
+            def __init__(self, action_name, gui_context, mode):
                 super(IteratingActionRunner, self).__init__(
-                    generator_function, gui_context
+                    action_name, gui_context, mode
                 )
                 self.return_queue = []
                 self.exception_queue = []
@@ -170,11 +174,11 @@ class ActionMixinCase(object):
                 while isinstance(step, (ActionStep, tuple)):
                     if isinstance(step, tuple):
                         serialized_step = json.loads(step[1])
-                        gui_result = yield tuple([step[0], serialized_step])                    
-                    else:
-                        if isinstance(step, CreateUpdateDelete):
+                        if issubclass(MetaActionStep.action_steps[step[0]], CreateUpdateDelete):
                             LOGGER.debug('crud step, update view')
-                            step.gui_run(gui_context)
+                            CreateUpdateDelete.gui_run(gui_context, step[1])
+                        gui_result = yield tuple([step[0], serialized_step])
+                    else:
                         gui_result = yield step
                                             
                     LOGGER.debug('yield step {}'.format(step))
@@ -192,7 +196,9 @@ class ActionMixinCase(object):
                 LOGGER.debug("iteration finished")
                 yield None
 
-        runner = IteratingActionRunner(action.model_run, gui_context)
+        initial_naming_context.unbind(test_action_name)
+        action_name = initial_naming_context.bind(('test_action',), action)
+        runner = IteratingActionRunner(action_name, gui_context, mode)
         yield from runner.run()
 
 

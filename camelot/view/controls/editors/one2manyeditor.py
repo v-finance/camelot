@@ -126,9 +126,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     def combobox_activated(self, index):
         combobox = self.sender()
         mode = [combobox.itemData(index)]
-        self.list_gui_context.mode_name = mode
-        action = initial_naming_context.resolve(combobox.property('action_route'))
-        runner = ActionRunner(action.model_run, self.list_gui_context)
+        runner = ActionRunner(combobox.property('action_route'), self.list_gui_context, mode)
         runner.exec()
         self.list_gui_context.model_name = None
 
@@ -165,9 +163,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     def current_row_changed(self, current=None, previous=None):
         self.update_list_action_states()
 
-    @QtCore.qt_slot(str, QtCore.QByteArray)
+    @QtCore.qt_slot('QStringList', QtCore.QByteArray)
     def action_state_changed(self, route, serialized_state):
-        route = tuple(route.split('/'))
+        route = tuple(route)
         for action_widget in self.findChildren(AbstractActionWidget):
             if action_widget.action_route == route:
                 state = json.loads(serialized_state.data())
