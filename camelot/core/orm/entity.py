@@ -243,6 +243,10 @@ class EntityMeta( DeclarativeMeta ):
                     application_date_col = application_date.prop.columns[0] if isinstance(application_date, orm.attributes.InstrumentedAttribute) else application_date
                     assert isinstance(application_date_col.type, Date), 'The application date should be of type Date'
 
+                transition_types = entity_args.get('transition_types')
+                if transition_types is not None:
+                    assert isinstance(transition_types, util.OrderedProperties), 'Transition types argument should define enumeration types'
+
                 retention_level = entity_args.get('retention_level')
                 if retention_level is not None:
                     assert retention_level in cls.retention_levels.values(), 'Unsupported retention level'
@@ -355,6 +359,10 @@ class EntityMeta( DeclarativeMeta ):
                 else:
                     order_by_clauses.append(order_by)
             return tuple(order_by_clauses)
+
+    @property
+    def transition_types(cls):
+        return cls._get_entity_arg('transition_types')
 
     @property
     def retention_level(cls):
