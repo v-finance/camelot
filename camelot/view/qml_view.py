@@ -163,7 +163,7 @@ def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model
     """
     global qml_action_dispatch
     if gui_context is None:
-        gui_context_name = qml_action_dispatch.get_context(('gui_context', '0'))
+        gui_context_name = ('gui_context', '0')
     elif gui_context.gui_context_name is None:
         gui_context_name = qml_action_dispatch.register(gui_context, model)
     else:
