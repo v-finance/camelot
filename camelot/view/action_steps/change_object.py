@@ -77,7 +77,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   parent=None,
                   flags=QtCore.Qt.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
-        self.setWindowTitle( str(window_title) )
+        self.setWindowTitle( window_title )
         self.set_banner_logo_pixmap( icon.getQPixmap() )
         self.set_banner_title( six.text_type(title) )
         self.set_banner_subtitle( six.text_type(subtitle) )
@@ -271,7 +271,7 @@ class ChangeObject(ActionStep):
         self.admin = admin
         self.accept = _('OK')
         self.reject = _('Cancel')
-        self.window_title = self.admin.get_verbose_name()
+        self.window_title = str(self.admin.get_verbose_name())
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)
