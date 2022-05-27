@@ -39,8 +39,8 @@ from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.action_steps.profile import EditProfiles
+from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls import delegates, tableview
-from camelot.view.controls.action_widget import ActionPushButton
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.controls.filter_widget import ComboBoxFilterWidget
 from camelot.view.crud_action import UpdateMixin
@@ -135,14 +135,14 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     def grab_widget_states( self, widget, suffix ):
         for state_name, state in self.states:
-            widget.set_state( state )
+            AbstractActionWidget.set_pushbutton_state(
+                widget, state._to_dict(), None, None
+            )
             self.grab_widget( widget, suffix='%s_%s'%( suffix,
                                                        state_name ) )
 
     def test_action_push_botton( self ):
-        widget = ActionPushButton( self.action_name,
-                                   self.gui_context,
-                                   self.parent )
+        widget = QtWidgets.QPushButton()
         self.grab_widget_states( widget, 'application' )
 
     def test_hide_progress_dialog( self ):
