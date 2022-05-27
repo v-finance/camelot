@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, QtCore, QtWidgets, QtQuick, QtQml, variant_to_py
+from ...core.qt import QtGui, QtWidgets, QtQuick, QtQml, variant_to_py
 
 from ...admin.icon import Icon
 from ...admin.action import Mode, State
@@ -93,6 +93,22 @@ class AbstractActionWidget( object ):
             toolbutton.setToolTip( '' )
         if state['modes']:
             toolbutton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+
+    @classmethod
+    def set_pushbutton_state(cls, push_button, state, parent, slot):
+        cls.set_widget_state(push_button, state)
+        if state['verbose_name'] != None:
+            push_button.setText( str( state['verbose_name'] ) )
+        if state['icon'] != None:
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            push_button.setIcon( from_admin_icon(icon).getQIcon() )
+        else:
+            push_button.setIcon( QtGui.QIcon() )
+        if state['tooltip'] != None:
+            push_button.setToolTip( str( state['tooltip'] ) )
+        else:
+            push_button.setToolTip( '' )
+        cls._set_menu(push_button, state, parent, slot)
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
@@ -190,61 +206,3 @@ class AbstractActionWidget( object ):
                 data = data.toVariant()
             mode = variant_to_py(data)
         self.run_action( mode )
-
-
-class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
-
-    def __init__( self, action_name, gui_context, parent ):
-        """A :class:`QtWidgets.QPushButton` that when pressed, will run an
-        action.
-
-        .. image:: /_static/actionwidgets/action_push_botton_application_enabled.png
-
-        """
-        QtWidgets.QPushButton.__init__( self, parent )
-        AbstractActionWidget.init( self, action_name, gui_context )
-        self.clicked.connect(self.action_triggered)
-
-    # REMOVE THIS...
-    """
-    @QtCore.qt_slot(Qt.Orientation, int, int)
-    def header_data_changed(self, orientation, first, last):
-        AbstractActionWidget.header_data_changed(self, orientation, first, last)
-    """
-
-    def set_state( self, state ):
-        super( ActionPushButton, self ).set_state( state )
-        if state.verbose_name != None:
-            self.setText( str( state.verbose_name ) )
-        if state.icon != None:
-            self.setIcon( from_admin_icon(state.icon).getQIcon() )
-        else:
-            self.setIcon( QtGui.QIcon() )
-        if state.tooltip != None:
-            self.setToolTip( str( state.tooltip ) )
-        else:
-            self.setToolTip( '' )            
-        self.set_menu(state, self)
-
-    def set_state_v2( self, state ):
-        self.set_pushbutton_state(self, state)
-
-    @classmethod
-    def set_pushbutton_state(cls, push_button, state, parent, slot):
-        cls.set_widget_state(push_button, state)
-        if state['verbose_name'] != None:
-            push_button.setText( str( state['verbose_name'] ) )
-        if state['icon'] != None:
-            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
-            push_button.setIcon( from_admin_icon(icon).getQIcon() )
-        else:
-            push_button.setIcon( QtGui.QIcon() )
-        if state['tooltip'] != None:
-            push_button.setToolTip( str( state['tooltip'] ) )
-        else:
-            push_button.setToolTip( '' )
-        cls._set_menu(push_button, state, parent, slot)
-
-    @QtCore.qt_slot()
-    def action_triggered(self):
-        self.action_triggered_by(self.sender())

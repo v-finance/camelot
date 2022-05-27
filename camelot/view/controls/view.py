@@ -35,7 +35,7 @@ import logging
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
 from ..action_runner import ActionRunner
-from .action_widget import AbstractActionWidget, ActionPushButton
+from .action_widget import AbstractActionWidget
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class ViewWithActionsMixin(object):
     def set_action_state(self, parent, action_route, action_state):
         for action_widget in parent.findChildren(QtWidgets.QPushButton):
             if action_widget.property('action_route') == action_route:
-                ActionPushButton.set_pushbutton_state(
+                AbstractActionWidget.set_pushbutton_state(
                     action_widget, action_state, parent, self.menu_triggered
                 )
                 return
