@@ -35,7 +35,7 @@ import logging
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
 from ..action_runner import ActionRunner
-from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
+from .action_widget import AbstractActionWidget, ActionToolbutton, ActionPushButton
 
 LOGGER = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class ViewWithActionsMixin(object):
                 return
         for action_widget in parent.findChildren(QtWidgets.QLabel):
             if action_widget.property('action_route') == action_route:
-                ActionLabel.set_label_state(action_widget, action_state)
+                AbstractActionWidget.set_label_state(action_widget, action_state)
                 return
         LOGGER.warn('No widget found with action route {}'.format(action_route))
 

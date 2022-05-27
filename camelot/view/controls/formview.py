@@ -373,6 +373,15 @@ class FormView(AbstractView):
         state = json.loads(serialized_state.data())
         self.set_action_state(self, tuple(action_route), state)
 
+    @QtCore.qt_slot(bool)
+    def button_clicked(self, checked):
+        self.run_action(self.sender(), self.gui_context, None)
+
+    @QtCore.qt_slot()
+    def menu_triggered(self):
+        qaction = self.sender()
+        self.run_action(qaction, self.gui_context, qaction.data())
+        
     def current_row_changed( self, current=None, previous=None ):
         current_index = self.gui_context.widget_mapper.currentIndex()
         self.model.change_selection(None, current_index)

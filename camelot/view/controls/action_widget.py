@@ -69,6 +69,11 @@ class AbstractActionWidget( object ):
         widget.setEnabled(state['enabled'])
         widget.setVisible(state['visible'])
 
+    @classmethod
+    def set_label_state(cls, label, state):
+        cls.set_widget_state(label, state)
+        label.setText(state.get('verbose_name') or '')
+
     # REMOVE THIS...
     """
     def current_row_changed( self, current=None, previous=None ):
@@ -297,26 +302,3 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
     @QtCore.qt_slot()
     def action_triggered(self):
         self.action_triggered_by(self.sender())
-
-class ActionLabel(QtWidgets.QLabel, AbstractActionWidget):
-
-    def __init__( self, action_name, gui_context, parent ):
-        """A :class:`QtWidgets.QLabel` that only displays the state
-        of an action and alows no user interaction"""
-        QtWidgets.QLabel.__init__(self, parent)
-        AbstractActionWidget.init(self, action_name, gui_context)
-        font = self.font()
-        font.setBold(True)
-        self.setFont(font)
-
-    def set_state(self, state):
-        AbstractActionWidget.set_state(self, state)
-        self.setText(state.verbose_name or '')
-
-    def set_state_v2(self, state):
-        self.set_label_state(self, state)
-
-    @classmethod
-    def set_label_state(cls, label, state):
-        cls.set_widget_state(label, state)
-        label.setText(state.get('verbose_name') or '')
