@@ -127,6 +127,7 @@ class SearchCase( test_orm.TestMetaData ):
             query = self.session.query( self.T )
             query = search_filter.decorate_query(query, string_value)
             
-            self.assertTrue( query.count() > 0 )
-            
-    
+            self.assertTrue(query.count() > 0, 'Count return 0 for {} {}'.format(
+                name, definition
+            ))
+
