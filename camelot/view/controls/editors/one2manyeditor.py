@@ -128,7 +128,6 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         mode = [combobox.itemData(index)]
         runner = ActionRunner(combobox.property('action_route'), self.list_gui_context, mode)
         runner.exec()
-        self.list_gui_context.model_name = None
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, action_routes, toolbar):
