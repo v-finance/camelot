@@ -27,11 +27,10 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, QtWidgets, QtQuick, QtQml, variant_to_py
+from ...core.qt import QtGui, QtWidgets
 
 from ...admin.icon import Icon
 from ...admin.action import Mode, State
-from ..action_runner import ActionRunner
 from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
@@ -110,48 +109,6 @@ class AbstractActionWidget( object ):
             push_button.setToolTip( '' )
         cls._set_menu(push_button, state, parent, slot)
 
-    def run_action( self, mode=None ):
-        gui_context = self.gui_context.copy()
-        action_runner = ActionRunner(self.action_name ,gui_context, mode)
-        action_runner.exec()
-
-    def set_menu(self, state, parent):
-        """This method creates a menu for an object with as its menu items
-        the different modes in which an action can be triggered.
-
-        :param state: a `camelot.admin.action.State` object
-        :param parent: a parent for the menu
-        """
-        if state.modes:
-            # self is not always a QWidget, so QMenu is created without
-            # parent
-            menu = self.menu()
-            if menu is None:
-                menu = QtWidgets.QMenu(parent=parent)
-                # setMenu does not transfer ownership
-                self.setMenu(menu)
-            menu.clear()
-            for mode in state.modes:
-                if mode.modes:
-                    mode_menu = mode.render(menu)
-                    for submode in mode.modes:
-                        submode_action = submode.render(mode_menu)
-                        submode_action.triggered.connect(self.action_triggered)
-                        mode_menu.addAction(submode_action)
-                else:
-                    mode_action = mode.render(menu)
-                    mode_action.triggered.connect(self.action_triggered)
-                    menu.addAction(mode_action)
-
-    def set_menu_v2(self, state, parent):
-        """This method creates a menu for an object with as its menu items
-        the different modes in which an action can be triggered.
-
-        :param state: a `camelot.admin.action.State` object
-        :param parent: a parent for the menu
-        """
-        self._set_menu(self, state, parent, self.action_triggered)
-
     @classmethod
     def _set_menu(cls, widget, state, parent, slot):
         """
@@ -190,19 +147,3 @@ class AbstractActionWidget( object ):
                     mode_action.setProperty('action_route', widget.property('action_route'))
                     menu.addAction(mode_action)
 
-    # not named triggered to avoid confusion with standard Qt slot
-    def action_triggered_by(self, sender):
-        """
-        action_triggered should be a slot, so it cannot be defined in the
-        abstract widget, the slot should get the sender and call
-        action_triggered_by
-        """
-        mode = None
-        if isinstance(sender, QtGui.QAction):
-            mode = str(variant_to_py(sender.data()))
-        elif isinstance(sender, QtQuick.QQuickItem):
-            data = sender.mode()
-            if isinstance(data, QtQml.QJSValue):
-                data = data.toVariant()
-            mode = variant_to_py(data)
-        self.run_action( mode )

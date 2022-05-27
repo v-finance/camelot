@@ -35,7 +35,6 @@ from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy, ProxyRegistry
-from ...action_runner import ActionRunner
 from ..action_widget import AbstractActionWidget
 from ..filter_widget import ComboBoxFilterWidget
 from ..view import ViewWithActionsMixin
@@ -126,8 +125,11 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     def combobox_activated(self, index):
         combobox = self.sender()
         mode = [combobox.itemData(index)]
-        runner = ActionRunner(combobox.property('action_route'), self.list_gui_context, mode)
-        runner.exec()
+        self.run_action(combobox, self.list_gui_context, mode)
+
+    @QtCore.qt_slot(bool)
+    def button_clicked(self, checked):
+        self.run_action(self.sender(), self.gui_context, None)
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, action_routes, toolbar):
