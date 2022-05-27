@@ -74,25 +74,25 @@ class AbstractActionWidget( object ):
         cls.set_widget_state(label, state)
         label.setText(state.get('verbose_name') or '')
 
-    # REMOVE THIS...
-    """
-    def current_row_changed( self, current=None, previous=None ):
-        #if not isinstance( self.gui_context, ListActionGuiContext ):
-        if not isinstance( self.gui_context, (ListActionGuiContext, FormActionGuiContext) ):
-            print('Update state:', self.action, ',', self.gui_context)
-            post( self.action.get_state,
-                  self.set_state,
-                  args = (self.gui_context.create_model_context(),) )
-
-    def header_data_changed(self, orientation, first, last):
-        if orientation==Qt.Orientation.Horizontal:
-            return
-        if isinstance(self.gui_context, FormActionGuiContext):
-            # the model might emit a dataChanged signal, while the widget mapper
-            # has been deleted
-            if not is_deleted(self.gui_context.widget_mapper):
-                self.current_row_changed(first)
-    """
+    @classmethod
+    def set_toolbutton_state(cls, toolbutton, state, slot):
+        # warning, this method does not set the menu, so does not work for
+        # modes.
+        cls.set_widget_state(toolbutton, state)
+        cls._set_menu(toolbutton, state, toolbutton, slot)
+        if state['verbose_name'] != None:
+            toolbutton.setText( str( state['verbose_name'] ) )
+        if state['icon'] != None:
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            toolbutton.setIcon( from_admin_icon(icon).getQIcon() )
+        else:
+            toolbutton.setIcon( QtGui.QIcon() )
+        if state['tooltip'] != None:
+            toolbutton.setToolTip( str( state['tooltip'] ) )
+        else:
+            toolbutton.setToolTip( '' )
+        if state['modes']:
+            toolbutton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
     def run_action( self, mode=None ):
         gui_context = self.gui_context.copy()
@@ -244,60 +244,6 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         else:
             push_button.setToolTip( '' )
         cls._set_menu(push_button, state, parent, slot)
-
-    @QtCore.qt_slot()
-    def action_triggered(self):
-        self.action_triggered_by(self.sender())
-
-class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
-
-    def __init__( self, action_name, gui_context, parent ):
-        """A :class:`QtWidgets.QToolButton` that when pressed, will run an
-        action."""
-        QtWidgets.QToolButton.__init__( self, parent )
-        AbstractActionWidget.init( self, action_name, gui_context )
-        self.clicked.connect(self.run_action)
-
-    def set_state( self, state ):
-        AbstractActionWidget.set_state(self, state)
-        if state.verbose_name != None:
-            self.setText( str( state.verbose_name ) )
-        if state.icon != None:
-            self.setIcon( from_admin_icon(state.icon).getQIcon() )
-        else:
-            self.setIcon( QtGui.QIcon() )
-        if state.tooltip != None:
-            self.setToolTip( str( state.tooltip ) )
-        else:
-            self.setToolTip( '' )
-        self.set_menu(state, self)
-        if state.modes:
-            self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
-
-    def set_state_v2( self, state ):
-        self.set_menu_v2(state, self)
-        self.set_toolbutton_state(self, state, self.action_triggered)
-
-    @classmethod
-    def set_toolbutton_state(cls, toolbutton, state, slot):
-        # warning, this method does not set the menu, so does not work for
-        # modes.
-        cls.set_widget_state(toolbutton, state)
-        cls._set_menu(toolbutton, state, toolbutton, slot)
-        if state['verbose_name'] != None:
-            toolbutton.setText( str( state['verbose_name'] ) )
-        if state['icon'] != None:
-            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
-            toolbutton.setIcon( from_admin_icon(icon).getQIcon() )
-        else:
-            toolbutton.setIcon( QtGui.QIcon() )
-        if state['tooltip'] != None:
-            toolbutton.setToolTip( str( state['tooltip'] ) )
-        else:
-            toolbutton.setToolTip( '' )
-        if state['modes']:
-            toolbutton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
-
 
     @QtCore.qt_slot()
     def action_triggered(self):

@@ -42,7 +42,7 @@ from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
     ChoicesRole, FieldAttributesRole, ProxyDict
 )
-from ..action_widget import ActionToolbutton
+from ..action_widget import AbstractActionWidget
 
 LOGGER = logging.getLogger(__name__)
 
@@ -259,7 +259,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                 if action_route_of_widget is None:
                     continue
                 if list(action_route_of_widget)==action_route:
-                    ActionToolbutton.set_toolbutton_state(
+                    AbstractActionWidget.set_toolbutton_state(
                         action_widget, action_state, editor.action_menu_triggered
                     )
                     break
