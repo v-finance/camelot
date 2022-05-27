@@ -136,7 +136,6 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         amount of memory, this maximum puts an upper limit on that.
     """
 
-    action_state_changed_signal = QtCore.qt_signal(tuple, State) # still used in python
     action_state_changed_cpp_signal = QtCore.qt_signal('QStringList', QtCore.QByteArray) # used in C++
 
     max_row_count = 10000000 # display maxium 10M rows

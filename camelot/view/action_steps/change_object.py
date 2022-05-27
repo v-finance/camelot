@@ -42,7 +42,6 @@ from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
-from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy.collection_proxy import CollectionProxy
@@ -139,12 +138,10 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if actions and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
-            actions_widget = ActionsBox(parent = self)
-            actions_widget.setObjectName('actions')
             for action in actions:
                 action_widget = self.render_action(
                     action.render_hint, action.route,
-                    self.gui_context, actions_widget
+                    self.gui_context, self
                 )
                 state = None
                 for action_state in action_states:
@@ -153,10 +150,9 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
                         break
                 if state is not None:
                     action_widget.set_state(state)
-                actions_widget.layout().addWidget(action_widget)
-            side_panel_layout.addWidget( actions_widget )
+                side_panel_layout.addWidget(action_widget)
             side_panel_layout.addStretch()
-            layout.addLayout( side_panel_layout )
+            layout.addLayout(side_panel_layout)
 
     @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):

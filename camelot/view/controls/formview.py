@@ -40,12 +40,10 @@ from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
 
 from ...core.item_model import ActionModeRole
 from ..action_runner import ActionRunner
-from camelot.admin.action.base import State
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.core.naming import initial_naming_context
 from camelot.view.crud_action import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
-from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls.busy_widget import BusyWidget
 from .delegates.delegatemanager import DelegateManager
 
@@ -307,7 +305,7 @@ class FormView(AbstractView):
         self.setLayout( layout )
         self.change_title(title)
 
-        model.action_state_changed_signal.connect(self.action_state_changed)
+        model.action_state_changed_cpp_signal.connect(self.action_state_changed)
         self.gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
         self.gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
 
@@ -336,26 +334,18 @@ class FormView(AbstractView):
         form = self.findChild(QtWidgets.QWidget, 'form' )
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if action_routes and form and layout:
-            route2state = {}
-            for action_state in action_states:
-                route2state[tuple(action_state[0])] = action_state[1]
             side_panel_layout = QtWidgets.QVBoxLayout()
-            from camelot.view.controls.actionsbox import ActionsBox
             LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox(parent=self)
-            actions_widget.setObjectName('actions')
             for action_route in action_routes:
                 action = initial_naming_context.resolve(tuple(action_route))
                 action_widget = self.render_action(
                     action.render_hint, action_route,
-                    self.gui_context, actions_widget
+                    self.gui_context, self
                 )
                 self.model.add_action_route(tuple(action_route))
-                state = route2state.get(tuple(action_route))
-                if state is not None:
-                    action_widget.set_state(state)
-                actions_widget.layout().addWidget(action_widget)
-            side_panel_layout.addWidget(actions_widget)
+                side_panel_layout.addWidget(action_widget)
+            for action_route, action_state in action_states:
+                self.set_action_state(self, tuple(action_route), action_state)
             side_panel_layout.addStretch()
             layout.addLayout(side_panel_layout)
 
@@ -363,9 +353,6 @@ class FormView(AbstractView):
     def set_toolbar_actions(self, action_routes, action_states):
         layout = self.findChild( QtWidgets.QLayout, 'layout' )
         if layout and action_routes:
-            route2state = {}
-            for action_state in action_states:
-                route2state[tuple(action_state[0])] = action_state[1]
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
             for action_route in action_routes:
@@ -375,18 +362,16 @@ class FormView(AbstractView):
                     self.gui_context, toolbar,
                 )
                 self.model.add_action_route(tuple(action_route))
-                state = route2state.get(tuple(action_route))
-                if state is not None:
-                    action_widget.set_state(state)
                 toolbar.addWidget(action_widget)
+            for action_route, action_state in action_states:
+                self.set_action_state(self, tuple(action_route), action_state)
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
 
-    @QtCore.qt_slot(tuple, State)
-    def action_state_changed(self, route, state):
-        action_name = self.gui_context.action_routes[route]
-        action_widget = self.findChild(AbstractActionWidget, action_name)
-        action_widget.set_state(state)
+    @QtCore.qt_slot('QStringList', QtCore.QByteArray)
+    def action_state_changed(self, action_route, serialized_state):
+        state = json.loads(serialized_state.data())
+        self.set_action_state(self, tuple(action_route), state)
 
     def current_row_changed( self, current=None, previous=None ):
         current_index = self.gui_context.widget_mapper.currentIndex()

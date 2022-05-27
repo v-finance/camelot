@@ -187,58 +187,6 @@ class AbstractActionWidget( object ):
         self.run_action( mode )
 
 
-class ActionAction( QtGui.QAction, AbstractActionWidget ):
-
-    def __init__( self, action_name, gui_context, parent ):
-        QtGui.QAction.__init__( self, parent )
-        AbstractActionWidget.init( self, action_name, gui_context )
-        self.triggered.connect(self.action_triggered)
-
-    @QtCore.qt_slot()
-    def action_triggered(self):
-        self.action_triggered_by(self.sender())
-
-    @QtCore.qt_slot( object )
-    def set_state( self, state ):
-        if state.shortcut != None:
-            self.setShortcut( state.shortcut )
-        if state.verbose_name != None:
-            self.setText( str( state.verbose_name ) )
-        else:
-            self.setText( '' )
-        if state.icon != None:
-            self.setIcon( from_admin_icon(state.icon).getQIcon() )
-        else:
-            self.setIcon( QtGui.QIcon() )
-        if state.tooltip != None:
-            self.setToolTip( str( state.tooltip ) )
-        else:
-            self.setToolTip( '' )
-        self.setEnabled( state.enabled )
-        self.setVisible( state.visible )
-        # todo : determine the parent for the menu
-        self.set_menu(state, None)
-
-    @QtCore.qt_slot( object )
-    def set_state_v2( self, state ):
-        if state['verbose_name'] != None:
-            self.setText( str( state['verbose_name'] ) )
-        else:
-            self.setText( '' )
-        if state['icon'] != None:
-            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
-            self.setIcon( from_admin_icon(icon).getQIcon() )
-        else:
-            self.setIcon( QtGui.QIcon() )
-        if state['tooltip'] != None:
-            self.setToolTip( str( state['tooltip'] ) )
-        else:
-            self.setToolTip( '' )
-        self.setEnabled( state['enabled'] )
-        self.setVisible( state['visible'] )
-        # todo : determine the parent for the menu
-        self.set_menu_v2(state, None)
-
 class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
 
     def __init__( self, action_name, gui_context, parent ):
@@ -274,19 +222,23 @@ class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
         self.set_menu(state, self)
 
     def set_state_v2( self, state ):
-        super( ActionPushButton, self ).set_state_v2( state )
+        self.set_pushbutton_state(self, state)
+
+    @classmethod
+    def set_pushbutton_state(cls, push_button, state, parent, slot):
+        cls.set_widget_state(push_button, state)
         if state['verbose_name'] != None:
-            self.setText( str( state['verbose_name'] ) )
+            push_button.setText( str( state['verbose_name'] ) )
         if state['icon'] != None:
             icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
-            self.setIcon( from_admin_icon(icon).getQIcon() )
+            push_button.setIcon( from_admin_icon(icon).getQIcon() )
         else:
-            self.setIcon( QtGui.QIcon() )
+            push_button.setIcon( QtGui.QIcon() )
         if state['tooltip'] != None:
-            self.setToolTip( str( state['tooltip'] ) )
+            push_button.setToolTip( str( state['tooltip'] ) )
         else:
-            self.setToolTip( '' )
-        self.set_menu_v2(state, self)
+            push_button.setToolTip( '' )
+        cls._set_menu(push_button, state, parent, slot)
 
     @QtCore.qt_slot()
     def action_triggered(self):
@@ -362,5 +314,9 @@ class ActionLabel(QtWidgets.QLabel, AbstractActionWidget):
         self.setText(state.verbose_name or '')
 
     def set_state_v2(self, state):
-        AbstractActionWidget.set_state_v2(self, state)
-        self.setText(state.get('verbose_name') or '')
+        self.set_label_state(self, state)
+
+    @classmethod
+    def set_label_state(cls, label, state):
+        cls.set_widget_state(label, state)
+        label.setText(state.get('verbose_name') or '')
