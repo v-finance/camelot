@@ -88,6 +88,10 @@ class ViewWithActionsMixin(object):
             if action_widget.property('action_route') == action_route:
                 AbstractActionWidget.set_label_state(action_widget, action_state)
                 return
+        for action_widget in parent.findChildren(QtWidgets.QComboBox):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_combobox_state(action_widget, action_state)
+                return
         LOGGER.warn('No widget found with action route {}'.format(action_route))
 
     def run_action(self, action_widget, gui_context, mode):

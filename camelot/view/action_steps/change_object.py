@@ -221,7 +221,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         self.update_complete(model)
         for route, state in action_states:
             table_widget.action_state_changed(
-                '/'.join(route),
+                route,
                 QtCore.QByteArray(json.dumps(state).encode('utf-8'))
             )
 

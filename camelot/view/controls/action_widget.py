@@ -110,6 +110,21 @@ class AbstractActionWidget( object ):
         cls._set_menu(push_button, state, parent, slot)
 
     @classmethod
+    def set_combobox_state(cls, combobox, state):
+        cls.set_widget_state(combobox, state)
+        combobox.clear()
+        current_index = 0
+        for i, mode in enumerate(state['modes']):
+            if mode['checked'] == True:
+                current_index = i
+            combobox.insertItem(
+                i, mode['verbose_name'], mode['value']
+            )
+        # setting the current index will trigger the run of the action to
+        # apply the initial filter
+        combobox.setCurrentIndex(current_index)
+
+    @classmethod
     def _set_menu(cls, widget, state, parent, slot):
         """
         slot can be None for use in unittests where the action wont be
