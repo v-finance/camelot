@@ -245,7 +245,7 @@ class OpenQmlTableView(OpenTableView):
 
         list_gui_context = gui_context.copy(QmlListActionGuiContext)
         list_gui_context.admin_route = tuple(step['admin_route'])
-        list_gui_context.context_id = None
+        list_gui_context.gui_context_name = None
 
         new_model = CollectionProxy(tuple(step['admin_route']))
         list(new_model.add_columns(step['columns']))

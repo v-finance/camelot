@@ -74,7 +74,7 @@ class SelectObjects( OpenTableView ):
     @classmethod
     def deserialize_result(cls, gui_context, response):
         objects = []
-        list_gui_context = qml_action_dispatch.get_context(response['context_id'])
+        list_gui_context = qml_action_dispatch.get_context(response['gui_context_name'])
         model = list_gui_context.get_item_model()
         if model is not None:
             proxy = model.get_value()

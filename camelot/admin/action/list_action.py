@@ -188,7 +188,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
     def get_item_model(self):
         if self.item_view is not None:
             return self.item_view.model()
-        return qml_action_dispatch.get_model(self.context_id)
+        return qml_action_dispatch.get_model(self.gui_context_name)
 
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
