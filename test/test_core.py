@@ -10,7 +10,7 @@ from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
     AlreadyBoundException, BindingType, Constant, ConstantNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
-    NameNotFoundException, NamingContext, NamingException, UnboundException
+    NameNotFoundException, NamingContext, NamingException, UnboundException, WeakRefNamingContext,
 )
 from camelot.core.orm import Entity, EntityBase, Session
 from camelot.core.profile import Profile, ProfileStore
@@ -1158,3 +1158,8 @@ class TernaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCas
         a2 = PK3Entity(id_1=1, id_2=2, id_3=3)
         cls.session.flush()
         cls.compatible_names = [(str(a1.id_1), str(a1.id_2), str(a1.id_3)), (str(a2.id_1), str(a2.id_2), str(a2.id_3))]
+
+class WeakRefNamingContextCase(AbstractNamingContextCase, NamingContextCaseMixin):
+
+    context_name = ('weakref',)
+    context_cls = WeakRefNamingContext
