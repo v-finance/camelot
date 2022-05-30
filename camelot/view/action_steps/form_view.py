@@ -123,7 +123,7 @@ class OpenFormView(ActionStep):
         for action_route in actions:
             action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
-            action_states.append((action_route.route, state))
+            action_states.append((action_route.route, state._to_dict()))
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests

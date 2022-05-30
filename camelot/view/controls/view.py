@@ -30,10 +30,14 @@
 """Functionality common to TableViews and FormViews"""
 
 import itertools
+import logging
 
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
-from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
+from ..action_runner import ActionRunner
+from .action_widget import AbstractActionWidget
+
+LOGGER = logging.getLogger(__name__)
 
 class ViewWithActionsMixin(object):
 
@@ -48,14 +52,16 @@ class ViewWithActionsMixin(object):
 
     def render_action(self, render_hint, action_route, gui_context, parent):
         if render_hint == RenderHint.TOOL_BUTTON:
-            qobject = ActionToolbutton(action_route, gui_context, parent)
+            qobject = QtWidgets.QToolButton(parent)
+            qobject.clicked.connect(self.button_clicked)
         elif render_hint == RenderHint.COMBO_BOX:
             qobject = QtWidgets.QComboBox(parent)
             qobject.activated.connect(self.combobox_activated)
         elif render_hint == RenderHint.PUSH_BUTTON:
-            qobject = ActionPushButton(action_route, gui_context, parent)
+            qobject = QtWidgets.QPushButton(parent)
+            qobject.clicked.connect(self.button_clicked)
         elif render_hint == RenderHint.LABEL:
-            qobject = ActionLabel(action_route, gui_context, parent)
+            qobject = QtWidgets.QLabel(parent)
         else:
             raise Exception('Unhandled render hint {} for {}'.format(
                 render_hint, action_route
@@ -64,6 +70,34 @@ class ViewWithActionsMixin(object):
         rendered_action_name = self._register_rendered_action(qobject)
         gui_context.action_routes[action_route] = rendered_action_name
         return qobject
+
+    def set_action_state(self, parent, action_route, action_state):
+        for action_widget in parent.findChildren(QtWidgets.QPushButton):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_pushbutton_state(
+                    action_widget, action_state, parent, self.menu_triggered
+                )
+                return
+        for action_widget in parent.findChildren(QtWidgets.QToolButton):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_toolbutton_state(
+                    action_widget, action_state, self.menu_triggered
+                )
+                return
+        for action_widget in parent.findChildren(QtWidgets.QLabel):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_label_state(action_widget, action_state)
+                return
+        for action_widget in parent.findChildren(QtWidgets.QComboBox):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_combobox_state(action_widget, action_state)
+                return
+        LOGGER.warn('No widget found with action route {}'.format(action_route))
+
+    def run_action(self, action_widget, gui_context, mode):
+        action_name = action_widget.property('action_route')
+        action_runner = ActionRunner(action_name, gui_context, mode)
+        action_runner.exec()
 
 class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
     """A string used to format the title of the view ::

@@ -39,10 +39,9 @@ from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.action_steps.profile import EditProfiles
+from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls import delegates, tableview
-from camelot.view.controls.action_widget import ActionPushButton
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from camelot.view.controls.filter_widget import ComboBoxFilterWidget
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.view.qml_view import get_qml_root_backend
@@ -135,14 +134,14 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     def grab_widget_states( self, widget, suffix ):
         for state_name, state in self.states:
-            widget.set_state( state )
+            AbstractActionWidget.set_pushbutton_state(
+                widget, state._to_dict(), None, None
+            )
             self.grab_widget( widget, suffix='%s_%s'%( suffix,
                                                        state_name ) )
 
     def test_action_push_botton( self ):
-        widget = ActionPushButton( self.action_name,
-                                   self.gui_context,
-                                   self.parent )
+        widget = QtWidgets.QPushButton()
         self.grab_widget_states( widget, 'application' )
 
     def test_hide_progress_dialog( self ):
@@ -709,7 +708,7 @@ class ListActionsCase(
             self.combo_box_filter.render_hint, self.combo_box_filter_route,
             self.gui_context, None
         )
-        ComboBoxFilterWidget._set_state_v2(widget, state._to_dict())
+        AbstractActionWidget.set_combobox_state(widget, state._to_dict())
         self.assertTrue(widget.count())
         list(self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value))
         self.grab_widget(widget)

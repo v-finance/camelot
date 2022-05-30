@@ -53,7 +53,6 @@ logger = logging.getLogger(__name__)
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.application_action import ApplicationActionGuiContext
-from ...admin.action.base import State
 from ...admin.action.list_action import ListActionModelContext
 from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
@@ -136,7 +135,6 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         amount of memory, this maximum puts an upper limit on that.
     """
 
-    action_state_changed_signal = QtCore.qt_signal(tuple, State) # still used in python
     action_state_changed_cpp_signal = QtCore.qt_signal('QStringList', QtCore.QByteArray) # used in C++
 
     max_row_count = 10000000 # display maxium 10M rows

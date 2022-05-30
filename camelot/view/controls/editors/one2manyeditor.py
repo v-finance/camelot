@@ -35,9 +35,6 @@ from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy, ProxyRegistry
-from ...action_runner import ActionRunner
-from ..action_widget import AbstractActionWidget
-from ..filter_widget import ComboBoxFilterWidget
 from ..view import ViewWithActionsMixin
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
@@ -126,9 +123,11 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     def combobox_activated(self, index):
         combobox = self.sender()
         mode = [combobox.itemData(index)]
-        runner = ActionRunner(combobox.property('action_route'), self.list_gui_context, mode)
-        runner.exec()
-        self.list_gui_context.model_name = None
+        self.run_action(combobox, self.list_gui_context, mode)
+
+    @QtCore.qt_slot(bool)
+    def button_clicked(self, checked):
+        self.run_action(self.sender(), self.list_gui_context, None)
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, action_routes, toolbar):
@@ -164,18 +163,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         self.update_list_action_states()
 
     @QtCore.qt_slot('QStringList', QtCore.QByteArray)
-    def action_state_changed(self, route, serialized_state):
-        route = tuple(route)
-        for action_widget in self.findChildren(AbstractActionWidget):
-            if action_widget.action_route == route:
-                state = json.loads(serialized_state.data())
-                action_widget.set_state_v2(state)
-                return
-        for action_widget in self.findChildren(QtWidgets.QComboBox):
-            if action_widget.action_route == route:
-                state = json.loads(serialized_state.data())
-                ComboBoxFilterWidget._set_state_v2(action_widget, state)
-                return
+    def action_state_changed(self, action_route, serialized_state):
+        action_state = json.loads(serialized_state.data())
+        self.set_action_state(self, tuple(action_route), action_state)
 
     def get_model(self):
         """
@@ -229,3 +219,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         if admin.list_action:
             admin.list_action.gui_run(self.list_gui_context)
 
+    @QtCore.qt_slot()
+    def menu_triggered(self):
+        qaction = self.sender()
+        self.run_action(qaction, self.list_gui_context, qaction.data())

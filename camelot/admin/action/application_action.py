@@ -443,10 +443,11 @@ class Refresh( Action ):
                 yield action_steps.UpdateProgress( i, 
                                                    session_items, 
                                                    progress_db_message )
-        yield action_steps.UpdateProgress( text = progress_view_message )
+        yield action_steps.UpdateProgress(text = progress_view_message )
         yield action_steps.UpdateObjects(refreshed_objects)
         yield action_steps.DeleteObjects(expunged_objects)
         yield action_steps.Refresh()
+        yield action_steps.UpdateProgress(1, 1)
 
 refresh = Refresh()
 
