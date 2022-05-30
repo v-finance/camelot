@@ -164,7 +164,7 @@ class CloseView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run( cls, gui_context, serialized_step ):
-        if gui_context.context_id is None:
+        if gui_context.gui_context_name is None:
             # python implementation, still used for FormView
             step = json.loads(serialized_step)
             view = gui_context.view
