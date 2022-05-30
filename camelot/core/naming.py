@@ -10,6 +10,7 @@ import decimal
 import functools
 import logging
 import typing
+import weakref
 
 from enum import Enum
 
@@ -903,6 +904,20 @@ class EntityNamingContext(EndpointNamingContext):
         if instance is None:
             raise NameNotFoundException(name[0], BindingType.named_object)
         return instance
+
+class WeakRefNamingContext(NamingContext):
+    """
+    Specialized naming context that stores it set of name-to-object bindings using weak references in a `weakref.WeakValueDictionary`.
+    Those weak references to objects are not enough to keep them alive: when the only remaining references to a referent are weak references,
+    garbage collection is free to destroy the referent and reuse its memory for something else, and corresponding entries in weak mappings simply get deleted.
+
+    This means that named object bindings in this context can get unbound in two ways, either explicitly using the unbind functionality, or implicitly by the garbage collection.
+    A primary use case for this weak reference naming context is the caching of large objects, that should not be kept alive only because it appears in the cache.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._bindings[BindingType.named_object] = weakref.WeakValueDictionary()
 
 class InitialNamingContext(NamingContext, metaclass=Singleton):
     """
