@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from ...admin.action.base import ActionStep
 from ...admin.icon import CompletionValue
-from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
+from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
 from ...core.serializable import DataclassSerializable
 from ...core.item_model import FieldAttributesRole, CompletionsRole, PreviewRole
 
@@ -118,7 +118,9 @@ class SetColumns(ActionStep):
             else:
                 set_header_data(item_model._header_font, Qt.ItemDataRole.FontRole)
 
-            settings_width = int( variant_to_py( item_model.settings.value( field_name, 0 ) ) )
+            # the value returned from settings might be a string representing a
+            # float (on Winblows)
+            settings_width = int(float(item_model.settings.value(field_name, 0)))
             if settings_width > 0:
                 width = settings_width
             else:
