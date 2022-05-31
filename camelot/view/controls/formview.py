@@ -35,13 +35,11 @@ from ...core.serializable import NamedDataclassSerializable
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
-from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
-                        variant_to_py)
+from ...core.qt import QtCore, QtWidgets, Qt,is_deleted, variant_to_py
 
 from ...core.item_model import ActionModeRole
 from ..action_runner import ActionRunner
 from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.core.naming import initial_naming_context
 from camelot.view.crud_action import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
@@ -90,8 +88,6 @@ class FormEditors(QtCore.QObject):
             model_index
         )
         widget_editor.setObjectName('%s_editor'%field_name)
-        stretch = self._field_attributes[field_name].get('stretch', 1)
-        widget_editor.setProperty('stretch', py_to_variant(stretch))
         delegate.setEditorData( widget_editor, model_index )
         widget_mapper.addMapping( widget_editor, index )
         return widget_editor
@@ -330,41 +326,35 @@ class FormView(AbstractView):
             self.change_title(u'')
 
     @QtCore.qt_slot(list)
-    def set_actions(self, action_routes, action_states):
+    def set_actions(self, actions):
         form = self.findChild(QtWidgets.QWidget, 'form' )
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
-        if action_routes and form and layout:
+        if actions and form and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
             LOGGER.debug('setting Actions for formview')
-            for action_route in action_routes:
-                action = initial_naming_context.resolve(tuple(action_route))
+            for action_route, render_hint in actions:
                 action_widget = self.render_action(
-                    action.render_hint, action_route,
+                    render_hint, tuple(action_route),
                     self.gui_context, self
                 )
                 self.model.add_action_route(tuple(action_route))
                 side_panel_layout.addWidget(action_widget)
-            for action_route, action_state in action_states:
-                self.set_action_state(self, tuple(action_route), action_state)
             side_panel_layout.addStretch()
             layout.addLayout(side_panel_layout)
 
     @QtCore.qt_slot(list)
-    def set_toolbar_actions(self, action_routes, action_states):
+    def set_toolbar_actions(self, actions):
         layout = self.findChild( QtWidgets.QLayout, 'layout' )
-        if layout and action_routes:
+        if layout and actions:
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
-            for action_route in action_routes:
-                action = initial_naming_context.resolve(tuple(action_route))
+            for action_route, render_hint in actions:
                 action_widget = self.render_action(
-                    action.render_hint, action_route,
+                    render_hint, tuple(action_route),
                     self.gui_context, toolbar,
                 )
                 self.model.add_action_route(tuple(action_route))
                 toolbar.addWidget(action_widget)
-            for action_route, action_state in action_states:
-                self.set_action_state(self, tuple(action_route), action_state)
             toolbar.addWidget( BusyWidget() )
             layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
 

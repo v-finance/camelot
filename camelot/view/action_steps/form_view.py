@@ -149,8 +149,10 @@ class OpenFormView(ActionStep):
             columns=self._columns, form_display=self._form_display,
             index=self.row
         )
-        form.set_actions([action.route for action in self.actions], self.action_states)
-        form.set_toolbar_actions([action.route for action in self.top_toolbar_actions], self.action_states)
+        form.set_actions([(a.route, a.render_hint) for a in self.actions])
+        form.set_toolbar_actions([(a.route, a.render_hint) for a in self.top_toolbar_actions])
+        for action_route, action_state in self.action_states:
+            form.set_action_state(form, tuple(action_route), action_state)
         return form
 
     def gui_run( self, gui_context ):
