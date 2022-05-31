@@ -722,7 +722,8 @@ class AbstractNamingContextCase(unittest.TestCase):
         super().setUp()
         # Store a copy of initial context's bindings before each test,
         # so that they can be reinstated in the tear down afterwards.
-        self.initial_context_bindings = {k:copy.copy(v) for k,v in InitialNamingContext()._bindings.items()}
+        self.initial_context_bindings = InitialNamingContext()._bindings
+        InitialNamingContext()._bindings = {btype: bstorage.copy() for btype, bstorage in InitialNamingContext()._bindings.items()}
         self.context = self.new_context()
 
     def tearDown(self):
@@ -1159,7 +1160,7 @@ class TernaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCas
         cls.session.flush()
         cls.compatible_names = [(str(a1.id_1), str(a1.id_2), str(a1.id_3)), (str(a2.id_1), str(a2.id_2), str(a2.id_3))]
 
-class WeakRefNamingContextCase(AbstractNamingContextCase, NamingContextCaseMixin):
+#class WeakRefNamingContextCase(AbstractNamingContextCase, NamingContextCaseMixin):
 
-    context_name = ('weakref',)
-    context_cls = WeakRefNamingContext
+    #context_name = ('weakref',)
+    #context_cls = WeakRefNamingContext
