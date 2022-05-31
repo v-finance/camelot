@@ -439,6 +439,20 @@ class BindingStorage(AbstractBindingStorage):
     def __len__(self):
         return len(self._bindings)
 
+class WeakValueBindingStorage(BindingStorage):
+    """
+    Binding storage implementation that stores the bindings in a name-to-object ´weakref.WeakValueDictionary´.
+    Those weak references to objects are not enough to keep them alive: when the only remaining references to a referent are weak references,
+    garbage collection is free to destroy the referent and reuse its memory for something else, and corresponding entries in weak mappings simply get deleted.
+
+    This means that object bindings can be removed in two ways, either explicitly using the remove functionality, or implicitly by the garbage collection.
+    Additionally, this also means that with this storage backend, immutable bindings can get removed by the latter process.
+    """
+
+    def __init__(self, binding_type):
+        super().__init__(binding_type)
+        self._bindings = weakref.WeakValueDictionary()
+
 class NamingContext(AbstractNamingContext):
     """
     Represents a naming context, which consists of a set of name-to-object bindings.
@@ -1001,7 +1015,7 @@ class WeakRefNamingContext(NamingContext):
 
     def __init__(self):
         super().__init__()
-        self._bindings[BindingType.named_object] = weakref.WeakValueDictionary()
+        self._bindings[BindingType.named_object] = WeakValueBindingStorage(BindingType.named_object)
 
 class InitialNamingContext(NamingContext, metaclass=Singleton):
     """
