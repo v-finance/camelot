@@ -347,6 +347,9 @@ class AbstractBindingStorage(object):
     def get(self, name):
         raise NotImplementedError
 
+    def copy(self):
+        raise NotImplementedError
+
     def list(self):
         raise NotImplementedError
 
@@ -381,6 +384,12 @@ class BindingStorage(AbstractBindingStorage):
         if name not in self._bindings:
             raise NameNotFoundException(name, self.binding_type)
         return self._bindings[name]
+
+    def copy(self):
+        duplicate = self.__class__(self.binding_type)
+        for name, obj in self._bindings.items():
+            duplicate.add(name, obj, immutable=name in self._immutable)
+        return duplicate
 
     def list(self):
         return self._bindings.keys()
