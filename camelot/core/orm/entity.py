@@ -142,6 +142,9 @@ class EntityMeta( DeclarativeMeta ):
        Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
        which should be of type Date.
 
+    * 'transition_types'
+       Enumeration that defines the types of state transitions instances of the entity class can undergo.
+
     * 'editable'
        This entity argument is a flag that when set to False will register the entity class as globally non-editable.
 
@@ -150,7 +153,7 @@ class EntityMeta( DeclarativeMeta ):
 
     * 'retention_level'
        Configures the data retention of the entity, e.g. how long it should be kept in the system before its final archiving or removal.
-
+    
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
