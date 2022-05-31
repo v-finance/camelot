@@ -353,6 +353,35 @@ class AbstractBindingStorage(object):
     def __contains__(self, name):
         raise NotImplementedError
 
+class BindingStorage(AbstractBindingStorage):
+
+    def __init__(self, binding_type):
+        self.binding_type = binding_type
+        self._bindings = {}
+        self._immutable = []
+
+    def add(self, name, obj, immutable=False):
+        if self.__contains__(name) and name in self._immutable:
+            raise ImmutableBindingException(self.binding_type, name[0])
+        self._bindings[name] = obj
+        if immutable:
+            self._immutable.append(name)
+
+    def remove(self, name):
+        if self.__contains__(name):
+            raise NameNotFoundException(name[0], self.binding_type)
+        if name in self._immutable:
+            raise ImmutableBindingException(self.binding_type, name[0])
+        self._bindings.pop(name)
+
+    def get(self, name):
+        if self.__contains__(name):
+            raise NameNotFoundException(name[0], self.binding_type)
+        return self._bindings[name]
+
+    def __contains__(self, name):
+        return name in self._bindings
+
 class NamingContext(AbstractNamingContext):
     """
     Represents a naming context, which consists of a set of name-to-object bindings.
