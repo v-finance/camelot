@@ -347,10 +347,13 @@ class AbstractBindingStorage(object):
     def get(self, name):
         raise NotImplementedError
 
-    def immutable(self, name):
+    def list(self):
         raise NotImplementedError
 
     def __contains__(self, name):
+        raise NotImplementedError
+
+    def __len__(self):
         raise NotImplementedError
 
 class BindingStorage(AbstractBindingStorage):
@@ -361,26 +364,32 @@ class BindingStorage(AbstractBindingStorage):
         self._immutable = []
 
     def add(self, name, obj, immutable=False):
-        if self.__contains__(name) and name in self._immutable:
-            raise ImmutableBindingException(self.binding_type, name[0])
+        if name in self._bindings and name in self._immutable:
+            raise ImmutableBindingException(self.binding_type, name)
         self._bindings[name] = obj
         if immutable:
             self._immutable.append(name)
 
     def remove(self, name):
-        if self.__contains__(name):
-            raise NameNotFoundException(name[0], self.binding_type)
+        if name not in self._bindings:
+            raise NameNotFoundException(name, self.binding_type)
         if name in self._immutable:
-            raise ImmutableBindingException(self.binding_type, name[0])
-        self._bindings.pop(name)
+            raise ImmutableBindingException(self.binding_type, name)
+        return self._bindings.pop(name)
 
     def get(self, name):
-        if self.__contains__(name):
-            raise NameNotFoundException(name[0], self.binding_type)
+        if name not in self._bindings:
+            raise NameNotFoundException(name, self.binding_type)
         return self._bindings[name]
+
+    def list(self):
+        return self._bindings.keys()
 
     def __contains__(self, name):
         return name in self._bindings
+
+    def __len__(self):
+        return len(self._bindings)
 
 class NamingContext(AbstractNamingContext):
     """
@@ -391,7 +400,7 @@ class NamingContext(AbstractNamingContext):
 
     def __init__(self):
         super().__init__()
-        self._bindings = {btype: dict() for btype in BindingType}
+        self._bindings = {btype: BindingStorage(btype) for btype in BindingType}
 
     @AbstractNamingContext.check_bounded
     def bind(self, name: Name, obj: object, immutable=False) -> CompositeName:
@@ -550,16 +559,10 @@ class NamingContext(AbstractNamingContext):
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
             # If binding, check if their exists one already
-            if name[0] in self._bindings[binding_type]:
-                if not rebind:
-                    raise AlreadyBoundException(name[0], binding_type)
-                else:
-                    _, binding_immutable = self._bindings[binding_type][name[0]]
-                    if binding_immutable:
-                        raise ImmutableBindingException(binding_type, name[0])
-
+            if name[0] in self._bindings[binding_type] and not rebind:
+                raise AlreadyBoundException(name[0], binding_type)
             # Add the object and its mutability to the registry for the given binding_type.
-            self._bindings[binding_type][name[0]] = (obj, immutable)
+            self._bindings[binding_type].add(name[0], obj, immutable)
             # Determine the full qualified named of the bound object (extending that of this NamingContext).
             qual_name = self.get_qual_name(name[0])
             # If the object is a NamingContext, assign the qualified name.
@@ -569,9 +572,7 @@ class NamingContext(AbstractNamingContext):
                 obj._name = qual_name
             return qual_name
         else:
-            if name[0] not in self._bindings[BindingType.named_context]:
-                raise NameNotFoundException(name[0], BindingType.named_context)
-            context, _ = self._bindings[BindingType.named_context][name[0]]
+            context = self._bindings[BindingType.named_context].get(name[0])
             if binding_type == BindingType.named_context:
                 if rebind:
                     return context.rebind_context(name[1:], obj)
@@ -640,18 +641,11 @@ class NamingContext(AbstractNamingContext):
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
-            if name[0] not in self._bindings[binding_type]:
-                raise NameNotFoundException(name[0], binding_type)
-            obj, immutable = self._bindings[binding_type][name[0]]
-            if immutable:
-                raise ImmutableBindingException(binding_type, name[0])
-            self._bindings[binding_type].pop(name[0])
+            obj = self._bindings[binding_type].remove(name[0])
             if binding_type == BindingType.named_context:
                 obj._name = None
         else:
-            if name[0] not in self._bindings[BindingType.named_context]:
-                raise NameNotFoundException(name[0], BindingType.named_context)
-            context, _ = self._bindings[BindingType.named_context][name[0]]
+            context = self._bindings[BindingType.named_context].get(name[0])
             if binding_type == BindingType.named_context:
                 context.unbind_context(name[1:])
             elif binding_type == BindingType.named_object:
@@ -710,20 +704,16 @@ class NamingContext(AbstractNamingContext):
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
-            if name[0] not in self._bindings[binding_type]:
-                raise NameNotFoundException(name[0], binding_type)
-            return self._bindings[binding_type][name[0]][0]
+            return self._bindings[binding_type].get(name[0])
         else:
-            if name[0] not in self._bindings[BindingType.named_context]:
-                raise NameNotFoundException(name[0], BindingType.named_context)
-            context, _ = self._bindings[BindingType.named_context][name[0]]
+            context = self._bindings[BindingType.named_context].get(name[0])
             if binding_type == BindingType.named_context:
                 return context.resolve_context(name[1:])
             elif binding_type == BindingType.named_object:
                 return context.resolve(name[1:])
 
     def list(self):
-        return self._bindings[BindingType.named_object].keys()
+        return self._bindings[BindingType.named_object].list()
 
     def __len__(self):
         return len(self._bindings[BindingType.named_object])
