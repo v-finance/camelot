@@ -336,6 +336,23 @@ class AbstractNamingContext(object):
         for name in self.list():
             LOGGER.info(self.verbose_name(*self._name, name))
 
+class AbstractBindingStorage(object):
+
+    def add(self, name, obj, immutable=False):
+        raise NotImplementedError
+
+    def remove(self, name):
+        raise NotImplementedError
+
+    def get(self, name):
+        raise NotImplementedError
+
+    def immutable(self, name):
+        raise NotImplementedError
+
+    def __contains__(self, name):
+        raise NotImplementedError
+
 class NamingContext(AbstractNamingContext):
     """
     Represents a naming context, which consists of a set of name-to-object bindings.
