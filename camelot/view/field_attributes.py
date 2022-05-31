@@ -245,7 +245,7 @@ _sqlalchemy_to_python_type_ = {
         'from_string': string_from_string,
         'editable': True,
         'nullable': True,
-        'search_strategy': list_filter.NoSearch,
+        'search_strategy': list_filter.StringSearch,
         'filter_strategy': list_filter.NoSearch,
     },
 }
