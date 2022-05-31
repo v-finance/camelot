@@ -337,17 +337,52 @@ class AbstractNamingContext(object):
             LOGGER.info(self.verbose_name(*self._name, name))
 
 class AbstractBindingStorage(object):
+    """
+    Abstract interface for name-to-object binding storage.
+    """
 
     def add(self, name, obj, immutable=False):
+        """
+        Store a binding for the given name and object with the given mutability.
+        If a binding already exists, an exception will be raised if it concerns an immutable binding,
+        otherwise the binding will be replaced by the new one.
+
+        :param name: name under which to bind the object.
+        :param obj: The object to bind with the given name
+        :param immutable: flag that indicates whether the created binding should be immutable.
+
+        :raises:
+            ImmutableBindingException NamingException.Message.binding_immutable: when an immutable binding already exists under the given name.
+        """
         raise NotImplementedError
 
     def remove(self, name):
+        """
+        Remove the binding under the given name and return the bound object.
+
+        :param name: name under which the object should have been bound.
+
+        :raises:
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            ImmutableBindingException NamingException.Message.binding_immutable: when trying to remove an immutable binding.
+        """
         raise NotImplementedError
 
     def get(self, name):
+        """
+        Retrieve the object bound under the given name.
+
+        :param name: name under which the object should have been bound.
+
+        :raises:
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
         raise NotImplementedError
 
     def copy(self):
+        """
+        Return a copy of this binding storage.
+        """
         raise NotImplementedError
 
     def list(self):
@@ -360,6 +395,10 @@ class AbstractBindingStorage(object):
         raise NotImplementedError
 
 class BindingStorage(AbstractBindingStorage):
+    """
+    Default binding storage implementation that stores the bindings in a
+    name-to-object dictionary.
+    """
 
     def __init__(self, binding_type):
         self.binding_type = binding_type
