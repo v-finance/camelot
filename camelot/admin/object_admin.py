@@ -699,6 +699,7 @@ be specified using the verbose_name attribute.
                 search_strategy=list_filter.NoFilter,
                 filter_strategy=list_filter.NoFilter,
                 action_routes=[],
+                hide_title=False,
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)

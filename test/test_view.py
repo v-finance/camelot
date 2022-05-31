@@ -490,9 +490,11 @@ class FormTest(
         widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
         widget_mapper.setModel( self.movie_model )
         widget_mapper.setItemDelegate(delegate)
-        self.widgets = FormEditors(
-            self.qt_parent, self.movie_admin.get_fields(),
-        )
+        fields = dict((f, {
+            'hide_title':fa.get('hide_title', False),
+            'verbose_name':str(fa['name']),
+            }) for f, fa in self.movie_admin.get_fields())
+        self.widgets = FormEditors(self.qt_parent, fields)
         self.person_entity = Person
         self.gui_context = GuiContext()
         
