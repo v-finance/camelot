@@ -31,11 +31,10 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import List, Any, Tuple, Optional, Dict, Union, Type
+from typing import List, Any, Tuple, Dict
 from dataclasses import dataclass, InitVar, field
 
 from camelot.core.serializable import DataclassSerializable
-from ..controls.delegates import ComboBoxDelegate
 from ..proxy.collection_proxy import CollectionProxy
 from ..workspace import show_top_level
 from ...admin.action.base import ActionStep, Action, State
@@ -86,7 +85,7 @@ class OpenFormView(ActionStep):
     actions: List[Action] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     top_toolbar_actions: List[Action] = field(init=False)
-    _columns: List[Tuple[Optional[Any], Dict[str, Union[Type[ComboBoxDelegate]]]]] = field(init=False)
+    fields: Dict[str, dict] = field(init=False)
     _form_display: bytes = field(init=False)
     admin_route: AdminRoute = field(init=False)
     objects: List[Any] = field(init=False)
@@ -101,7 +100,10 @@ class OpenFormView(ActionStep):
         self.actions = admin.get_form_actions(None)
         get_form_toolbar_actions = admin.get_form_toolbar_actions
         self.top_toolbar_actions = get_form_toolbar_actions()
-        self._columns = admin.get_fields()
+        self.fields = dict((f, {
+            'hide_title':fa.get('hide_title', False),
+            'verbose_name':str(fa['name']),
+            }) for f, fa in admin.get_fields())
         self._form_display = admin.get_form_display()._to_bytes()
         self.admin_route = admin.get_admin_route()
         self._add_action_states(admin, self.proxy, self.actions + self.top_toolbar_actions, self.action_states)
@@ -140,13 +142,13 @@ class OpenFormView(ActionStep):
         from camelot.view.controls.formview import FormView
 
         model = CollectionProxy(self.admin_route)
-        list(model.add_columns((fn for fn, fa in self._columns)))
+        list(model.add_columns((fn for fn, fa in self.fields.items())))
         model.set_value(self.proxy)
 
         form = FormView(
             title=self.title, admin_route=self.admin_route,
             form_close_route=self.form_close_route, model=model,
-            columns=self._columns, form_display=self._form_display,
+            fields=self.fields, form_display=self._form_display,
             index=self.row
         )
         form.set_actions([(a.route, a.render_hint) for a in self.actions])

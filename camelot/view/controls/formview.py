@@ -30,6 +30,7 @@
 """form view"""
 import json
 import logging
+import typing
 
 from ...core.serializable import NamedDataclassSerializable
 
@@ -50,7 +51,7 @@ class FormEditors(QtCore.QObject):
     option = None
     bold_font = None
 
-    def __init__(self, parent, columns):
+    def __init__(self, parent, fields: typing.Dict[str, dict]):
         """
         A class that holds the editors used on a form
 
@@ -66,11 +67,10 @@ class FormEditors(QtCore.QObject):
             # a form view and not on a table view
             self.option.version = 5
 
-        self._field_attributes = dict()
-        self._index = dict()
-        for i, (field_name, field_attributes ) in enumerate( columns):
-            self._field_attributes[field_name] = field_attributes
-            self._index[field_name] = i
+        self._fields = fields
+        self._index = dict(
+            (field_name, i) for i, field_name in enumerate(fields.keys())
+        )
 
     def create_editor( self, field_name, parent ):
         """
@@ -95,13 +95,10 @@ class FormEditors(QtCore.QObject):
     def create_label( self, field_name, editor, parent ):
         from camelot.view.controls.field_label import FieldLabel
         from camelot.view.controls.editors.wideeditor import WideEditor
-        field_attributes = self._field_attributes[field_name]
-        hide_title = field_attributes.get( 'hide_title', False )
         widget_label = None
-        if not hide_title:
+        if self._fields[field_name]['hide_title'] == False:
             widget_label = FieldLabel(
-                field_attributes['name'],
-                parent,
+                self._fields[field_name]['verbose_name'], parent,
             )
             widget_label.setObjectName('%s_label'%field_name)
             if not isinstance(editor, WideEditor):
@@ -138,9 +135,9 @@ class FormWidget(QtWidgets.QWidget):
 
     changed_signal = QtCore.qt_signal( int )
 
-    def __init__(self, admin_route, model, form_display, columns, parent):
+    def __init__(self, admin_route, model, form_display, fields, parent):
         QtWidgets.QWidget.__init__(self, parent)
-        self.columns, self.form_display, self.admin_route = columns, form_display, admin_route
+        self.fields, self.form_display, self.admin_route = fields, form_display, admin_route
         widget_mapper = FormDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(parent=self))
@@ -198,7 +195,7 @@ class FormWidget(QtWidgets.QWidget):
                 # when the columns are available in the model
                 self.create_widgets(
                     widget_mapper,
-                    self.columns,
+                    self.fields,
                     # Serialize the admin's form display again when the layout has changed, e.g. to pick up different tab labels with different locales.
                     self.form_display,
                     #self.admin.get_form_display()._to_bytes(),
@@ -229,10 +226,10 @@ class FormWidget(QtWidgets.QWidget):
         if widget_mapper:
             widget_mapper.submit()
 
-    def create_widgets(self, widget_mapper, columns, form_display):
+    def create_widgets(self, widget_mapper, fields, form_display):
         """Create value and label widgets"""
         LOGGER.debug( 'begin creating widgets' )
-        widgets = FormEditors(self, columns)
+        widgets = FormEditors(self, fields)
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         if isinstance(form_display, bytes):
@@ -267,7 +264,7 @@ class FormView(AbstractView):
 
     def __init__(
         self, title, admin_route, form_close_route, model, form_display,
-        columns, index, parent = None):
+        fields, index, parent = None):
         AbstractView.__init__( self, parent )
 
         layout = QtWidgets.QVBoxLayout()
@@ -285,7 +282,7 @@ class FormView(AbstractView):
 
         form = FormWidget(
             admin_route=admin_route, model=model, form_display=form_display,
-            columns=columns, parent=self
+            fields=fields, parent=self
         )
         form.setObjectName( 'form' )
         form.changed_signal.connect( self.update_title )

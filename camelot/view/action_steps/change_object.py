@@ -47,7 +47,6 @@ from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy.collection_proxy import CollectionProxy
 
 from .item_view import UpdateTableView
-from ..controls.delegates import ComboBoxDelegate
 from ..controls.view import ViewWithActionsMixin
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
@@ -72,7 +71,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
                   admin_route,
                   admin,
                   form_display,
-                  columns,
+                  fields,
                   form_actions,
                   action_states,
                   accept,
@@ -91,7 +90,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(
             admin_route=admin_route, model=model, form_display=form_display,
-            columns=columns, parent=self
+            fields=fields, parent=self
         )
         note_layout = QtWidgets.QVBoxLayout()
         note = editors.NoteEditor( parent=self )
@@ -131,7 +130,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         # set the value last, so the validity can be updated
         proxy = admin.get_proxy([obj])
         model.set_value(ProxyRegistry.register(proxy))
-        list(model.add_columns((fn for fn, _fa in columns)))
+        list(model.add_columns((fn for fn, _fa in fields.items())))
 
     @QtCore.qt_slot(list, list)
     def set_actions(self, actions, action_states):
@@ -276,7 +275,7 @@ class ChangeObject(ActionStep):
     obj: typing.Any
     admin: ObjectAdmin
     form_display: bytes = field(init=False)
-    columns: Dict[str, typing.Union[ComboBoxDelegate, typing.Any]] = field(init=False)
+    fields: Dict[str, dict] = field(init=False)
     form_actions: List[Action] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     admin_route: AdminRoute = field(init=False)
@@ -288,7 +287,10 @@ class ChangeObject(ActionStep):
     def __post_init__(self):
         assert self.admin is not None
         self.form_display = self.admin.get_form_display()._to_bytes()
-        self.columns = self.admin.get_fields()
+        self.fields = dict((f, {
+            'hide_title':fa.get('hide_title', False),
+            'verbose_name':str(fa['name']),
+            }) for f, fa in self.admin.get_fields())
         self.form_actions = self.admin.get_form_actions(None)
         self.admin_route = self.admin.get_admin_route()
         self._add_action_states(self.admin, self.admin.get_proxy([self.obj]), self.form_actions, self.action_states)
@@ -317,7 +319,7 @@ class ChangeObject(ActionStep):
                                     self.admin_route,
                                     self.admin,
                                     self.form_display,
-                                    self.columns,
+                                    self.fields,
                                     self.form_actions,
                                     self.action_states,
                                     self.accept,
