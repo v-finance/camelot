@@ -1169,3 +1169,26 @@ class WeakRefNamingContextCase(AbstractNamingContextCase, NamingContextCaseMixin
 
     context_name = ('weakref',)
     context_cls = WeakRefNamingContext
+
+    def test_bind(self):
+        # Verify that objects bound to a WeakRefNamingContext are removed once they are not hard referenced anymore,
+        # regardless of their mutability:
+        super().test_bind()
+
+        # * binding an unreferenced object:
+        for immutable in [True, False]:
+            self.context.bind('test', Object(), immutable)
+            with self.assertRaises(NameNotFoundException) as exc:
+                self.context.resolve('test')
+            self.assertEqual(exc.exception.name, 'test')
+            self.assertEqual(exc.exception.binding_type, BindingType.named_object)
+
+        obj = Object()
+        self.context.bind('test', obj, immutable)
+        self.assertEqual(obj, self.context.resolve('test'))
+        # * removing the last hard reference post-binding:
+        del obj
+        with self.assertRaises(NameNotFoundException) as exc:
+            self.context.resolve('test')
+        self.assertEqual(exc.exception.name, 'test')
+        self.assertEqual(exc.exception.binding_type, BindingType.named_object)
