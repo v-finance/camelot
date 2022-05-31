@@ -33,7 +33,7 @@ import json
 from typing import List, Dict, Tuple, Union
 
 from camelot.admin.action import ActionStep, Action, State
-from camelot.admin.action.form_action import FormActionGuiContext, FormActionModelContext
+from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
@@ -46,6 +46,7 @@ from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy.collection_proxy import CollectionProxy
 
+from .form_view import OpenFormView
 from .item_view import UpdateTableView
 from ..controls.view import ViewWithActionsMixin
 from ..workspace import apply_form_state
@@ -126,14 +127,25 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         cancel_button.pressed.connect( self.reject )
         ok_button.pressed.connect( self.accept )
         # set the actions in the actions panel
-        self.set_actions(form_actions, action_states)
+        self.set_actions(form_actions)
+        for action_route, action_state in action_states:
+            self.set_action_state(self, tuple(action_route), action_state)
         # set the value last, so the validity can be updated
         proxy = admin.get_proxy([obj])
         model.set_value(ProxyRegistry.register(proxy))
         list(model.add_columns((fn for fn, _fa in fields.items())))
 
-    @QtCore.qt_slot(list, list)
-    def set_actions(self, actions, action_states):
+    @QtCore.qt_slot(bool)
+    def button_clicked(self, checked):
+        self.run_action(self.sender(), self.gui_context, None)
+
+    @QtCore.qt_slot()
+    def menu_triggered(self):
+        qaction = self.sender()
+        self.run_action(qaction, self.gui_context, qaction.data())
+
+    @QtCore.qt_slot(list)
+    def set_actions(self, actions):
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if actions and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
@@ -142,13 +154,6 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
                     action.render_hint, action.route,
                     self.gui_context, self
                 )
-                state = None
-                for action_state in action_states:
-                    if action_state[0] == action.route:
-                        state = action_state[1]
-                        break
-                if state is not None:
-                    action_widget.set_state(state)
                 side_panel_layout.addWidget(action_widget)
             side_panel_layout.addStretch()
             layout.addLayout(side_panel_layout)
@@ -293,17 +298,10 @@ class ChangeObject(ActionStep):
             }) for f, fa in self.admin.get_fields())
         self.form_actions = self.admin.get_form_actions(None)
         self.admin_route = self.admin.get_admin_route()
-        self._add_action_states(self.admin, self.admin.get_proxy([self.obj]), self.form_actions, self.action_states)
-
-    @staticmethod
-    def _add_action_states(admin, proxy, actions, action_states):
-        model_context = FormActionModelContext()
-        model_context.admin = admin
-        model_context.proxy = proxy
-        for action_route in actions:
-            action = initial_naming_context.resolve(action_route.route)
-            state = action.get_state(model_context)
-            action_states.append((action_route.route, state))
+        OpenFormView._add_action_states(
+            self.admin, self.admin.get_proxy([self.obj]),
+            self.form_actions, self.action_states
+        )
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
