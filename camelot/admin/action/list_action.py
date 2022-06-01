@@ -196,40 +196,16 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         current_row, current_column, current_field_name = None, None, None
         proxy = None
         collection_count = 0
-        selection_count = 0
         selected_rows = []
-        if self.item_view is not None:
-            current_index = self.item_view.currentIndex()
-            if current_index.isValid():
-                current_row = current_index.row()
-                current_column = current_index.column()
-            model = self.item_view.model()
-            if model is not None:
-                proxy = model.get_value()
-                collection_count = model.rowCount()
-                if current_column is not None:
-                    current_field_name = variant_to_py(
-                        model.headerData(
-                            current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
-                        )
-                    )
-            if self.item_view.selectionModel() is not None:
-                selection = self.item_view.selectionModel().selection()
-                for i in range( len( selection ) ):
-                    selection_range = selection[i]
-                    rows_range = ( selection_range.top(), selection_range.bottom() )
-                    selected_rows.append( rows_range )
-                    selection_count += ( rows_range[1] - rows_range[0] ) + 1
-        else:
-            model = self.get_item_model()
-            if model is not None:
-                collection_count = model.rowCount()
-                proxy = model.get_value()
-            response = qml_action_step(self, 'GetSelection')
-            selection_count = response['selection_count']
-            current_row = response['current_row']
-            for i in range(len(response['selected_rows']) // 2):
-                selected_rows.append((response['selected_rows'][2 * i], response['selected_rows'][2 * i + 1]))
+        model = self.get_item_model()
+        if model is not None:
+            collection_count = model.rowCount()
+            proxy = model.get_value()
+        response = qml_action_step(self, 'GetSelection')
+        selection_count = response['selection_count']
+        current_row = response['current_row']
+        for i in range(len(response['selected_rows']) // 2):
+            selected_rows.append((response['selected_rows'][2 * i], response['selected_rows'][2 * i + 1]))
         context.selection_count = selection_count
         context.collection_count = collection_count
         context.selected_rows = selected_rows
