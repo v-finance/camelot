@@ -383,7 +383,10 @@ class EntityMeta( DeclarativeMeta ):
 
     @property
     def retention_cut_off_date(cls):
-        return cls._get_entity_arg('retention_cut_off_date')
+        retention_cut_off_date = cls._get_entity_arg('retention_cut_off_date')
+        if retention_cut_off_date is not None:
+            mapper = orm.class_mapper(cls)
+            return mapper.get_property(retention_cut_off_date.key).class_attribute
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
