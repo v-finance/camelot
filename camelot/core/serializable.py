@@ -4,7 +4,7 @@ import dataclasses
 import io
 import json
 
-from camelot.core.qt import QtGui
+from camelot.core.qt import QtCore, QtGui
 from .utils import ugettext_lazy
 from enum import Enum
 
@@ -65,6 +65,8 @@ class DataclassEncoder(json.JSONEncoder):
             return obj.value
         if isinstance(obj, LiveRef):
             return obj.property('name')
+        if isinstance(obj, QtCore.QJsonValue):
+            return obj.toVariant()
         return json.JSONEncoder.default(self, obj)
 
 

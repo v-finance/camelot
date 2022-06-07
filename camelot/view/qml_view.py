@@ -164,10 +164,6 @@ class QmlActionDispatch(QtCore.QObject):
     def run_action(self, gui_context_name, route, args):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(gui_context_name, route, args))
         gui_context = initial_naming_context.resolve(tuple(gui_context_name)).copy()
-        
-        if isinstance(args, QtQml.QJSValue):
-            args = variant_to_py(args.toVariant())
-
         action_runner = ActionRunner(tuple(route), gui_context, args)
         action_runner.exec()
 
