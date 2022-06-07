@@ -82,6 +82,23 @@ def get_qml_window():
         if widget.objectName() == 'cpp_qml_window':
             return widget
 
+def get_crud_signal_handler():
+    """
+    Get the CRUD signal handler singleton instance.
+    """
+    app = QtWidgets.QApplication.instance()
+    crud_signal_handler = app.findChild(QtCore.QObject, 'cpp_crud_signal_handler')
+    return crud_signal_handler
+
+def get_dgc_client():
+    """
+    Get the distributed grabage collection client singleton instance.
+    """
+    app = QtWidgets.QApplication.instance()
+    dgc_client = app.findChild(QtCore.QObject, 'cpp_dgc_client')
+    return dgc_client
+
+
 # FIXME: add timeout + keep-alive on client
 class QmlActionDispatch(QtCore.QObject):
 

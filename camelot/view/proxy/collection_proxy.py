@@ -68,7 +68,7 @@ from ..crud_action import (
     rowcount_name, rowdata_name, setdata_name, setcolumns_name, sort_name,
     update_name, runfieldaction_name
 )
-from ..crud_signals import CrudSignalHandler
+from camelot.view.qml_view import get_crud_signal_handler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings
 from camelot.view.model_thread import object_thread
@@ -186,8 +186,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         self.__crud_requests = collections.deque()
 
         self._reset()
-        self._crud_signal_handler = CrudSignalHandler()
-        self._crud_signal_handler.connect_signals( self )
+        self._crud_signal_handler = get_crud_signal_handler()
+        self._crud_signal_handler.connectSignals( self )
         self.logger.debug( 'initialization finished' )
 
     
@@ -290,7 +290,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                 # convert interval to int in case a long is returned
                 timer.setInterval(min(maximum_delay, int(timer.interval()) * 2))
             while len(self.__crud_requests):
-                model_context, request_id, request, mode = self.__crud_requests.popleft()
+                model_context, request_id, request, mode = self.__crud_requests.popleft() # <- too soon
                 self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
                 runner = ActionRunner(request, self, mode)
                 runner.exec()
@@ -432,7 +432,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if self._model_context is not None:
             return self._model_context.proxy
 
-    @QtCore.qt_slot(list)
+    @QtCore.qt_slot(QtCore.QObject)
     def objects_updated(self, objects):
         """Handles the entity signal, indicating that the model is out of
             )
@@ -441,34 +441,36 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         assert object_thread(self)
         if self._model_context is not None:
             self.logger.debug(
-                'received {0} objects updated'.format(len(objects))
+                'received objects updated: {}'.format(objects.property('name'))
             )
             self._append_request(update_name, {'objects': objects})
             self.timeout_slot()
 
-    @QtCore.qt_slot(list)
+    @QtCore.qt_slot(QtCore.QObject)
     def objects_deleted(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
         if self._model_context is not None:
             self.logger.debug(
-                'received {0} objects deleted'.format(len(objects))
+                #'received {0} objects deleted'.format(len(objects))
+                'received objects deleted: {}'.format(objects.property('name'))
                 )
             self._append_request(deleted_name, {
                 'objects': objects,
                 'rows': super(CollectionProxy, self).rowCount()
             })
-            self.timeout_slot()
+            #self.timeout_slot()
 
-    @QtCore.qt_slot(list)
+    @QtCore.qt_slot(QtCore.QObject)
     def objects_created(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
         if self._model_context is not None:
             self.logger.debug(
-                'received {0} objects created'.format(len(objects))
+                'received objects created: {}'.format(objects.property('name'))
+                #'received {0} objects created'.format(len(objects))
             )
             self._append_request(created_name, {'objects': objects})
             self.timeout_slot()

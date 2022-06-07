@@ -8,6 +8,7 @@ from camelot.core.qt import QtGui
 from .utils import ugettext_lazy
 from enum import Enum
 
+
 class Serializable(object):
     """
     Classes implementing this interface are able to serialize their
@@ -52,6 +53,8 @@ class Serializable(object):
 class DataclassEncoder(json.JSONEncoder):
 
     def default(self, obj):
+        from camelot.view.action_steps.orm import LiveRef
+
         if isinstance(obj, ugettext_lazy):
             return str(obj)
         if isinstance(obj, QtGui.QKeySequence):
@@ -60,6 +63,8 @@ class DataclassEncoder(json.JSONEncoder):
             return QtGui.QKeySequence(obj).toString()
         if isinstance(obj, Enum):
             return obj.value
+        if isinstance(obj, LiveRef):
+            return obj.property('name')
         return json.JSONEncoder.default(self, obj)
 
 
