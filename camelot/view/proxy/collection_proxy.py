@@ -186,8 +186,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         self.__crud_requests = collections.deque()
 
         self._reset()
-        self._crud_signal_handler = get_crud_signal_handler()
-        self._crud_signal_handler.connectSignals( self )
+        crud_signal_handler = get_crud_signal_handler()
+        crud_signal_handler.connectSignals( self )
         self.logger.debug( 'initialization finished' )
 
     
