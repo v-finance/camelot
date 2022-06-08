@@ -144,8 +144,8 @@ class ChangeSelection(Action):
         for action_route in mode['action_routes']:
             action = initial_naming_context.resolve(tuple(action_route))
             state = action.get_state(model_context)
-            action_states.append(state)
-        yield action_steps.ChangeSelection(mode['action_routes'], action_states)
+            action_states.append((action_route, state))
+        yield action_steps.ChangeSelection(action_states)
 
 changeselection_name = crud_action_context.bind(ChangeSelection.name, ChangeSelection(), True)
 
