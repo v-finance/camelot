@@ -139,17 +139,15 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
     max_row_count = 10000000 # display maxium 10M rows
 
-    def __init__(self, admin_route, max_number_of_rows=10):
+    def __init__(self, admin_route):
         """
         :param admin_route: the route to the view to display
         """
         super(CollectionProxy, self).__init__()
         ApplicationActionGuiContext.__init__(self)
         assert object_thread(self)
-        assert isinstance(max_number_of_rows, int)
         assert isinstance(admin_route, tuple)
         assert len(admin_route)
-        from camelot.view.model_thread import get_model_thread
         # TODO: replace with passed entity_name as part of future changes.
         admin_name = admin_route[-2]
         self.logger = logger.getChild('{0}.{1}'.format(id(self), admin_name))
@@ -163,9 +161,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         self.vertical_header_size =  QtCore.QSize(
             16 + 10, self._vertical_header_height
         )
-        self._max_number_of_rows = max_number_of_rows
         self._model_context = None
-        self._model_thread = get_model_thread()
         self._action_routes = []
         #
         # The timer reduced the number of times the model thread is
