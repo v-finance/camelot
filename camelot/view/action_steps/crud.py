@@ -4,12 +4,14 @@ import typing
 
 logger = logging.getLogger(__name__)
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List, Tuple
 
-from ...admin.action.base import ActionStep
+from ...admin.admin_route import Route
+from ...admin.action.base import ActionStep, State
 from ...admin.icon import CompletionValue
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
-from ...core.serializable import DataclassSerializable
+from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import FieldAttributesRole, CompletionsRole, PreviewRole
 
 class UpdateMixin(object):
@@ -189,16 +191,19 @@ class Update(ActionStep, UpdateMixin):
     def gui_run(self, item_model):
         self.update_item_model(item_model)     
 
-class ChangeSelection(ActionStep):
-    
-    def __init__(self, action_routes, action_states):
-        self.action_routes = action_routes
-        self.action_states = action_states
-        
-    def gui_run(self, item_model):
+@dataclass
+class ChangeSelection(ActionStep, DataclassSerializable):
+
+    blocking = False
+
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
+
+    @classmethod
+    def gui_run(self, item_model, serialized_step):
         if is_deleted(item_model):
             return
-        for i, action_route in enumerate(self.action_routes):
+        step = json.loads(serialized_step)
+        for route, state in step["action_states"]:
             item_model.action_state_changed_cpp_signal.emit(
-                action_route, self.action_states[i]._to_bytes()
+                route, json_encoder.encode(state).encode('utf-8')
             )
