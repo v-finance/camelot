@@ -2,7 +2,7 @@ import logging
 import itertools
 import json
 
-from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py, is_deleted
+from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, is_deleted
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context, NameNotFoundException
 from .action_runner import ActionRunner
