@@ -51,16 +51,26 @@ import json
 import logging
 import typing
 
-from ...admin.action.application_action import unbind_name
+#from ...admin.action.application_action import unbind_name
 from ...admin.action.base import ActionStep
 from ...core.naming import CompositeName, initial_naming_context
 from ...core.serializable import DataclassSerializable
-from ..action_runner import ActionRunner
-from ..crud_signals import CrudSignalHandler
+#from ..action_runner import ActionRunner
+from camelot.core.qt import QtCore
+from camelot.view.qml_view import get_crud_signal_handler, get_dgc_client
 
 leases = initial_naming_context.resolve_context('leases')
 
 LOGGER = logging.getLogger(__name__)
+
+
+class LiveRef(QtCore.QObject):
+
+    def __init__(self, name, parent=None):
+        super().__init__(parent)
+        self.setProperty('name', name)
+        get_dgc_client().registerRef(self)
+
 
 @dataclass
 class CreateUpdateDelete(ActionStep, DataclassSerializable):
@@ -95,20 +105,23 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
         # Presumed to be unnecessary, as ActionStep's gui_run constructs an ActionRunner on it's (empty) model_run,
         # which results in a unwanted round-trip to the model thread / server.
         #super(CreateUpdateDelete, self).gui_run(gui_context)
-        crud_signal_handler = CrudSignalHandler()
-        leases = []
+        crud_signal_handler = get_crud_signal_handler() #CrudSignalHandler()
+        #leases = []
         if step['deleted'] is not None:
-            crud_signal_handler.objects_deleted.emit(step['deleted'])
-            leases.append(step['deleted'])
+            crud_signal_handler.objects_deleted.emit(LiveRef(step['deleted']))
+            #crud_signal_handler.objects_deleted.emit(step['deleted'])
+            #leases.append(step['deleted'])
         if step['updated'] is not None:
-            crud_signal_handler.objects_updated.emit(step['updated'])
-            leases.append(step['updated'])
+            crud_signal_handler.objects_updated.emit(LiveRef(step['updated']))
+            #crud_signal_handler.objects_updated.emit(step['updated'])
+            #leases.append(step['updated'])
         if step['created'] is not None:
-            crud_signal_handler.objects_created.emit(step['created'])
-            leases.append(step['created'])
-        if len(leases):
-            runner = ActionRunner(unbind_name, cls, leases)
-            runner.exec()
+            crud_signal_handler.objects_created.emit(LiveRef(step['created']))
+            #crud_signal_handler.objects_created.emit(step['created'])
+            #leases.append(step['created'])
+        #if len(leases):
+            #runner = ActionRunner(unbind_name, cls, leases)
+            #runner.exec()
 
 
 class FlushSession(CreateUpdateDelete):

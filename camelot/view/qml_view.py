@@ -2,7 +2,7 @@ import logging
 import itertools
 import json
 
-from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py, is_deleted
+from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, is_deleted
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context, NameNotFoundException
 from .action_runner import ActionRunner
@@ -82,6 +82,23 @@ def get_qml_window():
         if widget.objectName() == 'cpp_qml_window':
             return widget
 
+def get_crud_signal_handler():
+    """
+    Get the CRUD signal handler singleton instance.
+    """
+    app = QtWidgets.QApplication.instance()
+    crud_signal_handler = app.findChild(QtCore.QObject, 'cpp_crud_signal_handler')
+    return crud_signal_handler
+
+def get_dgc_client():
+    """
+    Get the distributed grabage collection client singleton instance.
+    """
+    app = QtWidgets.QApplication.instance()
+    dgc_client = app.findChild(QtCore.QObject, 'cpp_dgc_client')
+    return dgc_client
+
+
 # FIXME: add timeout + keep-alive on client
 class QmlActionDispatch(QtCore.QObject):
 
@@ -147,10 +164,6 @@ class QmlActionDispatch(QtCore.QObject):
     def run_action(self, gui_context_name, route, args):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(gui_context_name, route, args))
         gui_context = initial_naming_context.resolve(tuple(gui_context_name)).copy()
-        
-        if isinstance(args, QtQml.QJSValue):
-            args = variant_to_py(args.toVariant())
-
         action_runner = ActionRunner(tuple(route), gui_context, args)
         action_runner.exec()
 
