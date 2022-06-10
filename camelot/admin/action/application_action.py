@@ -488,6 +488,9 @@ class Unbind(Action):
     name = 'unbind'
 
     def model_run(self, model_context, mode):
+        from camelot.view.action_steps import UpdateProgress
+        if len(mode) == 0:
+            yield UpdateProgress()
         for lease in mode:
             initial_naming_context.unbind(tuple(lease))
 
