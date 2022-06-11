@@ -1,4 +1,5 @@
 import datetime
+from dataclasses import dataclass
 import gc
 import io
 import logging
@@ -25,7 +26,6 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
-from camelot.bin.meta import NewProjectOptions
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import EntityBase, Session
@@ -178,12 +178,14 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.gui_context = ApplicationActionGuiContext()
         self.gui_context.admin_route = self.admin_route
 
-    def test_change_object( self ):
-        admin = app_admin.get_related_admin(NewProjectOptions)
-        options = NewProjectOptions()
-        options.name = 'Videostore'
-        options.module = 'videostore'
-        options.domain = 'example.com'
+    def test_change_object(self):
+
+        @dataclass
+        class Options(object):
+            name: str
+
+        admin = app_admin.get_related_admin(Options)
+        options = Options('Videostore')
         change_object = ChangeObject(options, admin)
         dialog = change_object.render(self.gui_context)
         self.grab_widget( dialog )
