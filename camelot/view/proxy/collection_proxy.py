@@ -136,6 +136,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
     """
 
     action_state_changed_cpp_signal = QtCore.qt_signal('QStringList', QtCore.QByteArray) # used in C++
+    selection_changed_signal = QtCore.qt_signal(list, int)
 
     max_row_count = 10000000 # display maxium 10M rows
 
@@ -722,3 +723,5 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             'selected_rows': selected_rows,
             'current_field_name': current_field_name,
         })
+
+        self.selection_changed_signal.emit(selected_rows, current_row if current_row is not None else -1)

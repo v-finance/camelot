@@ -176,6 +176,8 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         self.item_view = None
         self.view = None
         self.field_attributes = dict()
+        self.model_context_instance = None        
+        #self.create_model_context()
 
     def get_progress_dialog(self):
         return GuiContext.get_progress_dialog(self)
@@ -191,60 +193,49 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         return qml_action_dispatch.get_model(self.gui_context_name)
 
     def create_model_context( self ):
+        if self.model_context_instance is not None:
+            return self.model_context_instance
         context = super( ListActionGuiContext, self ).create_model_context()
+        # FIXME: This copy is probably not needed anymore since there is only 1 model context now
+        #        The copy probably creates bugs since the field_attributes are not updated anymore?
         context.field_attributes = copy.copy( self.field_attributes )
-        current_row, current_column, current_field_name = None, None, None
         proxy = None
-        collection_count = 0
-        selection_count = 0
-        selected_rows = []
-        if self.item_view is not None:
-            current_index = self.item_view.currentIndex()
-            if current_index.isValid():
-                current_row = current_index.row()
-                current_column = current_index.column()
-            model = self.item_view.model()
-            if model is not None:
-                proxy = model.get_value()
-                collection_count = model.rowCount()
-                if current_column is not None:
-                    current_field_name = variant_to_py(
-                        model.headerData(
-                            current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
-                        )
-                    )
-            if self.item_view.selectionModel() is not None:
-                selection = self.item_view.selectionModel().selection()
-                for i in range( len( selection ) ):
-                    selection_range = selection[i]
-                    rows_range = ( selection_range.top(), selection_range.bottom() )
-                    selected_rows.append( rows_range )
-                    selection_count += ( rows_range[1] - rows_range[0] ) + 1
-        else:
-            model = self.get_item_model()
-            if model is not None:
-                collection_count = model.rowCount()
-                proxy = model.get_value()
-            response = qml_action_step(self, 'GetSelection')
-            selection_count = response['selection_count']
-            current_row = response['current_row']
-            for i in range(len(response['selected_rows']) // 2):
-                selected_rows.append((response['selected_rows'][2 * i], response['selected_rows'][2 * i + 1]))
-        context.selection_count = selection_count
+        collection_count = 0        
+        model = self.get_item_model()
+        if model is not None:
+            collection_count = model.rowCount()
+            proxy = model.get_value()
+        context.selection_count = 0
         context.collection_count = collection_count
-        context.selected_rows = selected_rows
-        context.current_row = current_row
-        context.current_column = current_column
-        context.current_field_name = current_field_name
+        context.selected_rows = []
+        context.current_row = None
+        context.current_column = None
+        context.current_field_name = None
         context.proxy = proxy
-        return context
+        self.model_context_instance = context
+        return self.model_context_instance
         
     def copy( self, base_class = None ):
         new_context = super( ListActionGuiContext, self ).copy( base_class )
         new_context.item_view = self.item_view
         new_context.view = self.view
         new_context.field_attributes = self.field_attributes
+        new_context.model_context_instance = self.model_context_instance
         return new_context
+    
+    def update_collection_count( self, collection_count ):
+        context = self.create_model_context()
+        context.collection_count = collection_count
+        
+    def update_selection( self, selected_rows, current_row ):
+        LOGGER.info('GuiContext.update_selection({}, {})'.format(selected_rows, current_row))
+        context = self.create_model_context()
+        context.selected_rows = selected_rows
+        context.current_row = current_row
+        selection_count = 0
+        for row_range in selected_rows:
+            selection_count += (row_range[1] - row_range[0]) + 1
+        context.selection_count = selection_count
 
 class ListContextAction( Action ):
     """An base class for actions that should only be enabled if the
@@ -418,6 +409,7 @@ class DeleteSelection( EditAction ):
         from camelot.view import action_steps
         super().model_run(model_context, mode)
         admin = model_context.admin
+        LOGGER.info('model_context.selection_count: {}'.format(model_context.selection_count))
         if model_context.selection_count <= 0:
             return
         objects_to_remove = list( model_context.get_selection() )
@@ -448,6 +440,7 @@ class DeleteSelection( EditAction ):
     def handle_object( self, model_context, obj ):
         from camelot.view import action_steps
         model_context.proxy.remove(obj)
+        LOGGER.info('DeleteObjects({})'.format(obj))
         yield action_steps.DeleteObjects((obj,))
         model_context.admin.delete(obj)
 
