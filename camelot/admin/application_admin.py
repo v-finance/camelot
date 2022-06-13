@@ -375,10 +375,7 @@ shortcut confusion and reduce the number of status updates.
         return self._main_menu
 
     def get_name(self):
-        """
-        :return: the name of the application, by default this is the class
-            attribute name"""
-        return str( self.name )
+        return 'application'
 
     def get_version(self):
         """:return: string representing version of the application, by default this

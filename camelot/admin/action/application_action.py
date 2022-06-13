@@ -107,7 +107,7 @@ class ApplicationActionGuiContext( GuiContext ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.gui_context_name = None
         self.workspace = None
-        self.admin_route = None
+        self.admin_route = ('admin', 'application', '0')
         self.action_routes = {}
     
     def get_progress_dialog(self):
@@ -127,6 +127,7 @@ class ApplicationActionGuiContext( GuiContext ):
 
     def create_model_context(self):
         context = super(ApplicationActionGuiContext, self).create_model_context()
+        context.admin = initial_naming_context.resolve(self.admin_route)
         context.actions = list(self.action_routes.keys())
         return context
         

@@ -17,7 +17,6 @@ from camelot.admin.action import (
     list_action, application_action, form_action, list_filter,
     ApplicationActionGuiContext, Mode
 )
-from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFile, add_existing_object
@@ -859,46 +858,6 @@ class FormActionsCase(
         close_form_action = form_action.CloseForm()
         list(self.gui_run(close_form_action, self.gui_context, None))
 
-class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
-
-    def setUp(self):
-        super().setUp()
-        self.gui_context = ApplicationActionGuiContext()
-        self.admin_route = app_admin.get_admin_route()
-        self.gui_context.admin_route = self.admin_route
-
-    def tearDown(self):
-        super().tearDown()
-
-    def test_application(self):
-        app = Application(app_admin)
-        list(self.gui_run(app, self.gui_context, None))
-
-    def test_custom_application(self):
-
-        # begin custom application
-        class CustomApplication(Application):
-        
-            def model_run( self, model_context, mode ):
-                from camelot.view import action_steps
-                yield action_steps.UpdateProgress(text='Starting up')
-        # end custom application
-
-        application = CustomApplication(app_admin)
-        list(self.gui_run(application, self.gui_context, None))
 
 class ApplicationActionsCase(
     RunningThreadCase, GrabMixinCase, ExampleModelMixinCase
