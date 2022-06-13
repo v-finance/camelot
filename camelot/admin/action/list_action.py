@@ -37,14 +37,14 @@ import itertools
 from sqlalchemy import orm
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import Qt, QtGui, variant_to_py, is_deleted
+from ...core.qt import QtGui, is_deleted
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
-from camelot.view.qml_view import qml_action_step, qml_action_dispatch
+from camelot.view.qml_view import qml_action_dispatch
 
 import xlsxwriter
 
