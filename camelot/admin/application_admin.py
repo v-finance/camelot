@@ -92,11 +92,9 @@ When the same action is returned in the :meth:`get_toolbar_actions` and
 shortcut confusion and reduce the number of status updates.
     """
 
-    name = 'Camelot'
     application_url = None
     help_url = 'http://www.python-camelot.com/docs.html'
     author = 'Conceptive Engineering'
-    domain = 'python-camelot.com'
 
     version = '1.0'
 
@@ -377,48 +375,12 @@ shortcut confusion and reduce the number of status updates.
         return self._main_menu
 
     def get_name(self):
-        """
-        :return: the name of the application, by default this is the class
-            attribute name"""
-        return str( self.name )
+        return 'application'
 
     def get_version(self):
         """:return: string representing version of the application, by default this
                     is the class attribute verion"""
         return self.version
-
-    def get_icon(self):
-        """:return: the :class:`QtGui.QIcon` that should be used for the application"""
-        from camelot.view.art import FontIcon
-        return FontIcon('users').getQIcon() # 'tango/32x32/apps/system-users.png'
-
-    def get_splashscreen(self):
-        """:return: a :class:`QtGui.QPixmap` to be used as splash screen"""
-        from camelot.view.art import Pixmap
-        qpm = Pixmap('splashscreen.png').getQPixmap()
-        img = qpm.toImage()
-        # support transparency
-        if not qpm.mask(): 
-            if img.hasAlphaBuffer(): bm = img.createAlphaMask() 
-            else: bm = img.createHeuristicMask() 
-            qpm.setMask(bm) 
-        return qpm
-
-    def get_organization_name(self):
-        """
-        :return: a string with the name of the organization that wrote the
-            application. By default returns the :attr:`ApplicationAdmin.author`
-            attribute.
-        """
-        return self.author
-
-    def get_organization_domain(self):
-        """
-        :return: a string with the domain name of the organization that wrote the
-            application. By default returns the :attr:`ApplicationAdmin.domain`
-            attribute.
-        """
-        return self.domain
 
     def get_help_url(self):
         """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""

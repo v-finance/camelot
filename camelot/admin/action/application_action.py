@@ -51,7 +51,7 @@ application_action_context = initial_naming_context.bind_new_context(
     'application_action', immutable=True
 )
 
-class ApplicationActionModelContext( ModelContext ):
+class ApplicationActionModelContext(ModelContext):
     """The Model context for an :class:`camelot.admin.action.Action`.  On top 
     of the attributes of the :class:`camelot.admin.action.base.ModelContext`, 
     this context contains :
@@ -107,7 +107,7 @@ class ApplicationActionGuiContext( GuiContext ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.gui_context_name = None
         self.workspace = None
-        self.admin_route = None
+        self.admin_route = ('admin', 'application', '0')
         self.action_routes = {}
     
     def get_progress_dialog(self):
@@ -128,7 +128,6 @@ class ApplicationActionGuiContext( GuiContext ):
     def create_model_context(self):
         context = super(ApplicationActionGuiContext, self).create_model_context()
         context.admin = initial_naming_context.resolve(self.admin_route)
-        # todo : action routes should be translated to actions here
         context.actions = list(self.action_routes.keys())
         return context
         
