@@ -32,29 +32,14 @@
 import logging
 import sys
 
-from ..core.naming import initial_naming_context
 from ..core.qt import QtCore, QtWidgets
-from ..admin.action.application import Application
 from ..admin.action.application_action import ApplicationActionGuiContext
 from ..view.action_runner import ActionRunner
 
 LOGGER = logging.getLogger(__name__)
 
-def main(application_admin):
-    """shortcut main function, call this function to start the GUI interface 
-    with minimal hassle and without the need to construct a main action object.  
-    
-    If you need to customize the initialization process, use the 
-    :func:`main_action` function an supply the custom action object.
 
-    :param application_admin: a 
-        :class:`camelot.admin.application_admin.ApplicationAdmin` object
-        that specifies the look of the GUI interface
-    """
-    app = Application(application_admin)
-    main_action(app)
-    
-def main_action(action):
+def main_action():
     """
     Construct a :class:`QtWidgets.QApplication`, start the event loop and run a
     :class:`camelot.admin.action.base.Action` object.
@@ -68,12 +53,8 @@ def main_action(action):
     if app is None:
         app = QtWidgets.QApplication([a for a in sys.argv if a])
     try:
-        admin_route = action.application_admin.get_admin_route()
-        action.set_application_attributes()
-        main_action_name = initial_naming_context.bind(('main_action',), action)
         gui_context = ApplicationActionGuiContext()
-        gui_context.admin_route = admin_route
-        action_runner = ActionRunner(main_action_name, gui_context, None)
+        action_runner = ActionRunner(tuple(['main']), gui_context, None)
         action_runner.exec()
         result = app.exec()
         sys.exit(result)
