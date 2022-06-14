@@ -44,21 +44,30 @@ def prospected_attribute(column_attribute):
     """
     Function decorator that supports registering prospected behaviour for one of the instrumented
     column attribute of an Entity class.
-    The user-defined function expects an instance of the target entity and the prospection date,
-    and will be decorated/wrapped to be undefined if the provided target instance or prospection date are undefined.
+    The user-defined function expects an instance of the target entity, the prospection date and an optional transition type.
+    That function will then be decorated/wrapped to be undefined if the provided target instance or prospection date are undefined.
+    The transition types used are those that can be registered in the target entity's __entity_args__, and represent the possible
+    state transitions of the entity's instances, which may influence the prospection.
 
     :example:
      |
      |  class ConcreteEntity(Entity):
      |
+     |     __entity_args__ = {
+     |        'transition_types': types.transition_types,
+     |     }
+     |
      |     apply_from_date = schema.Column(sqlalchemy.types.Date())
      |     duration = schema.Column(sqlalchemy.types.Integer())
      |
      |     @prospected_attribute(duration)
-     |     def prospected_duration(self, at):
+     |     def prospected_duration(self, at, transition_type=None):
+     |        if transition_type == types.transition_types.certain_type:
+     |            return self.duration
      |        return months_between_dates(self.apply_from_date, at)
      |
      |  ConcreteEntity(apply_from_date=datetime.date(2012,1,1), duration=24).prospected_duration(datetime.date(2013,1,1)) == 12
+     |  ConcreteEntity(apply_from_date=datetime.date(2012,1,1), duration=24).prospected_duration(datetime.date(2013,1,1), types.transition_types.certain_type.name) == 24
      |  ConcreteEntity(apply_from_date=datetime.date(2012,1,1), duration=24).prospected_duration(None) == None
      |  ConcreteEntity(apply_from_date=None, duration=24).prospected_duration(None) == 24
     """
@@ -73,6 +82,7 @@ def prospected_attribute(column_attribute):
 def get_prospected_value(attribute, target, at, transition_type=None, default=None, **kwargs):
     """
     Helper method to extract the prospected value for the given instrumented attribute on a target entity, if applicable.
+    Note: an attribute without registered prospected behaviour registered is assumed to remain constant in time.
 
     :param attribute: an instance of orm.attributes.InstrumentedAttribute that maps to a column of the provided target entity.
     :param target: the entity instance to inspect the prospected value on.
