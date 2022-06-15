@@ -163,6 +163,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             16 + 10, self._vertical_header_height
         )
         self._model_context = None
+        self._gui_context = None
         self._action_routes = []
         #
         # The timer reduced the number of times the model thread is
@@ -724,4 +725,13 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             'current_field_name': current_field_name,
         })
 
-        self.selection_changed_signal.emit(selected_rows, current_row if current_row is not None else -1)
+        current_row = current_row if current_row is not None else -1
+        self.model_selection_changed(selected_rows, current_row)
+        self.selection_changed_signal.emit(selected_rows, current_row)
+
+    def set_gui_context(self, gui_context):
+        self._gui_context = gui_context
+
+    def model_selection_changed(self, selected_rows, current_row):
+        if self._gui_context is not None:
+            self._gui_context.update_selection(selected_rows, current_row)
