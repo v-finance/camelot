@@ -313,10 +313,11 @@ class ListActionsCase(
         self.gui_context.view = One2ManyEditor(admin_route=self.admin_route)
         self.gui_context.admin_route = self.admin_route
         self.gui_context.view.gui_context = self.gui_context
-        self.item_model.set_gui_context(self.gui_context)
         self.model_context = self.gui_context.create_model_context()
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
+        # Make sure to ChangeSelection action step is executed
+        self.item_model.timeout_slot()
         # create a model context
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
 
