@@ -170,6 +170,9 @@ class QmlActionDispatch(QtCore.QObject):
 
     def run_action(self, gui_context_name, route, args):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(gui_context_name, route, args))
+        model = self.get_model(tuple(gui_context_name))
+        if model is not None:
+            model.timeout_slot()
         gui_context = initial_naming_context.resolve(tuple(gui_context_name)).copy()
         action_runner = ActionRunner(tuple(route), gui_context, args)
         action_runner.exec()
