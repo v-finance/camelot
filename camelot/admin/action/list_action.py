@@ -383,7 +383,7 @@ class DeleteSelection( EditAction ):
         for o in objects_to_remove:
             depending_objects.update( set( admin.get_depending_objects( o ) ) )
         for i, obj in enumerate( objects_to_remove ):
-            yield action_steps.UpdateProgress( i, 
+            yield action_steps.UpdateProgress( i + 1,
                                                model_context.selection_count,
                                                _('Removing') )
             #
