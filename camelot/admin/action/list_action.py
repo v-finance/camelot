@@ -28,6 +28,7 @@
 #  ============================================================================
 
 import codecs
+import copy
 import datetime
 import enum
 import logging
