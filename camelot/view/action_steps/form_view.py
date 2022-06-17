@@ -31,23 +31,27 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import List, Any, Tuple, Dict
+from typing import List, Any, Tuple, Dict, Union
 from dataclasses import dataclass, InitVar, field
+import json
 
+from ..controls.formview import FormView
+from ..forms import AbstractForm
 from ..proxy.collection_proxy import CollectionProxy
 from ..workspace import show_top_level
-from ...admin.action.base import ActionStep, Action, State
+from ...admin.action.base import ActionStep, State, RenderHint
 from ...admin.action.form_action import FormActionModelContext
-from ...admin.admin_route import AdminRoute, Route
+from ...admin.admin_route import AdminRoute, Route, RouteWithRenderHint
 from ...admin.object_admin import ObjectAdmin
 from ...core.item_model import AbstractModelProxy, ProxyRegistry
 from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
+from ...core.utils import ugettext_lazy
 
 
 @dataclass
-class OpenFormView(ActionStep):
+class OpenFormView(ActionStep, DataclassSerializable):
     """Open the form view for a list of objects, in a non blocking way.
 
     :param object: the object to display in the form view.
@@ -71,49 +75,42 @@ class OpenFormView(ActionStep):
         at the top toolbar of the form, this defaults to the ones returned by the
         admin
 
-    .. attribute:: top_level
-
-       Display the form view top-level, or as a tab in the workspace,
-       defaults to `True`.
-
     """
     obj: InitVar[Any]
-    proxy: AbstractModelProxy
+    proxy: InitVar[AbstractModelProxy]
     admin: InitVar[ObjectAdmin]
 
+    proxy_route: Route = field(init=False)
     admin_name: str = field(init=False)
-    actions: List[Action] = field(init=False)
+    actions: List[RouteWithRenderHint] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
-    top_toolbar_actions: List[Action] = field(init=False)
+    top_toolbar_actions: List[RouteWithRenderHint] = field(init=False)
     fields: Dict[str, dict] = field(init=False)
-    _form_display: bytes = field(init=False)
+    form: AbstractForm = field(init=False)
     admin_route: AdminRoute = field(init=False)
-    objects: List[Any] = field(init=False)
     row: int = field(init=False)
     form_state: str = field(init=False)
     form_close_route: Route = field(init=False)
+    title: Union[str, ugettext_lazy] = field(init=False)
 
-    def __post_init__(self, obj, admin):
+    def __post_init__(self, obj, proxy, admin):
         assert obj is not None
-        assert isinstance(self.proxy, AbstractModelProxy)
+        assert isinstance(proxy, AbstractModelProxy)
         self.admin_name = admin.get_name()
         self.actions = admin.get_form_actions(None)
-        get_form_toolbar_actions = admin.get_form_toolbar_actions
-        self.top_toolbar_actions = get_form_toolbar_actions()
+        self.top_toolbar_actions = admin.get_form_toolbar_actions()
         self.fields = dict((f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
             }) for f, fa in admin.get_fields())
-        self._form_display = admin.get_form_display()._to_bytes()
+        self.form = json.loads(admin.get_form_display()._to_bytes())
         self.admin_route = admin.get_admin_route()
-        self._add_action_states(admin, self.proxy, self.actions + self.top_toolbar_actions, self.action_states)
-        self.objects = [obj]
-        self.row = self.proxy.index(obj)
-        self.proxy = ProxyRegistry.register(self.proxy)
+        self._add_action_states(admin, proxy, self.actions + self.top_toolbar_actions, self.action_states)
+        self.row = proxy.index(obj)
+        self.proxy_route = ProxyRegistry.register(proxy)
         self.form_close_route = AdminRoute._register_action_route(
             self.admin_route, admin.form_close_action
         )
-        self.top_level = True
         self.title = u' '
         self.form_state = admin.form_state
 
@@ -132,42 +129,39 @@ class OpenFormView(ActionStep):
 
         :return: the list of objects to display in the form view
         """
-        return self.objects
+        return ProxyRegistry.pop(self.proxy_route).get_model()
 
     def get_admin(self):
         """Use this method to get access to the admin in unit tests"""
         return initial_naming_context.resolve(self.admin_route)
 
-    def render(self, gui_context):
-        from camelot.view.controls.formview import FormView
-
-        model = CollectionProxy(self.admin_route)
-        list(model.add_columns((fn for fn, fa in self.fields.items())))
-        model.set_value(self.proxy)
-
+    @classmethod
+    def render(self, gui_context, step):
+        model = CollectionProxy(tuple(step['admin_route']))
+        list(model.add_columns((fn for fn, fa in step['fields'].items())))
+        model.set_value(step['proxy_route'])
         form = FormView(
-            title=self.title, admin_route=self.admin_route,
-            form_close_route=self.form_close_route, model=model,
-            fields=self.fields, form_display=self._form_display,
-            index=self.row
+            title=step['title'], admin_route=step['admin_route'],
+            form_close_route=tuple(step['form_close_route']), model=model,
+            fields=step['fields'], form_display=step['form'],
+            index=step['row']
         )
-        form.set_actions([(a.route, a.render_hint) for a in self.actions])
-        form.set_toolbar_actions([(a.route, a.render_hint) for a in self.top_toolbar_actions])
-        for action_route, action_state in self.action_states:
+        form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
+        form.set_toolbar_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['top_toolbar_actions']])
+        for action_route, action_state in step['action_states']:
             form.set_action_state(form, tuple(action_route), action_state)
         return form
 
-    def gui_run( self, gui_context ):
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
         window = gui_context.get_window()
-        formview = self.render(gui_context)
+        formview = cls.render(gui_context, step)
         if formview is not None:
-            if self.top_level == True:
-                formview.setObjectName('form.{}.{}'.format(
-                    self.admin_name, id(formview)
-                ))
-                show_top_level(formview, window, self.form_state)
-            else:
-                gui_context.workspace.set_view(formview)
+            formview.setObjectName('form.{}.{}'.format(
+                step['admin_route'], id(formview)
+            ))
+            show_top_level(formview, window, step['form_state'])
 
 
 @dataclass
