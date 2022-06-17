@@ -36,6 +36,7 @@ from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy, ProxyRegistry
 from ..view import ViewWithActionsMixin
+from ..tableview import TableWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
@@ -77,9 +78,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         #
         # Setup table
         #
-        from camelot.view.controls.tableview import AdminTableWidget
         # parent set by layout manager
-        table = AdminTableWidget(self)
+        table = TableWidget(parent=self)
         table.setObjectName('table')
         layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,

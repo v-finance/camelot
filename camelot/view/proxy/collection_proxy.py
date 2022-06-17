@@ -72,7 +72,6 @@ from camelot.view.qml_view import get_crud_signal_handler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings
 from camelot.view.model_thread import object_thread
-from camelot.view.art import from_admin_icon
 from camelot.view.action_runner import ActionRunner
 
 
