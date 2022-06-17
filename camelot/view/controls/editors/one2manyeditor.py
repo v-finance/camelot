@@ -127,6 +127,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        # close the editor to prevent certain Qt crashes
+        table.close_editor()
         self.run_action(self.sender(), self.list_gui_context, None)
 
     @QtCore.qt_slot(object)

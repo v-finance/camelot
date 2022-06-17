@@ -37,14 +37,14 @@ import itertools
 from sqlalchemy import orm
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import Qt, QtGui, variant_to_py, is_deleted
+from ...core.qt import QtGui, is_deleted
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
-from camelot.view.qml_view import qml_action_step, qml_action_dispatch
+from camelot.view.qml_view import qml_action_dispatch
 
 import xlsxwriter
 
@@ -191,53 +191,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         return qml_action_dispatch.get_model(self.gui_context_name)
 
     def create_model_context( self ):
-        context = super( ListActionGuiContext, self ).create_model_context()
-        context.field_attributes = copy.copy( self.field_attributes )
-        current_row, current_column, current_field_name = None, None, None
-        proxy = None
-        collection_count = 0
-        selection_count = 0
-        selected_rows = []
-        if self.item_view is not None:
-            current_index = self.item_view.currentIndex()
-            if current_index.isValid():
-                current_row = current_index.row()
-                current_column = current_index.column()
-            model = self.item_view.model()
-            if model is not None:
-                proxy = model.get_value()
-                collection_count = model.rowCount()
-                if current_column is not None:
-                    current_field_name = variant_to_py(
-                        model.headerData(
-                            current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
-                        )
-                    )
-            if self.item_view.selectionModel() is not None:
-                selection = self.item_view.selectionModel().selection()
-                for i in range( len( selection ) ):
-                    selection_range = selection[i]
-                    rows_range = ( selection_range.top(), selection_range.bottom() )
-                    selected_rows.append( rows_range )
-                    selection_count += ( rows_range[1] - rows_range[0] ) + 1
-        else:
-            model = self.get_item_model()
-            if model is not None:
-                collection_count = model.rowCount()
-                proxy = model.get_value()
-            response = qml_action_step(self, 'GetSelection')
-            selection_count = response['selection_count']
-            current_row = response['current_row']
-            for i in range(len(response['selected_rows']) // 2):
-                selected_rows.append((response['selected_rows'][2 * i], response['selected_rows'][2 * i + 1]))
-        context.selection_count = selection_count
-        context.collection_count = collection_count
-        context.selected_rows = selected_rows
-        context.current_row = current_row
-        context.current_column = current_column
-        context.current_field_name = current_field_name
-        context.proxy = proxy
-        return context
+        return self.get_item_model()._model_context
         
     def copy( self, base_class = None ):
         new_context = super( ListActionGuiContext, self ).copy( base_class )
@@ -429,7 +383,7 @@ class DeleteSelection( EditAction ):
         for o in objects_to_remove:
             depending_objects.update( set( admin.get_depending_objects( o ) ) )
         for i, obj in enumerate( objects_to_remove ):
-            yield action_steps.UpdateProgress( i, 
+            yield action_steps.UpdateProgress( i + 1,
                                                model_context.selection_count,
                                                _('Removing') )
             #

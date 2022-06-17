@@ -128,8 +128,9 @@ class QmlActionDispatch(QtCore.QObject):
         gui_context_id = self._gui_naming_context_ids.__next__()
         gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
         if model is not None:
-            self.models[gui_context_id] = model
+            self.models[gui_context_name] = model
             model.destroyed.connect(self.remove_model)
+            model.selection_changed_signal.connect(self.model_selection_changed)
         gui_context.gui_context_name = gui_context_name
         return gui_context_name
 
@@ -138,9 +139,17 @@ class QmlActionDispatch(QtCore.QObject):
 
     @QtCore.qt_slot(QtCore.QObject)
     def remove_model(self):
-        for context_id, model in list(self.models.items()):
+        for gui_context_name, model in list(self.models.items()):
             if is_deleted(model):
-                del self.models[context_id]
+                del self.models[gui_context_name]
+
+    @QtCore.qt_slot(list, int)
+    def model_selection_changed(self, selected_rows, current_row):
+        sender = self.sender()
+        for gui_context_name, model in list(self.models.items()):
+            if model == sender:
+                gui_context = self.get_context(gui_context_name)
+                gui_context.update_selection(selected_rows, current_row)
 
     def has_context(self, gui_context):
         if gui_context is None:
@@ -157,12 +166,13 @@ class QmlActionDispatch(QtCore.QObject):
         return initial_naming_context.resolve(tuple(gui_context_name))
 
     def get_model(self, gui_context_name):
-        gui_context_id = int(gui_context_name[-1])
-        return self.models.get(gui_context_id)
-
+        return self.models.get(gui_context_name)
 
     def run_action(self, gui_context_name, route, args):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(gui_context_name, route, args))
+        model = self.get_model(tuple(gui_context_name))
+        if model is not None:
+            model.timeout_slot()
         gui_context = initial_naming_context.resolve(tuple(gui_context_name)).copy()
         action_runner = ActionRunner(tuple(route), gui_context, args)
         action_runner.exec()

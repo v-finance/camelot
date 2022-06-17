@@ -299,6 +299,8 @@ class TableWidget(QtWidgets.QTableView):
         # changes should not be saved.
         self._columns_changed = dict()
 
+        self.model().change_selection_v2([current.row(), current.row()], current.row(), current.column())
+
     def keyPressEvent(self, e):
         assert object_thread(self)
         if self.hasFocus() and e.key() in (QtCore.Qt.Key.Key_Enter,
