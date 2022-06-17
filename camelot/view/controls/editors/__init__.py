@@ -59,7 +59,6 @@ from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
 from .richtexteditor import RichTextEditor
 from .textlineeditor import TextLineEditor
-from .timeeditor import TimeEditor
 from .virtualaddresseditor import VirtualAddressEditor
 from .textediteditor import TextEditEditor
 from .wideeditor import WideEditor
@@ -87,7 +86,6 @@ __all__ = [
     One2ManyEditor.__name__,
     RichTextEditor.__name__,
     TextLineEditor.__name__,
-    TimeEditor.__name__,
     VirtualAddressEditor.__name__,
     TextEditEditor.__name__,
     WideEditor.__name__,

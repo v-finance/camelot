@@ -509,13 +509,6 @@ class DecimalFilter(FieldFilter):
 
         elif operator == Operator.between and None not in (float_operands[0], float_operands[1]):
             return super().get_attribute_clause(attribute, operator, float_operands[0]-delta, float_operands[1]+delta)
-        
-class TimeFilter(FieldFilter):
-    
-    name = 'time_filter'
-    python_type = datetime.time
-    operators = Operator.numerical_operators()
-    _default_from_string = utils.time_from_string
 
 class DateFilter(FieldFilter):
 

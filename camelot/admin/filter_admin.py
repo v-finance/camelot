@@ -46,7 +46,6 @@ for strategy_cls, delegate in [
     (list_filter.DateFilter,     delegates.DateDelegate),
     (list_filter.DecimalFilter,  delegates.FloatDelegate),
     (list_filter.IntFilter,      delegates.IntegerDelegate),
-    (list_filter.TimeFilter,     delegates.TimeDelegate),
     (list_filter.RelatedFilter,  delegates.PlainTextDelegate),
     (list_filter.ChoicesFilter,  delegates.ComboBoxDelegate),
     (list_filter.MonthsFilter,   delegates.MonthsDelegate),
