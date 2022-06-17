@@ -31,7 +31,6 @@ import json
 import logging
 
 from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ....core.item_model import ListModelProxy, ProxyRegistry
@@ -70,9 +69,11 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
                  rows=5,
                  action_routes=[],
                  list_actions=[],
+                 list_action=None,
                  **kw):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setObjectName(field_name)
+        self.setProperty('action_route', list_action)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         #
@@ -218,9 +219,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        admin = initial_naming_context.resolve(self.admin_route)
-        if admin.list_action:
-            admin.list_action.gui_run(self.list_gui_context)
+        self.run_action(self, self.list_gui_context, None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):

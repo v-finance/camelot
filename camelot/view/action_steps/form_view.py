@@ -34,7 +34,6 @@ context of the `Qt` model-view-delegate framework.
 from typing import List, Any, Tuple, Dict
 from dataclasses import dataclass, InitVar, field
 
-from camelot.core.serializable import DataclassSerializable
 from ..proxy.collection_proxy import CollectionProxy
 from ..workspace import show_top_level
 from ...admin.action.base import ActionStep, Action, State
@@ -44,6 +43,7 @@ from ...admin.object_admin import ObjectAdmin
 from ...core.item_model import AbstractModelProxy, ProxyRegistry
 from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
+from ...core.serializable import DataclassSerializable
 
 
 @dataclass

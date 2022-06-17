@@ -779,6 +779,8 @@ be specified using the verbose_name attribute.
                     field_attributes['list_actions'] = [
                         route_with_render_hint for route_with_render_hint in related_admin.get_related_toolbar_actions(direction)
                     ]
+                if field_attributes.get('list_action') is None:
+                    field_attributes['list_action'] = related_admin.get_list_action()
                 if column_width is None:
                     table = related_admin.get_table()
                     fields = table.get_fields(column_group=0)
