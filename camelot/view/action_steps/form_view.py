@@ -129,7 +129,7 @@ class OpenFormView(ActionStep, DataclassSerializable):
 
         :return: the list of objects to display in the form view
         """
-        return ProxyRegistry.pop(self.proxy_route).get_model()
+        return ProxyRegistry.get(self.proxy_route).get_model()
 
     def get_admin(self):
         """Use this method to get access to the admin in unit tests"""
