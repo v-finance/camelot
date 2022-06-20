@@ -77,7 +77,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   parent=None,
                   flags=QtCore.Qt.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
-        self.setWindowTitle( window_title )
+        self.setWindowTitle( str(window_title) )
         self.set_banner_logo_pixmap( icon.getQPixmap() )
         self.set_banner_title( six.text_type(title) )
         self.set_banner_subtitle( six.text_type(subtitle) )
