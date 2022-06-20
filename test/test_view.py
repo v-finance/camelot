@@ -374,9 +374,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value( 'en_US' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'en_US' )
-        #editor.set_value( 'en_GB' )
-        #self.grab_default_states( editor )
-        #self.assertEqual( editor.get_value(), 'en_GB' )
+        editor.set_value( 'en_GB' )
+        self.grab_default_states( editor )
+        self.assertEqual( editor.get_value(), 'en_GB' )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
 
