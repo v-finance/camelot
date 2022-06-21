@@ -45,7 +45,6 @@ from camelot.types.typing import Color, Note, Directory, File, Months
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
-    time_from_string,
     datetime_from_string,
     int_from_string,
     float_from_string,
@@ -77,19 +76,6 @@ _sqlalchemy_to_python_type_ = {
         'from_string': date_from_string,
         'search_strategy': list_filter.DateFilter,
         'filter_strategy': list_filter.DateFilter,
-    },
-
-    sqlalchemy.types.Time : lambda f: {
-        'python_type': datetime.time,
-        'editable': True,
-        'nullable': True,
-        'widget': 'time',
-        'delegate': delegates.TimeDelegate,
-        'format': constants.camelot_time_format,
-        'nullable': True,
-        'from_string': time_from_string,
-        'search_strategy': list_filter.TimeFilter,
-        'filter_strategy': list_filter.TimeFilter,
     },
 
     sqlalchemy.types.DateTime : lambda f: {

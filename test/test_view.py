@@ -39,12 +39,11 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.controls.exception import ExceptionDialog, register_exception
 from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
-from camelot.view.controls.tableview import ColumnGroupsWidget, TableWidget
+from camelot.view.controls.tableview import TableWidget
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
 from camelot_example.application_admin import MyApplicationAdmin
 from camelot_example.model import Movie
-from camelot_example.view import VisitorsPerDirector
 
 logger = logging.getLogger('view.unittests')
 
@@ -417,15 +416,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertTrue( u'Rich Text Editor' in editor.get_value() )
         self.assert_valid_editor( editor, u'<h1>Rich Text Editor</h1>' )
 
-    def test_TimeEditor(self):
-        editor = editors.TimeEditor(parent=None, editable=True)
-        self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
-        editor.set_value( datetime.time(21, 5, 0) )
-        self.grab_default_states( editor )
-        self.assertEqual( editor.get_value(), datetime.time(21, 5, 0) )
-        self.assert_valid_editor( editor, datetime.time(21, 5, 0) )
-
     def test_TextEditEditor(self):
         editor = editors.TextEditEditor(parent=None, editable=True)
         self.assertEqual( editor.get_value(), ValueLoading )
@@ -557,7 +547,9 @@ class FormTest(
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
         person = self.person_entity()
         open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
-        self.grab_widget( open_form_view.render(self.gui_context) )
+        self.grab_widget(
+            open_form_view.render(self.gui_context, open_form_view._to_dict())
+        )
 
 class DelegateCase(unittest.TestCase, GrabMixinCase):
     """Test the basic functionallity of the delegates :
@@ -738,18 +730,6 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         self.grab_delegate(delegate, [], field_attributes={'admin': admin})
         delegate = delegates.One2ManyDelegate(parent=None, editable=False, admin=object())
         self.grab_delegate(delegate, [], field_attributes={'admin': admin})
-
-    def test_timedelegate(self):
-        delegate = delegates.TimeDelegate(parent=None, editable=True)
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, editors.TimeEditor))
-        time = datetime.time(10, 30, 15)
-        self.grab_delegate(delegate, time)
-        delegate = delegates.TimeDelegate(parent=None, editable=False)
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, editors.TimeEditor))
-        #time = time(10, 30, 15)
-        self.grab_delegate(delegate, time, 'disabled')
 
     def test_integerdelegate(self):
         delegate = delegates.IntegerDelegate(parent=None, editable=True)
@@ -956,31 +936,6 @@ class ControlsTest(
         busy_widget.set_busy( True )
         self.grab_widget( busy_widget )
 
-    def test_column_groups_widget(self):
-        table = VisitorsPerDirector.Admin.list_display
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout()
-        table_widget = QtWidgets.QTableWidget( 3, 6 )
-        table_widget.setHorizontalHeaderLabels( table.get_fields() )
-        column_groups = ColumnGroupsWidget( table,
-                                            table_widget )
-        layout.addWidget( table_widget )
-        layout.addWidget( column_groups )
-        widget.setLayout( layout )
-        #
-        # set the tab to 1 and then back to 0, to force a change
-        # signal
-        #
-        column_groups.setCurrentIndex( 1 )
-        column_groups.setCurrentIndex( 0 )
-        self.assertFalse( table_widget.isColumnHidden( 0 ) )
-        self.assertTrue( table_widget.isColumnHidden( 3 ) )
-        self.grab_widget( widget, 'first_tab' )
-        column_groups.setCurrentIndex( 1 )
-        self.assertTrue( table_widget.isColumnHidden( 0 ) )
-        self.assertFalse( table_widget.isColumnHidden( 3 ) )
-        self.grab_widget( widget, 'second_tab' )
-
     def test_desktop_workspace(self):
         #workspace = DesktopWorkspace(self.gui_context.admin_route, None)
         #self.grab_widget(workspace)
@@ -1030,14 +985,14 @@ class SnippetsTest(RunningThreadCase,
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
-        form = open_form_view.render(self.gui_context)
+        form = open_form_view.render(self.gui_context, open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
-        form = open_form_view.render(self.gui_context)
+        form = open_form_view.render(self.gui_context, open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_background_color(self):

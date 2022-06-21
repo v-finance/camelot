@@ -95,7 +95,7 @@ class ViewWithActionsMixin(object):
         LOGGER.warn('No widget found with action route {}'.format(action_route))
 
     def run_action(self, action_widget, gui_context, mode):
-        action_name = action_widget.property('action_route')
+        action_name = tuple(action_widget.property('action_route'))
         action_runner = ActionRunner(action_name, gui_context, mode)
         action_runner.exec()
 

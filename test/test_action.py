@@ -489,7 +489,7 @@ class ListActionsCase(
         model_context = self.gui_context.create_model_context()
         open_form_view_action = list_action.OpenFormView()
         for step in open_form_view_action.model_run(model_context, None):
-            form = step.render(self.gui_context)
+            form = step.render(self.gui_context, step._to_dict())
             form_value = form.model.get_value()
         self.assertTrue(isinstance(form_value, ListModelProxy))
 
@@ -1094,7 +1094,6 @@ class ListFilterCase(TestMetaData):
             ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test',       'test'),
             ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,     'True',        True),
             ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,     '01-01-2020',  datetime.date(2020,1,1), datetime.date(2022,1,1)),
-            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '10:00',       datetime.time(10,0), datetime.time(12,30)),
             ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',        1000, 5000),
             ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',          12, 24),
             ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test',       'Test'),
