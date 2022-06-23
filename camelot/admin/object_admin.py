@@ -365,8 +365,7 @@ be specified using the verbose_name attribute.
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
-        from camelot.admin.action.form_action import structure_to_form_actions
-        return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
+        return app_admin.get_form_actions() + list(self.form_actions)
 
     def get_form_toolbar_actions( self ):
         """

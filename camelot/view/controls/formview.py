@@ -32,11 +32,11 @@ import json
 import logging
 import typing
 
-from ...core.serializable import NamedDataclassSerializable
-
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
+from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtWidgets, Qt,is_deleted, variant_to_py
+from ...core.serializable import NamedDataclassSerializable
 
 from ...core.item_model import ActionModeRole
 from ..action_runner import ActionRunner
@@ -327,6 +327,8 @@ class FormView(AbstractView):
         form = self.findChild(QtWidgets.QWidget, 'form' )
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if actions and form and layout:
+            toolbar = QtWidgets.QToolBar()
+            toolbar.setIconSize(QtCore.QSize(16,16))
             side_panel_layout = QtWidgets.QVBoxLayout()
             LOGGER.debug('setting Actions for formview')
             for action_route, render_hint in actions:
@@ -335,25 +337,15 @@ class FormView(AbstractView):
                     self.gui_context, self
                 )
                 self.model.add_action_route(tuple(action_route))
-                side_panel_layout.addWidget(action_widget)
+                if render_hint == RenderHint.TOOL_BUTTON:
+                    toolbar.addWidget(action_widget)
+                else:
+                    side_panel_layout.addWidget(action_widget)
             side_panel_layout.addStretch()
             layout.addLayout(side_panel_layout)
-
-    @QtCore.qt_slot(list)
-    def set_toolbar_actions(self, actions):
-        layout = self.findChild( QtWidgets.QLayout, 'layout' )
-        if layout and actions:
-            toolbar = QtWidgets.QToolBar()
-            toolbar.setIconSize(QtCore.QSize(16,16))
-            for action_route, render_hint in actions:
-                action_widget = self.render_action(
-                    render_hint, tuple(action_route),
-                    self.gui_context, toolbar,
-                )
-                self.model.add_action_route(tuple(action_route))
-                toolbar.addWidget(action_widget)
             toolbar.addWidget( BusyWidget() )
-            layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
+            top_layout = self.findChild( QtWidgets.QLayout, 'layout' )
+            top_layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
 
     @QtCore.qt_slot('QStringList', QtCore.QByteArray)
     def action_state_changed(self, action_route, serialized_state):

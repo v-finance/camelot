@@ -84,7 +84,6 @@ class OpenFormView(ActionStep, DataclassSerializable):
     admin_name: str = field(init=False)
     actions: List[RouteWithRenderHint] = field(init=False)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
-    top_toolbar_actions: List[RouteWithRenderHint] = field(init=False)
     fields: Dict[str, dict] = field(init=False)
     form: AbstractForm = field(init=False)
     admin_route: AdminRoute = field(init=False)
@@ -97,15 +96,14 @@ class OpenFormView(ActionStep, DataclassSerializable):
         assert obj is not None
         assert isinstance(proxy, AbstractModelProxy)
         self.admin_name = admin.get_name()
-        self.actions = admin.get_form_actions(None)
-        self.top_toolbar_actions = admin.get_form_toolbar_actions()
+        self.actions = admin.get_form_actions(None) + admin.get_form_toolbar_actions()
         self.fields = dict((f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
             }) for f, fa in admin.get_fields())
-        self.form = json.loads(admin.get_form_display()._to_bytes())
+        self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
-        self._add_action_states(admin, proxy, self.actions + self.top_toolbar_actions, self.action_states)
+        self._add_action_states(admin, proxy, self.actions, self.action_states)
         self.row = proxy.index(obj)
         self.proxy_route = ProxyRegistry.register(proxy)
         self.form_close_route = AdminRoute._register_action_route(
@@ -147,7 +145,6 @@ class OpenFormView(ActionStep, DataclassSerializable):
             index=step['row']
         )
         form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
-        form.set_toolbar_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['top_toolbar_actions']])
         for action_route, action_state in step['action_states']:
             form.set_action_state(form, tuple(action_route), action_state)
         return form
