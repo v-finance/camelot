@@ -130,7 +130,7 @@ class OpenObject(SelectObject):
         if obj is not None:
             admin = model_context.field_attributes['admin']
             admin = admin.get_related_admin(obj.__class__)
-            yield action_steps.OpenFormView(obj, admin.get_proxy([obj]), admin)
+            yield action_steps.OpenFormView(admin, obj)
 
     def get_state(self, model_context):
         state = super(OpenObject, self).get_state(model_context)

@@ -31,27 +31,25 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import List, Any, Tuple, Dict, Union
-from dataclasses import dataclass, InitVar, field
+from typing import Dict
+from dataclasses import dataclass, field
 import json
 
 from ..controls.formview import FormView
 from ..forms import AbstractForm
 from ..proxy.collection_proxy import CollectionProxy
 from ..workspace import show_top_level
-from ...admin.action.base import ActionStep, State, RenderHint
-from ...admin.action.form_action import FormActionModelContext
-from ...admin.admin_route import AdminRoute, Route, RouteWithRenderHint
-from ...admin.object_admin import ObjectAdmin
+from ...admin.action.base import ActionStep, RenderHint
+from ...admin.admin_route import AdminRoute
 from ...core.item_model import AbstractModelProxy, ProxyRegistry
 from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
-from ...core.utils import ugettext_lazy
+from .item_view import AbstractCrudView
 
 
 @dataclass
-class OpenFormView(ActionStep, DataclassSerializable):
+class OpenFormView(AbstractCrudView):
     """Open the form view for a list of objects, in a non blocking way.
 
     :param object: the object to display in the form view.
@@ -76,51 +74,33 @@ class OpenFormView(ActionStep, DataclassSerializable):
         admin
 
     """
-    obj: InitVar[Any]
-    proxy: InitVar[AbstractModelProxy]
-    admin: InitVar[ObjectAdmin]
 
-    proxy_route: Route = field(init=False)
-    admin_name: str = field(init=False)
-    actions: List[RouteWithRenderHint] = field(init=False)
-    action_states: List[Tuple[Route, State]] = field(default_factory=list)
     fields: Dict[str, dict] = field(init=False)
     form: AbstractForm = field(init=False)
     admin_route: AdminRoute = field(init=False)
     row: int = field(init=False)
     form_state: str = field(init=False)
-    form_close_route: Route = field(init=False)
-    title: Union[str, ugettext_lazy] = field(init=False)
 
-    def __post_init__(self, obj, proxy, admin):
-        assert obj is not None
-        assert isinstance(proxy, AbstractModelProxy)
-        self.admin_name = admin.get_name()
-        self.actions = admin.get_form_actions(None) + admin.get_form_toolbar_actions()
+    def __post_init__(self, admin, value, proxy):
+        assert value is not None
+        assert (proxy is None) or (isinstance(proxy, AbstractModelProxy))
         self.fields = dict((f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
             }) for f, fa in admin.get_fields())
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
-        self._add_action_states(admin, proxy, self.actions, self.action_states)
-        self.row = proxy.index(obj)
-        self.proxy_route = ProxyRegistry.register(proxy)
-        self.form_close_route = AdminRoute._register_action_route(
+        if proxy is None:
+            proxy = admin.get_proxy([value])
+        self.row = proxy.index(value)
+        self.close_route = AdminRoute._register_action_route(
             self.admin_route, admin.form_close_action
         )
-        self.title = u' '
+        self.title = admin.get_verbose_name()
         self.form_state = admin.form_state
-
-    @staticmethod
-    def _add_action_states(admin, proxy, actions, action_states):
-        model_context = FormActionModelContext()
-        model_context.admin = admin
-        model_context.proxy = proxy
-        for action_route in actions:
-            action = initial_naming_context.resolve(action_route.route)
-            state = action.get_state(model_context)
-            action_states.append((action_route.route, state._to_dict()))
+        self.actions = admin.get_form_actions(None).copy()
+        self.actions.extend(admin.get_form_toolbar_actions())
+        super().__post_init__(admin, value, proxy)
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
@@ -140,7 +120,7 @@ class OpenFormView(ActionStep, DataclassSerializable):
         model.set_value(step['proxy_route'])
         form = FormView(
             title=step['title'], admin_route=step['admin_route'],
-            form_close_route=tuple(step['form_close_route']), model=model,
+            close_route=tuple(step['close_route']), model=model,
             fields=step['fields'], form_display=step['form'],
             index=step['row']
         )

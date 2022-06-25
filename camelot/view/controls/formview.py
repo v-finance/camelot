@@ -263,7 +263,7 @@ class FormView(AbstractView):
     form_widget = FormWidget
 
     def __init__(
-        self, title, admin_route, form_close_route, model, form_display,
+        self, title, admin_route, close_route, model, form_display,
         fields, index, parent = None):
         AbstractView.__init__( self, parent )
 
@@ -278,7 +278,7 @@ class FormView(AbstractView):
         self.model = model
         self.admin_route = admin_route
         self.title_prefix = title
-        self.form_close_route = form_close_route
+        self.close_route = close_route
 
         form = FormWidget(
             admin_route=admin_route, model=model, form_display=form_display,
@@ -375,7 +375,7 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot()
     def validate_close( self ):
-        action_runner = ActionRunner(self.form_close_route, self.gui_context, None)
+        action_runner = ActionRunner(self.close_route, self.gui_context, None)
         action_runner.exec()
 
     def close_view( self, accept ):

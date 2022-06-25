@@ -933,11 +933,6 @@ class ApplicationActionsCase(
                 file_selected = True
         self.assertTrue(file_selected)
 
-    def test_open_new_view( self ):
-        person_admin = app_admin.get_related_admin(Person)
-        open_new_view_action = application_action.OpenNewView(person_admin)
-        list(self.gui_run(open_new_view_action, self.gui_context, None))
-
     def test_change_logging( self ):
         change_logging_action = ChangeLogging()
         for step in change_logging_action.model_run(self.context, None):

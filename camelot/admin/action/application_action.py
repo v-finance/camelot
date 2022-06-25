@@ -323,35 +323,6 @@ class OpenTableView( EntityAction ):
         step.new_tab = (mode == 'new_tab')
         yield step
 
-class OpenNewView( EntityAction ):
-    """An application action that opens a new view of an Entity
-    
-    :param entity_admin: an instance of 
-        :class:`camelot.admin.entity_admin.EntityAdmin` to be used to
-        visualize the entities
-    
-    """
-
-    verbose_name = _('New')
-    shortcut = QtGui.QKeySequence.StandardKey.New
-    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    tooltip = _('New')
-            
-    def get_state( self, model_context ):
-        state = super( OpenNewView, self ).get_state( model_context )
-        state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
-        state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
-        return state
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        admin = self._entity_admin
-        new_object = admin.entity()
-        # Give the default fields their value
-        admin.add(new_object)
-        admin.set_defaults(new_object)
-        yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
-        
 
 class ShowAbout(Action):
     """Show the about dialog with the content returned by the

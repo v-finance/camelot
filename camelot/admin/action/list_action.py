@@ -311,7 +311,9 @@ class OpenFormView( ListContextAction ):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        yield action_steps.OpenFormView(model_context.get_object(), model_context.proxy, admin=model_context.admin)
+        yield action_steps.OpenFormView(
+            model_context.admin, model_context.get_object(), model_context.proxy
+        )
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
@@ -346,7 +348,7 @@ class DuplicateSelection( EditAction ):
                 yield action_steps.UpdateObjects(updated_objects)
                 yield action_steps.FlushSession(model_context.session)
             else:
-                yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
+                yield action_steps.OpenFormView(admin, new_object)
 
     def get_state(self, model_context):
         assert isinstance(model_context, ListActionModelContext)
@@ -1139,7 +1141,7 @@ class AddNewObjectMixin(object):
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
+            yield action_steps.OpenFormView(admin, new_object)
 
 class AddNewObject( AddNewObjectMixin, EditAction ):
     """Add a new object to a collection. Depending on the

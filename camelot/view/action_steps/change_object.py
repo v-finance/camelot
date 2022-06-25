@@ -380,8 +380,8 @@ class ChangeObjects(UpdateTableView):
     subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Please review the data below.'))
     icon: typing.Union[Icon, None] = field(init=False, default=Icon('file-excel'))
 
-    def __post_init__( self, value, admin, search_text):
-        super(ChangeObjects, self).__post_init__(admin, value, search_text)
+    def __post_init__( self, value, admin, proxy, search_text):
+        super().__post_init__(admin, value, proxy, search_text)
         self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
         if self.validate:

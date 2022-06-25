@@ -546,7 +546,7 @@ class FormTest(
     def test_inherited_form(self):
         person_admin = InheritedAdmin(self.app_admin, self.person_entity)
         person = self.person_entity()
-        open_form_view = OpenFormView(person, person_admin.get_proxy([person]), person_admin)
+        open_form_view = OpenFormView(person_admin, person)
         self.grab_widget(
             open_form_view.render(self.gui_context, open_form_view._to_dict())
         )
@@ -984,14 +984,14 @@ class SnippetsTest(RunningThreadCase,
     def test_fields_with_actions(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
+        open_form_view = OpenFormView(admin, coordinate)
         form = open_form_view.render(self.gui_context, open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
-        open_form_view = OpenFormView(coordinate, admin.get_proxy([coordinate]), admin)
+        open_form_view = OpenFormView(admin, coordinate)
         form = open_form_view.render(self.gui_context, open_form_view._to_dict())
         self.grab_widget(form)
 

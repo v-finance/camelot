@@ -37,7 +37,7 @@ from camelot.view.qml_view import qml_action_dispatch
 from .item_view import OpenTableView, OpenQmlTableView
 
 @dataclass
-class SelectObjects( OpenTableView ):
+class SelectObjects(OpenTableView):
     """Select one or more object from a query.  The `yield` of this action step
     return a list of objects.
 
@@ -51,11 +51,10 @@ class SelectObjects( OpenTableView ):
     value: InitVar = None
     verbose_name_plural: str = field(init=False)
 
-
-    def __post_init__(self, admin, value, search_text):
+    def __post_init__(self, admin, value, proxy, search_text):
         if value is None:
             value = admin.get_query()
-        super(SelectObjects, self).__post_init__(admin, value, search_text)
+        super().__post_init__(admin, value, proxy, search_text)
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
         self.actions = admin.get_list_actions().copy()
         self.actions.extend(admin.get_filters())
