@@ -391,10 +391,9 @@ class ChangeObjects(UpdateTableView):
                     self.invalid_rows.append(row)
                     break
 
-    def _post_init_actions__(self, admin):
-        self.actions = [
-            RouteWithRenderHint(action.route, action.render_hint) for action in admin.get_related_toolbar_actions('onetomany')
-        ]
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_related_toolbar_actions('onetomany'))
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests

@@ -56,11 +56,14 @@ class SelectObjects(OpenTableView):
             value = admin.get_query()
         super().__post_init__(admin, value, proxy, search_text)
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
-        self.actions = admin.get_list_actions().copy()
-        self.actions.extend(admin.get_filters())
-        self.actions.extend(admin.get_select_list_toolbar_actions())
         self.action_states = list()
         self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
+
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_list_actions())
+        actions.extend(admin.get_filters())
+        actions.extend(admin.get_select_list_toolbar_actions())
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):

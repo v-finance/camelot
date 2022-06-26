@@ -96,7 +96,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
 
     title: Union[str, ugettext_lazy] = field(init=False)
     proxy_route: Route = field(init=False)
-    actions: List[RouteWithRenderHint] = field(init=False)
+    actions: List[RouteWithRenderHint] = field(init=False, default_factory=list)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     crud_actions: CrudActions = field(init=False)
     close_route: Route = field(init=False)
@@ -135,9 +135,7 @@ class UpdateTableView(AbstractCrudView):
     def __post_init__(self, admin, value, proxy, search_text):
         assert (search_text is None) or isinstance(search_text, str)
         self.title = admin.get_verbose_name_plural()
-        self.actions = admin.get_list_actions().copy()
-        self.actions.extend(admin.get_filters())
-        self.actions.extend(admin.get_list_toolbar_actions())
+        self._add_actions(admin, self.actions)
         self.columns = admin.get_columns()
         self.list_action = admin.get_list_action()
         self.close_route = None
@@ -155,6 +153,12 @@ class UpdateTableView(AbstractCrudView):
                 LOGGER.warn('No SearchFilter found to apply search text')
         self.set_filters(self.action_states, proxy)
         super().__post_init__(admin, value, proxy)
+
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_list_actions())
+        actions.extend(admin.get_filters())
+        actions.extend(admin.get_list_toolbar_actions())
 
     @staticmethod
     def set_filters(action_states, model):
