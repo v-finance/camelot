@@ -117,8 +117,10 @@ class ActionRunner( QtCore.QEventLoop ):
         
     def _initiate_generator(self, serialized_message):
         """Create the model context and start the generator"""
+        from camelot.view.action_steps import PushProgressLevel
         message = json.loads(serialized_message)
         action = initial_naming_context.resolve(tuple(message['action_name']))
+        self.non_blocking_serializable_action_step_signal.emit("PushProgressLevel", PushProgressLevel('Please wait')._to_bytes())
         return action.model_run(self._model_context, message.get('mode'))
 
     def _iterate_until_blocking( self, generator_method, *args ):
@@ -161,9 +163,11 @@ class ActionRunner( QtCore.QEventLoop ):
                     result = next(self._generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
+            self.non_blocking_serializable_action_step_signal.emit("PopProgressLevel", b"")
             return e
         except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
+            self.non_blocking_serializable_action_step_signal.emit("PopProgressLevel", b"")
             return e
 
     @QtCore.qt_slot( object )
