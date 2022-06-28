@@ -72,6 +72,7 @@ from camelot.view.qml_view import get_crud_signal_handler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings
 from camelot.view.model_thread import object_thread
+from camelot.view.art import from_admin_icon
 from camelot.view.action_runner import ActionRunner
 
 
@@ -531,8 +532,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             if role == Qt.ItemDataRole.DecorationRole:
                 icon = variant_to_py(item.data(role))
                 if icon is not None:
-                    # Return only the icon name for now, when needed, we can still return the serialized icon later
-                    return icon.name
+                    return py_to_variant(from_admin_icon(icon).getQPixmap())
             else:
                 return item.data(role)
 
