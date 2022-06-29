@@ -691,7 +691,7 @@ class ExportSpreadsheet( ListContextAction ):
                                                                      field_names )
             row = offset + j
             if j % 100 == 0:
-                yield action_steps.UpdateProgress( j, model_context.collection_count )
+                yield action_steps.UpdateProgress( j + 1, model_context.collection_count )
             fields = enumerate(zip(field_names, 
                                              static_attributes,
                                              dynamic_attributes))
@@ -844,7 +844,7 @@ class ImportFromFile( EditAction ):
                     # in case the model is a collection proxy, the new objects should
                     # be appended
                     model_context.proxy.append(new_entity_instance)
-                    yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
+                    yield action_steps.UpdateProgress( i + 1, len( collection ), _('Importing data') )
                 yield action_steps.FlushSession( model_context.session )
             yield action_steps.Refresh()
         

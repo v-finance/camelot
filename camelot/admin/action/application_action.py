@@ -439,7 +439,7 @@ class Refresh( Action ):
                 session.expunge( obj )
                 expunged_objects.append( obj )
             if i%10 == 0:
-                yield action_steps.UpdateProgress( i, 
+                yield action_steps.UpdateProgress( i + 1,
                                                    session_items, 
                                                    progress_db_message )
         yield action_steps.UpdateProgress(text = progress_view_message )
