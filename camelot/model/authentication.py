@@ -39,14 +39,9 @@ from sqlalchemy.schema import Column, ForeignKey
 
 import camelot.types
 
-from ..admin.action import list_filter
-from ..admin.entity_admin import EntityAdmin
 from ..core.qt import QtCore, QtGui
 from ..core.orm import Entity, Session
 from ..core.sql import metadata
-from ..core.utils import ugettext_lazy as _
-from ..view import forms
-from ..view.controls import delegates
 
 END_OF_TIMES = datetime.date( year = 2400, month = 12, day = 31 )
 
@@ -171,26 +166,7 @@ class AuthenticationMechanism( Entity ):
         
     def __str__( self ):
         return self.username
-    
-    class Admin( EntityAdmin ):
-        verbose_name = _('Authentication mechanism')
-        verbose_name_plural = _('Authentication mechanism')
-        list_display = [
-            'authentication_type', 'username', 'from_date', 'thru_date',
-            'last_login'
-        ]
-        form_display = forms.HBoxForm(
-            [list_display, ['representation']]
-        )
-        field_attributes = {
-            'representation': {
-                'delegate': delegates.DbImageDelegate,
-                'name': ' ',
-                'max_size': 100000,
-                'preview_width': 100,
-                'preview_height': 200,
-                'search_strategy': list_filter.NoFilter
-                }}
+
 
 class AuthenticationGroup( Entity ):
     """A group of users (defined by their :class:`AuthenticationMechanism`).
@@ -228,23 +204,7 @@ class AuthenticationGroup( Entity ):
     def __str__( self ):
         return self.name or ''
     
-    class Admin( EntityAdmin ):
-        verbose_name = _('Authentication group')
-        verbose_name_plural = _('Authentication groups')
-        list_display = [ 'name' ]
-        form_state = 'right'
-        
-        def get_form_display( self ):
-            return forms.TabForm( [(_('Group'), ['name', 'members']),
-                                   (_('Authentication roles'), [role[1] for role in roles])
-                                   ])
-        
-        def get_field_attributes( self, field_name ):
-            fa = EntityAdmin.get_field_attributes( self, field_name )
-            if field_name in [role[1] for role in roles]:
-                fa['delegate'] = delegates.BoolDelegate
-                fa['editable'] = True
-            return fa
+
 
 authentication_group_member_table = schema.Table('authentication_group_member', metadata,
                             schema.Column('authentication_group_id', types.Integer(),
