@@ -5,6 +5,7 @@ import json
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, is_deleted
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context, NameNotFoundException
+from camelot.admin.action.application_action import ApplicationActionGuiContext
 from .action_runner import ActionRunner
 
 
@@ -159,12 +160,24 @@ class QmlActionDispatch(QtCore.QObject):
     def get_model(self, gui_context_name):
         return self.models.get(gui_context_name)
 
-    def run_action(self, gui_context_name, route, args):
-        LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(gui_context_name, route, args))
+    def run_action(self, gui_context_name, route, args, model_context_name):
+        LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, args, model_context_name))
         model = self.get_model(tuple(gui_context_name))
         if model is not None:
             model.timeout_slot()
-        gui_context = initial_naming_context.resolve(tuple(gui_context_name)).copy()
+
+        class DummyGuiContext(ApplicationActionGuiContext):
+
+            def __init__(self, gui_context_name, model_context_name):
+                super().__init__()
+                self.admin_route = None
+                self.gui_context_name = gui_context_name
+                self.model_context_name = model_context_name
+
+            def create_model_context(self):
+                return initial_naming_context.resolve(tuple(self.model_context_name))
+
+        gui_context = DummyGuiContext(gui_context_name, model_context_name)
         action_runner = ActionRunner(tuple(route), gui_context, args)
         action_runner.exec()
 

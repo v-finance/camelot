@@ -131,12 +131,15 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     # this could be non-blocking, but that causes unittest segmentation
     # fault issues which are not worth investigating
     menu: MenuItem
+    model_context_name: typing.List[str] = field(default_factory=list)
     action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
     model_context: InitVar(ModelContext) = None
 
     # noinspection PyDataclass
     def __post_init__(self, model_context):
+        from vfinance.cli.service import model_context_naming, model_context_counter
         self.menu = self._filter_items(self.menu, get_current_authentication())
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.menu.items, self.action_states)
 
     @classmethod
