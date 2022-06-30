@@ -130,7 +130,6 @@ class QmlActionDispatch(QtCore.QObject):
         if model is not None:
             self.models[gui_context_name] = model
             model.destroyed.connect(self.remove_model)
-            model.selection_changed_signal.connect(self.model_selection_changed)
         gui_context.gui_context_name = gui_context_name
         return gui_context_name
 
@@ -142,14 +141,6 @@ class QmlActionDispatch(QtCore.QObject):
         for gui_context_name, model in list(self.models.items()):
             if is_deleted(model):
                 del self.models[gui_context_name]
-
-    @QtCore.qt_slot(list, int)
-    def model_selection_changed(self, selected_rows, current_row):
-        sender = self.sender()
-        for gui_context_name, model in list(self.models.items()):
-            if model == sender:
-                gui_context = self.get_context(gui_context_name)
-                gui_context.update_selection(selected_rows, current_row)
 
     def has_context(self, gui_context):
         if gui_context is None:

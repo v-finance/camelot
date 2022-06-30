@@ -121,7 +121,12 @@ class UpdateMixin(object):
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ItemDataRole.ToolTipRole)
                 header_item.setData(py_to_variant(str(action_state.verbose_name)), Qt.ItemDataRole.DisplayRole)
+                # The decoration role contains the icon as a QPixmap which is used in the old table view.
                 header_item.setData(py_to_variant(action_state.icon), Qt.ItemDataRole.DecorationRole)
+                if action_state.icon is not None:
+                    # The whatsThis role contains the icon name which is used in the QML table view.
+                    # (note: user roles can't be used in a QML VerticalHeaderView)
+                    header_item.setData(py_to_variant(action_state.icon.name), Qt.ItemDataRole.WhatsThisRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 

@@ -42,6 +42,24 @@ _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
 
 @dataclass
+class PushProgressLevel(ActionStep, DataclassSerializable):
+
+    verbose_name: str
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        qml_action_step(gui_context, 'PushProgressLevel', serialized_step)
+
+
+@dataclass
+class PopProgressLevel(ActionStep, DataclassSerializable):
+
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        qml_action_step(gui_context, 'PopProgressLevel', serialized_step)
+
+
+@dataclass
 class UpdateProgress(ActionStep, DataclassSerializable):
     """
 Inform the user about the progress the application is making
