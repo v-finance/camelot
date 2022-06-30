@@ -92,7 +92,9 @@ class OpenFormView(AbstractCrudView):
         self.admin_route = admin.get_admin_route()
         if proxy is None:
             proxy = admin.get_proxy([value])
-        self.row = proxy.index(value)
+            self.row = 0
+        else:
+            self.row = proxy.index(value)
         self.close_route = AdminRoute._register_action_route(
             self.admin_route, admin.form_close_action
         )

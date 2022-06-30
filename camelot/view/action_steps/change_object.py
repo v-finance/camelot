@@ -30,9 +30,8 @@ import typing
 
 from dataclasses import dataclass, field
 import json
-from typing import List, Dict, Tuple, Union
+from typing import List, Union
 
-from camelot.admin.action import ActionStep, Action, State
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
@@ -51,8 +50,7 @@ from .item_view import UpdateTableView
 from ..controls.view import ViewWithActionsMixin
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
-from ...admin.admin_route import AdminRoute, Route, RouteWithRenderHint
-from ...admin.object_admin import ObjectAdmin
+from ...admin.admin_route import AdminRoute, RouteWithRenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 
 
