@@ -17,8 +17,14 @@ from ...core.item_model import FieldAttributesRole, CompletionsRole, PreviewRole
 class UpdateMixin(object):
 
     def _to_dict(self):
+        header_items = []
         cells = []
         for row, header_item, items in self.changed_ranges:
+            header_items.append({
+                "row": row,
+                "tool_tip": header_item.data(Qt.ItemDataRole.ToolTipRole),
+                "icon_name": header_item.data(Qt.ItemDataRole.WhatsThisRole)
+            })
             for column, item in items:
                 cell_data = {
                     "row": row,
@@ -27,6 +33,7 @@ class UpdateMixin(object):
                 }
                 cells.append(cell_data)
         return {
+            "header_items": header_items,
             "cells": cells
         }
 

@@ -196,6 +196,9 @@ class ActionMixinCase(object):
                 LOGGER.debug("iteration finished")
                 yield None
 
+            def _was_canceled( self, gui_context ):
+                return False
+
         initial_naming_context.unbind(test_action_name)
         action_name = initial_naming_context.bind(('test_action',), action)
         runner = IteratingActionRunner(action_name, gui_context, mode)

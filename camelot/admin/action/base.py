@@ -318,25 +318,6 @@ return immediately and the :meth:`model_run` will not be blocked.
         """
         return serialized_result
 
-class ProgressLevel(object):
-
-    def __init__(self, gui_context, verbose_name):
-        self.verbose_name = verbose_name
-        self.gui_context = gui_context
-        self.progress_dialog = None
-
-    def __enter__(self):
-        self.progress_dialog = self.gui_context.get_progress_dialog()
-        if self.progress_dialog is not None:
-            self.progress_dialog.push_level(self.verbose_name)
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if self.progress_dialog is not None:
-            self.progress_dialog.pop_level()
-        self.progress_dialog = None
-        return False
-
 
 class RenderHint(Enum):
     """
