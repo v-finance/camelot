@@ -98,9 +98,13 @@ class OpenFormView(AbstractCrudView):
         )
         self.title = admin.get_verbose_name()
         self.form_state = admin.form_state
-        self.actions = admin.get_form_actions(None).copy()
-        self.actions.extend(admin.get_form_toolbar_actions())
+        self._add_actions(admin, self.actions)
         super().__post_init__(admin, value, proxy)
+
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_form_actions(None))
+        actions.extend(admin.get_form_toolbar_actions())
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
