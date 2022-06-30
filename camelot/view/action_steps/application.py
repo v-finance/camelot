@@ -131,7 +131,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     # this could be non-blocking, but that causes unittest segmentation
     # fault issues which are not worth investigating
     menu: MenuItem
-    model_context_name: typing.List[str] = field(default_factory=list)
+    model_context_name: Route = field(default_factory=list)
     action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
     model_context: InitVar(ModelContext) = None
 
