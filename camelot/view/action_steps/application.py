@@ -33,6 +33,7 @@ import logging
 import typing
 
 from ...admin.action.base import ActionStep, State, ModelContext
+from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
@@ -137,7 +138,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
 
     # noinspection PyDataclass
     def __post_init__(self, model_context):
-        from vfinance.cli.service import model_context_naming, model_context_counter
         self.menu = self._filter_items(self.menu, get_current_authentication())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.menu.items, self.action_states)
