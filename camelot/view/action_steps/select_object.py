@@ -48,13 +48,10 @@ class SelectObjects(OpenTableView):
         be made.  If none is given, the default query from the admin is taken.
     """
 
-    value: InitVar = None
     verbose_name_plural: str = field(init=False)
 
-    def __post_init__(self, admin, value, proxy, search_text):
-        if value is None:
-            value = admin.get_query()
-        super().__post_init__(admin, value, proxy, search_text)
+    def __post_init__(self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
         self.action_states = list()
         self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)

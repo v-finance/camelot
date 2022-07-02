@@ -81,7 +81,7 @@ class OpenFormView(AbstractCrudView):
     row: int = field(init=False)
     form_state: str = field(init=False)
 
-    def __post_init__(self, admin, value, proxy):
+    def __post_init__(self, value, admin, proxy):
         assert value is not None
         assert (proxy is None) or (isinstance(proxy, AbstractModelProxy))
         self.fields = dict((f, {
@@ -101,7 +101,7 @@ class OpenFormView(AbstractCrudView):
         self.title = admin.get_verbose_name()
         self.form_state = admin.form_state
         self._add_actions(admin, self.actions)
-        super().__post_init__(admin, value, proxy)
+        super().__post_init__(value, admin, proxy)
 
     @staticmethod
     def _add_actions(admin, actions):

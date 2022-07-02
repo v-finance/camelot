@@ -276,9 +276,6 @@ class ChangeObject(OpenFormView):
     accept: typing.Union[str, ugettext_lazy] = _('OK')
     reject: typing.Union[str, ugettext_lazy] = _('Cancel')
 
-    def __post_init__(self, value, admin, proxy):
-        super().__post_init__(admin, value, proxy)
-
     @staticmethod
     def _add_actions(admin, actions):
         actions.extend(admin.get_form_actions(None))
@@ -365,7 +362,7 @@ class ChangeObjects(UpdateTableView):
     icon: typing.Union[Icon, None] = field(init=False, default=Icon('file-excel'))
 
     def __post_init__( self, value, admin, proxy, search_text):
-        super().__post_init__(admin, value, proxy, search_text)
+        super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
         if self.validate:

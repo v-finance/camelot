@@ -186,8 +186,10 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         admin = app_admin.get_related_admin(Options)
         options = Options('Videostore')
         change_object = ChangeObject(options, admin)
-        dialog = change_object.render(self.gui_context)
-        self.grab_widget( dialog )
+        dialog = change_object.render(
+            self.gui_context, change_object._to_dict()
+        )
+        self.grab_widget(dialog)
 
     def test_select_file( self ):
         action_steps.SelectFile('Image Files (*.png *.jpg);;All Files (*)')

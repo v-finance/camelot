@@ -559,7 +559,7 @@ def structure_to_application_action(structure, application_admin):
     if isinstance(structure, Action):
         return structure
     admin = application_admin.get_related_admin( structure )
-    return OpenTableView( admin )
+    return OpenTableView(admin.get_query(), admin)
 
 
 

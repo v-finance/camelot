@@ -90,8 +90,8 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
     based action steps
     """
 
-    admin: InitVar[ObjectAdmin]
     value: InitVar[Any]
+    admin: InitVar[ObjectAdmin]
     proxy: InitVar[AbstractModelProxy] = None
 
     title: Union[str, ugettext_lazy] = field(init=False)
@@ -101,7 +101,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
     crud_actions: CrudActions = field(init=False)
     close_route: Route = field(init=False)
 
-    def __post_init__(self, admin, value, proxy):
+    def __post_init__(self, value, admin, proxy):
         assert value is not None
         assert isinstance(proxy, AbstractModelProxy)
         self.crud_actions = CrudActions(admin)
@@ -132,7 +132,7 @@ class UpdateTableView(AbstractCrudView):
     columns: List[str] = field(init=False)
     list_action: Union[Route, None] = field(init=False)
 
-    def __post_init__(self, admin, value, proxy, search_text):
+    def __post_init__(self, value, admin, proxy, search_text):
         assert (search_text is None) or isinstance(search_text, str)
         self.title = admin.get_verbose_name_plural()
         self._add_actions(admin, self.actions)
@@ -152,7 +152,7 @@ class UpdateTableView(AbstractCrudView):
             else:
                 LOGGER.warn('No SearchFilter found to apply search text')
         self.set_filters(self.action_states, proxy)
-        super().__post_init__(admin, value, proxy)
+        super().__post_init__(value, admin, proxy)
 
     @staticmethod
     def _add_actions(admin, actions):
@@ -203,8 +203,8 @@ class OpenTableView( UpdateTableView ):
     new_tab: bool = False
     admin_route: Route = field(init=False)
 
-    def __post_init__(self, admin, value, proxy, search_text):
-        super().__post_init__(admin, value, proxy, search_text)
+    def __post_init__(self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
 
     @classmethod
@@ -248,8 +248,8 @@ class OpenQmlTableView(OpenTableView):
         
     """
 
-    def __init__(self, admin, value, search_text=None):
-        super().__init__(admin, value, search_text=search_text)
+    def __init__(self, value, admin, search_text=None):
+        super().__init__(value, admin, search_text=search_text)
         self.list_action = admin.get_list_action()
 
     @classmethod
