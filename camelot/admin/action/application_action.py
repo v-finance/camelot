@@ -28,7 +28,6 @@
 #  ============================================================================
 
 import logging
-import os
 
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
@@ -312,16 +311,10 @@ class OpenTableView( EntityAction ):
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Open table'))
-        # set environment variable to turn on old Qt table view (QML table view is now the default)
-        if os.environ.get('VFINANCE_OLD_TABLE'):
-            Step = action_steps.OpenTableView
-        else:
-            Step = action_steps.OpenQmlTableView
-        step = Step(
-            self._entity_admin, self._entity_admin.get_query()
+        yield action_steps.OpenQmlTableView(
+            self._entity_admin.get_query(),
+            self._entity_admin,
         )
-        step.new_tab = (mode == 'new_tab')
-        yield step
 
 
 class ShowAbout(Action):

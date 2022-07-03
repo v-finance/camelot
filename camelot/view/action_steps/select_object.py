@@ -28,7 +28,7 @@
 #  ============================================================================
 
 
-from dataclasses import dataclass, InitVar, field
+from dataclasses import dataclass, field
 
 from camelot.core.exception import CancelRequest
 from camelot.view.action_runner import hide_progress_dialog
