@@ -38,6 +38,7 @@ from typing import List, Union
 from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
+from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.naming import initial_naming_context
@@ -163,13 +164,13 @@ class CloseView(ActionStep, DataclassSerializable):
     accept: bool = True
 
     @classmethod
-    def gui_run( cls, gui_context, serialized_step ):
-        if gui_context.gui_context_name is None:
+    def gui_run(cls, gui_context, serialized_step):
+        if isinstance(gui_context, FormActionGuiContext):
             # python implementation, still used for FormView
             step = json.loads(serialized_step)
             view = gui_context.view
             if view is not None and not is_deleted(view):
-                view.close_view( step["accept"] )
+                view.close_view(step["accept"])
         else:
             qml_action_step(gui_context, 'CloseView', serialized_step)
 
