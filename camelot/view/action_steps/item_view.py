@@ -41,6 +41,7 @@ from ...admin.admin_route import Route
 from ...admin.action.base import ActionStep, RenderHint, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import SearchFilter, Filter, All
+from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...core.item_model import ProxyRegistry
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt
@@ -48,7 +49,7 @@ from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
-    CollectionProxy, rowcount_name, rowdata_name, setcolumns_name
+    CollectionProxy, rowcount_name, rowdata_name, setcolumns_name, RowModelContext
 )
 from ..qml_view import qml_action_step
 
@@ -184,10 +185,18 @@ class OpenTableView( UpdateTableView ):
     """
     new_tab: bool = False
     admin_route: Route = field(init=False)
+    model_context_name: Route = field(init=False)
 
     def __post_init__(self, admin, value, search_text):
         super(OpenTableView, self).__post_init__(admin, value, search_text)
         self.admin_route = admin.get_admin_route()
+        # Create the model_context for the table view
+        model_context = RowModelContext()
+        model_context.admin = admin
+        model_context.proxy = admin.get_proxy(value)
+        # todo : remove the concept of a validator (taken from CollectionProxy)
+        model_context.validator = admin.get_validator()
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
 
     @classmethod
     def render(cls, gui_context, step):
@@ -230,6 +239,7 @@ class OpenQmlTableView(OpenTableView):
         
     """
 
+    # FIXME: remove this (OpenTableView now has a __post_init__)
     def __init__(self, admin, value, search_text=None):
         super().__init__(admin, value, search_text=search_text)
         self.list_action = admin.get_list_action()
@@ -257,8 +267,10 @@ class OpenQmlTableView(OpenTableView):
                 continue
             new_model.add_action_route(tuple(action['route']))
 
-        response = qml_action_step(list_gui_context, action_step_name,
-                serialized_step, { 'model': new_model }, model=new_model)
+        #response = qml_action_step(list_gui_context, action_step_name,
+        #       serialized_step, { 'model': new_model }, model=new_model)
+        response = qml_action_step(gui_context, action_step_name,
+                serialized_step)
 
         return response, new_model
 

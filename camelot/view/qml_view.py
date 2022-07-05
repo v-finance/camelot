@@ -184,6 +184,17 @@ class QmlActionDispatch(QtCore.QObject):
 qml_action_dispatch = QmlActionDispatch()
 
 
+def is_cpp_gui_context(gui_context):
+    """
+    Check if a GUI context's name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
+    """
+    if gui_context.gui_context_name is None:
+        return False
+    if not len(gui_context.gui_context_name):
+        return False
+    return gui_context.gui_context_name[0] == 'cpp_gui_context'
+
+
 def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model=None):
     """
     Register the gui_context and execute the action step by specifying a name and serialized action step.

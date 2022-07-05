@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import typing
@@ -13,6 +14,8 @@ from ...admin.icon import CompletionValue
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import FieldAttributesRole, CompletionsRole, PreviewRole
+from ..qml_view import is_cpp_gui_context, qml_action_step
+
 
 class UpdateMixin(object):
 
@@ -38,6 +41,14 @@ class UpdateMixin(object):
         }
 
     def update_item_model(self, item_model):
+        # dispatch to RootBackend if this is a cpp gui context
+        if is_cpp_gui_context(item_model):
+            # FIXME: step is not (yet) serializable, use _to_dict for now
+            stream = io.BytesIO()
+            stream.write(json.dumps(self._to_dict()).encode())
+            serialized_step = stream.getvalue()
+            return qml_action_step(item_model, type(self).__name__, serialized_step)
+
         if is_deleted(item_model):
             return
         root_item = item_model.invisibleRootItem()
@@ -68,6 +79,10 @@ class RowCount(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(self, item_model, serialized_step):
+        # dispatch to RootBackend if this is a cpp gui context
+        if is_cpp_gui_context(item_model):
+            return qml_action_step(item_model, 'RowCount', serialized_step)
+
         if is_deleted(item_model):
             return
         step = json.loads(serialized_step)
@@ -94,6 +109,14 @@ class SetColumns(ActionStep):
         }
 
     def gui_run(self, item_model):
+        # dispatch to RootBackend if this is a cpp gui context
+        if is_cpp_gui_context(item_model):
+            # FIXME: step is not (yet) serializable, use _to_dict for now
+            stream = io.BytesIO()
+            stream.write(json.dumps(self._to_dict()).encode())
+            serialized_step = stream.getvalue()
+            return qml_action_step(item_model, 'SetColumns', serialized_step)
+
         if is_deleted(item_model):
             return
         item_model.beginResetModel()
@@ -207,6 +230,10 @@ class ChangeSelection(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(self, item_model, serialized_step):
+        # dispatch to RootBackend if this is a cpp gui context
+        if is_cpp_gui_context(item_model):
+            return qml_action_step(item_model, 'ChangeSelection', serialized_step)
+
         if is_deleted(item_model):
             return
         step = json.loads(serialized_step)
