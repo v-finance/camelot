@@ -248,6 +248,7 @@ class OpenQmlTableView(OpenTableView):
     def render(cls, gui_context, action_step_name, serialized_step):
         step = json.loads(serialized_step)
 
+        # FIXME: remove this code (now using CrudItemModel...)
         class QmlListActionGuiContext(ListActionGuiContext):
 
             def get_progress_dialog(self):
@@ -286,8 +287,7 @@ class ToFirstRow(ActionStep, DataclassSerializable):
     def gui_run(cls, gui_context, serialized_step):
         if gui_context.item_view is not None:
             gui_context.item_view.selectRow( 0 )
-        else:
-            qml_action_step(gui_context, 'ToFirstRow')
+
 
 @dataclass
 class ToLastRow(ActionStep, DataclassSerializable):
@@ -298,8 +298,7 @@ class ToLastRow(ActionStep, DataclassSerializable):
         if gui_context.item_view is not None:
             item_view = gui_context.item_view
             item_view.selectRow( item_view.model().rowCount() - 1 )
-        else:
-            qml_action_step(gui_context, 'ToLastRow')
+
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
@@ -309,8 +308,7 @@ class ClearSelection(ActionStep, DataclassSerializable):
     def gui_run(cls, gui_context, serialized_step):
         if gui_context.item_view is not None:
             gui_context.item_view.clearSelection()
-        else:
-            qml_action_step(gui_context, 'ClearSelection', serialized_step)
+
 
 @dataclass
 class SetSelection(ActionStep, DataclassSerializable):
@@ -318,9 +316,6 @@ class SetSelection(ActionStep, DataclassSerializable):
 
     rows: List[int] = field(default_factory=list)
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        qml_action_step(gui_context, 'SetSelection', serialized_step)
 
 @dataclass
 class RefreshItemView(ActionStep, DataclassSerializable):

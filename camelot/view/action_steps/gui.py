@@ -164,14 +164,12 @@ class CloseView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run( cls, gui_context, serialized_step ):
-        if gui_context.gui_context_name is None:
-            # python implementation, still used for FormView
-            step = json.loads(serialized_step)
-            view = gui_context.view
-            if view is not None and not is_deleted(view):
-                view.close_view( step["accept"] )
-        else:
-            qml_action_step(gui_context, 'CloseView', serialized_step)
+        assert gui_context.gui_context_name is None
+        # python implementation, still used for FormView
+        step = json.loads(serialized_step)
+        view = gui_context.view
+        if view is not None and not is_deleted(view):
+            view.close_view( step["accept"] )
 
 
 @dataclass

@@ -41,7 +41,7 @@ from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
-from camelot.view.qml_view import qml_action_step, get_qml_window, qml_action_dispatch, get_qml_root_backend
+from camelot.view.qml_view import qml_action_step, get_qml_window, qml_action_dispatch, get_qml_root_backend, is_cpp_gui_context
 
 LOGGER = logging.getLogger(__name__)
 
@@ -70,10 +70,6 @@ class SetThemeColors(ActionStep, DataclassSerializable):
 
     primary_color: str
     accent_color: str
-
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        qml_action_step(gui_context, 'SetThemeColors', serialized_step)
 
 
 @dataclass
@@ -174,10 +170,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
                 state = action.get_state(model_context)
                 action_states.append((action_route, state))
 
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        qml_action_step(gui_context, 'NavigationPanel', serialized_step)
-
 
 @dataclass
 class MainMenu(ActionStep, DataclassSerializable):
@@ -211,9 +203,6 @@ class MainMenu(ActionStep, DataclassSerializable):
                 state = action.get_state(model_context)
                 action_states.append((action_route, state))
 
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        qml_action_step(gui_context, 'MainMenu', serialized_step)
 
 @dataclass
 class InstallTranslator(ActionStep, DataclassSerializable):
@@ -226,9 +215,6 @@ class InstallTranslator(ActionStep, DataclassSerializable):
 
     language: str
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        qml_action_step(gui_context, 'InstallTranslator', serialized_step)
 
 @dataclass
 class RemoveTranslators(ActionStep, DataclassSerializable):
@@ -244,10 +230,6 @@ class RemoveTranslators(ActionStep, DataclassSerializable):
 
     def __post_init__(self, admin):
         self.admin_route = admin.get_admin_route()
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        qml_action_step(gui_context, 'RemoveTranslators', serialized_step)
 
 @dataclass
 class UpdateActionsState(ActionStep, DataclassSerializable):
@@ -274,7 +256,8 @@ class UpdateActionsState(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        if qml_action_dispatch.has_context(gui_context):
+        #if qml_action_dispatch.has_context(gui_context):
+        if is_cpp_gui_context(gui_context):
             root_backend = get_qml_root_backend()
             root_backend.updateActionsState(gui_context.gui_context_name, serialized_step)
             return
