@@ -108,13 +108,6 @@ class OpenFormView(AbstractCrudView):
         actions.extend(admin.get_form_actions(None))
         actions.extend(admin.get_form_toolbar_actions())
 
-    def get_objects(self):
-        """Use this method to get access to the objects to change in unit tests
-
-        :return: the list of objects to display in the form view
-        """
-        return ProxyRegistry.get(self.proxy_route).get_model()
-
     def get_admin(self):
         """Use this method to get access to the admin in unit tests"""
         return initial_naming_context.resolve(self.admin_route)

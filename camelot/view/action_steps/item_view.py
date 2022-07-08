@@ -118,6 +118,13 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
 
+    def get_objects(self):
+        """Use this method to get access to the objects to change in unit tests
+
+        :return: the list of objects to display in the form view
+        """
+        return ProxyRegistry.get(self.proxy_route).get_model()
+
 @dataclass
 class UpdateTableView(AbstractCrudView):
     """Change the admin and or value of an existing table view
