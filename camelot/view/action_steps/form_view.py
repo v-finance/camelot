@@ -41,7 +41,7 @@ from ..proxy.collection_proxy import CollectionProxy
 from ..workspace import show_top_level
 from ...admin.action.base import ActionStep, RenderHint
 from ...admin.admin_route import AdminRoute
-from ...core.item_model import AbstractModelProxy, ProxyRegistry
+from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
