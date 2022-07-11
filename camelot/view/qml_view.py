@@ -236,12 +236,15 @@ def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
     global qml_action_dispatch
-    if gui_context is None:
-        gui_context_name = ('gui_context', '0')
-    elif gui_context.gui_context_name is None:
-        gui_context_name = qml_action_dispatch.register(gui_context, model)
+    if isinstance(gui_context, list):
+        gui_context_name = gui_context
     else:
-        gui_context_name = gui_context.gui_context_name
+        if gui_context is None:
+            gui_context_name = ('gui_context', '0')
+        elif gui_context.gui_context_name is None:
+            gui_context_name = qml_action_dispatch.register(gui_context, model)
+        else:
+            gui_context_name = gui_context.gui_context_name
     backend = get_qml_root_backend()
     response = backend.actionStep(gui_context_name, name, step, props)
     return json.loads(response.data())
