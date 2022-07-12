@@ -186,8 +186,10 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         admin = app_admin.get_related_admin(Options)
         options = Options('Videostore')
         change_object = ChangeObject(options, admin)
-        dialog = change_object.render(self.gui_context)
-        self.grab_widget( dialog )
+        dialog = change_object.render(
+            self.gui_context, change_object._to_dict()
+        )
+        self.grab_widget(dialog)
 
     def test_select_file( self ):
         action_steps.SelectFile('Image Files (*.png *.jpg);;All Files (*)')
@@ -932,11 +934,6 @@ class ApplicationActionsCase(
                 generator.send(['unittest-backup.db'])
                 file_selected = True
         self.assertTrue(file_selected)
-
-    def test_open_new_view( self ):
-        person_admin = app_admin.get_related_admin(Person)
-        open_new_view_action = application_action.OpenNewView(person_admin)
-        list(self.gui_run(open_new_view_action, self.gui_context, None))
 
     def test_change_logging( self ):
         change_logging_action = ChangeLogging()

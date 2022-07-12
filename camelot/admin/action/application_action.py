@@ -28,7 +28,6 @@
 #  ============================================================================
 
 import logging
-import os
 
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
@@ -312,46 +311,11 @@ class OpenTableView( EntityAction ):
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Open table'))
-        # set environment variable to turn on old Qt table view (QML table view is now the default)
-        if os.environ.get('VFINANCE_OLD_TABLE'):
-            Step = action_steps.OpenTableView
-        else:
-            Step = action_steps.OpenQmlTableView
-        step = Step(
-            self._entity_admin, self._entity_admin.get_query()
+        yield action_steps.OpenQmlTableView(
+            self._entity_admin.get_query(),
+            self._entity_admin,
         )
-        step.new_tab = (mode == 'new_tab')
-        yield step
 
-class OpenNewView( EntityAction ):
-    """An application action that opens a new view of an Entity
-    
-    :param entity_admin: an instance of 
-        :class:`camelot.admin.entity_admin.EntityAdmin` to be used to
-        visualize the entities
-    
-    """
-
-    verbose_name = _('New')
-    shortcut = QtGui.QKeySequence.StandardKey.New
-    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    tooltip = _('New')
-            
-    def get_state( self, model_context ):
-        state = super( OpenNewView, self ).get_state( model_context )
-        state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
-        state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
-        return state
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        admin = self._entity_admin
-        new_object = admin.entity()
-        # Give the default fields their value
-        admin.add(new_object)
-        admin.set_defaults(new_object)
-        yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
-        
 
 class ShowAbout(Action):
     """Show the about dialog with the content returned by the
@@ -588,7 +552,7 @@ def structure_to_application_action(structure, application_admin):
     if isinstance(structure, Action):
         return structure
     admin = application_admin.get_related_admin( structure )
-    return OpenTableView( admin )
+    return OpenTableView(admin.get_query(), admin)
 
 
 

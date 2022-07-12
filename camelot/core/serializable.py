@@ -94,7 +94,7 @@ class DataclassSerializable(Serializable):
     @classmethod
     def _asdict_inner(cls, obj):
         if dataclasses._is_dataclass_instance(obj):
-            return cls.serialize_fields(obj)
+            return type(obj).serialize_fields(obj)
         elif isinstance(obj, (list, tuple)):
             return type(obj)(cls._asdict_inner(v) for v in obj)
         elif isinstance(obj, dict):
