@@ -194,7 +194,11 @@ class QmlActionDispatch(QtCore.QObject):
                 self.model_context_name = model_context_name
 
             def create_model_context(self):
-                return initial_naming_context.resolve(tuple(self.model_context_name))
+                try:
+                    return initial_naming_context.resolve(tuple(self.model_context_name))
+                except NameNotFoundException:
+                    # FIXME: DGCClient always uses ['model_context, '1'] for the unbind action which is not available in the tests
+                    LOGGER.error('Could not create model context, no binding for name: {}'.format(self.model_context_name))
 
         gui_context = DummyGuiContext(gui_context_name, model_context_name)
         action_runner = ActionRunner(tuple(route), gui_context, args)

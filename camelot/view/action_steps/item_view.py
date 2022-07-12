@@ -273,7 +273,7 @@ class OpenQmlTableView(OpenTableView):
         response = qml_action_step(gui_context, action_step_name,
                 serialized_step)
 
-        return response, new_model
+        return response, None
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
