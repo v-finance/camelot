@@ -33,16 +33,17 @@ the `ListActionGuiContext`.
 """
 
 from dataclasses import dataclass, InitVar, field
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Any
 import json
 import logging
 
-from ...admin.admin_route import Route
-from ...admin.action.base import ActionStep, RenderHint, State
+from ...admin.admin_route import Route, RouteWithRenderHint
+from ...admin.action.base import ActionStep, State
 from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
 from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
-from ...core.item_model import ProxyRegistry
+from ...admin.object_admin import ObjectAdmin
+from ...core.item_model import AbstractModelProxy, ProxyRegistry
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt
 from ...core.serializable import DataclassSerializable
@@ -84,54 +85,29 @@ class CrudActions(DataclassSerializable):
     set_columns: Route = field(init=False, default=setcolumns_name)
     row_data: Route = field(init=False, default=rowdata_name)
 
-
 @dataclass
-class UpdateTableView( ActionStep, DataclassSerializable ):
-    """Change the admin and or value of an existing table view
-    
-    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
-    :param value: a list of objects or a query
-    
+class AbstractCrudView(ActionStep, DataclassSerializable):
+    """Abstract action step to define attributes common to all item view
+    based action steps
     """
 
-    admin: InitVar
-    value: InitVar
-    search_text: InitVar[Union[str, None]] = None
+    value: InitVar[Any]
+    admin: InitVar[ObjectAdmin]
+    proxy: InitVar[AbstractModelProxy] = None
+
     title: Union[str, ugettext_lazy] = field(init=False)
-    columns: List[str] = field(init=False)
-    list_action: Union[Route, None] = field(init=False)
     proxy_route: Route = field(init=False)
-    actions: List[Tuple[Route, RenderHint]] = field(init=False)
+    actions: List[RouteWithRenderHint] = field(init=False, default_factory=list)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     crud_actions: CrudActions = field(init=False)
+    close_route: Route = field(init=False)
 
-    def __post_init__(self, admin, value, search_text):
-        self.value = value
-        self.title = admin.get_verbose_name_plural()
-        self._post_init_actions__(admin)
-        self.columns = admin.get_columns()
-        self.list_action = admin.get_list_action()
-        proxy = admin.get_proxy(value)
-        if search_text is not None:
-            for action_route in self.actions:
-                action = initial_naming_context.resolve(action_route.route)
-                if isinstance(action, SearchFilter):
-                    search_strategies = list(admin._get_search_fields(search_text))
-                    search_value = (search_text, *search_strategies)
-                    proxy.filter(action, search_value)
-                    break
-            else:
-                LOGGER.warn('No SearchFilter found to apply search text')
-
+    def __post_init__(self, value, admin, proxy):
+        assert value is not None
+        assert isinstance(proxy, AbstractModelProxy)
+        self.crud_actions = CrudActions(admin)
         self.proxy_route = ProxyRegistry.register(proxy)
         self._add_action_states(admin, proxy, self.actions, self.action_states)
-        self.set_filters(self.action_states, proxy)
-        self.crud_actions = CrudActions(admin)
-
-    def _post_init_actions__(self, admin):
-        self.actions = admin.get_list_actions().copy()
-        self.actions.extend(admin.get_filters())
-        self.actions.extend(admin.get_list_toolbar_actions())
 
     @staticmethod
     def _add_action_states(admin, proxy, actions, action_states):
@@ -142,6 +118,55 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
             action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
+
+    def get_objects(self):
+        """Use this method to get access to the objects to change in unit tests
+
+        :return: the list of objects to display in the form view
+        """
+        return ProxyRegistry.get(self.proxy_route).get_model()
+
+@dataclass
+class UpdateTableView(AbstractCrudView):
+    """Change the admin and or value of an existing table view
+    
+    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param value: a list of objects or a query
+    
+    """
+
+    search_text: InitVar[Union[str, None]] = None
+
+    columns: List[str] = field(init=False)
+    list_action: Union[Route, None] = field(init=False)
+
+    def __post_init__(self, value, admin, proxy, search_text):
+        assert (search_text is None) or isinstance(search_text, str)
+        self.title = admin.get_verbose_name_plural()
+        self._add_actions(admin, self.actions)
+        self.columns = admin.get_columns()
+        self.list_action = admin.get_list_action()
+        self.close_route = None
+        if proxy is None:
+            proxy = admin.get_proxy(value)
+        if search_text is not None:
+            for action_route in self.actions:
+                action = initial_naming_context.resolve(action_route.route)
+                if isinstance(action, SearchFilter):
+                    search_strategies = list(admin._get_search_fields(search_text))
+                    search_value = (search_text, *search_strategies)
+                    proxy.filter(action, search_value)
+                    break
+            else:
+                LOGGER.warn('No SearchFilter found to apply search text')
+        self.set_filters(self.action_states, proxy)
+        super().__post_init__(value, admin, proxy)
+
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_list_actions())
+        actions.extend(admin.get_filters())
+        actions.extend(admin.get_list_toolbar_actions())
 
     @staticmethod
     def set_filters(action_states, model):
@@ -187,8 +212,8 @@ class OpenTableView( UpdateTableView ):
     admin_route: Route = field(init=False)
     model_context_name: Route = field(init=False)
 
-    def __post_init__(self, admin, value, search_text):
-        super(OpenTableView, self).__post_init__(admin, value, search_text)
+    def __post_init__(self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
         # Create the model_context for the table view
         model_context = RowModelContext()
@@ -240,8 +265,8 @@ class OpenQmlTableView(OpenTableView):
     """
 
     # FIXME: remove this (OpenTableView now has a __post_init__)
-    def __init__(self, admin, value, search_text=None):
-        super().__init__(admin, value, search_text=search_text)
+    def __init__(self, value, admin, search_text=None):
+        super().__init__(value, admin, search_text=search_text)
         self.list_action = admin.get_list_action()
 
     @classmethod

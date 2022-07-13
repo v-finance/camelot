@@ -315,17 +315,3 @@ class ToLastForm( list_action.AbstractToLast, CloseForm ):
         return action_steps.ToLastForm()
 
 to_last_form = ToLastForm()
-
-def structure_to_form_actions( structure ):
-    """Convert a list of python objects to a list of form actions.
-    If the python object is an instance of as Action, it is kept as is.
-    """
-
-    def object_to_action( o ):
-        assert isinstance( o, Action )
-        return o
-
-    return [object_to_action( o ) for o in structure]
-
-
-

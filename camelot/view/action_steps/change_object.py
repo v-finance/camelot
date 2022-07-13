@@ -30,9 +30,8 @@ import typing
 
 from dataclasses import dataclass, field
 import json
-from typing import List, Dict, Tuple, Union
+from typing import List, Union
 
-from camelot.admin.action import ActionStep, Action, State
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
@@ -51,8 +50,7 @@ from .item_view import UpdateTableView
 from ..controls.view import ViewWithActionsMixin
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
-from ...admin.admin_route import AdminRoute, Route, RouteWithRenderHint
-from ...admin.object_admin import ObjectAdmin
+from ...admin.admin_route import AdminRoute, RouteWithRenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 
 
@@ -68,9 +66,9 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
     """
 
     def __init__( self,
-                  obj,
+                  proxy_route,
                   admin_route,
-                  admin,
+                  title,
                   form_display,
                   fields,
                   form_actions,
@@ -81,7 +79,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
                   parent=None,
                   flags=QtCore.Qt.WindowType.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
-        self.setWindowTitle( admin.get_verbose_name() )
+        self.setWindowTitle( title )
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
         self.banner_widget().setStyleSheet('background-color: white;')
 
@@ -102,8 +100,6 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         layout.addLayout(note_layout)
         model.headerDataChanged.connect(self.header_data_changed)
         form_widget.setObjectName( 'form' )
-        if hasattr(admin, 'form_size') and admin.form_size:
-            form_widget.setMinimumSize(admin.form_size[0], admin.form_size[1])
         self.main_widget().setLayout(layout)
 
         self.gui_context = FormActionGuiContext()
@@ -131,8 +127,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         for action_route, action_state in action_states:
             self.set_action_state(self, tuple(action_route), action_state)
         # set the value last, so the validity can be updated
-        proxy = admin.get_proxy([obj])
-        model.set_value(ProxyRegistry.register(proxy))
+        model.set_value(proxy_route)
         list(model.add_columns((fn for fn, _fa in fields.items())))
 
     @QtCore.qt_slot(bool)
@@ -151,7 +146,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
             side_panel_layout = QtWidgets.QVBoxLayout()
             for action in actions:
                 action_widget = self.render_action(
-                    action.render_hint, action.route,
+                    RenderHint(action['render_hint']), tuple(action['route']),
                     self.gui_context, self
                 )
                 side_panel_layout.addWidget(action_widget)
@@ -260,7 +255,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                 ))
 
 @dataclass
-class ChangeObject(ActionStep):
+class ChangeObject(OpenFormView):
     """
     Pop up a form for the user to change an object
 
@@ -277,63 +272,49 @@ class ChangeObject(ActionStep):
 
     """
 
-    obj: typing.Any
-    admin: ObjectAdmin
-    form_display: bytes = field(init=False)
-    fields: Dict[str, dict] = field(init=False)
-    form_actions: List[Action] = field(init=False)
-    action_states: List[Tuple[Route, State]] = field(default_factory=list)
-    admin_route: AdminRoute = field(init=False)
-    title: typing.Union[str, ugettext_lazy, None] = _('Please complete')
     subtitle: typing.Union[str, ugettext_lazy, None] = _('Complete the form and press the OK button')
-    accept = _('OK')
-    reject = _('Cancel')
+    accept: typing.Union[str, ugettext_lazy] = _('OK')
+    reject: typing.Union[str, ugettext_lazy] = _('Cancel')
 
-    def __post_init__(self):
-        assert self.admin is not None
-        self.form_display = self.admin.get_form_display()._to_bytes()
-        self.fields = dict((f, {
-            'hide_title':fa.get('hide_title', False),
-            'verbose_name':str(fa['name']),
-            }) for f, fa in self.admin.get_fields())
-        self.form_actions = self.admin.get_form_actions(None)
-        self.admin_route = self.admin.get_admin_route()
-        OpenFormView._add_action_states(
-            self.admin, self.admin.get_proxy([self.obj]),
-            self.form_actions, self.action_states
-        )
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_form_actions(None))
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
 
         :return: the object to change
         """
-        return self.obj
+        return self.get_objects()[0]
 
-    def render(self, gui_context):
+    @classmethod
+    def render(self, gui_context, step):
         """create the dialog. this method is used to unit test
         the action step."""
-        dialog = ChangeObjectDialog(self.obj,
-                                    self.admin_route,
-                                    self.admin,
-                                    self.form_display,
-                                    self.fields,
-                                    self.form_actions,
-                                    self.action_states,
-                                    self.accept,
-                                    self.reject)
-        dialog.set_banner_title(str(self.title))
-        dialog.set_banner_subtitle(str(self.subtitle))
+        dialog = ChangeObjectDialog(
+            step['proxy_route'],
+            tuple(step['admin_route']),
+            step['title'],
+            step['form'],
+            step['fields'],
+            step['actions'],
+            step['action_states'],
+            step['accept'],
+            step['reject'],
+        )
+        dialog.set_banner_title(step['title'])
+        dialog.set_banner_subtitle(step['subtitle'])
         return dialog
 
-    def gui_run( self, gui_context ):
-        dialog = self.render(gui_context)
-        apply_form_state(dialog, None, self.admin.form_state)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        dialog = cls.render(gui_context, step)
+        apply_form_state(dialog, None, step['form_state'])
         with hide_progress_dialog( gui_context ):
             result = dialog.exec()
             if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
-            return self.obj
 
 
 @dataclass
@@ -380,8 +361,8 @@ class ChangeObjects(UpdateTableView):
     subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Please review the data below.'))
     icon: typing.Union[Icon, None] = field(init=False, default=Icon('file-excel'))
 
-    def __post_init__( self, value, admin, search_text):
-        super(ChangeObjects, self).__post_init__(admin, value, search_text)
+    def __post_init__( self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
         if self.validate:
@@ -391,17 +372,17 @@ class ChangeObjects(UpdateTableView):
                     self.invalid_rows.append(row)
                     break
 
-    def _post_init_actions__(self, admin):
-        self.actions = [
-            RouteWithRenderHint(action.route, action.render_hint) for action in admin.get_related_toolbar_actions('onetomany')
-        ]
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_related_toolbar_actions('onetomany'))
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
 
         :return: the object to change
         """
-        return self.value
+        proxy = ProxyRegistry.get(self.proxy_route)
+        return proxy.get_model()
 
     def get_admin(self):
         """Use this method to get access to the admin in unit tests"""
