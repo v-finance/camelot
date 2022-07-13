@@ -127,15 +127,17 @@ class OpenObject(SelectObject):
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         obj = model_context.value
-        if obj is not None:
+        # Disregard the case of having no value, or having multiple defined.
+        if obj is not None and not isinstance(obj, list):
             admin = model_context.field_attributes['admin']
             admin = admin.get_related_admin(obj.__class__)
             yield action_steps.OpenFormView(obj, admin)
 
     def get_state(self, model_context):
         state = super(OpenObject, self).get_state(model_context)
-        state.visible = (model_context.value is not None)
-        state.enabled = (model_context.value is not None)
+        obj = model_context.value
+        state.visible = (obj is not None and not isinstance(obj, list))
+        state.enabled = (obj is not None and not isinstance(obj, list))
         return state
 
 class ClearObject(EditFieldAction):
