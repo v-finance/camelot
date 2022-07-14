@@ -1,10 +1,12 @@
 import logging
 import itertools
 import json
+import inspect
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, is_deleted
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context, NameNotFoundException
+from camelot.admin.action.application_action import ApplicationActionGuiContext
 from .action_runner import ActionRunner
 
 
@@ -98,6 +100,22 @@ def get_dgc_client():
     dgc_client = app.findChild(QtCore.QObject, 'cpp_dgc_client')
     return dgc_client
 
+def is_cpp_gui_context_name(gui_context_name):
+    """
+    Check if a GUI context name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
+    """
+    if not len(gui_context_name):
+        return False
+    return gui_context_name[0] == 'cpp_gui_context'
+
+def is_cpp_gui_context(gui_context):
+    """
+    Check if a GUI context's name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
+    """
+    if gui_context.gui_context_name is None:
+        return False
+    return is_cpp_gui_context_name(gui_context.gui_context_name)
+
 
 # FIXME: add timeout + keep-alive on client
 class QmlActionDispatch(QtCore.QObject):
@@ -122,6 +140,7 @@ class QmlActionDispatch(QtCore.QObject):
             gui_context_id = self._gui_naming_context_ids.__next__()
             gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
             return gui_context_name
+        assert not is_cpp_gui_context(gui_context)
         if gui_context.gui_context_name is not None:
             if id(initial_naming_context.resolve(gui_context.gui_context_name)) == id(gui_context):
                 return gui_context.gui_context_name
@@ -134,7 +153,8 @@ class QmlActionDispatch(QtCore.QObject):
         return gui_context_name
 
     def unregister(self, gui_context_name):
-        initial_naming_context.unbind(tuple(gui_context_name))
+        if not is_cpp_gui_context_name(gui_context_name):
+            initial_naming_context.unbind(tuple(gui_context_name))
 
     @QtCore.qt_slot(QtCore.QObject)
     def remove_model(self):
@@ -159,29 +179,76 @@ class QmlActionDispatch(QtCore.QObject):
     def get_model(self, gui_context_name):
         return self.models.get(gui_context_name)
 
-    def run_action(self, gui_context_name, route, args):
-        LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(gui_context_name, route, args))
+    def run_action(self, gui_context_name, route, args, model_context_name):
+        LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, args, model_context_name))
         model = self.get_model(tuple(gui_context_name))
         if model is not None:
             model.timeout_slot()
-        gui_context = initial_naming_context.resolve(tuple(gui_context_name)).copy()
+
+        class DummyGuiContext(ApplicationActionGuiContext):
+
+            def __init__(self, gui_context_name, model_context_name):
+                super().__init__()
+                self.admin_route = None
+                self.gui_context_name = gui_context_name
+                self.model_context_name = model_context_name
+
+            def create_model_context(self):
+                try:
+                    return initial_naming_context.resolve(tuple(self.model_context_name))
+                except NameNotFoundException:
+                    # FIXME: DGCClient always uses ['model_context, '1'] for the unbind action which is not available in the tests
+                    LOGGER.error('Could not create model context, no binding for name: {}'.format(self.model_context_name))
+
+        gui_context = DummyGuiContext(gui_context_name, model_context_name)
         action_runner = ActionRunner(tuple(route), gui_context, args)
         action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()
 
 
+def is_cpp_action_step(gui_context, action_step):
+    if inspect.isclass(action_step):
+        action_step = action_step.__name__
+
+    always_cpp = [
+        'NavigationPanel',
+        'SetThemeColors',
+        'MainMenu',
+        'InstallTranslator',
+        'RemoveTranslator',
+    ]
+    if action_step in always_cpp:
+        return True
+
+    if not is_cpp_gui_context(gui_context):
+        return False
+
+    return action_step in [
+        'ToFirstRow',
+        'ToLastRow',
+        'ClearSelection',
+        'SetSelection',
+        'RefreshItemView',
+        'CloseView',
+    ]
+
+
+# FIXME: rename to cpp_action_step?
 def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model=None):
     """
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
     global qml_action_dispatch
-    if gui_context is None:
-        gui_context_name = ('gui_context', '0')
-    elif gui_context.gui_context_name is None:
-        gui_context_name = qml_action_dispatch.register(gui_context, model)
+    if isinstance(gui_context, list):
+        gui_context_name = gui_context
     else:
-        gui_context_name = gui_context.gui_context_name
+        if gui_context is None:
+            gui_context_name = ('gui_context', '0')
+        elif gui_context.gui_context_name is None:
+            gui_context_name = qml_action_dispatch.register(gui_context, model)
+        else:
+            gui_context_name = gui_context.gui_context_name
     backend = get_qml_root_backend()
     response = backend.actionStep(gui_context_name, name, step, props)
     return json.loads(response.data())
