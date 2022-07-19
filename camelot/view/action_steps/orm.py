@@ -51,13 +51,11 @@ import json
 import logging
 import typing
 
-#from ...admin.action.application_action import unbind_name
 from ...admin.action.base import ActionStep
 from ...core.naming import CompositeName, initial_naming_context
 from ...core.serializable import DataclassSerializable
-#from ..action_runner import ActionRunner
 from camelot.core.qt import QtCore
-from camelot.view.qml_view import get_crud_signal_handler, get_dgc_client
+from camelot.view.qml_view import get_crud_signal_handler, get_dgc_client, is_cpp_gui_context, qml_action_step
 
 leases = initial_naming_context.resolve_context('leases')
 
@@ -101,27 +99,20 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        # Presumed to be unnecessary, as ActionStep's gui_run constructs an ActionRunner on it's (empty) model_run,
-        # which results in a unwanted round-trip to the model thread / server.
-        #super(CreateUpdateDelete, self).gui_run(gui_context)
-        crud_signal_handler = get_crud_signal_handler() #CrudSignalHandler()
-        #leases = []
-        if step['deleted'] is not None:
-            crud_signal_handler.objects_deleted.emit(LiveRef(step['deleted']))
-            #crud_signal_handler.objects_deleted.emit(step['deleted'])
-            #leases.append(step['deleted'])
-        if step['updated'] is not None:
-            crud_signal_handler.objects_updated.emit(LiveRef(step['updated']))
-            #crud_signal_handler.objects_updated.emit(step['updated'])
-            #leases.append(step['updated'])
-        if step['created'] is not None:
-            crud_signal_handler.objects_created.emit(LiveRef(step['created']))
-            #crud_signal_handler.objects_created.emit(step['created'])
-            #leases.append(step['created'])
-        #if len(leases):
-            #runner = ActionRunner(unbind_name, cls, leases)
-            #runner.exec()
+        if is_cpp_gui_context(gui_context):
+            qml_action_step(gui_context, cls.__name__, serialized_step)
+        else:
+            step = json.loads(serialized_step)
+            # Presumed to be unnecessary, as ActionStep's gui_run constructs an ActionRunner on it's (empty) model_run,
+            # which results in a unwanted round-trip to the model thread / server.
+            #super(CreateUpdateDelete, self).gui_run(gui_context)
+            crud_signal_handler = get_crud_signal_handler()
+            if step['deleted'] is not None:
+                crud_signal_handler.objects_deleted.emit(LiveRef(step['deleted']))
+            if step['updated'] is not None:
+                crud_signal_handler.objects_updated.emit(LiveRef(step['updated']))
+            if step['created'] is not None:
+                crud_signal_handler.objects_created.emit(LiveRef(step['created']))
 
 
 class FlushSession(CreateUpdateDelete):
