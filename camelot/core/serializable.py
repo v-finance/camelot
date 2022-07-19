@@ -67,6 +67,8 @@ class DataclassEncoder(json.JSONEncoder):
             return obj.property('name')
         if isinstance(obj, QtCore.QJsonValue):
             return obj.toVariant()
+        if isinstance(obj, QtGui.QColor):
+            return obj.name()
         return json.JSONEncoder.default(self, obj)
 
 
