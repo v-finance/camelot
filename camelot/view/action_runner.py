@@ -181,15 +181,10 @@ class ActionRunner( QtCore.QEventLoop ):
 
     @QtCore.qt_slot(str, bytes)
     def non_blocking_serializable_action_step(self, step_type, serialized_step):
-        from camelot.view.qml_view import is_cpp_action_step, qml_action_step
-
         cls = MetaActionStep.action_steps[step_type]
         try:
             self._was_canceled(self._gui_context)
-            if is_cpp_action_step(self._gui_context, step_type):
-                qml_action_step(self._gui_context, step_type, serialized_step)
-            else:
-                cls.gui_run(self._gui_context, serialized_step)
+            cls.gui_run(self._gui_context, serialized_step)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
@@ -235,18 +230,13 @@ class ActionRunner( QtCore.QEventLoop ):
         :param yielded: the object that was yielded by the generator in the
             *model thread*
         """
-        from camelot.view.qml_view import is_cpp_action_step, qml_action_step
-
         if isinstance(yielded, (ActionStep, tuple)):
             try:
                 self._was_canceled(self._gui_context)
                 if isinstance(yielded, tuple):
                     step_type, serialized_step = yielded
                     cls = MetaActionStep.action_steps[step_type]
-                    if is_cpp_action_step(self._gui_context, step_type):
-                        to_send = qml_action_step(self._gui_context, step_type, serialized_step)
-                    else:
-                        to_send = cls.gui_run(self._gui_context, serialized_step)
+                    to_send = cls.gui_run(self._gui_context, serialized_step)
                     to_send = cls.deserialize_result(self._gui_context, to_send)
                 else:
                     to_send = yielded.gui_run(self._gui_context)

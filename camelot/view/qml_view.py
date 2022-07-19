@@ -207,33 +207,6 @@ class QmlActionDispatch(QtCore.QObject):
 qml_action_dispatch = QmlActionDispatch()
 
 
-def is_cpp_action_step(gui_context, action_step):
-    if inspect.isclass(action_step):
-        action_step = action_step.__name__
-
-    always_cpp = [
-        'NavigationPanel',
-        'SetThemeColors',
-        'MainMenu',
-        'InstallTranslator',
-        'RemoveTranslator',
-    ]
-    if action_step in always_cpp:
-        return True
-
-    if not is_cpp_gui_context(gui_context):
-        return False
-
-    return action_step in [
-        'ToFirstRow',
-        'ToLastRow',
-        'ClearSelection',
-        'SetSelection',
-        'RefreshItemView',
-        'CloseView',
-    ]
-
-
 # FIXME: rename to cpp_action_step?
 def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model=None):
     """
