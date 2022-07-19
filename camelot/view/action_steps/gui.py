@@ -62,6 +62,7 @@ class Refresh( ActionStep, DataclassSerializable ):
     def gui_run(self, gui_context, serialized_step):
         if gui_context.workspace:
             gui_context.workspace.refresh()
+        qml_action_step(gui_context, 'Refresh')
 
 class ItemSelectionDialog(StandaloneWizardPage):
 
