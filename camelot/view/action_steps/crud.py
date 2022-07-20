@@ -13,9 +13,14 @@ from ...admin.action.base import ActionStep, State
 from ...admin.icon import CompletionValue
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
-from ...core.item_model import FieldAttributesRole, CompletionsRole, PreviewRole
+from ...core.item_model import (
+    FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole
+)
 from ..qml_view import is_cpp_gui_context, qml_action_step
 
+non_serializable_roles = (
+    FieldAttributesRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole
+)
 
 class UpdateMixin(object):
 
@@ -32,8 +37,14 @@ class UpdateMixin(object):
                 cell_data = {
                     "row": row,
                     "column": column,
-                    "display": item.data(PreviewRole)
                 }
+                for role in range(Qt.ItemDataRole.DisplayRole, ChoicesRole+1):
+                    if role in non_serializable_roles:
+                        continue
+                    role_data = item.data(role)
+                    if role_data is not None:
+                        cell_data[role] = role_data
+                cell_data[Qt.ItemDataRole.DisplayRole] = item.data(PreviewRole)
                 cells.append(cell_data)
         return {
             "header_items": header_items,
@@ -45,7 +56,7 @@ class UpdateMixin(object):
         if is_cpp_gui_context(item_model):
             # FIXME: step is not (yet) serializable, use _to_dict for now
             stream = io.BytesIO()
-            stream.write(json.dumps(self._to_dict()).encode())
+            stream.write(json_encoder.encode(self._to_dict()).encode())
             serialized_step = stream.getvalue()
             return qml_action_step(item_model, type(self).__name__, serialized_step)
 
