@@ -1,7 +1,6 @@
 import logging
 import itertools
 import json
-import inspect
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, is_deleted
 from camelot.core.exception import UserException
@@ -112,6 +111,8 @@ def is_cpp_gui_context(gui_context):
     """
     Check if a GUI context's name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
     """
+    if gui_context is None:
+        return False
     if gui_context.gui_context_name is None:
         return False
     return is_cpp_gui_context_name(gui_context.gui_context_name)
