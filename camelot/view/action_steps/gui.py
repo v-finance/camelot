@@ -46,6 +46,7 @@ from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.action_runner import hide_progress_dialog
+from camelot.view.qml_view import qml_action_step
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from ..art import FontIcon
@@ -61,6 +62,7 @@ class Refresh( ActionStep, DataclassSerializable ):
     def gui_run(self, gui_context, serialized_step):
         if gui_context.workspace:
             gui_context.workspace.refresh()
+        qml_action_step(gui_context, 'Refresh')
 
 class ItemSelectionDialog(StandaloneWizardPage):
 
@@ -170,6 +172,8 @@ class CloseView(ActionStep, DataclassSerializable):
             view = gui_context.view
             if view is not None and not is_deleted(view):
                 view.close_view(step["accept"])
+        else:
+            qml_action_step(gui_context, 'CloseView', serialized_step)
 
 
 @dataclass

@@ -1,7 +1,6 @@
 import logging
 import itertools
 import json
-import inspect
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, is_deleted
 from camelot.core.exception import UserException
@@ -112,6 +111,8 @@ def is_cpp_gui_context(gui_context):
     """
     Check if a GUI context's name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
     """
+    if gui_context is None:
+        return False
     if gui_context.gui_context_name is None:
         return False
     return is_cpp_gui_context_name(gui_context.gui_context_name)
@@ -205,33 +206,6 @@ class QmlActionDispatch(QtCore.QObject):
         action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()
-
-
-def is_cpp_action_step(gui_context, action_step):
-    if inspect.isclass(action_step):
-        action_step = action_step.__name__
-
-    always_cpp = [
-        'NavigationPanel',
-        'SetThemeColors',
-        'MainMenu',
-        'InstallTranslator',
-        'RemoveTranslator',
-    ]
-    if action_step in always_cpp:
-        return True
-
-    if not is_cpp_gui_context(gui_context):
-        return False
-
-    return action_step in [
-        'ToFirstRow',
-        'ToLastRow',
-        'ClearSelection',
-        'SetSelection',
-        'RefreshItemView',
-        'CloseView',
-    ]
 
 
 # FIXME: rename to cpp_action_step?

@@ -52,7 +52,7 @@ from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     CollectionProxy, rowcount_name, rowdata_name, setcolumns_name, RowModelContext
 )
-from ..qml_view import qml_action_step
+from ..qml_view import qml_action_step, is_cpp_gui_context
 
 LOGGER = logging.getLogger(__name__)
 
@@ -310,7 +310,9 @@ class ToFirstRow(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        if gui_context.item_view is not None:
+        if is_cpp_gui_context(gui_context):
+            qml_action_step(gui_context, 'ToFirstRow')
+        else:
             gui_context.item_view.selectRow( 0 )
 
 
@@ -320,7 +322,9 @@ class ToLastRow(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        if gui_context.item_view is not None:
+        if is_cpp_gui_context(gui_context):
+            qml_action_step(gui_context, 'ToLastRow')
+        else:
             item_view = gui_context.item_view
             item_view.selectRow( item_view.model().rowCount() - 1 )
 
@@ -331,7 +335,9 @@ class ClearSelection(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        if gui_context.item_view is not None:
+        if is_cpp_gui_context(gui_context):
+            qml_action_step(gui_context, 'ClearSelection', serialized_step)
+        else:
             gui_context.item_view.clearSelection()
 
 
@@ -350,6 +356,9 @@ class RefreshItemView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        model = gui_context.get_item_model()
-        if model is not None:
-            model.refresh()
+        if is_cpp_gui_context(gui_context):
+            qml_action_step(gui_context, 'RefreshItemView', serialized_step)
+        else:
+            model = gui_context.get_item_model()
+            if model is not None:
+                model.refresh()
