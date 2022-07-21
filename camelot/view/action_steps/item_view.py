@@ -101,6 +101,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     crud_actions: CrudActions = field(init=False)
     close_route: Route = field(init=False)
+    group: str = field(init=False)
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
@@ -108,6 +109,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         self.crud_actions = CrudActions(admin)
         self.proxy_route = ProxyRegistry.register(proxy)
         self._add_action_states(admin, proxy, self.actions, self.action_states)
+        self.group = admin.get_admin_route()[-2][:255]
 
     @staticmethod
     def _add_action_states(admin, proxy, actions, action_states):
