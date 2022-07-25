@@ -385,7 +385,7 @@ class DeleteSelection( EditAction ):
             depending_objects.update( set( admin.get_depending_objects( o ) ) )
         for i, obj in enumerate( objects_to_remove ):
             yield action_steps.UpdateProgress( i + 1,
-                                               model_context.selection_count,
+                                               (1 if self.remove_only() else 2) * model_context.selection_count,
                                                _('Removing') )
             #
             # We should not update depending objects that have
@@ -395,17 +395,19 @@ class DeleteSelection( EditAction ):
                 depending_objects.remove( obj )
             except KeyError:
                 pass
-            for step in self.handle_object( model_context, obj ):
-                yield step
+            model_context.proxy.remove(obj)
+        if not self.remove_only():
+            yield action_steps.DeleteObjects(objects_to_remove)
+            for i, obj in enumerate( objects_to_remove ):
+                yield action_steps.UpdateProgress( model_context.selection_count + i + 1,
+                                                   2 * model_context.selection_count,
+                                                   _('Removing') )
+                model_context.admin.delete(obj)
         yield action_steps.UpdateObjects(depending_objects)
         yield action_steps.FlushSession( model_context.session )
-        
-    def handle_object( self, model_context, obj ):
-        from camelot.view import action_steps
-        model_context.proxy.remove(obj)
-        # use group -> 2 loops (yield + delete)
-        yield action_steps.DeleteObjects((obj,))
-        model_context.admin.delete(obj)
+
+    def remove_only(self):
+        return False
 
     def get_state(self, model_context):
         assert isinstance(model_context, ListActionModelContext)
@@ -1186,11 +1188,8 @@ class RemoveSelection(DeleteSelection):
     verbose_name = _('Remove')
     icon = Icon('minus') # 'tango/16x16/actions/list-remove.png'
     name = 'remove_selection'
-            
-    def handle_object( self, model_context, obj ):
-        model_context.proxy.remove( obj )
-        # no StopIteration, since the supergenerator needs to
-        # continue to flush the session
-        yield None
+
+    def remove_only(self):
+        return True
 
 remove_selection = RemoveSelection()
