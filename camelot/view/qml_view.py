@@ -180,8 +180,19 @@ class QmlActionDispatch(QtCore.QObject):
     def get_model(self, gui_context_name):
         return self.models.get(gui_context_name)
 
+    def args_string(self, args):
+        if isinstance(args, QtCore.QJsonValue):
+            if args.isNull(): return 'null'
+            if args.isUndefined(): return 'undefined'
+            if args.isBool(): return args.toBool()
+            if args.isDouble(): return args.toDouble()
+            if args.isString(): return args.toString()
+            if args.isObject(): return QtCore.QJsonDocument(args.toObject()).toJson(QtCore.QJsonDocument.JsonFormat.Compact).data().decode()
+            if args.isArray(): return QtCore.QJsonDocument(args.toArray()).toJson(QtCore.QJsonDocument.JsonFormat.Compact).data().decode()
+        return args
+
     def run_action(self, gui_context_name, route, args, model_context_name):
-        LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, args, model_context_name))
+        LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, self.args_string(args), model_context_name))
         model = self.get_model(tuple(gui_context_name))
         if model is not None:
             model.timeout_slot()
