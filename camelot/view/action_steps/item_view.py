@@ -39,7 +39,7 @@ import logging
 
 from ...admin.admin_route import Route, RouteWithRenderHint
 from ...admin.action.base import ActionStep, State
-from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.object_admin import ObjectAdmin
@@ -50,7 +50,7 @@ from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
-    CollectionProxy, rowcount_name, rowdata_name, setcolumns_name, RowModelContext
+    rowcount_name, rowdata_name, setcolumns_name, RowModelContext
 )
 from ..qml_view import qml_action_step, is_cpp_gui_context
 

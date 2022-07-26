@@ -33,7 +33,6 @@ from dataclasses import dataclass, field
 from camelot.core.exception import CancelRequest
 from camelot.core.naming import initial_naming_context
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.qml_view import qml_action_dispatch
 
 from .item_view import OpenTableView, OpenQmlTableView
 
