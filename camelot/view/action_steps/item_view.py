@@ -39,7 +39,7 @@ import logging
 
 from ...admin.admin_route import Route, RouteWithRenderHint
 from ...admin.action.base import ActionStep, State
-from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.object_admin import ObjectAdmin
@@ -50,7 +50,7 @@ from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
-    CollectionProxy, rowcount_name, rowdata_name, setcolumns_name, RowModelContext
+    rowcount_name, rowdata_name, setcolumns_name, RowModelContext
 )
 from ..qml_view import qml_action_step, is_cpp_gui_context
 
@@ -264,40 +264,10 @@ class OpenQmlTableView(OpenTableView):
         
     """
 
-    # FIXME: remove this (OpenTableView now has a __post_init__)
-    def __init__(self, value, admin, search_text=None):
-        super().__init__(value, admin, search_text=search_text)
-        self.list_action = admin.get_list_action()
-
     @classmethod
     def render(cls, gui_context, action_step_name, serialized_step):
-        step = json.loads(serialized_step)
-
-        # FIXME: remove this code (now using CrudItemModel...)
-        class QmlListActionGuiContext(ListActionGuiContext):
-
-            def get_progress_dialog(self):
-                return ApplicationActionGuiContext.get_progress_dialog(self)
-
-        list_gui_context = gui_context.copy(QmlListActionGuiContext)
-        list_gui_context.admin_route = tuple(step['admin_route'])
-        list_gui_context.gui_context_name = None
-
-        new_model = CollectionProxy(tuple(step['admin_route']))
-        list(new_model.add_columns(step['columns']))
-        new_model.set_value(step['proxy_route'])
-
-        for action in step['actions']:
-            render_hint = action['render_hint']
-            if render_hint in ['combo_box', 'non_exclusive_group_box', 'exclusive_group_box']:
-                continue
-            new_model.add_action_route(tuple(action['route']))
-
-        #response = qml_action_step(list_gui_context, action_step_name,
-        #       serialized_step, { 'model': new_model }, model=new_model)
         response = qml_action_step(gui_context, action_step_name,
                 serialized_step)
-
         return response, None
 
     @classmethod

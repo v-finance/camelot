@@ -2,7 +2,7 @@ import logging
 import itertools
 import json
 
-from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, is_deleted
+from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, jsonvalue_to_py
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context, NameNotFoundException
 from camelot.admin.action.application_action import ApplicationActionGuiContext
@@ -128,7 +128,6 @@ class QmlActionDispatch(QtCore.QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.models = {}
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
@@ -136,7 +135,7 @@ class QmlActionDispatch(QtCore.QObject):
         # register None gui_context as with ['gui_context', '0']
         self.register(None)
 
-    def register(self, gui_context, model=None):
+    def register(self, gui_context):
         if gui_context is None:
             gui_context_id = self._gui_naming_context_ids.__next__()
             gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
@@ -147,21 +146,12 @@ class QmlActionDispatch(QtCore.QObject):
                 return gui_context.gui_context_name
         gui_context_id = self._gui_naming_context_ids.__next__()
         gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
-        if model is not None:
-            self.models[gui_context_name] = model
-            model.destroyed.connect(self.remove_model)
         gui_context.gui_context_name = gui_context_name
         return gui_context_name
 
     def unregister(self, gui_context_name):
         if not is_cpp_gui_context_name(gui_context_name):
             initial_naming_context.unbind(tuple(gui_context_name))
-
-    @QtCore.qt_slot(QtCore.QObject)
-    def remove_model(self):
-        for gui_context_name, model in list(self.models.items()):
-            if is_deleted(model):
-                del self.models[gui_context_name]
 
     def has_context(self, gui_context):
         if gui_context is None:
@@ -177,14 +167,8 @@ class QmlActionDispatch(QtCore.QObject):
     def get_context(self, gui_context_name):
         return initial_naming_context.resolve(tuple(gui_context_name))
 
-    def get_model(self, gui_context_name):
-        return self.models.get(gui_context_name)
-
     def run_action(self, gui_context_name, route, args, model_context_name):
-        LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, args, model_context_name))
-        model = self.get_model(tuple(gui_context_name))
-        if model is not None:
-            model.timeout_slot()
+        LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
 
         class DummyGuiContext(ApplicationActionGuiContext):
 
@@ -209,7 +193,7 @@ qml_action_dispatch = QmlActionDispatch()
 
 
 # FIXME: rename to cpp_action_step?
-def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model=None):
+def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}):
     """
     Register the gui_context and execute the action step by specifying a name and serialized action step.
     """
@@ -220,7 +204,7 @@ def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, model
         if gui_context is None:
             gui_context_name = ('gui_context', '0')
         elif gui_context.gui_context_name is None:
-            gui_context_name = qml_action_dispatch.register(gui_context, model)
+            gui_context_name = qml_action_dispatch.register(gui_context)
         else:
             gui_context_name = gui_context.gui_context_name
     backend = get_qml_root_backend()

@@ -14,7 +14,7 @@ from ...admin.icon import CompletionValue
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole
+    FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole, ObjectRole
 )
 from ..qml_view import is_cpp_gui_context, qml_action_step
 
@@ -31,7 +31,8 @@ class UpdateMixin(object):
             header_items.append({
                 "row": row,
                 "tool_tip": header_item.data(Qt.ItemDataRole.ToolTipRole),
-                "icon_name": header_item.data(Qt.ItemDataRole.WhatsThisRole)
+                "icon_name": header_item.data(Qt.ItemDataRole.WhatsThisRole),
+                "object": header_item.data(ObjectRole)
             })
             for column, item in items:
                 cell_data = {

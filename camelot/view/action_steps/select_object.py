@@ -31,8 +31,8 @@
 from dataclasses import dataclass, field
 
 from camelot.core.exception import CancelRequest
+from camelot.core.naming import initial_naming_context
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.qml_view import qml_action_dispatch
 
 from .item_view import OpenTableView, OpenQmlTableView
 
@@ -73,10 +73,9 @@ class SelectObjects(OpenTableView):
     @classmethod
     def deserialize_result(cls, gui_context, response):
         objects = []
-        list_gui_context = qml_action_dispatch.get_context(response['gui_context_name'])
-        model = list_gui_context.get_item_model()
-        if model is not None:
-            proxy = model.get_value()
+        model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
+        proxy = model_context.proxy
+        if proxy is not None:
             selected_rows = response['selected_rows']
             for i in range(len(selected_rows) // 2):
                 first_row = selected_rows[2 * i]

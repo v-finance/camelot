@@ -338,6 +338,12 @@ else:
     # Qt messages are now remotely logged by the launcher's message handler
     #QtCore.qInstallMessageHandler(qmsghandler)
 
+def jsonvalue_to_py(obj=None):
+    """Convert QJsonValue to python equivalent"""
+    if isinstance(obj, QtCore.QJsonValue):
+        return obj.toVariant()
+    return obj
+
 __all__ = [
     QtCore.__name__,
     QtGui.__name__,
@@ -346,5 +352,6 @@ __all__ = [
     py_to_variant.__name__,
     valid_variant.__name__,
     variant_to_py.__name__,
+    jsonvalue_to_py.__name__,
 ]
 
