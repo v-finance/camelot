@@ -263,7 +263,12 @@ class Created(Action, UpdateMixin):
                 continue
             columns = tuple(range(len(model_context.static_field_attributes)))
             changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        yield action_steps.Created(changed_ranges) 
+        yield action_steps.Created(changed_ranges)
+        # Scroll to last row so that the user sees the newly added object in the list.
+        # FIXME: maybe use row and scroll to row instead of last row?
+        #        This replaces the AddNewObject's ToLastRow which is called too early with the new crud actions.
+        #        However, this is now also called when duplicating objects.
+        yield action_steps.ToLastRow()
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
