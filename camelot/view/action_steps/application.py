@@ -257,9 +257,7 @@ class UpdateActionsState(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         if is_cpp_gui_context(gui_context):
-            root_backend = get_qml_root_backend()
-            root_backend.updateActionsState(gui_context.gui_context_name, serialized_step)
-            return
+            return qml_action_step(gui_context, 'UpdateActionsState', serialized_step)
 
         step = json.loads(serialized_step)
         for action_route, action_state in step['action_states']:
