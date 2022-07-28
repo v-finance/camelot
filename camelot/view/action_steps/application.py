@@ -41,7 +41,7 @@ from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
-from camelot.view.qml_view import qml_action_step, get_qml_window, get_qml_root_backend, is_cpp_gui_context
+from camelot.view.qml_view import qml_action_step, get_qml_window, is_cpp_gui_context
 
 LOGGER = logging.getLogger(__name__)
 
