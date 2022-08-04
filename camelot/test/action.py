@@ -53,7 +53,7 @@ class MockModelContext( object ):
         self.field_attributes = {}
         self._session = session
         
-    def get_object( self ):
+    def get_object( self, row=None ):
         return self.obj
         
     def get_selection( self, yield_per = None ):
