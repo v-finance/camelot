@@ -73,6 +73,12 @@ class SetThemeColors(ActionStep, DataclassSerializable):
 
 
 @dataclass
+class Authenticate(ActionStep, DataclassSerializable):
+    """
+    Request client side credentials
+    """
+
+@dataclass
 class MainWindow(ActionStep, DataclassSerializable):
     """
     This action step also takes care of other python stuff for now
