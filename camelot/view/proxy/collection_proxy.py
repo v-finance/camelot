@@ -183,7 +183,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
         self._reset()
         crud_signal_handler = get_crud_signal_handler()
-        crud_signal_handler.connect_signals( self )
+        crud_signal_handler.connectSignals( self )
         self.logger.debug( 'initialization finished' )
 
     
@@ -428,47 +428,49 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if self._model_context is not None:
             return self._model_context.proxy
 
-    @QtCore.qt_slot(QtCore.QObject)
-    def objects_updated(self, objects):
+    @QtCore.qt_slot(list)
+    def objectsUpdated(self, objects):
         """Handles the entity signal, indicating that the model is out of
-            )
         date
         """
+        from camelot.view.action_steps.orm import LiveRef
         assert object_thread(self)
         if self._model_context is not None:
             self.logger.debug(
-                'received objects updated: {}'.format(objects.property('name'))
+                'received objects updated: {}'.format(objects)
             )
-            self._append_request(update_name, {'objects': objects})
+            self._append_request(update_name, {'objects': LiveRef(objects)})
             self.timeout_slot()
 
-    @QtCore.qt_slot(QtCore.QObject)
-    def objects_deleted(self, objects):
+    @QtCore.qt_slot(list)
+    def objectsDeleted(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
+        from camelot.view.action_steps.orm import LiveRef
         assert object_thread( self )
         if self._model_context is not None:
             self.logger.debug(
                 #'received {0} objects deleted'.format(len(objects))
-                'received objects deleted: {}'.format(objects.property('name'))
+                'received objects deleted: {}'.format(objects)
                 )
             self._append_request(deleted_name, {
-                'objects': objects,
+                'objects': LiveRef(objects),
                 'rows': super(CollectionProxy, self).rowCount()
             })
             #self.timeout_slot()
 
-    @QtCore.qt_slot(QtCore.QObject)
-    def objects_created(self, objects):
+    @QtCore.qt_slot(list)
+    def objectsCreated(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
+        from camelot.view.action_steps.orm import LiveRef
         assert object_thread( self )
         if self._model_context is not None:
             self.logger.debug(
-                'received objects created: {}'.format(objects.property('name'))
+                'received objects created: {}'.format(objects)
                 #'received {0} objects created'.format(len(objects))
             )
-            self._append_request(created_name, {'objects': objects})
+            self._append_request(created_name, {'objects': LiveRef(objects)})
             self.timeout_slot()
 
     def add_columns(self, field_names):
