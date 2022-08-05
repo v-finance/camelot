@@ -108,11 +108,11 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
             #super(CreateUpdateDelete, self).gui_run(gui_context)
             crud_signal_handler = get_crud_signal_handler()
             if step['deleted'] is not None:
-                crud_signal_handler.objects_deleted.emit(LiveRef(step['deleted']))
+                crud_signal_handler.objectsDeleted.emit(step['deleted'])
             if step['updated'] is not None:
-                crud_signal_handler.objects_updated.emit(LiveRef(step['updated']))
+                crud_signal_handler.objectsUpdated.emit(step['updated'])
             if step['created'] is not None:
-                crud_signal_handler.objects_created.emit(LiveRef(step['created']))
+                crud_signal_handler.objectsCreated.emit(step['created'])
 
 
 class FlushSession(CreateUpdateDelete):
