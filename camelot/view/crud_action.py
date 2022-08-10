@@ -135,8 +135,22 @@ class ChangeSelection(Action):
 
     name = 'change_selection'
 
+    def validate_ids(self, model_context, mode):
+        if mode['current_row'] is not None:
+            current_obj = model_context.get_object(mode['current_row'])
+            assert id(current_obj) == mode['current_row_id']
+        assert len(mode['selected_rows']) == len(mode['selected_rows_ids'])
+        for i in range(len(mode['selected_rows'])):
+            row_range = mode['selected_rows'][i]
+            row_range_ids = mode['selected_rows_ids'][i]
+            begin_obj = model_context.get_object(row_range[0])
+            end_obj = model_context.get_object(row_range[1])
+            assert id(begin_obj) == row_range_ids[0]
+            assert id(end_obj) == row_range_ids[1]
+
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        self.validate_ids(model_context, mode)
         action_states = []
         model_context.current_row = mode['current_row']
         model_context.current_column = mode['current_column']
