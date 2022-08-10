@@ -135,12 +135,16 @@ class ListActionModelContext( ApplicationActionModelContext ):
         for obj in self.proxy[0:self.collection_count]:
             yield obj
             
-    def get_object( self ):
+    def get_object( self, row = None ):
         """
-        :return: the object displayed in the current row or None
+        :param row: The row for the object to get.
+        :return: The object for the specified row. If the specified row is None, the object
+            displayed in the current row or None is returned.
         """
-        if self.current_row != None:
-            for obj in self.proxy[self.current_row:self.current_row+1]:
+        if row is None:
+            row = self.current_row
+        if row != None:
+            for obj in self.proxy[row:row+1]:
                 return obj
         
 class ListActionGuiContext( ApplicationActionGuiContext ):
@@ -312,7 +316,7 @@ class OpenFormView( ListContextAction ):
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(
-            model_context.get_object(), model_context.admin, model_context.proxy
+            model_context.get_object(mode), model_context.admin, model_context.proxy
         )
 
     def get_state( self, model_context ):
