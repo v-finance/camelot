@@ -135,31 +135,34 @@ class ChangeSelection(Action):
 
     name = 'change_selection'
 
-    def validate_ids(self, model_context, mode):
-        if mode['current_row'] is not None:
-            current_obj = model_context.get_object(mode['current_row'])
-            assert id(current_obj) == mode['current_row_id']
-        assert len(mode['selected_rows']) == len(mode['selected_rows_ids'])
-        for i in range(len(mode['selected_rows'])):
-            row_range = mode['selected_rows'][i]
-            row_range_ids = mode['selected_rows_ids'][i]
-            begin_obj = model_context.get_object(row_range[0])
-            end_obj = model_context.get_object(row_range[1])
-            assert id(begin_obj) == row_range_ids[0]
-            assert id(end_obj) == row_range_ids[1]
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        self.validate_ids(model_context, mode)
-        action_states = []
-        model_context.current_row = mode['current_row']
+        # validate & set current_row
+        model_context.current_row = None
+        if mode['current_row'] is not None:
+            current_obj = model_context.get_object(mode['current_row'])
+            if id(current_obj) == mode['current_row_id']:
+                model_context.current_row = mode['current_row']
+        # validfate & set selected rows
+        model_context.selected_rows = []
+        if len(mode['selected_rows']) == len(mode['selected_rows_ids']):
+            for i in range(len(mode['selected_rows'])):
+                row_range = mode['selected_rows'][i]
+                if row_range[0] == -1 or row_range[1] == -1:
+                    continue
+                row_range_ids = mode['selected_rows_ids'][i]
+                begin_obj = model_context.get_object(row_range[0])
+                end_obj = model_context.get_object(row_range[1])
+                if id(begin_obj) == row_range_ids[0] and id(end_obj) == row_range_ids[1]:
+                    model_context.selected_rows.append(row_range)
+
         model_context.current_column = mode['current_column']
         model_context.current_field_name = mode['current_field_name']
-        model_context.selected_rows = mode['selected_rows']
         model_context.collection_count = len(model_context.proxy)
         model_context.selection_count = 0
         for row_range in mode['selected_rows']:
             model_context.selection_count += (row_range[1] - row_range[0]) + 1
+        action_states = []
         for action_route in mode['action_routes']:
             action = initial_naming_context.resolve(tuple(action_route))
             state = action.get_state(model_context)
