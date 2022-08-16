@@ -29,7 +29,7 @@
 
 from .application import (
     MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
-    MainMenu, UpdateActionsState, SetThemeColors
+    MainMenu, UpdateActionsState, SetThemeColors, Authenticate
 )
 from .change_object import ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -55,6 +55,7 @@ from .crud import (
 )
 
 __all__ = [
+    Authenticate.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
     ChangeSelection.__name__,
