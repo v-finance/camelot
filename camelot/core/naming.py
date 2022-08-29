@@ -431,7 +431,11 @@ class BindingStorage(AbstractBindingStorage):
         return duplicate
 
     def list(self):
-        return self._bindings.keys()
+        """
+        Return the names of the bindings as valid names (tuples)
+        """
+        for key in self._bindings.keys():
+            yield (key,)
 
     def __contains__(self, name):
         return name in self._bindings
@@ -776,9 +780,10 @@ class NamingContext(AbstractNamingContext):
 
     def list(self):
         yield from self._bindings[BindingType.named_object].list()
-        for name in self._bindings[BindingType.named_context].list():
-            named_context = self.resolve_context(name)
-            yield from named_context.list()
+        for name_of_named_context in self._bindings[BindingType.named_context].list():
+            named_context = self.resolve_context(name_of_named_context)
+            for name_in_named_context in named_context.list():
+                yield (*name_of_named_context, *name_in_named_context)
 
     def __len__(self):
         return len(self._bindings[BindingType.named_object])
