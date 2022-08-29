@@ -684,10 +684,6 @@ class ListActionsCase(
         metadata.drop_all()
         metadata.clear()
 
-    def test_add_new_object(self):
-        add_new_object_action = list_action.AddNewObject()
-        list(self.gui_run(add_new_object_action, self.gui_context, None))
-
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
         state = self.get_state(set_filters_step, self.gui_context)
