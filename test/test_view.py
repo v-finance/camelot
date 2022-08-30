@@ -18,14 +18,12 @@ from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.table import ColumnGroup
 from camelot.core.constants import camelot_maxfloat, camelot_minfloat
 from camelot.core.exception import UserException
 from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import FieldAttributesRole, PreviewRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
-from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import forms
@@ -884,52 +882,6 @@ class ControlsTest(
         suffix_width = self._header_data(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
 
         self.assertEqual(first_name_width, suffix_width)
-
-    def test_column_group( self ):
-
-        class ColumnWidthAdmin( Person.Admin ):
-            #begin column group
-            list_display = [ ColumnGroup( _('Name'), ['first_name', 'last_name', 'suffix'] ),
-                             ColumnGroup( _('Official'), ['birthdate', 'social_security_number', 'passport_number'] ),
-                             ]
-            #end column group
-
-        widget = TableWidget()
-        widget.setMinimumWidth( 800 )
-        self.grab_widget( widget )
-
-    def test_multiple_main_windows(self):
-        """Make sure we can still create multiple QMainWindows"""
-        # This is not longer possible using the launcher
-        pass
-        '''
-        app = QtWidgets.QApplication.instance()
-        if app is None:
-            app = QtWidgets.QApplication([])
-
-        def count_main_windows():
-            result = 0
-            for widget in app.allWidgets():
-                if isinstance(widget, QtWidgets.QMainWindow):
-                    result += 1
-            return result
-        
-        application = Application(app_admin)
-
-        for step in self.gui_run(application, self.gui_context):
-            if isinstance(step, tuple) and step[0] == MainWindow.__name__:
-                MainWindow.render(self.gui_context, step[1])
-                
-        num_main_windows1 = count_main_windows()
-        
-        for step in self.gui_run(application, self.gui_context):
-            if isinstance(step, tuple) and step[0] == MainWindow.__name__:
-                MainWindow.render(self.gui_context, step[1])
-
-        num_main_windows2 = count_main_windows()
-
-        self.assertEqual( num_main_windows1 + 1, num_main_windows2 )
-        '''
 
     def test_busy_widget(self):
         busy_widget = BusyWidget()

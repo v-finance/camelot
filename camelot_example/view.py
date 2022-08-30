@@ -27,17 +27,13 @@
 #
 #  ============================================================================
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin import table
 from camelot.core.utils import ugettext_lazy as _
 
 class VisitorsPerDirector(object):
     
     class Admin(EntityAdmin):
         verbose_name = _('Visitors per director')
-        list_display = table.Table( [ table.ColumnGroup( _('Name and Visitors'), ['first_name', 'last_name', 'visitors'] ),
-                                      table.ColumnGroup( _('Official'), ['birthdate', 'social_security_number', 'passport_number'] ) ]
-                                    )
-# end column group
+        list_display = ['first_name', 'last_name', 'visitors', 'birthdate', 'social_security_number', 'passport_number']
 
 def setup_views():
     from sqlalchemy.sql import select, func, and_
