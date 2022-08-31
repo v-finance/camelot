@@ -29,7 +29,6 @@ from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model import party
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockListActionGuiContext, MockModelContext
