@@ -59,6 +59,7 @@ class UpdateMixin(object):
         :param data: fill the data cache, otherwise only fills the header cache
         :return: the changes to the item model
         """
+        from ..view.proxy.collection_proxy import invalid_item
         admin = model_context.admin
         static_field_attributes = model_context.static_field_attributes
         column_names = [model_context.static_field_attributes[column]['field_name'] for column in columns]
@@ -66,7 +67,7 @@ class UpdateMixin(object):
         changed_ranges = []
         logger.debug('add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
-        if (not admin.is_deleted( obj ) and (data==True) and (obj is not None)):
+        if (admin.is_readable( obj ) and (data==True) and (obj is not None)):
             row_data = {column:data for column, data in zip(columns, strip_data_from_object(obj, column_names))}
             dynamic_field_attributes ={column:fa for column, fa in zip(columns, admin.get_dynamic_field_attributes(obj, column_names))}
             if admin.list_action:
@@ -85,20 +86,23 @@ class UpdateMixin(object):
             items = []
             locale = model_context.locale
             for column in changed_columns:
-                # copy to make sure the original dict can be reused in
-                # subsequent calls
-                field_attributes = dict(static_field_attributes[column])
-                # the dynamic attributes might update the static attributes,
-                # if get_dynamic_field_attributes is overwritten, like in 
-                # the case of the EntityAdmin setting the onetomany fields
-                # to not editable for objects that are not persistent
-                field_attributes.update(dynamic_field_attributes[column])
-                delegate = field_attributes['delegate']
-                field_action_model_context = self.field_action_model_context(
-                    model_context, obj, field_attributes
-                )
-                item = delegate.get_standard_item(locale, field_action_model_context)
-                items.append((column, item))
+                if action_state is not None:
+                    # copy to make sure the original dict can be reused in
+                    # subsequent calls
+                    field_attributes = dict(static_field_attributes[column])
+                    # the dynamic attributes might update the static attributes,
+                    # if get_dynamic_field_attributes is overwritten, like in
+                    # the case of the EntityAdmin setting the onetomany fields
+                    # to not editable for objects that are not persistent
+                    field_attributes.update(dynamic_field_attributes[column])
+                    delegate = field_attributes['delegate']
+                    field_action_model_context = self.field_action_model_context(
+                        model_context, obj, field_attributes
+                    )
+                    item = delegate.get_standard_item(locale, field_action_model_context)
+                    items.append((column, item))
+                else:
+                    items.append((column, invalid_item))
             try:
                 verbose_identifier = admin.get_verbose_identifier(obj)
             except (Exception, RuntimeError, TypeError, NameError) as e:
@@ -108,11 +112,12 @@ class UpdateMixin(object):
                                       exc_info=e)
                 verbose_identifier = u''
             valid = False
-            for message in model_context.validator.validate_object(obj):
-                break
-            else:
-                valid = True
-                message = None
+            message = None
+            if action_state is not None:
+                for message in model_context.validator.validate_object(obj):
+                    break
+                else:
+                    valid = True
             header_item = QtGui.QStandardItem()
             header_item.setData(py_to_variant(id(obj)), ObjectRole)
             header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
