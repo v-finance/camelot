@@ -102,7 +102,7 @@ class UpdateMixin(object):
                     item = delegate.get_standard_item(locale, field_action_model_context)
                     items.append((column, item))
                 else:
-                    items.append((column, invalid_item))
+                    items.append((column, invalid_item.clone()))
             try:
                 verbose_identifier = admin.get_verbose_identifier(obj)
             except (Exception, RuntimeError, TypeError, NameError) as e:
