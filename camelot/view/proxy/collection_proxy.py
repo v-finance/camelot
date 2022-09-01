@@ -703,6 +703,10 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
         if current_row < 0:
             current_row = None
+            current_row_id = None
+        else:
+            current_row_id = self.headerData(current_row, Qt.Orientation.Vertical, ObjectRole)
+
 
         current_field_name = None
         if current_column is not None:
@@ -713,14 +717,23 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             )
         assert len(row_ranges) % 2 == 0
         selected_rows = []
+        selected_rows_ids = []
         for i in range(len(row_ranges) // 2):
-            selected_rows.append(( row_ranges[2 * i], row_ranges[2 * i + 1]))
+            begin_row = row_ranges[2 * i]
+            end_row = row_ranges[2 * i + 1]
+            selected_rows.append(( begin_row, end_row))
+            selected_rows_ids.append((
+                self.headerData(begin_row, Qt.Orientation.Vertical, ObjectRole),
+                self.headerData(end_row, Qt.Orientation.Vertical, ObjectRole)
+            ))
 
         request = changeselection_name
         self._append_request(request, {
             'action_routes': self._action_routes,
             'current_row': current_row,
+            'current_row_id': current_row_id,
             'current_column': current_column,
             'selected_rows': selected_rows,
+            'selected_rows_ids': selected_rows_ids,
             'current_field_name': current_field_name,
         })

@@ -59,6 +59,7 @@ class UpdateMixin(object):
         :param data: fill the data cache, otherwise only fills the header cache
         :return: the changes to the item model
         """
+        from ..view.proxy.collection_proxy import invalid_item
         admin = model_context.admin
         static_field_attributes = model_context.static_field_attributes
         column_names = [model_context.static_field_attributes[column]['field_name'] for column in columns]
@@ -66,7 +67,7 @@ class UpdateMixin(object):
         changed_ranges = []
         logger.debug('add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
-        if (not admin.is_deleted( obj ) and (data==True) and (obj is not None)):
+        if (admin.is_readable( obj ) and (data==True) and (obj is not None)):
             row_data = {column:data for column, data in zip(columns, strip_data_from_object(obj, column_names))}
             dynamic_field_attributes ={column:fa for column, fa in zip(columns, admin.get_dynamic_field_attributes(obj, column_names))}
             if admin.list_action:
@@ -85,20 +86,23 @@ class UpdateMixin(object):
             items = []
             locale = model_context.locale
             for column in changed_columns:
-                # copy to make sure the original dict can be reused in
-                # subsequent calls
-                field_attributes = dict(static_field_attributes[column])
-                # the dynamic attributes might update the static attributes,
-                # if get_dynamic_field_attributes is overwritten, like in 
-                # the case of the EntityAdmin setting the onetomany fields
-                # to not editable for objects that are not persistent
-                field_attributes.update(dynamic_field_attributes[column])
-                delegate = field_attributes['delegate']
-                field_action_model_context = self.field_action_model_context(
-                    model_context, obj, field_attributes
-                )
-                item = delegate.get_standard_item(locale, field_action_model_context)
-                items.append((column, item))
+                if action_state is not None:
+                    # copy to make sure the original dict can be reused in
+                    # subsequent calls
+                    field_attributes = dict(static_field_attributes[column])
+                    # the dynamic attributes might update the static attributes,
+                    # if get_dynamic_field_attributes is overwritten, like in
+                    # the case of the EntityAdmin setting the onetomany fields
+                    # to not editable for objects that are not persistent
+                    field_attributes.update(dynamic_field_attributes[column])
+                    delegate = field_attributes['delegate']
+                    field_action_model_context = self.field_action_model_context(
+                        model_context, obj, field_attributes
+                    )
+                    item = delegate.get_standard_item(locale, field_action_model_context)
+                    items.append((column, item))
+                else:
+                    items.append((column, invalid_item.clone()))
             try:
                 verbose_identifier = admin.get_verbose_identifier(obj)
             except (Exception, RuntimeError, TypeError, NameError) as e:
@@ -108,11 +112,12 @@ class UpdateMixin(object):
                                       exc_info=e)
                 verbose_identifier = u''
             valid = False
-            for message in model_context.validator.validate_object(obj):
-                break
-            else:
-                valid = True
-                message = None
+            message = None
+            if action_state is not None:
+                for message in model_context.validator.validate_object(obj):
+                    break
+                else:
+                    valid = True
             header_item = QtGui.QStandardItem()
             header_item.setData(py_to_variant(id(obj)), ObjectRole)
             header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
@@ -137,15 +142,32 @@ class ChangeSelection(Action):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        action_states = []
-        model_context.current_row = mode['current_row']
+        # validate & set current_row
+        model_context.current_row = None
+        if mode['current_row'] is not None:
+            current_obj = model_context.get_object(mode['current_row'])
+            if id(current_obj) == mode['current_row_id']:
+                model_context.current_row = mode['current_row']
+        # validfate & set selected rows
+        model_context.selected_rows = []
+        if len(mode['selected_rows']) == len(mode['selected_rows_ids']):
+            for i in range(len(mode['selected_rows'])):
+                row_range = mode['selected_rows'][i]
+                if row_range[0] == -1 or row_range[1] == -1:
+                    continue
+                row_range_ids = mode['selected_rows_ids'][i]
+                begin_obj = model_context.get_object(row_range[0])
+                end_obj = model_context.get_object(row_range[1])
+                if id(begin_obj) == row_range_ids[0] and id(end_obj) == row_range_ids[1]:
+                    model_context.selected_rows.append(row_range)
+
         model_context.current_column = mode['current_column']
         model_context.current_field_name = mode['current_field_name']
-        model_context.selected_rows = mode['selected_rows']
         model_context.collection_count = len(model_context.proxy)
         model_context.selection_count = 0
         for row_range in mode['selected_rows']:
             model_context.selection_count += (row_range[1] - row_range[0]) + 1
+        action_states = []
         for action_route in mode['action_routes']:
             action = initial_naming_context.resolve(tuple(action_route))
             state = action.get_state(model_context)

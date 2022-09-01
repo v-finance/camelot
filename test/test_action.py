@@ -29,7 +29,6 @@ from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model import party
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockListActionGuiContext, MockModelContext
@@ -684,10 +683,6 @@ class ListActionsCase(
         metadata.drop_all()
         metadata.clear()
 
-    def test_add_new_object(self):
-        add_new_object_action = list_action.AddNewObject()
-        list(self.gui_run(add_new_object_action, self.gui_context, None))
-
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
         state = self.get_state(set_filters_step, self.gui_context)
@@ -718,86 +713,6 @@ class ListActionsCase(
         list(self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value))
         self.grab_widget(widget)
 
-    def test_orm( self ):
-
-        class UpdatePerson( Action ):
-
-            verbose_name = _('Update person')
-
-            def model_run( self, model_context, mode ):
-                for person in model_context.get_selection():
-                    soc_number = person.social_security_number
-                    if soc_number:
-                        # assume the social sec number contains the birth date
-                        person.birth_date = datetime.date( int(soc_number[0:4]),
-                                                           int(soc_number[4:6]),
-                                                           int(soc_number[6:8])
-                                                           )
-                    # delete the email of the person
-                    for contact_mechanism in person.contact_mechanisms:
-                        model_context.session.delete( contact_mechanism )
-                        yield action_steps.DeleteObjects((contact_mechanism,))
-                    # add a new email
-                    m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                        person.last_name ) )
-                    cm = party.ContactMechanism( mechanism = m )
-                    pcm = party.PartyContactMechanism( party = person,
-                                                       contact_mechanism = cm )
-                    
-                    # immediately update the GUI
-                    yield action_steps.CreateObjects((cm,))
-                    yield action_steps.CreateObjects((pcm,))
-                    yield action_steps.UpdateObjects((person,))
-                # flush the session on finish
-                model_context.session.flush()
-
-        # end manual update
-
-        updated, created = False, False
-        update_person = UpdatePerson()
-        for step in self.gui_run(update_person, self.gui_context, None):
-            if isinstance(step, tuple) and step[0] == 'UpdateObjects':
-                updated = True
-            if isinstance(step, tuple) and step[0] == 'CreateObjects':
-                created = True
-        self.assertTrue(updated)
-        self.assertTrue(created)
-
-        # begin auto update
-
-        class UpdatePerson( Action ):
-
-            verbose_name = _('Update person')
-
-            def model_run( self, model_context, mode ):
-                for person in model_context.get_selection():
-                    soc_number = person.social_security_number
-                    if soc_number:
-                        # assume the social sec number contains the birth date
-                        person.birth_date = datetime.date( int(soc_number[0:4]),
-                                                           int(soc_number[4:6]),
-                                                           int(soc_number[6:8])
-                                                           )
-                    # delete the email of the person
-                    for contact_mechanism in person.contact_mechanisms:
-                        model_context.session.delete( contact_mechanism )
-                    # add a new email
-                    m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                        person.last_name ) )
-                    cm = party.ContactMechanism( mechanism = m )
-                    party.PartyContactMechanism( party = person,
-                                                contact_mechanism = cm )
-                # flush the session on finish and update the GUI
-                yield action_steps.FlushSession( model_context.session )
-
-        # end auto update
-
-        flush_session = False
-        update_person = UpdatePerson()
-        for step in self.gui_run(update_person, self.gui_context, None):
-            if isinstance(step, tuple) and step[0] == 'FlushSession':
-                flush_session = True
-        self.assertTrue(flush_session)
 
 
 class FormActionsCase(

@@ -316,7 +316,7 @@ class OpenFormView( ListContextAction ):
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(
-            model_context.get_object(mode), model_context.admin, model_context.proxy
+            model_context.get_object(), model_context.admin, model_context.proxy
         )
 
     def get_state( self, model_context ):

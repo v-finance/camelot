@@ -107,7 +107,8 @@ class QueryModelProxy(ListModelProxy):
             return self._indexed_objects[obj]
         except KeyError:
             i = self._objects.index(obj)
-            self._indexed_objects[i+self._length] = obj
+            length = self._length if self._length is not None else len(self)
+            self._indexed_objects[i+length] = obj
             return i+self._length
 
     def remove(self, obj):
