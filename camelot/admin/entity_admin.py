@@ -314,9 +314,9 @@ and used as a custom action.
                     # the 'appropriate' way to get it from the class.  Getting it
                     # from the descriptor seems to manipulate  the actual descriptor
                     class_attribute = getattr(self.entity, field_name)
-                    # Attribute should always have an expression because of the check made above.
-                    expression = class_attribute.expression
                     if class_attribute is not None:
+                        # Attribute should always have an expression because of the check made above.
+                        expression = class_attribute.expression
                         columns = []
                         if isinstance(expression, (schema.Column, sql.elements.Label)):
                             columns = [expression]
