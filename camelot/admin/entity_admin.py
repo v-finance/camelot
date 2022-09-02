@@ -318,7 +318,7 @@ and used as a custom action.
                     expression = class_attribute.expression
                     if class_attribute is not None:
                         columns = []
-                        if isinstance(expression, sql.elements.Label):
+                        if isinstance(expression, (schema.Column, sql.elements.Label)):
                             columns = [expression]
                         elif isinstance(expression, sql.Select):
                             columns = expression.columns
