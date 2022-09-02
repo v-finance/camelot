@@ -45,7 +45,7 @@ from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
 from camelot.core.qt import Qt
 
-from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
+from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
 from sqlalchemy.orm.exc import UnmappedClassError
