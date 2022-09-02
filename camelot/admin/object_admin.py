@@ -1082,6 +1082,12 @@ be specified using the verbose_name attribute.
             state, False otherwise"""
         return False
 
+    def is_readable(self, _obj):
+        """
+        :return: True if the object is readable, False otherwise.
+            Deleted objects are not considered to be readable."""
+        return not self.is_deleted(_obj)
+
     def is_persistent(self, _obj):
         """:return: True if the object has a persisted state, False otherwise"""
         return False

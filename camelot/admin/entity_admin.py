@@ -659,6 +659,17 @@ and used as a custom action.
             return True
         return False
 
+    def is_readable(self, obj):
+        """
+        :return: True if the object is readable, False otherwise.
+            Deleted objects are not considered to be readable."""
+        state = instance_state( obj )
+        if state is None:
+            return False
+        if state.deleted or state.detached:
+            return False
+        return True
+
     def get_all_fields_and_attributes(self):
         """In addition to all the fields that are defined in the views
         or through the field_attributes, this method returns all the fields
