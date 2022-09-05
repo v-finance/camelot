@@ -1,7 +1,5 @@
 import unittest
 
-from camelot.core.qt import QtCore
-
 
 class I18NTest(unittest.TestCase):
 
