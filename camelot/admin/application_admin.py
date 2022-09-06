@@ -27,9 +27,7 @@
 #
 #  ============================================================================
 
-import itertools
 import logging
-import os
 import sys
 
 logger = logging.getLogger('camelot.admin.application_admin')
@@ -386,115 +384,6 @@ shortcut confusion and reduce the number of status updates.
         """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""
         if self.help_url:
             return QtCore.QUrl( self.help_url )
-
-    @classmethod
-    def _load_translator_from_file( cls, 
-                                    module_name, 
-                                    file_name,
-                                    directory = '', 
-                                    search_delimiters = '_', 
-                                    suffix = '.qm' ):
-        """
-        Tries to create a translator based on a file stored within a module.
-        The file is loaded through the pkg_resources, to enable loading it from
-        within a Python egg.  This method tries to mimic the behavior of
-        :meth:`QtCore.QTranslator.load` while looking for an appropriate
-        translation file.
-
-        :param module_name: the name of the module in which to look for
-            the translation file with pkg_resources.
-        :param file_name: the filename of the the tranlations file, without 
-            suffix
-        :param directory: the directory, relative to the module in which
-            to look for translation files
-        :param suffix: the suffix of the filename
-        :param search_delimiters: list of characters by which to split the file
-            name to search for variations of the file name
-        :return: :keyword:None if unable to load the file, otherwise a
-            :obj:`QtCore.QTranslator` object.
-
-        This method tries to load all file names with or without suffix, and
-        with or without the part after the search delimiter.
-        """
-        from camelot.core.resources import resource_string
-
-        #
-        # split the directory names and file name
-        #
-        file_name_parts = [ file_name ]
-        head, tail = os.path.split( file_name_parts[0] )
-        while tail:
-            file_name_parts[0] = tail
-            file_name_parts = [ head ] + file_name_parts
-            head, tail = os.path.split( file_name_parts[0] )
-        #
-        # for each directory and file name, generate all possibilities
-        #
-        file_name_parts_possibilities = []
-        for file_name_part in file_name_parts:
-            part_possibilities = []
-            for search_delimiter in search_delimiters:
-                delimited_parts = file_name_part.split( search_delimiter )
-                for i in range( len( delimited_parts ) ):
-                    part_possibility = search_delimiter.join( delimited_parts[:len(delimited_parts)-i] )
-                    part_possibilities.append( part_possibility )
-            file_name_parts_possibilities.append( part_possibilities )
-        #
-        # make the combination of all those possibilities
-        #
-        file_names = []
-        for parts_possibility in itertools.product( *file_name_parts_possibilities ):
-            file_name = os.path.join( *parts_possibility )
-            file_names.append( file_name )
-            file_names.append( file_name + suffix )
-        #
-        # now try all file names
-        #
-        translations = None
-        for file_name in file_names:
-            try:
-                logger.debug( u'try %s'%file_name )
-                translations = resource_string( module_name, os.path.join(directory,file_name) )
-                break
-            except IOError:
-                pass
-        if translations:
-            _translations_data_.append( translations ) # keep the data alive
-            translator = QtCore.QTranslator()
-            # PySide workaround for missing loadFromData method
-            if not hasattr( translator, 'loadFromData' ):
-                return
-            if translator.loadFromData( translations ):
-                logger.info("add translation %s" % (directory + file_name))
-                return translator
-
-    def get_translator(self):
-        """Reimplement this method to add application specific translations
-        to your application.  The default method returns a list with the
-        default Qt and the default Camelot translator for the current system
-        locale.  Call :meth:`QLocale.setDefault` before this method is called
-        if you want to load different translations then the system default.
-
-        :return: a list of :obj:`QtCore.QTranslator` objects that should be 
-            used to translate the application
-        """
-        translators = []
-        qt_translator = QtCore.QTranslator()
-        locale_name = QtCore.QLocale().name()
-        logger.info( u'using locale %s'%locale_name )
-        if qt_translator.load( "qt_" + locale_name,
-                               QtCore.QLibraryInfo.path( QtCore.QLibraryInfo.LibraryPath.TranslationsPath ) ):
-            translators.append(qt_translator)
-        logger.debug("Qt translator found for {} : {}".format(locale_name, len(translators)>0))
-        camelot_translator = self._load_translator_from_file(
-            'camelot', 
-            os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
-            'art/translations/'
-        )
-        logger.debug("Camelot translator found for {} : {}".format(locale_name, camelot_translator is not None))
-        if camelot_translator:
-            translators.append( camelot_translator )
-        return translators
 
     def get_about(self):
         """:return: the content of the About dialog, a string with html

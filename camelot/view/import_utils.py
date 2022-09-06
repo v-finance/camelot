@@ -41,7 +41,6 @@ from camelot.view.controls import delegates
 from camelot.admin.admin_route import register_list_actions
 from camelot.admin.action.list_action import delete_selection
 from camelot.admin.object_admin import ObjectAdmin
-from camelot.admin.table import Table
 from camelot.admin.action import Action, RowNumberAction
 from camelot.view.art import ColorScheme
 from camelot.core.exception import UserException
@@ -364,9 +363,6 @@ class RowDataAdmin(ObjectAdmin):
         settings = self.admin.get_settings()
         settings.beginGroup('import')
         return settings
-
-    def get_table(self):
-        return Table( self.get_columns() )
 
     def get_all_fields_and_attributes(self):
         """

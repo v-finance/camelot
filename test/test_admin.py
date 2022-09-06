@@ -159,15 +159,17 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
             def y(self, value):
                 self.x = value
 
+            class Admin(ObjectAdmin):
+                list_display = ['y']
+
         # test if a default admin is created
         admin = self.app_admin.get_related_admin(A)
-        self.assertEqual(type(admin), ObjectAdmin)
+        self.assertIsInstance(admin, ObjectAdmin)
         self.assertEqual(admin.entity, A)
         fa = admin.get_field_attributes('y')
         self.assertEqual(fa['editable'], True)
 
-        table = admin.get_table()
-        fields = table.get_fields()
+        fields = admin.get_columns()
         self.assertEqual(fields, ['y'])
 
         class B(A):
@@ -194,8 +196,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         fa = admin.get_field_attributes('z')
         self.assertEqual(fa['editable'], False)
 
-        table = admin.get_table()
-        fields = table.get_fields()
+        fields = admin.get_columns()
         self.assertEqual(fields, ['x', 'y'])
 
 

@@ -431,7 +431,11 @@ class BindingStorage(AbstractBindingStorage):
         return duplicate
 
     def list(self):
-        return self._bindings.keys()
+        """
+        Return the names of the bindings as valid names (tuples)
+        """
+        for key in self._bindings.keys():
+            yield (key,)
 
     def __contains__(self, name):
         return name in self._bindings
@@ -775,7 +779,11 @@ class NamingContext(AbstractNamingContext):
                 return context.resolve(name[1:])
 
     def list(self):
-        return self._bindings[BindingType.named_object].list()
+        yield from self._bindings[BindingType.named_object].list()
+        for name_of_named_context in self._bindings[BindingType.named_context].list():
+            named_context = self.resolve_context(name_of_named_context)
+            for name_in_named_context in named_context.list():
+                yield (*name_of_named_context, *name_in_named_context)
 
     def __len__(self):
         return len(self._bindings[BindingType.named_object])
@@ -926,6 +934,13 @@ class ConstantNamingContext(EndpointNamingContext):
                 raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=self.constant_type.arity.minimum)
 
+    def list(self):
+        """
+        Since an infinite amount of objects are bound to this context, the only reasonable result
+        of listing it is an empty list.
+        """
+        return []
+
 class EntityNamingContext(EndpointNamingContext):
     """
     Represents a stateless endpoint naming context, which handles resolving instances of a ´camelot.core.orm.entity.Entity´ class.
@@ -1002,6 +1017,13 @@ class EntityNamingContext(EndpointNamingContext):
         if instance is None:
             raise NameNotFoundException(name[0], BindingType.named_object)
         return instance
+
+    def list(self):
+        """
+        The database might contain a very large number of entities, to avoid looping over all entities in the
+        database, this method will return an empty list.
+        """
+        return []
 
 class WeakRefNamingContext(NamingContext):
     """

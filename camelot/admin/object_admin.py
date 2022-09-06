@@ -781,8 +781,7 @@ be specified using the verbose_name attribute.
                 if field_attributes.get('list_action') is None:
                     field_attributes['list_action'] = related_admin.get_list_action()
                 if column_width is None:
-                    table = related_admin.get_table()
-                    fields = table.get_fields(column_group=0)
+                    fields = related_admin.get_columns()
                     related_field_attributes = related_admin.get_field_attributes
                     related_column_widths = (
                         related_field_attributes(field).get('column_width', 0) for 
@@ -883,32 +882,14 @@ be specified using the verbose_name attribute.
         """
         return self.list_search
 
-    def get_table( self ):
-        """The definition of the table to be used in a list view
-        :return: a `camelot.admin.table.Table` object
-        """
-        from camelot.admin.table import structure_to_table
-        if self.list_display == []:
-            # take a copy to prevent contamination
-            self.list_display = list()
-            # no fields were defined, see if there are properties
-            for cls in inspect.getmro(self.entity):
-                for desc_name, desc in cls.__dict__.items():
-                    if desc_name.startswith('__'):
-                        continue
-                    if len(self.get_descriptor_field_attributes(desc_name)):
-                        self.list_display.insert(0, desc_name)
-        table = structure_to_table(self.list_display)
-        return table
-
     def get_columns(self):
         """
         The columns to be displayed in the list view, returns a list of field names.
 
         :return: [field_name, ...]
         """
-        table = self.get_table()
-        return [field for field in table.get_fields()]
+        # take a copy to prevent contamination
+        return [field for field in self.list_display]
 
     def get_validator( self, model = None):
         """Get a validator object
@@ -957,9 +938,9 @@ be specified using the verbose_name attribute.
 
     def get_form_display(self):
         from camelot.view.forms import Form, structure_to_form
-        if self.form_display:
+        if self.form_display is not None:
             return structure_to_form(self.form_display)
-        return Form( self.get_table().get_fields() )
+        return Form(self.get_columns())
 
     def set_field_value(self, obj, field_name, value):
         """Set the value of a field on an object.  By default this method calls
