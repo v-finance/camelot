@@ -54,7 +54,9 @@ def main_action():
         app = QtWidgets.QApplication([a for a in sys.argv if a])
     try:
         gui_context = ApplicationActionGuiContext()
-        action_runner = ActionRunner(tuple(['main']), gui_context, None)
+        action_runner = ActionRunner(
+            tuple(['main']), gui_context, tuple(['constant', 'null']), None
+        )
         action_runner.exec()
         result = app.exec()
         sys.exit(result)
