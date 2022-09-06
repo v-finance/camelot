@@ -281,6 +281,19 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         subcontext = self.context.bind_new_context('subcontext')
         self.assertEqual(subcontext.get_qual_name('test'), (*self.context_name, 'subcontext', 'test'))
 
+    def test_list(self):
+        initial_size_before_bind = len(list(initial_naming_context.list()))
+        if not isinstance(self.context, InitialNamingContext):
+            initial_naming_context.bind_context(self.context_name, self.context)
+            obj =  Object()
+            self.context.bind('obj1', obj)
+            context_size = len(list(self.context.list()))
+            self.assertEqual(context_size, 1)
+            initial_size_after_bind = len(list(initial_naming_context.list()))
+            self.assertEqual(initial_size_after_bind, initial_size_before_bind+context_size)
+            # keep obj alive to be able to test the weak ref naming context
+            del obj
+
     def test_bind(self):
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
         # and bind the context to the initial context.
