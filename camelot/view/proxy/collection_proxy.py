@@ -118,6 +118,14 @@ class RowModelContext(ListActionModelContext):
         self.field_attributes = dict()
         self.obj = None
         self.locale = QtCore.QLocale()
+        self._validator = None
+
+    @property
+    def validator(self):
+        if self._validator is None:
+            # todo : remove the concept of a validator (taken from CollectionProxy)
+            self._validator = self.admin.get_validator()
+        return self._validator
 
 
 # CollectionProxy subclasses ApplicationActionGuiContext to be able to behave

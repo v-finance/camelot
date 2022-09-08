@@ -128,16 +128,17 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
             self.set_action_state(self, tuple(action_route), action_state)
         # set the value last, so the validity can be updated
         model.set_value(proxy_route)
+        self.model_context_name = proxy_route
         list(model.add_columns((fn for fn, _fa in fields.items())))
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
-        self.run_action(self.sender(), self.gui_context, None)
+        self.run_action(self.sender(), self.gui_context, self.model_context_name, None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.gui_context, qaction.data())
+        self.run_action(qaction, self.gui_context, self.model_context_name, qaction.data())
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):

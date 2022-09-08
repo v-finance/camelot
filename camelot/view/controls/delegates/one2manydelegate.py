@@ -65,6 +65,9 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
                 transient.bind(str(next(transient_counter)), one2many_model_context),
                 Qt.ItemDataRole.EditRole
             )
+            # dirty hack to keep model context and its name bound as long as
+            # the item lives
+            item.setData(one2many_model_context, Qt.ItemDataRole.AccessibleDescriptionRole)
         return item
 
     def createEditor( self, parent, option, index ):

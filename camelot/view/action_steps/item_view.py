@@ -111,8 +111,6 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         model_context = RowModelContext()
         model_context.admin = admin
         model_context.proxy = proxy
-        # todo : remove the concept of a validator (taken from CollectionProxy)
-        model_context.validator = admin.get_validator()
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
 
         self._add_action_states(admin, proxy, self.actions, self.action_states)

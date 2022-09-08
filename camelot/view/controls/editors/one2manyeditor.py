@@ -119,18 +119,25 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
                 self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
+    def _run_list_context_action(self, action_widget, mode):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        model = table.model()
+        self.run_action(
+            action_widget, self.list_gui_context, model.get_value(), mode
+        )
+
     @QtCore.qt_slot(int)
     def combobox_activated(self, index):
         combobox = self.sender()
         mode = [combobox.itemData(index)]
-        self.run_action(combobox, self.list_gui_context, mode)
+        self._run_list_context_action(combobox, mode)
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        self.run_action(self.sender(), self.list_gui_context, None)
+        self._run_list_context_action(self.sender(), None)
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, action_routes, toolbar):
@@ -218,9 +225,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        self.run_action(self, self.list_gui_context, None)
+        self._run_list_context_action(self, None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.list_gui_context, qaction.data())
+        self._run_list_context_action(qaction, qaction.data())
