@@ -39,7 +39,7 @@ from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
+from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot_example.application_admin import MyApplicationAdmin
 from camelot_example.model import Movie
 

@@ -19,7 +19,7 @@ from camelot.core.qt import Qt, QtCore, delete, py_to_variant, variant_to_py
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.view.item_model.cache import ValueCache
-from camelot.view.proxy.collection_proxy import (CollectionProxy, ProxyRegistry, invalid_item)
+from camelot.view.proxy.collection_proxy import CollectionProxy, invalid_item
 
 LOGGER = logging.getLogger(__name__)
 
