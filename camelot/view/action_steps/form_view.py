@@ -116,7 +116,7 @@ class OpenFormView(AbstractCrudView):
     def render(self, gui_context, step):
         model = CollectionProxy(tuple(step['admin_route']))
         list(model.add_columns((fn for fn, fa in step['fields'].items())))
-        model.set_value(step['proxy_route'])
+        model.set_value(step['model_context_name'])
         form = FormView(
             title=step['title'], admin_route=step['admin_route'],
             close_route=tuple(step['close_route']), model=model,

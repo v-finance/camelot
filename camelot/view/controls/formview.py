@@ -354,12 +354,12 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
-        self.run_action(self.sender(), self.gui_context, None)
+        self.run_action(self.sender(), self.gui_context, self.model.get_value(), None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.gui_context, qaction.data())
+        self.run_action(qaction, self.gui_context, self.model.get_value(), qaction.data())
         
     def current_row_changed( self, current=None, previous=None ):
         current_index = self.gui_context.widget_mapper.currentIndex()

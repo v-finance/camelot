@@ -27,15 +27,20 @@
 #
 #  ============================================================================
 
+import itertools
 
-
+from ....core.naming import initial_naming_context
 from ....core.item_model import FieldAttributesRole
-from ....core.qt import variant_to_py, Qt, py_to_variant
+from ....core.qt import variant_to_py, Qt
+from ...proxy.collection_proxy import RowModelContext
 from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 import logging
 logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
+
+transient = initial_naming_context.resolve_context('transient')
+transient_counter = itertools.count()
 
 class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for many 2 one relations
@@ -53,7 +58,13 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super(One2ManyDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
             admin = model_context.field_attributes['admin']
-            item.setData(py_to_variant(admin.get_proxy(model_context.value)), Qt.ItemDataRole.EditRole)
+            one2many_model_context = RowModelContext()
+            one2many_model_context.admin = admin
+            one2many_model_context.proxy = admin.get_proxy(model_context.value)
+            item.setData(
+                transient.bind(str(next(transient_counter)), one2many_model_context),
+                Qt.ItemDataRole.EditRole
+            )
         return item
 
     def createEditor( self, parent, option, index ):
@@ -66,8 +77,8 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         logger.debug( 'set one2many editor data' )
         if index.model() is None:
             return
-        model = variant_to_py( index.data( Qt.ItemDataRole.EditRole ) )
-        editor.set_value( model )
+        value = index.data(Qt.ItemDataRole.EditRole)
+        editor.set_value(value)
         field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         editor.set_field_attributes(**field_attributes)
         # update field actions

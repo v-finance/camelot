@@ -1063,6 +1063,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         self.bind_new_context('entity', immutable=True)
         self.bind_new_context('object', immutable=True)
         self.bind_new_context('leases', immutable=True)
+        self.bind_context('transient', WeakRefNamingContext(), immutable=True)
 
     def new_context(self) -> NamingContext:
         """

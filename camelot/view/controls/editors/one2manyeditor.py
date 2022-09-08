@@ -33,7 +33,6 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
-from ....core.item_model import ListModelProxy, ProxyRegistry
 from ..view import ViewWithActionsMixin
 from ..tableview import TableWidget
 from .wideeditor import WideEditor
@@ -197,16 +196,16 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
                     ).width()
                     table.setColumnWidth(i, txtwidth)
 
-    def set_value(self, collection):
-        collection = CustomEditor.set_value(self, collection)
-        if collection is None:
-            collection = ListModelProxy([])
+    def set_value(self, value):
+        value = CustomEditor.set_value(self, value)
+        #if collection is None:
+            #collection = ListModelProxy([])
         model = self.get_model()
         if model is not None:
             # even if the collection 'is' the same object as the current
             # one, still need to set it, since the content of the collection
             # might have changed.
-            model.set_value(ProxyRegistry.register(collection))
+            model.set_value(value)
             self.update_list_action_states()
 
     def get_value(self):
