@@ -75,6 +75,8 @@ class SerializableMixinCase(object):
 
 class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
 
+    model_context_name = ('constant', 'null')
+
     def setUp(self):
         super().setUp()
         self.admin_route = app_admin.get_admin_route()
@@ -154,6 +156,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     action.
     """
 
+    model_context_name = ('constant', 'null')
     images_path = test_view.static_images_path
 
     @classmethod
@@ -275,6 +278,7 @@ class ListActionsCase(
     """
 
     images_path = test_view.static_images_path
+    model_context_name = ('test_list_actions_model_context',)
 
     @classmethod
     def setUpClass(cls):
@@ -721,6 +725,7 @@ class FormActionsCase(
     """Test the standard list actions.
     """
 
+    model_context_name = ('test_form_actions_model_context',)
     images_path = test_view.static_images_path
 
     @classmethod
@@ -785,6 +790,7 @@ class ApplicationActionsCase(
     """
 
     images_path = test_view.static_images_path
+    model_context_name = ('constant', 'null')
 
     @classmethod
     def setUpClass(cls):

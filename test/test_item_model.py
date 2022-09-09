@@ -7,6 +7,8 @@ from sqlalchemy.engine import Engine
 
 from .test_model import ExampleModelMixinCase
 from .test_proxy import A, B
+from . import app_admin
+
 from camelot.admin.action.field_action import ClearObject, SelectObject
 from camelot.admin.action.list_filter import Filter
 from camelot.admin.application_admin import ApplicationAdmin
@@ -19,7 +21,9 @@ from camelot.core.qt import Qt, QtCore, delete, py_to_variant, variant_to_py
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.view.item_model.cache import ValueCache
-from camelot.view.proxy.collection_proxy import CollectionProxy, invalid_item
+from camelot.view.proxy.collection_proxy import (
+    RowModelContext, CollectionProxy, invalid_item
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -575,12 +579,16 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
 
     @classmethod
     def setup_proxy(cls):
-        cls.proxy = QueryModelProxy(cls.session.query(Person))
+        proxy = QueryModelProxy(cls.session.query(Person))
+        model_context = RowModelContext()
+        model_context.admin = app_admin.get_related_admin(Person)
+        model_context.proxy = proxy
+        initial_naming_context.rebind(cls.model_context_name, model_context)
 
     @classmethod
     def setup_item_model(cls, admin_route, admin_name):
         cls.item_model = CollectionProxy(admin_route)
-        cls.item_model.set_value(ProxyRegistry.register(cls.proxy))
+        cls.item_model.set_value(cls.model_context_name)
         cls.columns = ('first_name', 'last_name')
         list(cls.item_model.add_columns(cls.columns))
         cls.item_model.timeout_slot()
