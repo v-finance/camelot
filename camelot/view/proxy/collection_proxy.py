@@ -427,7 +427,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
     
     def get_value(self):
         if self._model_context is not None:
-            return self._model_context.property('name')
+            return tuple(self._model_context.property('name'))
 
     @QtCore.qt_slot(list)
     def objectsUpdated(self, objects):
