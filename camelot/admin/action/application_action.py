@@ -30,7 +30,7 @@
 import logging
 import itertools
 
-from ...core.naming import initial_naming_context
+from ...core.naming import initial_naming_context, NameNotFoundException
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from .base import RenderHint
@@ -459,7 +459,10 @@ class Unbind(Action):
         if len(mode) == 0:
             yield UpdateProgress()
         for lease in mode:
-            initial_naming_context.unbind(tuple(lease))
+            try:
+                initial_naming_context.unbind(tuple(lease))
+            except NameNotFoundException:
+                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))
 
 unbind_name = application_action_context.bind(Unbind.name, Unbind(), True)
 
