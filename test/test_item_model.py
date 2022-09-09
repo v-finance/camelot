@@ -512,7 +512,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.item_model.objectsDeleted(list(name))
         # but removing an object should go through the item_model or there is no
         # way the item_model can be aware.
-        self.item_model.get_value().remove(a)
+        model_context = initial_naming_context.resolve(self.item_model.get_value())
+        model_context.proxy.remove(a)
         # but the timeout might be after the object was deleted
         self.item_model.timeout_slot()
         self.process()
@@ -563,17 +564,19 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         a0 = self.collection[0]
         # get the data once, to fill the cached values
         self._load_data(self.item_model)
-        returned_list = self._data(0, 2, self.item_model)
-        self.assertEqual(len(returned_list), len(a0.z))
+        model_context_name = self._data(0, 2, self.item_model)
+        model_context = initial_naming_context.resolve(model_context_name)
+        proxy = model_context.proxy
+        self.assertEqual(len(proxy), len(a0.z))
         # manipulate the returned list, and see if the original is manipulated
         # as well
         new_z = object()
         self.assertFalse(new_z in a0.z )
-        returned_list.append(new_z)
+        proxy.append(new_z)
         self.assertTrue( new_z in a0.z )
         z0 = a0.z[0]
         self.assertTrue( z0 in a0.z )
-        returned_list.remove(z0)
+        proxy.remove(z0)
         self.assertFalse( z0 in a0.z )
 
     def test_completion(self):

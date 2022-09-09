@@ -11,7 +11,7 @@ from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
-from .test_item_model import A, ItemModelCaseMixin, QueryQStandardItemModelMixinCase
+from .test_item_model import A, QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
 from camelot.admin.action import GuiContext
 from camelot.admin.action.application_action import ApplicationActionGuiContext
@@ -41,7 +41,6 @@ from camelot.view.controls.tableview import TableWidget
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot_example.application_admin import MyApplicationAdmin
-from camelot_example.model import Movie
 
 logger = logging.getLogger('view.unittests')
 
