@@ -595,10 +595,11 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
 
     @classmethod
-    def setup_proxy(cls):
+    def setup_proxy(cls, admin_cls=Person.Admin):
+        admin = admin_cls(app_admin, Person)
         proxy = QueryModelProxy(cls.session.query(Person))
         model_context = RowModelContext()
-        model_context.admin = app_admin.get_related_admin(Person)
+        model_context.admin = admin
         model_context.proxy = proxy
         initial_naming_context.rebind(cls.model_context_name, model_context)
 

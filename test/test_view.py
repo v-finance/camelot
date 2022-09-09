@@ -838,6 +838,7 @@ class ControlsTest(
         class SmallColumnsAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
 
+        self.thread.post(self.setup_proxy, args=(SmallColumnsAdmin,))
         admin = SmallColumnsAdmin( self.app_admin, Person )
         widget = TableWidget()
         model = CollectionProxy(admin.get_admin_route())
@@ -866,6 +867,7 @@ class ControlsTest(
                                  'suffix':{'column_width':8},}
             # end column width
 
+        self.thread.post(self.setup_proxy, args=(ColumnWidthAdmin,))
         admin = ColumnWidthAdmin( self.app_admin, Person )
         widget = TableWidget()
         model = CollectionProxy(admin.get_admin_route())
