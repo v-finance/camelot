@@ -60,21 +60,7 @@ The GUI context in which an action is running.  This object can contain
 references to widgets and other useful information.  This object cannot
 contain reference to anything database or model related, as those belong
 strictly to the :class:`ModelContext`
-
-.. attribute:: mode_name
-
-    the name of the mode in which the action was triggered
-    
-.. attribute:: model_context
-
-    a subclass of :class:`ModelContext` to be used in :meth:`create_model_context`
-    as the type of object to return.
     """
-    
-    model_context = ModelContext
-    
-    def __init__( self ):
-        self.mode_name = None
 
     def get_progress_dialog(self):
         """
@@ -103,18 +89,6 @@ strictly to the :class:`ModelContext`
         """
         return None
 
-    def create_model_context( self ):
-        """Create a :class:`ModelContext` filled with base information, 
-        extracted from this GuiContext.  This function will be called in the
-        GUI thread, so it should not access the model directly, but rather
-        extract all information needed from te GUI to be available in the
-        model.
-        
-        :return: a :class:`ModelContext`
-        """
-        context = self.model_context()
-        return context
-        
     def copy( self, base_class = None ):
         """Create a copy of the GuiContext, this function is used
         to create new GuiContext's that are more specialized without
@@ -124,7 +98,6 @@ strictly to the :class:`ModelContext`
             if the new context should be of the same type as the copied context.
         """
         new_context = (base_class or self.__class__)()
-        new_context.mode_name = self.mode_name
         return new_context
 
 

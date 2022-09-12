@@ -85,10 +85,6 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
             LOGGER.warn('Number of leases is growing to {}'.format(len(leases)))
 
     @classmethod
-    def create_model_context(cls):
-        return None
-
-    @classmethod
     def gui_run(cls, gui_context, serialized_step):
         if is_cpp_gui_context(gui_context):
             qml_action_step(gui_context, cls.__name__, serialized_step)

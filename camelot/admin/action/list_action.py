@@ -171,9 +171,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
        form.
        
     """
-        
-    model_context = ListActionModelContext
-    
+
     def __init__( self ):
         super( ListActionGuiContext, self ).__init__()
         self.item_view = None
@@ -193,9 +191,6 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
             return self.item_view.model()
         return qml_action_dispatch.get_model(self.gui_context_name)
 
-    def create_model_context( self ):
-        return self.get_item_model()._model_context
-        
     def copy( self, base_class = None ):
         new_context = super( ListActionGuiContext, self ).copy( base_class )
         new_context.item_view = self.item_view

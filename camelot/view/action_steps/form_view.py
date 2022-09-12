@@ -102,6 +102,9 @@ class OpenFormView(AbstractCrudView):
         self.form_state = admin.form_state
         self._add_actions(admin, self.actions)
         super().__post_init__(value, admin, proxy)
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        model_context.current_row = self.row
+        model_context.selection_count = 1
 
     @staticmethod
     def _add_actions(admin, actions):
