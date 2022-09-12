@@ -43,7 +43,7 @@ from ...admin.action.list_action import ListActionModelContext
 from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.object_admin import ObjectAdmin
-from ...core.item_model import AbstractModelProxy, ProxyRegistry
+from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt
 from ...core.serializable import DataclassSerializable
@@ -96,7 +96,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
     proxy: InitVar[AbstractModelProxy] = None
 
     title: Union[str, ugettext_lazy] = field(init=False)
-    proxy_route: Route = field(init=False)
+    model_context_name: Route = field(init=False)
     actions: List[RouteWithRenderHint] = field(init=False, default_factory=list)
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     crud_actions: CrudActions = field(init=False)
@@ -107,7 +107,12 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         assert value is not None
         assert isinstance(proxy, AbstractModelProxy)
         self.crud_actions = CrudActions(admin)
-        self.proxy_route = ProxyRegistry.register(proxy)
+        # Create the model_context for the table view
+        model_context = RowModelContext()
+        model_context.admin = admin
+        model_context.proxy = proxy
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+
         self._add_action_states(admin, proxy, self.actions, self.action_states)
         self.group = admin.get_admin_route()[-2][:255]
 
@@ -126,7 +131,8 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
 
         :return: the list of objects to display in the form view
         """
-        return ProxyRegistry.get(self.proxy_route).get_model()
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        return model_context.proxy.get_model()
 
 @dataclass
 class UpdateTableView(AbstractCrudView):
@@ -212,18 +218,10 @@ class OpenTableView( UpdateTableView ):
     """
     new_tab: bool = False
     admin_route: Route = field(init=False)
-    model_context_name: Route = field(init=False)
 
     def __post_init__(self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
-        # Create the model_context for the table view
-        model_context = RowModelContext()
-        model_context.admin = admin
-        model_context.proxy = admin.get_proxy(value)
-        # todo : remove the concept of a validator (taken from CollectionProxy)
-        model_context.validator = admin.get_validator()
-        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
 
     @classmethod
     def render(cls, gui_context, step):

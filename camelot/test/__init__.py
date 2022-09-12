@@ -110,13 +110,15 @@ class ActionMixinCase(object):
     Helper methods to simulate running actions in a different thread
     """
 
+    # specify a model context name in each test case
+    model_context_name = None
+
     @classmethod
     def get_state(cls, action, gui_context):
         """
         Get the state of an action in the model thread and return
         the result.
         """
-        model_context = gui_context.create_model_context()
 
         class StateRegister(QtCore.QObject):
 
@@ -128,6 +130,7 @@ class ActionMixinCase(object):
             def set_state(self, state):
                 self.state = state
 
+        model_context = initial_naming_context.resolve(cls.model_context_name)
         state_register = StateRegister()
         cls.thread.post(
             action.get_state, state_register.set_state, args=(model_context,)
@@ -146,7 +149,7 @@ class ActionMixinCase(object):
 
             def __init__(self, action_name, gui_context, mode):
                 super(IteratingActionRunner, self).__init__(
-                    action_name, gui_context, mode
+                    action_name, gui_context, cls.model_context_name, mode
                 )
                 self.return_queue = []
                 self.exception_queue = []

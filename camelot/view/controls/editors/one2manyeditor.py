@@ -33,7 +33,6 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
-from ....core.item_model import ListModelProxy, ProxyRegistry
 from ..view import ViewWithActionsMixin
 from ..tableview import TableWidget
 from .wideeditor import WideEditor
@@ -120,18 +119,25 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
                 self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
+    def _run_list_context_action(self, action_widget, mode):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        model = table.model()
+        self.run_action(
+            action_widget, self.list_gui_context, model.get_value(), mode
+        )
+
     @QtCore.qt_slot(int)
     def combobox_activated(self, index):
         combobox = self.sender()
         mode = [combobox.itemData(index)]
-        self.run_action(combobox, self.list_gui_context, mode)
+        self._run_list_context_action(combobox, mode)
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        self.run_action(self.sender(), self.list_gui_context, None)
+        self._run_list_context_action(self.sender(), None)
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, action_routes, toolbar):
@@ -197,16 +203,16 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
                     ).width()
                     table.setColumnWidth(i, txtwidth)
 
-    def set_value(self, collection):
-        collection = CustomEditor.set_value(self, collection)
-        if collection is None:
-            collection = ListModelProxy([])
+    def set_value(self, value):
+        value = CustomEditor.set_value(self, value)
+        #if collection is None:
+            #collection = ListModelProxy([])
         model = self.get_model()
         if model is not None:
             # even if the collection 'is' the same object as the current
             # one, still need to set it, since the content of the collection
             # might have changed.
-            model.set_value(ProxyRegistry.register(collection))
+            model.set_value(value)
             self.update_list_action_states()
 
     def get_value(self):
@@ -219,9 +225,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        self.run_action(self, self.list_gui_context, None)
+        self._run_list_context_action(self, None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.list_gui_context, qaction.data())
+        self._run_list_context_action(qaction, qaction.data())

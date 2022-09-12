@@ -53,7 +53,7 @@ class Serializable(object):
 class DataclassEncoder(json.JSONEncoder):
 
     def default(self, obj):
-        from camelot.view.action_steps.orm import LiveRef
+        from ..view.qml_view import LiveRef
 
         if isinstance(obj, ugettext_lazy):
             return str(obj)

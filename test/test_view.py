@@ -11,7 +11,7 @@ from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
-from .test_item_model import A, ItemModelCaseMixin, QueryQStandardItemModelMixinCase
+from .test_item_model import A, QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
 from camelot.admin.action import GuiContext
 from camelot.admin.action.application_action import ApplicationActionGuiContext
@@ -39,9 +39,8 @@ from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
+from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot_example.application_admin import MyApplicationAdmin
-from camelot_example.model import Movie
 
 logger = logging.getLogger('view.unittests')
 
@@ -443,10 +442,11 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
 class FormTest(
     RunningThreadCase,
-    GrabMixinCase, ItemModelCaseMixin,ExampleModelMixinCase
+    GrabMixinCase, QueryQStandardItemModelMixinCase, ExampleModelMixinCase
     ):
 
     images_path = static_images_path
+    model_context_name = ('form_test_model_context',)
 
     @classmethod
     def setUpClass(cls):
@@ -464,24 +464,24 @@ class FormTest(
     def setUp(self):
         super().setUp()
         self.app_admin = ApplicationAdmin()
-        self.movie_admin = self.app_admin.get_related_admin( Movie )
-        self.admin_route = self.movie_admin.get_admin_route()
-        self.movie_model = CollectionProxy(self.admin_route)
-        proxy = self.movie_admin.get_proxy(self.movie_admin.get_query())
-        self.movie_model.set_value(ProxyRegistry.register(proxy))
-        list(self.movie_model.add_columns(
-            [fn for fn,fa in self.movie_admin.get_fields()]
+        self.person_admin = self.app_admin.get_related_admin(Person)
+        self.admin_route = self.person_admin.get_admin_route()
+        self.person_model = CollectionProxy(self.admin_route)
+        self.thread.post(self.setup_proxy)
+        self.person_model.set_value(self.model_context_name)
+        list(self.person_model.add_columns(
+            [fn for fn,fa in self.person_admin.get_fields()]
         ))
-        self._load_data(self.movie_model)
+        self._load_data(self.person_model)
         self.qt_parent = QtCore.QObject()
         delegate = DelegateManager(self.qt_parent)
         widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
-        widget_mapper.setModel( self.movie_model )
+        widget_mapper.setModel( self.person_model )
         widget_mapper.setItemDelegate(delegate)
         fields = dict((f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
-            }) for f, fa in self.movie_admin.get_fields())
+            }) for f, fa in self.person_admin.get_fields())
         self.widgets = FormEditors(self.qt_parent, fields)
         self.person_entity = Person
         self.gui_context = GuiContext()
@@ -496,47 +496,47 @@ class FormTest(
         return form_data[1]
         
     def test_form(self):
-        form_data = self._get_serialized_form_display_data(Movie.Admin.form_display)
-        self.grab_widget(Movie.Admin.form_display.render(self.widgets, form_data))
-        form = forms.Form( ['title', 'short_description',
-                            'director', 'releasedate',
-                            'tags', forms.Break(),
+        form_data = self._get_serialized_form_display_data(self.person_admin.form_display)
+        self.grab_widget(self.person_admin.form_display.render(self.widgets, form_data))
+        form = forms.Form( ['first_name', 'last_name',
+                            'birthdate', 'passport_number',
+                            'picture', forms.Break(),
                              forms.Label('End')] )
         self.assertTrue( str( form ) )
 
     def test_tab_form(self):
-        form = forms.TabForm([('First tab', ['title', 'short_description']),
-                              ('Second tab', ['director', 'releasedate'])])
+        form = forms.TabForm([('First tab', ['first_name', 'last_name']),
+                              ('Second tab', ['birthdate', 'passport_number'])])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(form.render(self.widgets, form_data))
-        form.add_tab_at_index( 'Main', forms.Form(['rating']), 0 )
+        form.add_tab_at_index( 'Main', forms.Form(['picture']), 0 )
         self.assertTrue( form.get_tab( 'Second tab' ) )
         self.assertTrue( str( form ) )
 
     def test_group_box_form(self):
-        form = forms.GroupBoxForm('Movie', ['title', 'short_description'])
+        form = forms.GroupBoxForm('Person', ['first_name', 'last_name'])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.GroupBoxForm.render(self.widgets, form_data))
 
     def test_grid_form(self):
-        form = forms.GridForm([['title',                      'short_description'],
-                               ['director',                   'releasedate'],
-                               [forms.ColumnSpan('rating', 2)              ]
+        form = forms.GridForm([['first_name',          'last_name'],
+                               ['birthdate',           'passport_number'],
+                               [forms.ColumnSpan('picture', 2)              ]
                                ])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.GridForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
-        form.append_row( ['cover', 'script'] )
+        form.append_row( ['personal_title', 'suffix'] )
         form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
-        form = forms.VBoxForm([['title', 'short_description'], ['director', 'releasedate']])
+        form = forms.VBoxForm([['first_name', 'last_name'], ['birthdate', 'passport_number']])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.VBoxForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
 
     def test_hbox_form(self):
-        form = forms.HBoxForm([['title', 'short_description'], ['director', 'releasedate']])
+        form = forms.HBoxForm([['first_name', 'last_name'], ['birthdate', 'passport_number']])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.HBoxForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
@@ -812,6 +812,7 @@ class ControlsTest(
     """Test some basic controls"""
 
     images_path = static_images_path
+    model_context_name = ('controls_test_model_context',)
 
     @classmethod
     def setUpClass(cls):
@@ -837,11 +838,12 @@ class ControlsTest(
         class SmallColumnsAdmin( Person.Admin ):
             list_display = ['first_name', 'suffix']
 
+        self.thread.post(self.setup_proxy, args=(SmallColumnsAdmin,))
         admin = SmallColumnsAdmin( self.app_admin, Person )
         widget = TableWidget()
         model = CollectionProxy(admin.get_admin_route())
         widget.setModel(model)
-        model.set_value(ProxyRegistry.register(self.proxy))
+        model.set_value(self.model_context_name)
         list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
         self.process()
@@ -865,11 +867,12 @@ class ControlsTest(
                                  'suffix':{'column_width':8},}
             # end column width
 
+        self.thread.post(self.setup_proxy, args=(ColumnWidthAdmin,))
         admin = ColumnWidthAdmin( self.app_admin, Person )
         widget = TableWidget()
         model = CollectionProxy(admin.get_admin_route())
         widget.setModel(model)
-        model.set_value(ProxyRegistry.register(self.proxy))
+        model.set_value(self.model_context_name)
         list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
         self.process()
@@ -922,6 +925,7 @@ class SnippetsTest(RunningThreadCase,
     ):
 
     images_path = static_images_path
+    model_context_name = ('snippets_test_model_context',)
 
     @classmethod
     def setUpClass(cls):
@@ -955,7 +959,7 @@ class SnippetsTest(RunningThreadCase,
             columns=person_columns,
             action_routes=[],
         )
-        editor.set_value(self.proxy)
+        editor.set_value(self.model_context_name)
         self.process()
         editor_model = editor.get_model()
         self.assertTrue(editor_model)

@@ -128,9 +128,7 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
        the view in which the action is triggered.
        
     """
-        
-    model_context = FormActionModelContext
-    
+
     def __init__(self):
         super( FormActionGuiContext, self ).__init__()
         self.widget_mapper = None
@@ -144,15 +142,6 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
             return self.view.window()
         return super(FormActionGuiContext, self).get_window()
 
-    def create_model_context(self):
-        context = super( FormActionGuiContext, self ).create_model_context()
-        context.proxy = self.widget_mapper.model().get_value()
-        current_index = self.widget_mapper.currentIndex()
-        if current_index >= 0:
-            context.current_row = current_index
-            context.selection_count = 1
-        return context
-        
     def copy(self, base_class = None):
         new_context = super( FormActionGuiContext, self ).copy( base_class )
         new_context.widget_mapper = self.widget_mapper
