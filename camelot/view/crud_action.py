@@ -148,6 +148,8 @@ class ChangeSelection(Action):
             current_obj = model_context.get_object(mode['current_row'])
             if id(current_obj) == mode['current_row_id']:
                 model_context.current_row = mode['current_row']
+            else:
+                logger.error('Invalid current_row_id used for selection')
         # validfate & set selected rows
         model_context.selected_rows = []
         if len(mode['selected_rows']) == len(mode['selected_rows_ids']):
@@ -160,6 +162,8 @@ class ChangeSelection(Action):
                 end_obj = model_context.get_object(row_range[1])
                 if id(begin_obj) == row_range_ids[0] and id(end_obj) == row_range_ids[1]:
                     model_context.selected_rows.append(row_range)
+                else:
+                    logger.error('Invalid selected_rows_ids used for selection')
 
         model_context.current_column = mode['current_column']
         model_context.current_field_name = mode['current_field_name']
