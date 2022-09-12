@@ -19,7 +19,7 @@ from camelot.core.item_model import (
 )
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
-from camelot.core.qt import Qt, QtCore, delete, py_to_variant, variant_to_py
+from camelot.core.qt import Qt, QtCore, is_deleted, delete, py_to_variant, variant_to_py
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.view.item_model.cache import ValueCache
@@ -209,6 +209,14 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.item_model.timeout_slot()
         self.process()
         self.signal_register = ItemModelSignalRegister(self.item_model)
+
+    def tearDown(self):
+        # since multiple tests share the same model context name, avoid
+        # interaction between tests by deleting item_models holding a reference
+        # to that name
+        if not is_deleted(self.item_model):
+            delete(self.item_model)
+        self.item_model = None
 
     def test_rowcount(self):
         # the rowcount remains 0 while no timeout has passed

@@ -25,7 +25,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.validator.entity_validator import EntityValidator
-from camelot.core.qt import QtGui, QtWidgets, Qt
+from camelot.core.qt import QtGui, QtWidgets, Qt, delete
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
@@ -328,6 +328,8 @@ class ListActionsCase(
 
     def tearDown( self ):
         Session().expunge_all()
+        delete(self.item_model)
+        self.item_model = None
 
     def test_gui_context(self):
         self.assertTrue( isinstance( self.gui_context.copy(),
