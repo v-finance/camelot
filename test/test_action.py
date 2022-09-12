@@ -24,7 +24,6 @@ from camelot.admin.action.list_action import SetFilters, ListActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.qt import QtGui, QtWidgets, Qt
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import EntityBase, Session
