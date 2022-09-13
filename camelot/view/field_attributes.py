@@ -238,6 +238,16 @@ _sqlalchemy_to_python_type_ = {
         'search_strategy': list_filter.NoSearch,
         'filter_strategy': list_filter.NoSearch,
     },
+
+    camelot.types.Color: lambda f: {
+        'delegate': delegates.ColorDelegate,
+        'python_type': str,
+        'from_string': string_from_string,
+        'editable': True,
+        'nullable': True,
+        'search_strategy': list_filter.StringSearch,
+        'filter_strategy': list_filter.NoSearch,
+    },
 }
 
 #
