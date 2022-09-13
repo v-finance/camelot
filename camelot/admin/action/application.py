@@ -29,6 +29,7 @@
 import logging
 
 from ...core.qt import QtCore
+from ...core.sql import metadata
 from ...core.utils import ugettext as _
 from ..application_admin import ApplicationAdmin
 from .base import Action
@@ -122,7 +123,8 @@ class Application( Action ):
         yield action_steps.UpdateProgress( 1, 5, _('Setup database') )
         settings.setup_model()
         yield action_steps.UpdateProgress( 2, 5, _('Load translations') )
-        load_translations()
+        connection = metadata.bind.connect()
+        load_translations(connection)
         yield action_steps.UpdateProgress( 3, 5, _('Install translator') )
         yield action_steps.InstallTranslator( model_context.admin ) 
         yield action_steps.UpdateProgress( 4, 5, _('Create main window') )
