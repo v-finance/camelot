@@ -370,11 +370,16 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_LanguageEditor(self):
         editor = editors.LanguageEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 'en_US' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'en_US' )
-        self.assert_valid_editor( editor, 'en_US' )
+        editor.set_value( 'en_GB' )
+        self.grab_default_states( editor )
+        self.assertEqual( editor.get_value(), 'en_GB' )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+
 
     def test_Many2OneEditor(self):
         editor = editors.Many2OneEditor(parent=None)
@@ -736,7 +741,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         delegate = delegates.ColorDelegate(parent=None, **self.kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ColorEditor))
-        color = [255, 255, 0]
+        color = '8f3a84'
         self.grab_delegate(delegate, color)
         delegate = delegates.ColorDelegate(parent=None, editable=False)
         editor = delegate.createEditor(None, self.option, None)

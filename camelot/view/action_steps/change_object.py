@@ -70,13 +70,14 @@ class ChangeObjectDialog( StandaloneWizardPage ):
                   form_actions,
                   accept,
                   reject,
+                  window_title,
                   title =  _('Please complete'),
                   subtitle = _('Complete the form and press the OK button'),
                   icon = FontIcon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
                   flags=QtCore.Qt.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
-        self.setWindowTitle( admin.get_verbose_name() )
+        self.setWindowTitle( str(window_title) )
         self.set_banner_logo_pixmap( icon.getQPixmap() )
         self.set_banner_title( six.text_type(title) )
         self.set_banner_subtitle( six.text_type(subtitle) )
@@ -258,6 +259,10 @@ class ChangeObject(ActionStep):
 
         The text shown in the reject button
 
+    .. attribute:: window_title
+
+        The window title for the dialog
+
     """
 
     def __init__(self, obj, admin):
@@ -266,6 +271,7 @@ class ChangeObject(ActionStep):
         self.admin = admin
         self.accept = _('OK')
         self.reject = _('Cancel')
+        self.window_title = str(self.admin.get_verbose_name())
         self.form_display = self.admin.get_form_display()
         self.columns = self.admin.get_fields()
         self.form_actions = self.admin.get_form_actions(None)
@@ -289,7 +295,8 @@ class ChangeObject(ActionStep):
                                     self.columns,
                                     self.form_actions,
                                     self.accept,
-                                    self.reject)
+                                    self.reject,
+                                    self.window_title)
         return dialog
 
     def gui_run( self, gui_context ):

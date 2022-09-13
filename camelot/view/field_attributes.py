@@ -211,6 +211,7 @@ _sqlalchemy_to_python_type_ = {
         'nullable': True,
         'widget': 'combobox',
         'operators' : _numerical_operators,
+        'to_string': enumeration_to_string,
         'search_strategy': list_filter.NoSearch,
         'filter_strategy': list_filter.NoSearch,
     },
@@ -235,6 +236,16 @@ _sqlalchemy_to_python_type_ = {
         'operators' : _text_operators,
         'remove_original': False,
         'search_strategy': list_filter.NoSearch,
+        'filter_strategy': list_filter.NoSearch,
+    },
+
+    camelot.types.Color: lambda f: {
+        'delegate': delegates.ColorDelegate,
+        'python_type': str,
+        'from_string': string_from_string,
+        'editable': True,
+        'nullable': True,
+        'search_strategy': list_filter.StringSearch,
         'filter_strategy': list_filter.NoSearch,
     },
 }

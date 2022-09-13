@@ -29,10 +29,19 @@
 
 import six
 
-from .customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.core.qt import Qt
 from camelot.view.controls import editors
+
+from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 @six.add_metaclass(DocumentationMetaclass)
 class ColorDelegate(CustomDelegate):
 
     editor = editors.ColorEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, value, fa_values):
+        item = super(ColorDelegate, cls).get_standard_item(locale, value, fa_values)
+        color = editors.ColorEditor.to_qcolor(value, Qt.transparent)
+        item.setData(color, Qt.BackgroundColorRole)
+        return item
