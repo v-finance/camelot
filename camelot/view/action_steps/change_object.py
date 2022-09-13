@@ -35,7 +35,7 @@ from typing import List, Union
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
-from camelot.core.item_model import ValidRole, ValidMessageRole, ProxyRegistry
+from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
@@ -128,16 +128,17 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
             self.set_action_state(self, tuple(action_route), action_state)
         # set the value last, so the validity can be updated
         model.set_value(proxy_route)
+        self.model_context_name = proxy_route
         list(model.add_columns((fn for fn, _fa in fields.items())))
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
-        self.run_action(self.sender(), self.gui_context, None)
+        self.run_action(self.sender(), self.gui_context, self.model_context_name, None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.gui_context, qaction.data())
+        self.run_action(qaction, self.gui_context, self.model_context_name, qaction.data())
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
@@ -292,7 +293,7 @@ class ChangeObject(OpenFormView):
         """create the dialog. this method is used to unit test
         the action step."""
         dialog = ChangeObjectDialog(
-            step['proxy_route'],
+            step['model_context_name'],
             tuple(step['admin_route']),
             step['title'],
             step['form'],
@@ -376,14 +377,6 @@ class ChangeObjects(UpdateTableView):
     def _add_actions(admin, actions):
         actions.extend(admin.get_related_toolbar_actions('onetomany'))
 
-    def get_objects(self):
-        """Use this method to get access to the objects to change in unit tests
-
-        :return: the object to change
-        """
-        proxy = ProxyRegistry.get(self.proxy_route)
-        return proxy.get_model()
-
     def get_admin(self):
         """Use this method to get access to the admin in unit tests"""
         return initial_naming_context.resolve(self.admin_route)
@@ -393,7 +386,7 @@ class ChangeObjects(UpdateTableView):
         """create the dialog. this method is used to unit test
         the action step."""
         dialog = ChangeObjectsDialog(
-            ProxyRegistry.pop(step['proxy_route']),
+            tuple(step['model_context_name']),
             tuple(step['admin_route']), step['columns'],
             [RouteWithRenderHint(tuple(rwrh['route']), RenderHint(rwrh['render_hint'])) for rwrh in step['actions']],
             set(step['invalid_rows']), step['action_states'],

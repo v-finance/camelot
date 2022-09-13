@@ -7,19 +7,25 @@ from sqlalchemy.engine import Engine
 
 from .test_model import ExampleModelMixinCase
 from .test_proxy import A, B
+from . import app_admin
+
 from camelot.admin.action.field_action import ClearObject, SelectObject
 from camelot.admin.action.list_filter import Filter
 from camelot.admin.application_admin import ApplicationAdmin
-from camelot.core.item_model import (AbstractModelProxy, ActionRoutesRole, ActionStatesRole, CompletionPrefixRole,
-                                       CompletionsRole, FieldAttributesRole, ObjectRole, ValidMessageRole, ValidRole,
-                                       VerboseIdentifierRole)
+from camelot.core.item_model import (
+    ActionRoutesRole, ActionStatesRole, CompletionPrefixRole,
+    CompletionsRole, FieldAttributesRole, ObjectRole, ValidMessageRole, ValidRole,
+    VerboseIdentifierRole
+)
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
-from camelot.core.qt import Qt, QtCore, delete, py_to_variant, variant_to_py
+from camelot.core.qt import Qt, QtCore, is_deleted, delete, py_to_variant, variant_to_py
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.view.item_model.cache import ValueCache
-from camelot.view.proxy.collection_proxy import (CollectionProxy, ProxyRegistry, invalid_item)
+from camelot.view.proxy.collection_proxy import (
+    RowModelContext, CollectionProxy, invalid_item
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -107,6 +113,15 @@ class ItemModelCaseMixin(object):
     Helper methods to test a QAbstractItemModel
     """
 
+    @classmethod
+    def setup_proxy(cls, type_, collection):
+        admin = app_admin.get_related_admin(type_)
+        proxy = admin.get_proxy(collection)
+        model_context = RowModelContext()
+        model_context.admin = admin
+        model_context.proxy = proxy
+        initial_naming_context.rebind(cls.model_context_name, model_context)
+
     def _load_data(self, item_model):
         """Trigger the loading of data by the QAbstractItemModel"""
         item_model.timeout_slot()
@@ -168,7 +183,9 @@ class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTest
     pass
 
 class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests, ExampleModelMixinCase):
-    
+
+    model_context_name = ('test_item_model_thread_model_context',)
+
     @classmethod
     def setUpClass(cls):
         super(ItemModelThreadCase, cls).setUpClass()
@@ -185,13 +202,21 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
         self.item_model = CollectionProxy(self.admin_route)
-        proxy = self.admin.get_proxy(self.collection)
-        self.item_model.set_value(ProxyRegistry.register(proxy))
+        self.thread.post(self.setup_proxy, args=(self.A, self.collection,))
+        self.item_model.set_value(self.model_context_name)
         self.columns = self.admin.list_display
         list(self.item_model.add_columns(self.columns))
         self.item_model.timeout_slot()
         self.process()
         self.signal_register = ItemModelSignalRegister(self.item_model)
+
+    def tearDown(self):
+        # since multiple tests share the same model context name, avoid
+        # interaction between tests by deleting item_models holding a reference
+        # to that name
+        if not is_deleted(self.item_model):
+            delete(self.item_model)
+        self.item_model = None
 
     def test_rowcount(self):
         # the rowcount remains 0 while no timeout has passed
@@ -233,7 +258,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['icon']['name'], SelectObject.icon.name)
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['tooltip'], ClearObject.tooltip)
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['icon']['name'], ClearObject.icon.name)
-        self.assertTrue(isinstance(self._data(1, 2, self.item_model), AbstractModelProxy))
+        self.assertTrue(isinstance(self._data(1, 2, self.item_model), tuple))
+        self.assertEqual(self._data(1, 2, self.item_model)[0], 'transient')
         self.assertEqual(self._data(1, 3, self.item_model), self.collection[1].created)
         
         self.assertEqual(self._data(-1, -1, self.item_model, role=ObjectRole, validate_index=False), None)
@@ -494,7 +520,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.item_model.objectsDeleted(list(name))
         # but removing an object should go through the item_model or there is no
         # way the item_model can be aware.
-        self.item_model.get_value().remove(a)
+        model_context = initial_naming_context.resolve(self.item_model.get_value())
+        model_context.proxy.remove(a)
         # but the timeout might be after the object was deleted
         self.item_model.timeout_slot()
         self.process()
@@ -545,17 +572,19 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         a0 = self.collection[0]
         # get the data once, to fill the cached values
         self._load_data(self.item_model)
-        returned_list = self._data(0, 2, self.item_model)
-        self.assertEqual(len(returned_list), len(a0.z))
+        model_context_name = self._data(0, 2, self.item_model)
+        model_context = initial_naming_context.resolve(model_context_name)
+        proxy = model_context.proxy
+        self.assertEqual(len(proxy), len(a0.z))
         # manipulate the returned list, and see if the original is manipulated
         # as well
         new_z = object()
         self.assertFalse(new_z in a0.z )
-        returned_list.append(new_z)
+        proxy.append(new_z)
         self.assertTrue( new_z in a0.z )
         z0 = a0.z[0]
         self.assertTrue( z0 in a0.z )
-        returned_list.remove(z0)
+        proxy.remove(z0)
         self.assertFalse( z0 in a0.z )
 
     def test_completion(self):
@@ -574,13 +603,18 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
 
     @classmethod
-    def setup_proxy(cls):
-        cls.proxy = QueryModelProxy(cls.session.query(Person))
+    def setup_proxy(cls, admin_cls=Person.Admin):
+        admin = admin_cls(app_admin, Person)
+        proxy = QueryModelProxy(cls.session.query(Person))
+        model_context = RowModelContext()
+        model_context.admin = admin
+        model_context.proxy = proxy
+        initial_naming_context.rebind(cls.model_context_name, model_context)
 
     @classmethod
     def setup_item_model(cls, admin_route, admin_name):
         cls.item_model = CollectionProxy(admin_route)
-        cls.item_model.set_value(ProxyRegistry.register(cls.proxy))
+        cls.item_model.set_value(cls.model_context_name)
         cls.columns = ('first_name', 'last_name')
         list(cls.item_model.add_columns(cls.columns))
         cls.item_model.timeout_slot()
@@ -591,6 +625,8 @@ class QueryQStandardItemModelCase(
     """Test the functionality of A QStandardItemModel
     representing a query
     """
+
+    model_context_name = ('test_query_item_model_model_context',)
 
     @classmethod
     def setUpClass(cls):
@@ -628,10 +664,11 @@ class QueryQStandardItemModelCase(
         ))
 
     def insert_object(self):
+        model_context = initial_naming_context.resolve(self.model_context_name)
         person = Person()
-        count = len(self.proxy)
-        self.proxy.append(person)
-        self.assertEqual(self.proxy.index(person), count)
+        count = len(model_context.proxy)
+        model_context.proxy.append(person)
+        self.assertEqual(model_context.proxy.index(person), count)
         self.person = person
 
     def test_insert_after_sort(self):
@@ -663,7 +700,8 @@ class QueryQStandardItemModelCase(
         new_rowcount = self.item_model.rowCount()
         self.assertEqual(new_rowcount, rowcount + 1)
         new_row = new_rowcount - 1
-        self.assertEqual([person], list(self.item_model.get_value()[new_row:new_rowcount]))
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        self.assertEqual([person], list(model_context.proxy[new_row:new_rowcount]))
         # fill in the required fields
         self.assertFalse( self.person_admin.is_persistent( person ) )
         self.assertEqual( self._data( new_row, 0, self.item_model ), None )
@@ -681,6 +719,17 @@ class QueryQStandardItemModelCase(
         # get the object at the new row (eg, to display a form view)
         self.assertEqual(self._header_data(new_row, Qt.Orientation.Vertical, ObjectRole, self.item_model), id(person))
 
+    @classmethod
+    def apply_filter(cls):
+
+        class SingleItemFilter(Filter):
+        
+            def decorate_query(self, query, values):
+                return query.filter_by(id=values)
+
+        model_context = initial_naming_context.resolve(cls.model_context_name)
+        model_context.proxy.filter(SingleItemFilter(Person.id), cls.first_person_id)
+        
     def test_single_query(self):
         # after constructing a queryproxy, 4 queries are issued
         # before data is returned : 
@@ -689,16 +738,10 @@ class QueryQStandardItemModelCase(
         # - contact mechanism select in load
         # - address select in load
         # those last 2 are needed for the validation of the compounding objects
-        
-        class SingleItemFilter(Filter):
-
-            def decorate_query(self, query, values):
-                return query.filter_by(id=values)
-        
+        self.thread.post(self.apply_filter)
         start = self.query_counter
         item_model = CollectionProxy(self.admin_route)
-        self.proxy.filter(SingleItemFilter(Person.id), self.first_person_id)
-        item_model.set_value(ProxyRegistry.register(self.proxy))
+        item_model.set_value(self.model_context_name)
         list(item_model.add_columns(self.columns))
         self._load_data(item_model)
         self.assertEqual(item_model.columnCount(), 2)

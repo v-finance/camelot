@@ -7,7 +7,7 @@ from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
 from ..core.exception import log_programming_error
-from ..core.naming import initial_naming_context
+from ..core.naming import initial_naming_context, NameNotFoundException
 from ..core.qt import Qt, QtGui, py_to_variant
 from .item_model.cache import ValueCache
 
@@ -240,7 +240,13 @@ class Update(Action, UpdateMixin):
     def model_run(self, model_context, mode):
         changed_ranges = []
         from camelot.view import action_steps
-        objects = initial_naming_context.resolve(tuple(mode['objects']))
+        objects_name = tuple(mode['objects'])
+        try:
+            objects = initial_naming_context.resolve(objects_name)
+        except NameNotFoundException:
+            logger.warn('received update request for non existing objects : {}'.format(objects_name))
+            yield action_steps.UpdateProgress(text='Updating view failed')
+            return
         for obj in objects:
             try:
                 row = model_context.proxy.index(obj)

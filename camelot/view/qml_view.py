@@ -172,21 +172,15 @@ class QmlActionDispatch(QtCore.QObject):
 
         class DummyGuiContext(ApplicationActionGuiContext):
 
-            def __init__(self, gui_context_name, model_context_name):
+            def __init__(self, gui_context_name):
                 super().__init__()
                 self.admin_route = None
                 self.gui_context_name = gui_context_name
-                self.model_context_name = model_context_name
 
-            def create_model_context(self):
-                try:
-                    return initial_naming_context.resolve(tuple(self.model_context_name))
-                except NameNotFoundException:
-                    # FIXME: DGCClient always uses ['model_context, '1'] for the unbind action which is not available in the tests
-                    LOGGER.error('Could not create model context, no binding for name: {}'.format(self.model_context_name))
-
-        gui_context = DummyGuiContext(gui_context_name, model_context_name)
-        action_runner = ActionRunner(tuple(route), gui_context, args)
+        gui_context = DummyGuiContext(gui_context_name)
+        action_runner = ActionRunner(
+            tuple(route), gui_context, model_context_name, args
+        )
         action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()
@@ -210,3 +204,10 @@ def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}):
     backend = get_qml_root_backend()
     response = backend.actionStep(gui_context_name, name, step, props)
     return json.loads(response.data())
+
+class LiveRef(QtCore.QObject):
+
+    def __init__(self, name, parent=None):
+        super().__init__(parent)
+        self.setProperty('name', name)
+        get_dgc_client().registerRef(self)

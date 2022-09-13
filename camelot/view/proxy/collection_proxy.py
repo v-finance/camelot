@@ -59,8 +59,8 @@ from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     ObjectRole, FieldAttributesRole, PreviewRole, 
-    AbstractModelProxy, CompletionPrefixRole, ActionRoutesRole,
-    ActionStatesRole, ProxyRegistry, ProxyDict, CompletionsRole,
+    CompletionPrefixRole, ActionRoutesRole,
+    ActionStatesRole, ProxyDict, CompletionsRole,
     ActionModeRole,
 )
 from ..crud_action import (
@@ -71,6 +71,7 @@ from ..crud_action import (
 from camelot.view.qml_view import get_crud_signal_handler
 from ..item_model.cache import ValueCache
 from ..utils import get_settings
+from ..qml_view import LiveRef
 from camelot.view.model_thread import object_thread
 from camelot.view.art import from_admin_icon
 from camelot.view.action_runner import ActionRunner
@@ -117,6 +118,14 @@ class RowModelContext(ListActionModelContext):
         self.field_attributes = dict()
         self.obj = None
         self.locale = QtCore.QLocale()
+        self._validator = None
+
+    @property
+    def validator(self):
+        if self._validator is None:
+            # todo : remove the concept of a validator (taken from CollectionProxy)
+            self._validator = self.admin.get_validator()
+        return self._validator
 
 
 # CollectionProxy subclasses ApplicationActionGuiContext to be able to behave
@@ -288,7 +297,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             while len(self.__crud_requests):
                 model_context, request_id, request, mode = self.__crud_requests.popleft() # <- too soon
                 self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
-                runner = ActionRunner(request, self, mode)
+                runner = ActionRunner(request, self, model_context.property('name'), mode)
                 runner.exec()
 
     def _start_timer(self):
@@ -351,9 +360,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                               )
 
     # Methods to behave like a GuiContext.
-    def create_model_context(self):
-        return self._model_context
-    
+
     def get_progress_dialog(self):
         pass
 
@@ -404,36 +411,29 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
     def set_value(self, value):
         """
-        :param value: The route containing the proxy id of te collection of objects to display.
-                      This route will contain only 1 integer which is a valid id for the
-                      :class:`camelot.core.item_model.ProxyRegistry` (e.g. ['123']).
-                      This is also the return type of ProxyRegistry.register().
+        :param value: The name of the model context to execute the crud
+            actions against.
         """
         self.logger.debug('set_value called')
-        model_context = RowModelContext()
-        model_context.admin = initial_naming_context.resolve(self.admin_route)
-        model_context.proxy = ProxyRegistry.pop(value)
-        assert isinstance(model_context.proxy, AbstractModelProxy)
-        # todo : remove the concept of a validator
-        model_context.validator = model_context.admin.get_validator()
-        self._model_context = model_context
+        self._model_context = None
         self._reset()
-        # the columns might be set before the value, but they might be running
-        # in the model thread for a different model context as well, so
-        # resubmit the set columns task for this model context
-        self._append_request(setcolumns_name, self._columns)
+        if value is not None:
+            self._model_context = LiveRef(list(value))
+            # the columns might be set before the value, but they might be running
+            # in the model thread for a different model context as well, so
+            # resubmit the set columns task for this model context
+            self._append_request(setcolumns_name, self._columns)
         self.layoutChanged.emit()
     
     def get_value(self):
         if self._model_context is not None:
-            return self._model_context.proxy
+            return tuple(self._model_context.property('name'))
 
     @QtCore.qt_slot(list)
     def objectsUpdated(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date
         """
-        from camelot.view.action_steps.orm import LiveRef
         assert object_thread(self)
         if self._model_context is not None:
             self.logger.debug(
@@ -446,7 +446,6 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
     def objectsDeleted(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
-        from camelot.view.action_steps.orm import LiveRef
         assert object_thread( self )
         if self._model_context is not None:
             self.logger.debug(
@@ -463,7 +462,6 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
     def objectsCreated(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
-        from camelot.view.action_steps.orm import LiveRef
         assert object_thread( self )
         if self._model_context is not None:
             self.logger.debug(

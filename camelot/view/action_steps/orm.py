@@ -54,20 +54,11 @@ import typing
 from ...admin.action.base import ActionStep
 from ...core.naming import CompositeName, initial_naming_context
 from ...core.serializable import DataclassSerializable
-from camelot.core.qt import QtCore
-from camelot.view.qml_view import get_crud_signal_handler, get_dgc_client, is_cpp_gui_context, qml_action_step
+from camelot.view.qml_view import get_crud_signal_handler, is_cpp_gui_context, qml_action_step
 
 leases = initial_naming_context.resolve_context('leases')
 
 LOGGER = logging.getLogger(__name__)
-
-
-class LiveRef(QtCore.QObject):
-
-    def __init__(self, name, parent=None):
-        super().__init__(parent)
-        self.setProperty('name', name)
-        get_dgc_client().registerRef(self)
 
 
 @dataclass
@@ -92,10 +83,6 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
             self.created = leases.bind(str(next(self._lease_counter)), objects_created)
         if len(leases) > 10:
             LOGGER.warn('Number of leases is growing to {}'.format(len(leases)))
-
-    @classmethod
-    def create_model_context(cls):
-        return None
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):

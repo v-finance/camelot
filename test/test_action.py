@@ -11,7 +11,7 @@ import camelot.types
 
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
-from camelot.core.item_model import ListModelProxy, ObjectRole
+from camelot.core.item_model import ObjectRole
 from camelot.admin.action import Action, ActionStep, State
 from camelot.admin.action import (
     list_action, application_action, form_action, list_filter,
@@ -24,7 +24,7 @@ from camelot.admin.action.list_action import SetFilters, ListActionModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.qt import QtGui, QtWidgets, Qt
+from camelot.core.qt import QtGui, QtWidgets, Qt, delete
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
@@ -73,6 +73,8 @@ class SerializableMixinCase(object):
 
 
 class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
+
+    model_context_name = ('constant', 'null')
 
     def setUp(self):
         super().setUp()
@@ -153,6 +155,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     action.
     """
 
+    model_context_name = ('constant', 'null')
     images_path = test_view.static_images_path
 
     @classmethod
@@ -274,6 +277,7 @@ class ListActionsCase(
     """
 
     images_path = test_view.static_images_path
+    model_context_name = ('test_list_actions_model_context',)
 
     @classmethod
     def setUpClass(cls):
@@ -314,7 +318,6 @@ class ListActionsCase(
         self.gui_context.view = One2ManyEditor(admin_route=self.admin_route)
         self.gui_context.admin_route = self.admin_route
         self.gui_context.view.gui_context = self.gui_context
-        self.model_context = self.gui_context.create_model_context()
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
         # Make sure to ChangeSelection action step is executed
@@ -324,15 +327,17 @@ class ListActionsCase(
 
     def tearDown( self ):
         Session().expunge_all()
+        delete(self.item_model)
+        self.item_model = None
 
-    def test_gui_context( self ):
+    def test_gui_context(self):
         self.assertTrue( isinstance( self.gui_context.copy(),
                                      list_action.ListActionGuiContext ) )
-        model_context = self.gui_context.create_model_context()
-        self.assertTrue( isinstance( model_context,
-                                     list_action.ListActionModelContext ) )
-        list( model_context.get_collection() )
-        list( model_context.get_selection() )
+
+    def test_model_context(self):
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        list(model_context.get_collection())
+        list(model_context.get_selection())
         model_context.get_object()
 
     def test_change_row_actions( self ):
@@ -468,7 +473,8 @@ class ListActionsCase(
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        steps = action.model_run(self.gui_context.create_model_context(), 'first_name')
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        steps = action.model_run(model_context, 'first_name')
         for step in steps:
             if isinstance(step, ChangeObject):
                 field_value = step.get_object()
@@ -486,12 +492,12 @@ class ListActionsCase(
         list_model.timeout_slot()
         self.process()
         self.gui_context.item_view.setCurrentIndex(list_model.index(0, 0))
-        model_context = self.gui_context.create_model_context()
+        model_context = initial_naming_context.resolve(self.model_context_name)
         open_form_view_action = list_action.OpenFormView()
         for step in open_form_view_action.model_run(model_context, None):
             form = step.render(self.gui_context, step._to_dict())
             form_value = form.model.get_value()
-        self.assertTrue(isinstance(form_value, ListModelProxy))
+        self.assertTrue(isinstance(form_value, (tuple,)))
 
     @staticmethod
     def track_crud_steps(action, model_context):
@@ -506,7 +512,8 @@ class ListActionsCase(
         return steps, created, updated
 
     def test_delete_selection(self):
-        selected_object = self.model_context.get_object()
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        selected_object = model_context.get_object()
         self.assertTrue(selected_object in self.session)
         delete_selection_action = list_action.DeleteSelection()
         list(self.gui_run(delete_selection_action, self.gui_context, None))
@@ -515,7 +522,8 @@ class ListActionsCase(
 
     def test_remove_selection(self):
         remove_selection_action = list_action.RemoveSelection()
-        list( remove_selection_action.model_run( self.gui_context.create_model_context(), None ) )
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        list(remove_selection_action.model_run(model_context, None))
 
     def test_move_rank_up_down(self):
         metadata = MetaData()
@@ -541,18 +549,19 @@ class ListActionsCase(
                 pass
 
         metadata.create_all()
-        selected_object = self.model_context.get_object()
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        selected_object = model_context.get_object()
         self.assertTrue(selected_object in self.session)
 
         # The actions should not be present in the related toolbar actions of the entity if its not rank-based.
-        related_toolbar_actions = [action.route[-1] for action in self.model_context.admin.get_related_toolbar_actions('onetomany')]
+        related_toolbar_actions = [action.route[-1] for action in model_context.admin.get_related_toolbar_actions('onetomany')]
         self.assertNotIn(list_action.move_rank_up.name, related_toolbar_actions)
         self.assertNotIn(list_action.move_rank_down.name, related_toolbar_actions)
         # If the action is run on a non rank-based entity anyways, an assertion should block it.
         for action in (list_action.move_rank_up, list_action.move_rank_down):
             with self.assertRaises(AssertionError) as exc:
-                list(action.model_run(self.model_context, None))
-            self.assertEqual(str(exc.exception), action.Message.entity_not_rank_based.value.format(self.model_context.admin.entity))
+                list(action.model_run(model_context, None))
+            self.assertEqual(str(exc.exception), action.Message.entity_not_rank_based.value.format(model_context.admin.entity))
 
         # The action should be present on a rank-based entity:
         admin = app_admin.get_related_admin(A)
@@ -658,6 +667,7 @@ class FormActionsCase(
     """Test the standard list actions.
     """
 
+    model_context_name = ('test_form_actions_model_context',)
     images_path = test_view.static_images_path
 
     @classmethod
@@ -693,8 +703,6 @@ class FormActionsCase(
     def test_gui_context( self ):
         self.assertTrue( isinstance( self.gui_context.copy(),
                                      form_action.FormActionGuiContext ) )
-        self.assertTrue( isinstance( self.gui_context.create_model_context(),
-                                     form_action.FormActionModelContext ) )
 
     def test_previous_next( self ):
         previous_action = form_action.ToPreviousForm()
@@ -722,6 +730,7 @@ class ApplicationActionsCase(
     """
 
     images_path = test_view.static_images_path
+    model_context_name = ('constant', 'null')
 
     @classmethod
     def setUpClass(cls):

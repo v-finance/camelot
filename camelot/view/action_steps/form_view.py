@@ -102,6 +102,9 @@ class OpenFormView(AbstractCrudView):
         self.form_state = admin.form_state
         self._add_actions(admin, self.actions)
         super().__post_init__(value, admin, proxy)
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        model_context.current_row = self.row
+        model_context.selection_count = 1
 
     @staticmethod
     def _add_actions(admin, actions):
@@ -116,7 +119,7 @@ class OpenFormView(AbstractCrudView):
     def render(self, gui_context, step):
         model = CollectionProxy(tuple(step['admin_route']))
         list(model.add_columns((fn for fn, fa in step['fields'].items())))
-        model.set_value(step['proxy_route'])
+        model.set_value(step['model_context_name'])
         form = FormView(
             title=step['title'], admin_route=step['admin_route'],
             close_route=tuple(step['close_route']), model=model,

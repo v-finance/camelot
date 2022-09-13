@@ -30,7 +30,7 @@
 import logging
 import itertools
 
-from ...core.naming import initial_naming_context
+from ...core.naming import initial_naming_context, NameNotFoundException
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from .base import RenderHint
@@ -103,9 +103,7 @@ class ApplicationActionGuiContext( GuiContext ):
         route to the action to the route to the rendered action displaying the
         action state.
     """
-    
-    model_context = ApplicationActionModelContext
-    
+
     def __init__( self ):
         super( ApplicationActionGuiContext, self ).__init__()
         self.gui_context_name = None
@@ -128,12 +126,6 @@ class ApplicationActionGuiContext( GuiContext ):
         from camelot.view.qml_view import get_qml_window
         return get_qml_window()
 
-    def create_model_context(self):
-        context = super(ApplicationActionGuiContext, self).create_model_context()
-        context.admin = initial_naming_context.resolve(tuple(self.admin_route))
-        context.actions = list(self.action_routes.keys())
-        return context
-        
     def copy(self, base_class=None):
         new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
         new_context.gui_context_name = self.gui_context_name
@@ -459,7 +451,10 @@ class Unbind(Action):
         if len(mode) == 0:
             yield UpdateProgress()
         for lease in mode:
-            initial_naming_context.unbind(tuple(lease))
+            try:
+                initial_naming_context.unbind(tuple(lease))
+            except NameNotFoundException:
+                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))
 
 unbind_name = application_action_context.bind(Unbind.name, Unbind(), True)
 

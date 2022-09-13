@@ -33,7 +33,9 @@ import json
 import logging
 import typing
 
-from ..core.naming import initial_naming_context, CompositeName
+from ..core.naming import (
+    initial_naming_context, CompositeName, NameNotFoundException
+)
 from ..core.serializable import DataclassSerializable, json_encoder
 from ..core.qt import QtCore, is_deleted
 from camelot.admin.action import ActionStep
@@ -79,7 +81,12 @@ class ActionRunner( QtCore.QEventLoop ):
     non_blocking_action_step_signal = QtCore.qt_signal(object)
     non_blocking_serializable_action_step_signal = QtCore.qt_signal(str, bytes)
     
-    def __init__(self, action_name: CompositeName, gui_context, mode: typing.Union[str, dict, list, int]):
+    def __init__(self,
+                 action_name: CompositeName,
+                 gui_context,
+                 model_context: CompositeName,
+                 mode: typing.Union[str, dict, list, int]
+                 ):
         """
         :param gui_context: the GUI context of the generator
         """
@@ -87,12 +94,12 @@ class ActionRunner( QtCore.QEventLoop ):
         self._return_code = None
         self._generator = None
         self._gui_context = gui_context
-        self._model_context = gui_context.create_model_context()
         self._non_blocking_cancel_request = False
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
         self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
         message = {
             'action_name': action_name,
+            'model_context': model_context,
             'mode': mode,
         }
         serialized_message = json_encoder.encode(message)
@@ -120,8 +127,14 @@ class ActionRunner( QtCore.QEventLoop ):
         from camelot.view.action_steps import PushProgressLevel
         message = json.loads(serialized_message)
         action = initial_naming_context.resolve(tuple(message['action_name']))
+        try:
+            model_context = initial_naming_context.resolve(tuple(message['model_context']))
+        except NameNotFoundException:
+            # FIXME: DGCClient always uses ['model_context, '1'] for the unbind action which is not available in the tests
+            LOGGER.error('Could not create model context, no binding for name: {}'.format(message['model_context']))
+            return
         self.non_blocking_serializable_action_step_signal.emit("PushProgressLevel", PushProgressLevel('Please wait')._to_bytes())
-        return action.model_run(self._model_context, message.get('mode'))
+        return action.model_run(model_context, message.get('mode'))
 
     def _iterate_until_blocking( self, generator_method, *args ):
         """Helper calling for generator methods.  The decorated method iterates
