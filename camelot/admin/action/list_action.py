@@ -198,20 +198,6 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         new_context.field_attributes = self.field_attributes
         return new_context
 
-class ListContextAction( Action ):
-    """An base class for actions that should only be enabled if the
-    gui_context is a :class:`ListActionModelContext`
-    """
-
-    name = 'list_context_action'
-    
-    def get_state( self, model_context ):
-        state = super( ListContextAction, self ).get_state( model_context )
-        if isinstance( model_context, ListActionModelContext ):
-            state.enabled = True
-        else:
-            state.enabled = False
-        return state
 
 class RowNumberAction( Action ):
     """
@@ -228,7 +214,7 @@ class RowNumberAction( Action ):
 
 row_number_action = RowNumberAction()
 
-class EditAction( ListContextAction ):
+class EditAction(Action):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
@@ -297,7 +283,7 @@ class ListLabel(Action):
 
 list_label = ListLabel()
 
-class OpenFormView( ListContextAction ):
+class OpenFormView(Action):
     """Open a form view for the current row of a list."""
     
     shortcut = QtGui.QKeySequence.StandardKey.Open
@@ -513,7 +499,7 @@ class AbstractToFirst(object):
     tooltip = _('First')
     verbose_name = _('First')
 
-class ToFirstRow( AbstractToFirst, ListContextAction ):
+class ToFirstRow(AbstractToFirst, Action):
     """Move to the first row in a table"""
 
     name = 'to_first'
@@ -540,7 +526,7 @@ class AbstractToLast(object):
     tooltip = _('Last')
     verbose_name = _('Last')
     
-class ToLastRow( AbstractToLast, ListContextAction ):
+class ToLastRow(AbstractToLast, Action):
     """Move to the last row in a table"""
 
     name = 'to_last'
@@ -570,7 +556,7 @@ class ClearMapping(Action):
         yield action_steps.UpdateObjects(cleared_mappings)
 
 
-class ExportSpreadsheet( ListContextAction ):
+class ExportSpreadsheet(Action):
     """Export all rows in a table to a spreadsheet"""
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -741,7 +727,7 @@ class ExportSpreadsheet( ListContextAction ):
 
 export_spreadsheet = ExportSpreadsheet()
     
-class SelectAll( ListContextAction ):
+class SelectAll(Action):
     """Select all rows in a table"""
     
     verbose_name = _('Select &All')
