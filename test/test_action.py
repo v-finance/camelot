@@ -25,7 +25,6 @@ from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.core.qt import QtGui, QtWidgets, Qt, delete
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import EntityBase, Session
@@ -512,64 +511,6 @@ class ListActionsCase(
             elif isinstance(step, action_steps.UpdateObjects):
                 updated.extend(initial_naming_context.resolve(step.updated) if step.updated else [])
         return steps, created, updated
-
-    def test_duplicate_selection( self ):
-        initial_row_count = self._row_count(self.item_model)
-        action = list_action.DuplicateSelection()
-        state = self.get_state(action, self.gui_context)
-        self.assertTrue(state.enabled)
-        list(self.gui_run(action, self.gui_context, None))
-        self.process()
-        new_row_count = self._row_count(self.item_model)
-        self.assertEqual(new_row_count, initial_row_count+1)
-        person = Person(first_name='test', last_name='person')
-        self.session.flush()
-        model_context = MockModelContext(self.session)
-        model_context.admin = self.admin
-        model_context.proxy = self.admin.get_proxy([])
-        # The action should only be applicable for a single selection.
-        # So verify a UserException is raised when selecting multiple ...
-        model_context.selection = [None, None]
-        with self.assertRaises(UserException) as exc:
-            list(action.model_run(model_context, None))
-        self.assertEqual(exc.exception.text, action.Message.no_single_selection.value) 
-        # ...and selecting None has no side-effects.
-        model_context.selection = []
-        steps, created, updated = self.track_crud_steps(action, model_context)
-        self.assertEqual(created, [])
-        self.assertEqual(updated, [])
-        self.assertNotIn(action_steps.FlushSession, steps)
-
-        # Verify the valid duplication of a single selection.
-        model_context.selection = [person]
-        steps, created, updated = self.track_crud_steps(action, model_context)
-        self.assertEqual(len(created), 1)
-        self.assertEqual(len(updated), 0)
-        self.assertIn(action_steps.FlushSession, steps)
-        copied_obj = created[0]
-        self.assertEqual(copied_obj.first_name, person.first_name)
-        self.assertEqual(copied_obj.last_name, person.last_name)
-
-        # Verify in the case wherein the duplicated instance is invalid, its is not flushed yet and opened within its form.
-        # Set custom validator that always fails to make sure duplicated instance is found to be invalid/
-        validator = self.admin.validator
-        class CustomValidator(EntityValidator):
-
-            def validate_object(self, p):
-                return ['some validation error']
-
-        self.admin.validator = CustomValidator
-        model_context.selection = [person]
-        steps, created, updated = self.track_crud_steps(action, model_context)
-        self.assertEqual(len(created), 1)
-        self.assertEqual(updated, [])
-        self.assertIn(action_steps.OpenFormView, steps)
-        self.assertNotIn(action_steps.FlushSession, steps)
-        copied_obj = created[0]
-        self.assertEqual(copied_obj.first_name, person.first_name)
-        self.assertEqual(copied_obj.last_name, person.last_name)
-        # Reinstated original validator to prevent intermingling with other test (cases).
-        self.admin.validator = validator
 
     def test_delete_selection(self):
         model_context = initial_naming_context.resolve(self.model_context_name)
