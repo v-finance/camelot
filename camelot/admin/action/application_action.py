@@ -72,9 +72,9 @@ class ApplicationActionModelContext(ModelContext):
         the active session
     """
     
-    def __init__( self ):
-        super( ApplicationActionModelContext, self ).__init__()
-        self.admin = None
+    def __init__(self, admin):
+        super(ApplicationActionModelContext, self).__init__()
+        self.admin = admin
         self.actions = []
 
     # Cannot set session in constructor because constructor is called

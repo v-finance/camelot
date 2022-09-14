@@ -766,7 +766,7 @@ be specified using the verbose_name attribute.
                 #    and their state is updated when the parent object is updated
                 #
                 #  * the list_actions, that operate on a selection of rows, these
-                #    actions have access to the ListActionModelContext (selection)
+                #    actions have access to the ObjectsActionModelContext (selection)
                 #    and their state is updated when the selection changes.
                 #
                 if field_attributes.get('actions') is None:

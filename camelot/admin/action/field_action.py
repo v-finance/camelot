@@ -44,7 +44,7 @@ from .list_action import AddNewObjectMixin
 from .application_action import ApplicationActionModelContext
 
 
-class FieldActionModelContext( ApplicationActionModelContext ):
+class FieldActionModelContext(ApplicationActionModelContext):
     """The context for a :class:`Action` on a field.  On top of the attributes of the
     :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`,
     this context contains :
@@ -68,8 +68,8 @@ class FieldActionModelContext( ApplicationActionModelContext ):
 
     """
 
-    def __init__(self):
-        super( FieldActionModelContext, self ).__init__()
+    def __init__(self, admin):
+        super( FieldActionModelContext, self ).__init__(admin)
         self.obj = None
         self.field = None
         self.value = None

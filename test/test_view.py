@@ -304,7 +304,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_FloatEditor(self):
         # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
         delegate = delegates.FloatDelegate(parent=None, suffix='euro', editable=True)
-        field_action_model_context = FieldActionModelContext()
+        field_action_model_context = FieldActionModelContext(
+            app_admin.get_related_admin(Person)
+        )
         field_action_model_context.value = 3
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
@@ -570,7 +572,9 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
     def grab_delegate(self, delegate, value, suffix='editable', field_attributes={}):
 
         model = QtGui.QStandardItemModel(1, 1)
-        field_action_model_context = FieldActionModelContext()
+        field_action_model_context = FieldActionModelContext(
+            app_admin.get_related_admin(Person)
+        )
         field_action_model_context.value = value
         field_action_model_context.field_attributes = field_attributes
 
@@ -682,7 +686,9 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.DateEditor))
         self.grab_delegate(delegate, today, 'disabled')
-        field_action_model_context = FieldActionModelContext()
+        field_action_model_context = FieldActionModelContext(
+            app_admin.get_related_admin(Person)
+        )
         field_action_model_context.value = today
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(self.locale, field_action_model_context)
@@ -781,7 +787,9 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
                                                    choices=CHOICES,
                                                    editable=False)
         self.grab_delegate(delegate, 1, 'disabled')
-        field_action_model_context = FieldActionModelContext()
+        field_action_model_context = FieldActionModelContext(
+            app_admin.get_related_admin(Person)
+        )
         field_action_model_context.value = '2'
         field_action_model_context.field_attributes = {'choices':CHOICES}
         item = delegate.get_standard_item(self.locale, field_action_model_context)

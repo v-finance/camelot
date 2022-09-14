@@ -33,8 +33,7 @@ from .application_action import (
 )
 from .base import Action, ActionStep, GuiContext, Mode, State, RenderHint
 from .form_action import FormActionGuiContext
-from .list_action import ( ListActionGuiContext, ListActionModelContext, 
-                           OpenFormView , RowNumberAction)
+from .list_action import (ListActionGuiContext, OpenFormView , RowNumberAction)
 from .field_action import FieldActionModelContext
 
 __all__ = [
@@ -45,7 +44,6 @@ __all__ = [
     FieldActionModelContext.__name__, 
     FormActionGuiContext.__name__,
     ListActionGuiContext.__init__,
-    ListActionModelContext.__name__,
     OpenFormView.__init__,
     OpenTableView.__name__,
     GuiContext.__name__,
