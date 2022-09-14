@@ -174,7 +174,7 @@ be specified using the verbose_name attribute.
         class Admin( EntityAdmin ):
             form_actions = [CloseForm()]
 
-    These actions will be triggered with a :class:`camelot.admin.action.form_action.FormActionModelContext` as the `model_context` parameter
+    These actions will be triggered with a :class:`camelot.admin.action.base.ObjectsModelContext` as the `model_context` parameter
     in the :meth:`camelot.admin.action.base.Action.model_run` method.
 
 .. attribute:: related_toolbar_actions
