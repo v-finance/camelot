@@ -37,7 +37,7 @@ from ..core.naming import (
     initial_naming_context, CompositeName, NameNotFoundException
 )
 from ..core.serializable import DataclassSerializable, json_encoder
-from ..core.qt import QtCore, is_deleted
+from ..core.qt import QtCore, QtGui, is_deleted
 from camelot.admin.action import ActionStep
 from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import GuiException, CancelRequest
@@ -205,8 +205,20 @@ class ActionRunner( QtCore.QEventLoop ):
     @QtCore.qt_slot( object )
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
-        print('Exception occurred:')
-        print(exception_info)
+        app = QtGui.QGuiApplication.instance()
+        if app.platformName() == "offscreen":
+            # When running tests in offscreen mode, print the exception and exit with -1 status
+            print("Exception occurred while executing an action:")
+            print()
+            print("======================================================================")
+            print()
+            print("Title: {}".format(exception_info.title))
+            print("Text: {}".format(exception_info.text))
+            print()
+            print(exception_info.detail)
+            print("======================================================================")
+            print()
+            app.exit(-1)
         dialog = ExceptionDialog( exception_info )
         dialog.exec()
         self.non_blocking_serializable_action_step_signal.emit("PopProgressLevel", b"")
