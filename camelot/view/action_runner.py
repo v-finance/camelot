@@ -205,6 +205,8 @@ class ActionRunner( QtCore.QEventLoop ):
     @QtCore.qt_slot( object )
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
+        print('Exception occurred:')
+        print(exception_info)
         dialog = ExceptionDialog( exception_info )
         dialog.exec()
         self.non_blocking_serializable_action_step_signal.emit("PopProgressLevel", b"")
