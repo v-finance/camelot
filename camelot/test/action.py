@@ -46,7 +46,6 @@ class MockModelContext( object ):
         self.admin = None
         self.mode_name = None
         self.collection_count = 1
-        self.selection_count = 1
         self.current_row = 0
         self.current_column = None
         self.current_field_name = None
@@ -63,6 +62,10 @@ class MockModelContext( object ):
 
     def get_collection( self, yield_per = None ):
         return self.get_selection(yield_per=yield_per)
+
+    @property
+    def selection_count(self):
+        return len(self.selection)
 
     @property
     def session( self ):

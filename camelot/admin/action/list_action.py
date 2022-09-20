@@ -38,8 +38,7 @@ from sqlalchemy import orm
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import QtGui, is_deleted
 from .base import Action, Mode, GuiContext, RenderHint
-from .application_action import ( ApplicationActionGuiContext,
-                                 ApplicationActionModelContext )
+from .application_action import ApplicationActionGuiContext
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
@@ -49,104 +48,7 @@ import xlsxwriter
 
 LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
 
-class ListActionModelContext( ApplicationActionModelContext ):
-    """On top of the attributes of the 
-    :class:`camelot.admin.action.application_action.ApplicationActionModelContext`, 
-    this context contains :
-        
-    .. attribute:: selection_count
-    
-        the number of selected rows.
-        
-    .. attribute:: collection_count
-    
-        the number of rows in the list.
-        
-    .. attribute:: selected_rows
-    
-        an ordered list with tuples of selected row ranges.  the range is
-        inclusive.
-        
-    .. attribute:: current_row
-    
-        the current row in the list if a cell is active
-    
-    .. attribute:: current_column
-    
-        the current column in the table if a cell is active
-    
-    .. attribute:: current_field_name
-    
-        the name of the field displayed in the current column
-        
-    .. attribute:: session
-    
-        The session to which the objects in the list belong.
 
-    .. attribute:: proxy
-
-        A :class:`camelot.core.item_model.AbstractModelProxy` object that gives
-        access to the objects in the list
-
-    .. attribute:: field_attributes
-    
-        The field attributes of the field to which the list relates, for example
-        the attributes of Person.addresses if the list is the list of addresses
-        of the Person.
-       
-    The :attr:`collection_count` and :attr:`selection_count` attributes allow the 
-    :meth:`model_run` to quickly evaluate the size of the collection or the
-    selection without calling the potentially time consuming methods
-    :meth:`get_collection` and :meth:`get_selection`.
-
-    """
-    
-    def __init__( self ):
-        super( ListActionModelContext, self ).__init__()
-        self.proxy = None
-        self.admin = None
-        self.current_row = None
-        self.current_column = None
-        self.current_field_name = None
-        self.selection_count = 0
-        self.collection_count = 0
-        self.selected_rows = []
-        self.field_attributes = dict()
-        
-    def get_selection( self, yield_per = None ):
-        """
-        :param yield_per: an integer number giving a hint on how many objects
-            should fetched from the database at the same time.
-        :return: a generator over the objects selected
-        """
-        # during deletion or duplication, the collection might
-        # change, while the selection remains the same, so we should
-        # be careful when using the collection to generate selection data
-        for (first_row, last_row) in self.selected_rows:
-            for obj in self.proxy[first_row:last_row + 1]:
-                yield obj
-
-    def get_collection( self, yield_per = None ):
-        """
-        :param yield_per: an integer number giving a hint on how many objects
-            should fetched from the database at the same time.
-        :return: a generator over the objects in the list
-        """
-        for obj in self.proxy[0:self.collection_count]:
-            yield obj
-            
-    def get_object( self, row = None ):
-        """
-        :param row: The row for the object to get.
-        :return: The object for the specified row. If the specified row is None, the object
-            displayed in the current row or None is returned.
-        """
-        if row is None:
-            row = self.current_row
-        if row != None:
-            for obj in self.proxy[row:row+1]:
-                return obj
-        
 class ListActionGuiContext( ApplicationActionGuiContext ):
     """The context for an :class:`Action` on a table view.  On top of the attributes of the 
     :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
@@ -198,20 +100,6 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
         new_context.field_attributes = self.field_attributes
         return new_context
 
-class ListContextAction( Action ):
-    """An base class for actions that should only be enabled if the
-    gui_context is a :class:`ListActionModelContext`
-    """
-
-    name = 'list_context_action'
-    
-    def get_state( self, model_context ):
-        state = super( ListContextAction, self ).get_state( model_context )
-        if isinstance( model_context, ListActionModelContext ):
-            state.enabled = True
-        else:
-            state.enabled = False
-        return state
 
 class RowNumberAction( Action ):
     """
@@ -228,7 +116,7 @@ class RowNumberAction( Action ):
 
 row_number_action = RowNumberAction()
 
-class EditAction( ListContextAction ):
+class EditAction(Action):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
@@ -248,10 +136,9 @@ class EditAction( ListContextAction ):
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
         # Check for editability on the level of the field
-        if isinstance( model_context, ListActionModelContext ):
-            editable = model_context.field_attributes.get( 'editable', True )
-            if editable == False:
-                state.enabled = False
+        editable = model_context.field_attributes.get('editable', True)
+        if editable == False:
+            state.enabled = False
         # Check for editability on the level of the entity
         admin = model_context.admin
         if admin and not admin.is_editable():
@@ -297,7 +184,7 @@ class ListLabel(Action):
 
 list_label = ListLabel()
 
-class OpenFormView( ListContextAction ):
+class OpenFormView(Action):
     """Open a form view for the current row of a list."""
     
     shortcut = QtGui.QKeySequence.StandardKey.Open
@@ -350,7 +237,6 @@ class DuplicateSelection( EditAction ):
                 yield action_steps.OpenFormView(new_object, admin)
 
     def get_state(self, model_context):
-        assert isinstance(model_context, ListActionModelContext)
         state = super().get_state(model_context)
         if model_context.selection_count <= 0:
             state.enabled = False
@@ -409,7 +295,6 @@ class DeleteSelection( EditAction ):
         return False
 
     def get_state(self, model_context):
-        assert isinstance(model_context, ListActionModelContext)
         state = super().get_state(model_context)
         if model_context.selection_count <= 0:
             state.enabled = False
@@ -470,7 +355,6 @@ class MoveRankUp(EditAction):
                     model_context.session.refresh(updated_obj)
 
     def get_state(self, model_context):
-        assert isinstance(model_context, ListActionModelContext)
         state = super().get_state(model_context)
         state.enabled = model_context.selection_count == 1
         return state
@@ -513,7 +397,7 @@ class AbstractToFirst(object):
     tooltip = _('First')
     verbose_name = _('First')
 
-class ToFirstRow( AbstractToFirst, ListContextAction ):
+class ToFirstRow(AbstractToFirst, Action):
     """Move to the first row in a table"""
 
     name = 'to_first'
@@ -540,7 +424,7 @@ class AbstractToLast(object):
     tooltip = _('Last')
     verbose_name = _('Last')
     
-class ToLastRow( AbstractToLast, ListContextAction ):
+class ToLastRow(AbstractToLast, Action):
     """Move to the last row in a table"""
 
     name = 'to_last'
@@ -570,7 +454,7 @@ class ClearMapping(Action):
         yield action_steps.UpdateObjects(cleared_mappings)
 
 
-class ExportSpreadsheet( ListContextAction ):
+class ExportSpreadsheet(Action):
     """Export all rows in a table to a spreadsheet"""
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -741,7 +625,7 @@ class ExportSpreadsheet( ListContextAction ):
 
 export_spreadsheet = ExportSpreadsheet()
     
-class SelectAll( ListContextAction ):
+class SelectAll(Action):
     """Select all rows in a table"""
     
     verbose_name = _('Select &All')

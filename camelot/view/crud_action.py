@@ -5,11 +5,11 @@ logger = logging.getLogger(__name__)
 
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
+from ..core.cache import ValueCache
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
 from ..core.exception import log_programming_error
 from ..core.naming import initial_naming_context, NameNotFoundException
 from ..core.qt import Qt, QtGui, py_to_variant
-from .item_model.cache import ValueCache
 
 crud_action_context = initial_naming_context.bind_new_context(
     'crud_action', immutable=True
@@ -43,8 +43,7 @@ class UpdateMixin(object):
     @classmethod
     def field_action_model_context(cls, model_context, obj, field_attributes):
         field_name = field_attributes['field_name']
-        field_action_model_context = FieldActionModelContext()
-        field_action_model_context.admin = model_context.admin
+        field_action_model_context = FieldActionModelContext(model_context.admin)
         field_action_model_context.field = field_name
         field_action_model_context.value = strip_data_from_object(obj, [field_name])[0]
         field_action_model_context.field_attributes = field_attributes

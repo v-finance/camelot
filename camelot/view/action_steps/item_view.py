@@ -38,19 +38,19 @@ import json
 import logging
 
 from ...admin.admin_route import Route, RouteWithRenderHint
-from ...admin.action.base import ActionStep, State
-from ...admin.action.list_action import ListActionModelContext
+from ...admin.action import ActionStep, State
 from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
+from ...admin.model_context import ObjectsModelContext
 from ...admin.object_admin import ObjectAdmin
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
-from ...core.qt import Qt
+from ...core.qt import Qt, QtCore
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
-    rowcount_name, rowdata_name, setcolumns_name, RowModelContext
+    rowcount_name, rowdata_name, setcolumns_name
 )
 from ..qml_view import qml_action_step, is_cpp_gui_context
 
@@ -108,19 +108,13 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         assert isinstance(proxy, AbstractModelProxy)
         self.crud_actions = CrudActions(admin)
         # Create the model_context for the table view
-        model_context = RowModelContext()
-        model_context.admin = admin
-        model_context.proxy = proxy
+        model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
-
-        self._add_action_states(admin, proxy, self.actions, self.action_states)
+        self._add_action_states(model_context, self.actions, self.action_states)
         self.group = admin.get_admin_route()[-2][:255]
 
     @staticmethod
-    def _add_action_states(admin, proxy, actions, action_states):
-        model_context = ListActionModelContext()
-        model_context.admin = admin
-        model_context.proxy = proxy
+    def _add_action_states(model_context, actions, action_states):
         for action_route in actions:
             action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)

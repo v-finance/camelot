@@ -54,7 +54,11 @@ class SelectObjects(OpenTableView):
         super().__post_init__(value, admin, proxy, search_text)
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
         self.action_states = list()
-        self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
+        self._add_action_states(
+            initial_naming_context.resolve(self.model_context_name),
+            self.actions,
+            self.action_states
+        )
 
     @staticmethod
     def _add_actions(admin, actions):

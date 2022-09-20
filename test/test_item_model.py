@@ -12,6 +12,7 @@ from . import app_admin
 from camelot.admin.action.field_action import ClearObject, SelectObject
 from camelot.admin.action.list_filter import Filter
 from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.model_context import ObjectsModelContext
 from camelot.core.item_model import (
     ActionRoutesRole, ActionStatesRole, CompletionPrefixRole,
     CompletionsRole, FieldAttributesRole, ObjectRole, ValidMessageRole, ValidRole,
@@ -22,10 +23,8 @@ from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, is_deleted, delete, py_to_variant, variant_to_py
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
-from camelot.view.item_model.cache import ValueCache
-from camelot.view.proxy.collection_proxy import (
-    RowModelContext, CollectionProxy, invalid_item
-)
+from camelot.core.cache import ValueCache
+from camelot.view.proxy.collection_proxy import CollectionProxy, invalid_item
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,9 +116,7 @@ class ItemModelCaseMixin(object):
     def setup_proxy(cls, type_, collection):
         admin = app_admin.get_related_admin(type_)
         proxy = admin.get_proxy(collection)
-        model_context = RowModelContext()
-        model_context.admin = admin
-        model_context.proxy = proxy
+        model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
         initial_naming_context.rebind(cls.model_context_name, model_context)
 
     def _load_data(self, item_model):
@@ -606,9 +603,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     def setup_proxy(cls, admin_cls=Person.Admin):
         admin = admin_cls(app_admin, Person)
         proxy = QueryModelProxy(cls.session.query(Person))
-        model_context = RowModelContext()
-        model_context.admin = admin
-        model_context.proxy = proxy
+        model_context = ObjectsModelContext(admin, proxy, None)
         initial_naming_context.rebind(cls.model_context_name, model_context)
 
     @classmethod

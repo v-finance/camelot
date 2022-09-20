@@ -29,10 +29,10 @@
 
 import itertools
 
+from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
 from ....core.item_model import FieldAttributesRole
 from ....core.qt import variant_to_py, Qt
-from ...proxy.collection_proxy import RowModelContext
 from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -58,9 +58,9 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super(One2ManyDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
             admin = model_context.field_attributes['admin']
-            one2many_model_context = RowModelContext()
-            one2many_model_context.admin = admin
-            one2many_model_context.proxy = admin.get_proxy(model_context.value)
+            one2many_model_context = ObjectsModelContext(
+                admin, admin.get_proxy(model_context.value), locale
+            )
             item.setData(
                 transient.bind(str(next(transient_counter)), one2many_model_context),
                 Qt.ItemDataRole.EditRole

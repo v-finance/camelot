@@ -53,7 +53,6 @@ logger = logging.getLogger(__name__)
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.application_action import ApplicationActionGuiContext
-from ...admin.action.list_action import ListActionModelContext
 from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
@@ -69,7 +68,6 @@ from ..crud_action import (
     update_name, runfieldaction_name
 )
 from camelot.view.qml_view import get_crud_signal_handler
-from ..item_model.cache import ValueCache
 from ..utils import get_settings
 from ..qml_view import LiveRef
 from camelot.view.model_thread import object_thread
@@ -97,35 +95,6 @@ invalid_item.setData(invalid_data, ActionModeRole)
 
 initial_delay = 50
 maximum_delay = 1000
-
-
-class RowModelContext(ListActionModelContext):
-    """A list action model context for a single row.  This context is used
-    to get the state of the list action on a row
-    """
-    
-    def __init__( self ):
-        super( RowModelContext, self ).__init__()
-        self.proxy = None
-        self.admin = None
-        self.edit_cache = ValueCache(100)
-        self.attributes_cache = ValueCache(100)
-        self.static_field_attributes = []
-        self.current_row = None
-        self.selection_count = 0
-        self.collection_count = 0
-        self.selected_rows = []
-        self.field_attributes = dict()
-        self.obj = None
-        self.locale = QtCore.QLocale()
-        self._validator = None
-
-    @property
-    def validator(self):
-        if self._validator is None:
-            # todo : remove the concept of a validator (taken from CollectionProxy)
-            self._validator = self.admin.get_validator()
-        return self._validator
 
 
 # CollectionProxy subclasses ApplicationActionGuiContext to be able to behave

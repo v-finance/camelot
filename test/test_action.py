@@ -20,7 +20,8 @@ from camelot.admin.action import (
 from camelot.admin.action import export_mapping
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFile, add_existing_object
-from camelot.admin.action.list_action import SetFilters, ListActionModelContext
+from camelot.admin.action.list_action import SetFilters
+from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
@@ -575,10 +576,10 @@ class ListActionsCase(
         ax3 = A(type='x', rank=3)
         ay1 = A(type='y', rank=1)
         session.flush()
-        model_context = list_action.ListActionModelContext()
-        model_context.proxy = admin.get_proxy([ax1, ax2, ay1, ax3])
+        model_context = ObjectsModelContext(
+            admin, admin.get_proxy([ax1, ax2, ay1, ax3]), None
+        )
         model_context.collection_count = 4
-        model_context.admin = admin
         for action in (list_action.move_rank_up, list_action.move_rank_down):
             with self.assertRaises(UserException) as exc:
                 list(action.model_run(model_context, None))
@@ -816,8 +817,9 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         cls.setup_sample_model()
         cls.load_example_data()
         cls.movie = cls.session.query(Movie).offset(1).first()
-        movie_list_model_context = ListActionModelContext()
-        movie_list_model_context.admin = movie_admin
+        movie_list_model_context = ObjectsModelContext(
+            movie_admin, movie_admin.get_proxy([cls.movie]), None
+        )
         # a model context for the director attribute
         director_attributes = list(movie_admin.get_static_field_attributes(
             ['director']
