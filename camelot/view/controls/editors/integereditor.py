@@ -63,7 +63,9 @@ class IntegerEditor(CustomEditor):
         self.setFocusPolicy(Qt.StrongFocus)
         
         spin_box = CustomDoubleSpinBox(option, parent)
-        spin_box.setRange(minimum-1, maximum)
+        minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
+        if None not in (minimum, maximum):
+            spin_box.setRange(minimum-1, maximum)
         spin_box.setDecimals(0)
         spin_box.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         spin_box.addAction(action)
