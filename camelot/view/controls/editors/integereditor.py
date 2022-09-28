@@ -33,8 +33,6 @@ import six
 
 from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.view.art import FontIcon
-from camelot.core.constants import camelot_minint
-from camelot.core.constants import camelot_maxint
 
 from .customeditor import CustomEditor, set_background_color_palette
 from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
