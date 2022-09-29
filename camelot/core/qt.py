@@ -294,30 +294,36 @@ if qt_api in ('PyQt4', 'PySide'):
     #
     _encoding=QtCore.QCoreApplication.UnicodeUTF8
 
-    def qtranslate(string_to_translate, n=-1):
+    def qtranslate(string_to_translate, n=-1, msgctxt=None):
         """Translate a string using the QCoreApplication translation framework
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
+        msgctxt_encoded = None
+        if msgctxt is not None:
+            msgctxt_encoded = msgctxt.encode('utf-8')
         return str(QtCore.QCoreApplication.translate(
             '',
             string_to_translate.encode('utf-8'),
-            '',
+            msgctxt_encoded,
             _encoding,
             n
         ))
 
 else:
 
-    def qtranslate(string_to_translate, n=-1):
+    def qtranslate(string_to_translate, n=-1, msgctxt=None):
         """Translate a string using the QCoreApplication translation framework
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
+        msgctxt_encoded = None
+        if msgctxt is not None:
+            msgctxt_encoded = msgctxt.encode('utf-8')
         return str(QtCore.QCoreApplication.translate(
             '',
             string_to_translate.encode('utf-8'),
-            '',
+            msgctxt_encoded,
             n,
         ))
 
