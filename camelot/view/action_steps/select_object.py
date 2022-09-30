@@ -52,6 +52,8 @@ class SelectObjects(OpenTableView):
 
     def __post_init__(self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
+        # Remove close action since there already is a cancel button
+        self.actions = [action for action in self.actions if action.route[-1] != 'close']
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
         self.action_states = list()
         self._add_action_states(
