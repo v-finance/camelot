@@ -5,7 +5,6 @@ import json
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, jsonvalue_to_py
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context, NameNotFoundException
-from camelot.admin.action.application_action import ApplicationActionGuiContext
 from .action_runner import ActionRunner
 
 
@@ -169,17 +168,8 @@ class QmlActionDispatch(QtCore.QObject):
 
     def run_action(self, gui_context_name, route, args, model_context_name):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
-
-        class DummyGuiContext(ApplicationActionGuiContext):
-
-            def __init__(self, gui_context_name):
-                super().__init__()
-                self.admin_route = None
-                self.gui_context_name = gui_context_name
-
-        gui_context = DummyGuiContext(gui_context_name)
         action_runner = ActionRunner(
-            tuple(route), gui_context, model_context_name, args
+            tuple(route), gui_context_name, model_context_name, args
         )
         action_runner.exec()
 
