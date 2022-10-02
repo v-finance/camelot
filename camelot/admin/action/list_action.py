@@ -633,11 +633,8 @@ class SelectAll(Action):
     tooltip = _('Select all rows in the table')
     name = 'select_all'
 
-    def gui_run( self, gui_context ):
-        gui_context.item_view.selectAll()
-
 select_all = SelectAll()
-        
+
 class ImportFromFile( EditAction ):
     """Import a csv file in the current table"""
 

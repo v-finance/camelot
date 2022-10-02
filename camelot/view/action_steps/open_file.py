@@ -76,8 +76,8 @@ class OpenFile( ActionStep, DataclassSerializable ):
         return file_name
 
     @classmethod
-    def gui_run( cls, gui_context, serialized_step ):
-        qml_action_step(gui_context, 'OpenFile', serialized_step)
+    def gui_run( cls, gui_context_name, serialized_step ):
+        qml_action_step(gui_context_name, 'OpenFile', serialized_step)
 
 class OpenStream( OpenFile ):
     """Write a stream to a temporary file and open that file with the 
@@ -141,7 +141,7 @@ class WordJinjaTemplate( OpenFile ):
         template_stream.dump( open( path, 'wb' ), encoding='utf-8' )
         super( WordJinjaTemplate, self ).__init__( path )
         
-    def gui_run( self, gui_context ):
+    def gui_run( self, gui_context_name ):
         try:
             import pythoncom
             import win32com.client
@@ -153,7 +153,7 @@ class WordJinjaTemplate( OpenFile ):
             word_app.Activate()
         # fallback in case of not on windows
         except ImportError:
-            super( WordJinjaTemplate, self ).gui_run( gui_context )
+            super( WordJinjaTemplate, self ).gui_run( gui_context_name )
 
 
 

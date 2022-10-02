@@ -375,6 +375,7 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot()
     def validate_close( self ):
+        # widget_mapper.submit() ??
         action_runner = ActionRunner(self.close_route, self.gui_context, self.model.get_value(), None)
         action_runner.exec()
 

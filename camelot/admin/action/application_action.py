@@ -470,14 +470,14 @@ class Profiler( Action ):
         self.model_profile = None
         self.gui_profile = None
 
-    def gui_run(self, gui_context):
+    def gui_run(self, gui_context_name):
         import cProfile
         if self.gui_profile is None:
             self.gui_profile = cProfile.Profile()
             self.gui_profile.enable()
         else:
             self.gui_profile.disable()
-        super(Profiler, self).gui_run(gui_context)
+        super(Profiler, self).gui_run(gui_context_name)
 
     def model_run(self, model_context, mode):
         from ...view import action_steps

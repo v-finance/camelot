@@ -138,12 +138,7 @@ class CloseForm( Action ):
         """
         from camelot.view import action_steps
         return action_steps.CloseView()
-    
-    def gui_run( self, gui_context ):
-        if not is_deleted(gui_context.widget_mapper):
-            gui_context.widget_mapper.submit()
-        super( CloseForm, self ).gui_run( gui_context )
-        
+
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress( text = _('Closing form') )

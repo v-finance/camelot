@@ -169,28 +169,14 @@ class QmlActionDispatch(QtCore.QObject):
     def run_action(self, gui_context_name, route, args, model_context_name):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
         action_runner = ActionRunner(
-            tuple(route), gui_context_name, model_context_name, args
+            tuple(route), tuple(gui_context_name), tuple(model_context_name), args
         )
         action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()
 
 
-# FIXME: rename to cpp_action_step?
-def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}):
-    """
-    Register the gui_context and execute the action step by specifying a name and serialized action step.
-    """
-    global qml_action_dispatch
-    if isinstance(gui_context, list):
-        gui_context_name = gui_context
-    else:
-        if gui_context is None:
-            gui_context_name = ('gui_context', '0')
-        elif gui_context.gui_context_name is None:
-            gui_context_name = qml_action_dispatch.register(gui_context)
-        else:
-            gui_context_name = gui_context.gui_context_name
+def qml_action_step(gui_context_name, name, step=QtCore.QByteArray(), props={}):
     backend = get_qml_root_backend()
     response = backend.actionStep(gui_context_name, name, step, props)
     return json.loads(response.data())
