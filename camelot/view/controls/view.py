@@ -95,11 +95,12 @@ class ViewWithActionsMixin(object):
         LOGGER.warn('No widget found with action route {}'.format(action_route))
 
     def run_action(self, action_widget, gui_context, model_context_name, mode):
-        action_name = tuple(action_widget.property('action_route'))
-        action_runner = ActionRunner(
-            action_name, gui_context, model_context_name, mode
-        )
-        action_runner.exec()
+        action_name = tuple(action_widget.property('action_route') or [])
+        if len(action_name):
+            action_runner = ActionRunner(
+                action_name, gui_context, model_context_name, mode
+            )
+            action_runner.exec()
 
 class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
     """A string used to format the title of the view ::
