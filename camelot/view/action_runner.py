@@ -38,6 +38,7 @@ from ..core.naming import (
 )
 from ..core.serializable import DataclassSerializable, json_encoder
 from ..core.qt import QtCore, is_deleted
+from . import gui_naming_context
 from camelot.admin.action import ActionStep
 from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import GuiException, CancelRequest
@@ -83,7 +84,7 @@ class ActionRunner( QtCore.QEventLoop ):
     
     def __init__(self,
                  action_name: CompositeName,
-                 gui_context,
+                 gui_context: CompositeName,
                  model_context: CompositeName,
                  mode: typing.Union[str, dict, list, int]
                  ):
@@ -93,6 +94,7 @@ class ActionRunner( QtCore.QEventLoop ):
         super( ActionRunner, self ).__init__()
         self._return_code = None
         self._generator = None
+        assert gui_naming_context.resolve(gui_context)
         self._gui_context = gui_context
         self._non_blocking_cancel_request = False
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
@@ -185,19 +187,21 @@ class ActionRunner( QtCore.QEventLoop ):
 
     @QtCore.qt_slot( object )
     def non_blocking_action_step( self, action_step ):
+        gui_context = gui_naming_context.resolve(self._gui_context)
         try:
-            self._was_canceled( self._gui_context )
-            action_step.gui_run( self._gui_context )
+            self._was_canceled(gui_context)
+            action_step.gui_run(gui_context)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
 
     @QtCore.qt_slot(str, bytes)
     def non_blocking_serializable_action_step(self, step_type, serialized_step):
+        gui_context = gui_naming_context.resolve(self._gui_context)
         cls = MetaActionStep.action_steps[step_type]
         try:
-            self._was_canceled(self._gui_context)
-            cls.gui_run(self._gui_context, serialized_step)
+            self._was_canceled(gui_context)
+            cls.gui_run(gui_context, serialized_step)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
@@ -227,7 +231,7 @@ class ActionRunner( QtCore.QEventLoop ):
         else:
             self.exit()
         
-    def _was_canceled( self, gui_context ):
+    def _was_canceled(self, gui_context):
         """raise a :class:`camelot.core.exception.CancelRequest` if the
         user pressed the cancel button of the progress dialog in the
         gui_context.
@@ -246,15 +250,16 @@ class ActionRunner( QtCore.QEventLoop ):
         """
         if isinstance(yielded, (ActionStep, tuple)):
             try:
-                self._was_canceled(self._gui_context)
+                gui_context = gui_naming_context.resolve(self._gui_context)
+                self._was_canceled(gui_context)
                 if isinstance(yielded, tuple):
                     step_type, serialized_step = yielded
                     cls = MetaActionStep.action_steps[step_type]
-                    to_send = cls.gui_run(self._gui_context, serialized_step)
-                    to_send = cls.deserialize_result(self._gui_context, to_send)
+                    to_send = cls.gui_run(gui_context, serialized_step)
+                    to_send = cls.deserialize_result(gui_context, to_send)
                 else:
-                    to_send = yielded.gui_run(self._gui_context)
-                self._was_canceled( self._gui_context )
+                    to_send = yielded.gui_run(gui_context)
+                self._was_canceled(gui_context )
                 post( self._iterate_until_blocking, 
                       self.__next__, 
                       self.exception, 
