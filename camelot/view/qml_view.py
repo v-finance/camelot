@@ -4,7 +4,7 @@ import json
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, jsonvalue_to_py
 from camelot.core.exception import UserException
-from camelot.core.naming import initial_naming_context, NameNotFoundException
+from camelot.core.naming import initial_naming_context
 from .action_runner import ActionRunner
 
 
@@ -130,41 +130,6 @@ class QmlActionDispatch(QtCore.QObject):
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
-            root_backend.releaseContext.connect(self.unregister)
-        # register None gui_context as with ['gui_context', '0']
-        self.register(None)
-
-    def register(self, gui_context):
-        if gui_context is None:
-            gui_context_id = self._gui_naming_context_ids.__next__()
-            gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
-            return gui_context_name
-        assert not is_cpp_gui_context(gui_context)
-        if gui_context.gui_context_name is not None:
-            if id(initial_naming_context.resolve(gui_context.gui_context_name)) == id(gui_context):
-                return gui_context.gui_context_name
-        gui_context_id = self._gui_naming_context_ids.__next__()
-        gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
-        gui_context.gui_context_name = gui_context_name
-        return gui_context_name
-
-    def unregister(self, gui_context_name):
-        if not is_cpp_gui_context_name(gui_context_name):
-            initial_naming_context.unbind(tuple(gui_context_name))
-
-    def has_context(self, gui_context):
-        if gui_context is None:
-            return True
-        if gui_context.gui_context_name is None:
-            return False
-        try:
-            initial_naming_context.resolve(gui_context.gui_context_name)
-            return True
-        except NameNotFoundException:
-            return False
-
-    def get_context(self, gui_context_name):
-        return initial_naming_context.resolve(tuple(gui_context_name))
 
     def run_action(self, gui_context_name, route, args, model_context_name):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
