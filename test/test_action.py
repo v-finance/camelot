@@ -80,8 +80,7 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
     def setUp(self):
         super().setUp()
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin_route = self.admin_route
+        self.gui_context = ('constant', 'null')
 
     def test_action_step(self):
         ActionStep()
@@ -176,8 +175,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         super(ActionStepsCase, self).setUp()
         get_qml_root_backend().setVisible(True, False)
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin_route = self.admin_route
+        self.gui_context = ('constant', 'null')
 
     def test_change_object(self):
 

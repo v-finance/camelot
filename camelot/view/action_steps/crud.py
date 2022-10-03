@@ -1,4 +1,3 @@
-import io
 import json
 import logging
 import typing
@@ -17,7 +16,6 @@ from ...core.item_model import (
     FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole, ObjectRole
 )
 from .. import gui_naming_context
-from ..qml_view import is_cpp_gui_context_name, qml_action_step
 
 non_serializable_roles = (
     FieldAttributesRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole
@@ -54,14 +52,7 @@ class UpdateMixin(object):
         }
 
     def update_item_model(self, gui_context_name):
-        # dispatch to RootBackend if this is a cpp gui context
-        if is_cpp_gui_context_name(gui_context_name):
-            # FIXME: step is not (yet) serializable, use _to_dict for now
-            stream = io.BytesIO()
-            stream.write(json_encoder.encode(self._to_dict()).encode())
-            serialized_step = stream.getvalue()
-            return qml_action_step(gui_context_name, type(self).__name__, serialized_step)
-        item_model = gui_context_name.resolve(gui_context_name)
+        item_model = gui_naming_context.resolve(gui_context_name)
         if is_deleted(item_model):
             return
         root_item = item_model.invisibleRootItem()
@@ -92,9 +83,6 @@ class RowCount(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(self, gui_context_name, serialized_step):
-        # dispatch to RootBackend if this is a cpp gui context
-        if is_cpp_gui_context_name(gui_context_name):
-            return qml_action_step(gui_context_name, 'RowCount', serialized_step)
         item_model = gui_naming_context.resolve(gui_context_name)
         if is_deleted(item_model):
             return
@@ -122,13 +110,6 @@ class SetColumns(ActionStep):
         }
 
     def gui_run(self, gui_context_name):
-        # dispatch to RootBackend if this is a cpp gui context
-        if is_cpp_gui_context_name(gui_context_name):
-            # FIXME: step is not (yet) serializable, use _to_dict for now
-            stream = io.BytesIO()
-            stream.write(json.dumps(self._to_dict()).encode())
-            serialized_step = stream.getvalue()
-            return qml_action_step(gui_context_name, 'SetColumns', serialized_step)
         item_model = gui_naming_context.resolve(gui_context_name)
         if is_deleted(item_model):
             return
@@ -242,9 +223,6 @@ class ChangeSelection(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(self, gui_context_name, serialized_step):
-        # dispatch to RootBackend if this is a cpp gui context
-        if is_cpp_gui_context_name(gui_context_name):
-            return qml_action_step(gui_context_name, 'ChangeSelection', serialized_step)
         item_model = gui_naming_context.resolve(gui_context_name)
         if is_deleted(item_model):
             return

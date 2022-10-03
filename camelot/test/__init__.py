@@ -139,17 +139,19 @@ class ActionMixinCase(object):
         return state_register.state
 
     @classmethod
-    def gui_run(cls, action, gui_context, mode):
+    def gui_run(cls, action, gui_context_name, mode):
         """
         Simulates the gui_run of an action, but instead of blocking,
         yields progress each time a message is received from the model.
         """
 
+        initial_naming_context.validate_composite_name(gui_context_name)
+
         class IteratingActionRunner(ActionRunner):
 
-            def __init__(self, action_name, gui_context, mode):
+            def __init__(self, action_name, gui_context_name, mode):
                 super(IteratingActionRunner, self).__init__(
-                    action_name, gui_context, cls.model_context_name, mode
+                    action_name, gui_context_name, cls.model_context_name, mode
                 )
                 self.return_queue = []
                 self.exception_queue = []
@@ -179,7 +181,7 @@ class ActionMixinCase(object):
                         serialized_step = json.loads(step[1])
                         if issubclass(MetaActionStep.action_steps[step[0]], CreateUpdateDelete):
                             LOGGER.debug('crud step, update view')
-                            CreateUpdateDelete.gui_run(gui_context, step[1])
+                            CreateUpdateDelete.gui_run(gui_context_name, step[1])
                         gui_result = yield tuple([step[0], serialized_step])
                     else:
                         gui_result = yield step
@@ -199,12 +201,12 @@ class ActionMixinCase(object):
                 LOGGER.debug("iteration finished")
                 yield None
 
-            def _was_canceled( self, gui_context ):
+            def _was_canceled( self, gui_context_name ):
                 return False
 
         initial_naming_context.unbind(test_action_name)
         action_name = initial_naming_context.bind(('test_action',), action)
-        runner = IteratingActionRunner(action_name, gui_context, mode)
+        runner = IteratingActionRunner(action_name, gui_context_name, mode)
         yield from runner.run()
 
 

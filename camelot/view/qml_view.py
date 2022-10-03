@@ -1,10 +1,8 @@
 import logging
-import itertools
 import json
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, jsonvalue_to_py
 from camelot.core.exception import UserException
-from camelot.core.naming import initial_naming_context
 from .action_runner import ActionRunner
 
 
@@ -119,11 +117,6 @@ def is_cpp_gui_context(gui_context):
 
 # FIXME: add timeout + keep-alive on client
 class QmlActionDispatch(QtCore.QObject):
-
-    _gui_naming_context = initial_naming_context.bind_new_context(
-        'gui_context', immutable=True
-    )
-    _gui_naming_context_ids = itertools.count()
 
     def __init__(self, parent=None):
         super().__init__(parent)

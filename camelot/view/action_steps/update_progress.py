@@ -106,6 +106,7 @@ updated.
         
         :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
         """
+        # @TODO : this needs to be handled in the action runner
         if is_cpp_gui_context_name(gui_context_name):
             # C++ QmlProgressDialog
             response = qml_action_step(gui_context_name, 'UpdateProgress', serialized_step)
@@ -115,7 +116,9 @@ updated.
                 qml_action_step(gui_context_name, 'UpdateProgress', reset_step)
                 raise CancelRequest()
             return
-        gui_context = gui_naming_context.resolve()
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        if gui_context is None:
+            return
         progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
             if isinstance(progress_dialog, QtWidgets.QProgressDialog):
