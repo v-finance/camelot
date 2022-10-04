@@ -129,6 +129,13 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         return model_context.proxy.get_model()
 
 @dataclass
+class Column(DataclassSerializable):
+
+    name: str
+    verbose_name: str
+    default_visible: bool
+
+@dataclass
 class UpdateTableView(AbstractCrudView):
     """Change the admin and or value of an existing table view
     
@@ -139,14 +146,16 @@ class UpdateTableView(AbstractCrudView):
 
     search_text: InitVar[Union[str, None]] = None
 
-    columns: List[str] = field(init=False)
+    columns: List[Column] = field(init=False, default_factory=list)
     list_action: Union[Route, None] = field(init=False)
 
     def __post_init__(self, value, admin, proxy, search_text):
         assert (search_text is None) or isinstance(search_text, str)
         self.title = admin.get_verbose_name_plural()
         self._add_actions(admin, self.actions)
-        self.columns = admin.get_columns()
+        for field_name in admin.get_columns():
+            fa = list(admin.get_static_field_attributes([field_name]))
+            self.columns.append(Column(field_name, fa[0]['name'], True))
         self.list_action = admin.get_list_action()
         self.close_route = None
         if proxy is None:
