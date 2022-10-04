@@ -114,7 +114,11 @@ be specified using the verbose_name attribute.
 
 .. attribute:: list_display
 
-    a list with the fields that should be displayed in a table view
+    A list with the fields that should be displayed in a table view by default.
+
+.. attribute:: extra_display
+
+    A list with additional fields that can be displayed in a table view.
 
 .. attribute:: lines_per_row
 
@@ -249,6 +253,7 @@ be specified using the verbose_name attribute.
     verbose_name = None
     verbose_name_plural = None
     list_display = []
+    extra_display = []
     lines_per_row = 1
     validator = ObjectValidator
     model = CollectionProxy
@@ -884,12 +889,22 @@ be specified using the verbose_name attribute.
 
     def get_columns(self):
         """
-        The columns to be displayed in the list view, returns a list of field names.
+        The columns to be displayed in the list view by default, returns a list of field names.
 
         :return: [field_name, ...]
         """
         # take a copy to prevent contamination
         return [field for field in self.list_display]
+
+    def get_extra_columns(self):
+        """
+        The additional columns that are available to be displayed in the list view, returns a list of field names.
+
+        :return: [field_name, ...]
+        """
+        # TODO: Create list using introspection?
+        # take a copy to prevent contamination
+        return [field for field in self.extra_display]
 
     def get_validator( self, model = None):
         """Get a validator object
