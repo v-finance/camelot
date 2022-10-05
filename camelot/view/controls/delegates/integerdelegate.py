@@ -32,6 +32,7 @@ import six
 from ....core.qt import py_to_variant, Qt
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.core import constants
 from camelot.view.controls import editors
 
 if six.PY3:
@@ -48,6 +49,11 @@ class IntegerDelegate(CustomDelegate):
 
     @classmethod
     def get_standard_item(cls, locale, value, fa_values):
+        minimum, maximum = fa_values.get('minimum'), fa_values.get('maximum')
+        fa_values.update({
+            'minimum': minimum if minimum is not None else constants.camelot_minint,
+            'maximum': maximum if maximum is not None else constants.camelot_maxint,
+        })
         item = super(IntegerDelegate, cls).get_standard_item(locale, value, fa_values)
         if value is not None:
             value_str = locale.toString(long_int(value))
