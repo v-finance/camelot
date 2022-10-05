@@ -156,6 +156,9 @@ class UpdateTableView(AbstractCrudView):
         for field_name in admin.get_columns():
             fa = list(admin.get_static_field_attributes([field_name]))
             self.columns.append(Column(field_name, fa[0]['name'], True))
+        for field_name in admin.get_extra_columns():
+            fa = list(admin.get_static_field_attributes([field_name]))
+            self.columns.append(Column(field_name, fa[0]['name'], False))
         self.list_action = admin.get_list_action()
         self.close_route = None
         if proxy is None:
