@@ -101,7 +101,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     crud_actions: CrudActions = field(init=False)
     close_route: Route = field(init=False)
-    group: str = field(init=False)
+    group: List[str] = field(init=False)
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
@@ -111,7 +111,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.actions, self.action_states)
-        self.group = admin.get_admin_route()[-2][:255]
+        self.group = [admin.get_admin_route()[-2][:255]]
 
     @staticmethod
     def _add_action_states(model_context, actions, action_states):
