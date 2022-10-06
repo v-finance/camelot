@@ -101,7 +101,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
     crud_actions: CrudActions = field(init=False)
     close_route: Route = field(init=False)
-    group: str = field(init=False)
+    group: List[str] = field(init=False)
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
@@ -111,7 +111,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.actions, self.action_states)
-        self.group = admin.get_admin_route()[-2][:255]
+        self.group = [admin.get_admin_route()[-2][:255]]
 
     @staticmethod
     def _add_action_states(model_context, actions, action_states):
@@ -129,6 +129,13 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         return model_context.proxy.get_model()
 
 @dataclass
+class Column(DataclassSerializable):
+
+    name: str
+    verbose_name: str
+    default_visible: bool
+
+@dataclass
 class UpdateTableView(AbstractCrudView):
     """Change the admin and or value of an existing table view
     
@@ -139,14 +146,19 @@ class UpdateTableView(AbstractCrudView):
 
     search_text: InitVar[Union[str, None]] = None
 
-    columns: List[str] = field(init=False)
+    columns: List[Column] = field(init=False, default_factory=list)
     list_action: Union[Route, None] = field(init=False)
 
     def __post_init__(self, value, admin, proxy, search_text):
         assert (search_text is None) or isinstance(search_text, str)
         self.title = admin.get_verbose_name_plural()
         self._add_actions(admin, self.actions)
-        self.columns = admin.get_columns()
+        for field_name in admin.get_columns():
+            fa = list(admin.get_static_field_attributes([field_name]))
+            self.columns.append(Column(field_name, fa[0]['name'], True))
+        for field_name in admin.get_extra_columns():
+            fa = list(admin.get_static_field_attributes([field_name]))
+            self.columns.append(Column(field_name, fa[0]['name'], False))
         self.list_action = admin.get_list_action()
         self.close_route = None
         if proxy is None:
