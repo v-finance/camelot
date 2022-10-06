@@ -40,6 +40,7 @@ from ...core.qt import QtGui, is_deleted
 from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ApplicationActionGuiContext
 from camelot.core.exception import UserException
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
 from camelot.view.qml_view import qml_action_dispatch
@@ -1021,8 +1022,7 @@ class AddNewObjectMixin(object):
         # the object has been created
         yield action_steps.CreateObjects((subsystem_object,))
         if not len(admin.get_validator().validate_object(new_object)):
-            session = orm.object_session(subsystem_object)
-            yield action_steps.FlushSession(session)
+            admin.flush(new_object)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
         yield action_steps.UpdateObjects(
@@ -1030,6 +1030,20 @@ class AddNewObjectMixin(object):
         )
         if create_inline is False:
             yield action_steps.OpenFormView(new_object, admin)
+
+    def get_modes(self, model_context):
+        """
+        Determine and/or construct the applicable modes for this add action based on the given model_context.
+        This will either be the explicitly set modes, or modes constructed based on registere types for the admin.
+        """
+        admin = self.get_admin(model_context)
+        if not self.modes and admin is not None and issubclass(admin.entity, Entity):
+            polymorphic_types = admin.entity.get_polymorphic_types()
+            if admin.entity.__types__ is not None:
+                return admin.entity.__types__.get_modes()
+            elif polymorphic_types is not None:
+                return polymorphic_types.get_modes()
+        return self.modes
 
 class AddNewObject( AddNewObjectMixin, EditAction ):
     """Add a new object to a collection. Depending on the
@@ -1045,12 +1059,17 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     verbose_name = _('New')
     name = 'new_object'
 
-    def get_admin(self, model_context, mode):
+    def get_admin(self, model_context, mode=None):
         """
         Return the admin used for creating and handling the new entity instance with.
         By default, the given model_context's admin is used.
         """
-        return model_context.admin
+        admin = model_context.admin
+        if (admin is not None) and (mode is not None):
+            cls_for_type = admin.entity.get_cls_by_type(mode)
+            if cls_for_type:
+                return admin.get_related_admin(cls_for_type)
+        return admin
 
     def get_proxy(self, model_context, admin):
         return model_context.proxy
@@ -1060,6 +1079,11 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
         yield from super().model_run(model_context, mode)
         # Scroll to last row so that the user sees the newly added object in the list.
         yield action_steps.ToLastRow()
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        state.modes = self.get_modes(model_context)
+        return state
 
 add_new_object = AddNewObject()
 
