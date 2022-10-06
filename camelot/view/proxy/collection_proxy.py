@@ -391,7 +391,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             # the columns might be set before the value, but they might be running
             # in the model thread for a different model context as well, so
             # resubmit the set columns task for this model context
-            self._append_request(setcolumns_name, self._columns)
+            columns = [c['name'] for c in self._columns]
+            self._append_request(setcolumns_name, columns)
         self.layoutChanged.emit()
     
     def get_value(self):
