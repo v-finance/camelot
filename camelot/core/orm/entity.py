@@ -302,7 +302,9 @@ class EntityMeta( DeclarativeMeta ):
         Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
         This can be the class that is specifically registered for the given type or type group, or a possible registered default class otherwise.
         Providing no type will also return the default registered class if present.
-        
+        Additionally, in case of a polymorphic base class, passing one of the polymorphic identities will also retrieve
+        the entity corresponding to the identity based on the polymorphic map.
+
         :param _type:  either None which will lookup a possible registered default class, or a member of a sqlalchemy.util.OrderedProperties instance.
                        If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
                        __type_groups__, that get auto-set in case the set types are grouped.
@@ -318,6 +320,8 @@ class EntityMeta( DeclarativeMeta ):
                        | BaseClass.get_cls_by_type(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
         :raises :      an AttributeException when the given argument is not a valid type
         """
+        if 'polymorphic_on' in cls.__mapper_args__ and _type in cls.__mapper__.polymorphic_map:
+            return cls.__mapper__.polymorphic_map[_type].entity
         if cls.__types__ is not None:
             groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
             types = cls.__types__
