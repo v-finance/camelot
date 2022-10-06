@@ -297,6 +297,19 @@ class EntityMeta( DeclarativeMeta ):
         # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
         return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
 
+    def get_polymorphic_types(cls):
+        """
+        In case of a polymorphic base class with a polymorphic discriminator column
+        that is of type Enumeration, return its contained type enumeration.
+        """
+        polymorphic_on = cls.__mapper_args__.get('polymorphic_on')
+        if polymorphic_on is not None:
+            polymorphic_on_col = polymorphic_on
+            if isinstance(polymorphic_on, orm.attributes.InstrumentedAttribute):
+                polymorphic_on_col = polymorphic_on.prop.columns[0]
+            if isinstance(polymorphic_on_col.type, Enumeration):
+                return polymorphic_on_col.type.enum
+
     def get_cls_by_type(cls, _type):
         """
         Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
