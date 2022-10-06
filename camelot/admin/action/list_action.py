@@ -33,8 +33,6 @@ import enum
 import logging
 import itertools
 
-from sqlalchemy import orm
-
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import QtGui, is_deleted
 from .base import Action, Mode, GuiContext, RenderHint
