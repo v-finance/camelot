@@ -1067,7 +1067,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
         admin = model_context.admin
         if (admin is not None) and (mode is not None):
             cls_for_type = admin.entity.get_cls_by_type(mode)
-            if cls_for_type:
+            if cls_for_type is not None:
                 return admin.get_related_admin(cls_for_type)
         return admin
 
