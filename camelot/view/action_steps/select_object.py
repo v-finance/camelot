@@ -59,6 +59,8 @@ class SelectObjects(OpenTableView):
             self.actions,
             self.action_states
         )
+        # Allow custom column settings for SelectObjects
+        self.group.append('SelectObjects')
 
     @staticmethod
     def _add_actions(admin, actions):
