@@ -32,7 +32,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.test.action import MockListActionGuiContext, MockModelContext
-from camelot.view import action_steps, import_utils, utils
+from camelot.view import action_steps, import_utils, utils, gui_naming_context
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
@@ -118,9 +118,10 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     def setUp(self):
         get_qml_root_backend().setVisible(True, False)
-        self.admin_route = app_admin.get_admin_route()
-        self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin_route = app_admin.get_admin_route()
+        self.gui_context_obj = ApplicationActionGuiContext()
+        self.gui_context = gui_naming_context.bind(
+            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        )
         self.parent = QtWidgets.QWidget()
         enabled = State()
         disabled = State()
@@ -144,7 +145,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         self.grab_widget_states( widget, 'application' )
 
     def test_hide_progress_dialog( self ):
-        dialog = self.gui_context.get_progress_dialog()
+        dialog = self.gui_context_obj.get_progress_dialog()
         dialog.show()
         with hide_progress_dialog(self.gui_context):
             self.assertTrue( dialog.isHidden() )
@@ -175,7 +176,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         super(ActionStepsCase, self).setUp()
         get_qml_root_backend().setVisible(True, False)
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context = ('constant', 'null')
+        self.gui_context = ('cpp_gui_context', 'root_backend')
 
     def test_change_object(self):
 
@@ -248,13 +249,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         )
         self.assertTrue( str( update_progress ) )
         update_progress = self._write_read(update_progress)
-        # give the gui context a progress dialog, so it can be updated
-        progress_dialog = self.gui_context.get_progress_dialog()
         update_progress.gui_run(self.gui_context, update_progress._to_bytes())
-        # now press the cancel button
-        progress_dialog.cancel()
-        with self.assertRaises( CancelRequest ):
-            update_progress.gui_run(self.gui_context, update_progress._to_bytes())
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')
@@ -312,11 +307,15 @@ class ListActionsCase(
         self._load_data(self.item_model)
         table_view = tableview.TableWidget()
         table_view.setModel(self.item_model)
-        self.gui_context = list_action.ListActionGuiContext()
-        self.gui_context.item_view = table_view
-        self.gui_context.view = One2ManyEditor(admin_route=self.admin_route)
-        self.gui_context.admin_route = self.admin_route
-        self.gui_context.view.gui_context = self.gui_context
+        self.gui_context_obj = list_action.ListActionGuiContext()
+        self.gui_context_obj.item_view = table_view
+        self.gui_context_obj.view = One2ManyEditor(admin_route=self.admin_route)
+        self.gui_context_obj.admin_route = self.admin_route
+        self.gui_context_obj.view.gui_context = self.gui_context_obj
+        self.gui_context = initial_naming_context.bind(
+            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        )
+        
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
         # Make sure to ChangeSelection action step is executed
@@ -328,10 +327,6 @@ class ListActionsCase(
         Session().expunge_all()
         delete(self.item_model)
         self.item_model = None
-
-    def test_gui_context(self):
-        self.assertTrue( isinstance( self.gui_context.copy(),
-                                     list_action.ListActionGuiContext ) )
 
     def test_model_context(self):
         model_context = initial_naming_context.resolve(self.model_context_name)
@@ -481,7 +476,7 @@ class ListActionsCase(
 
     def test_open_form_view( self ):
         # sort and filter the original model
-        item_view = self.gui_context.item_view
+        item_view = self.gui_context_obj.item_view
         list_model = item_view.model()
         list_model.sort(1, Qt.SortOrder.DescendingOrder)
         list_model.timeout_slot()
@@ -490,7 +485,7 @@ class ListActionsCase(
         list_model.data(list_model.index(0, 0), Qt.ItemDataRole.DisplayRole)
         list_model.timeout_slot()
         self.process()
-        self.gui_context.item_view.setCurrentIndex(list_model.index(0, 0))
+        self.gui_context_obj.item_view.setCurrentIndex(list_model.index(0, 0))
         model_context = initial_naming_context.resolve(self.model_context_name)
         open_form_view_action = list_action.OpenFormView()
         for step in open_form_view_action.model_run(model_context, None):
@@ -649,9 +644,9 @@ class ListActionsCase(
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        widget = self.gui_context.view.render_action(
+        widget = self.gui_context_obj.view.render_action(
             self.combo_box_filter.render_hint, self.combo_box_filter_route,
-            self.gui_context, None
+            self.gui_context_obj, None
         )
         AbstractActionWidget.set_combobox_state(widget, state._to_dict())
         self.assertTrue(widget.count())
@@ -689,19 +684,18 @@ class FormActionsCase(
         person_admin = app_admin.get_related_admin(Person)
         self.admin_route = person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, person_admin.get_name())
-        self.gui_context = form_action.FormActionGuiContext()
-        self.gui_context._model = self.item_model
-        self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
-        self.gui_context.widget_mapper.setModel(self.item_model)
-        self.gui_context.admin_route = self.admin_route
-        self.gui_context.admin = person_admin
+        self.gui_context_obj = form_action.FormActionGuiContext()
+        self.gui_context_obj._model = self.item_model
+        self.gui_context_obj.widget_mapper = QtWidgets.QDataWidgetMapper()
+        self.gui_context_obj.widget_mapper.setModel(self.item_model)
+        self.gui_context_obj.admin_route = self.admin_route
+        self.gui_context_obj.admin = person_admin
+        self.gui_context = initial_naming_context.bind(
+            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        )
 
     def tearDown(self):
         super().tearDown()
-
-    def test_gui_context( self ):
-        self.assertTrue( isinstance( self.gui_context.copy(),
-                                     form_action.FormActionGuiContext ) )
 
     def test_previous_next( self ):
         previous_action = form_action.ToPreviousForm()
@@ -748,9 +742,7 @@ class ApplicationActionsCase(
         super( ApplicationActionsCase, self ).setUp()
         self.context = MockModelContext(session=self.session)
         self.context.admin = app_admin
-        self.admin_route = app_admin.get_admin_route()
-        self.gui_context = application_action.ApplicationActionGuiContext()
-        self.gui_context.admin_route = self.admin_route
+        self.gui_context = ('cpp_gui_context', 'root_backend')
 
     def test_refresh(self):
         refresh_action = application_action.Refresh()
