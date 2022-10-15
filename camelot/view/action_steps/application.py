@@ -41,7 +41,8 @@ from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
-from camelot.view.qml_view import qml_action_step, get_qml_window, is_cpp_gui_context
+from .. import gui_naming_context
+from camelot.view.qml_view import qml_action_step, get_qml_window, is_cpp_gui_context_name
 
 LOGGER = logging.getLogger(__name__)
 
@@ -261,10 +262,10 @@ class UpdateActionsState(ActionStep, DataclassSerializable):
                 self.action_states.append((action_route, state._to_dict()))
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if is_cpp_gui_context(gui_context):
-            return qml_action_step(gui_context, 'UpdateActionsState', serialized_step)
-
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            return qml_action_step(gui_context_name, 'UpdateActionsState', serialized_step)
+        gui_context = gui_naming_context.resolve(gui_context_name)
         step = json.loads(serialized_step)
         for action_route, action_state in step['action_states']:
             action = initial_naming_context.resolve(tuple(action_route))

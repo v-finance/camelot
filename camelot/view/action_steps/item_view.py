@@ -48,11 +48,12 @@ from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
+from .. import gui_naming_context
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
     rowcount_name, rowdata_name, setcolumns_name
 )
-from ..qml_view import qml_action_step, is_cpp_gui_context
+from ..qml_view import qml_action_step, is_cpp_gui_context_name
 
 LOGGER = logging.getLogger(__name__)
 
@@ -284,25 +285,10 @@ class OpenQmlTableView(OpenTableView):
 class ToFirstRow(ActionStep, DataclassSerializable):
     """Move to the first row in a table"""
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if is_cpp_gui_context(gui_context):
-            qml_action_step(gui_context, 'ToFirstRow')
-        else:
-            gui_context.item_view.selectRow( 0 )
-
 
 @dataclass
 class ToLastRow(ActionStep, DataclassSerializable):
     """Move to the last row in a table"""
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if is_cpp_gui_context(gui_context):
-            qml_action_step(gui_context, 'ToLastRow')
-        else:
-            item_view = gui_context.item_view
-            item_view.selectRow( item_view.model().rowCount() - 1 )
 
 
 @dataclass
@@ -310,10 +296,11 @@ class ClearSelection(ActionStep, DataclassSerializable):
     """Deselect all selected items."""
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if is_cpp_gui_context(gui_context):
-            qml_action_step(gui_context, 'ClearSelection', serialized_step)
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'ClearSelection', serialized_step)
         else:
+            gui_context = gui_naming_context.resolve(gui_context_name)
             gui_context.item_view.clearSelection()
 
 
@@ -331,10 +318,11 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     """
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if is_cpp_gui_context(gui_context):
-            qml_action_step(gui_context, 'RefreshItemView', serialized_step)
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'RefreshItemView', serialized_step)
         else:
+            gui_context = gui_naming_context.resolve(gui_context_name)
             model = gui_context.get_item_model()
             if model is not None:
                 model.refresh()

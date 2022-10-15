@@ -26,7 +26,6 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.qt import QtGui, QtWidgets, Qt, delete
-from camelot.core.exception import CancelRequest
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person

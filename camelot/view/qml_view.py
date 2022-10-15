@@ -104,17 +104,6 @@ def is_cpp_gui_context_name(gui_context_name):
         return False
     return gui_context_name[0] == 'cpp_gui_context'
 
-def is_cpp_gui_context(gui_context):
-    """
-    Check if a GUI context's name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
-    """
-    if gui_context is None:
-        return False
-    if gui_context.gui_context_name is None:
-        return False
-    return is_cpp_gui_context_name(gui_context.gui_context_name)
-
-
 # FIXME: add timeout + keep-alive on client
 class QmlActionDispatch(QtCore.QObject):
 
