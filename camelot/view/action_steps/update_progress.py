@@ -47,17 +47,10 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
 
     verbose_name: str
 
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        qml_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
-
 
 @dataclass
 class PopProgressLevel(ActionStep, DataclassSerializable):
-
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        qml_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
+    pass
 
 
 @dataclass
