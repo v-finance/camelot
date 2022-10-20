@@ -117,18 +117,22 @@ class ProfileCase(unittest.TestCase):
         store = ProfileStore(filename)
         self.assertEqual( store.read_profiles(), [] )
         self.assertEqual( store.get_last_profile(), None )
-        profile_1 = Profile(u'prôfile_1')
-        profile_1.dialect = u'sqlite'
-        profile_2 = Profile(u'prôfile_2')
-        profile_2.dialect = u'mysql'
+        profile_1 = Profile('prôfile_1')
+        profile_1.dialect = 'sqlite'
+        profile_1.locale_language = 'en_US'
+        profile_2 = Profile('prôfile_2')
+        profile_2.dialect = 'mysql'
+        profile_2.locale_language = 'en_GB'
         store.write_profiles( [profile_1, profile_2] )
         self.assertEqual( len(store.read_profiles()), 2 )
         store.set_last_profile( profile_1 )
-        self.assertTrue( store.get_last_profile().name, u'prôfile_1' )
-        self.assertTrue( store.get_last_profile().dialect, u'sqlite' )
+        self.assertTrue( store.get_last_profile().name, 'prôfile_1' )
+        self.assertTrue( store.get_last_profile().dialect, 'sqlite' )
+        self.assertTrue( store.get_last_profile().locale_language, 'en_US' )
         store.set_last_profile( profile_2 )
-        self.assertTrue( store.get_last_profile().name, u'prôfile_2' )
-        self.assertTrue( store.get_last_profile().dialect, u'mysql' )
+        self.assertTrue( store.get_last_profile().name, 'prôfile_2' )
+        self.assertTrue( store.get_last_profile().dialect, 'mysql' )
+        self.assertTrue( store.get_last_profile().locale_language, 'en_GB' )
         # os.remove(filename)
 
         return store

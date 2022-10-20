@@ -356,7 +356,20 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, 3.14 )
 
     def test_IntegerEditor(self):
+        # Default or explicitly set behaviour of the minimum and maximum of the integer editor was moved to the integer delegate
+        delegate = delegates.IntegerDelegate()
+        field_action_model_context = FieldActionModelContext(
+            app_admin.get_related_admin(Person)
+        )
+        field_action_model_context.value = 3
+        field_action_model_context.field_attributes = {}
+        item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
+        field_attributes = item.data(FieldAttributesRole)
+        self.assertIn('minimum', field_attributes)
+        self.assertIn('maximum', field_attributes)
+
         editor = editors.IntegerEditor(parent=None, editable=True)
+        editor.set_field_attributes(**field_attributes)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0 )
@@ -372,9 +385,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         # turn off the calculator
-        editor = editors.IntegerEditor(parent=None,
-                                            calculator=False)
-        editor.set_field_attributes( editable=True )
+        editor = editors.IntegerEditor(parent=None, calculator=False)
+        editor.set_field_attributes(editable=True, **field_attributes)
         editor.set_value( 3 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
@@ -395,11 +407,16 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_LanguageEditor(self):
         editor = editors.LanguageEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 'en_US' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'en_US' )
-        self.assert_valid_editor( editor, 'en_US' )
+        editor.set_value( 'en_GB' )
+        self.grab_default_states( editor )
+        self.assertEqual( editor.get_value(), 'en_GB' )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
+
 
     def test_Many2OneEditor(self):
         editor = editors.Many2OneEditor(parent=None, **self.editable_kwargs)

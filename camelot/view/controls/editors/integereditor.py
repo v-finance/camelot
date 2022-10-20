@@ -33,8 +33,6 @@ from math import floor
 
 from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.view.art import FontIcon
-from camelot.core.constants import camelot_minint
-from camelot.core.constants import camelot_maxint
 
 from .customeditor import CustomEditor, set_background_color_palette
 from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
@@ -46,8 +44,6 @@ class IntegerEditor(CustomEditor):
     calculator_icon = FontIcon('calculator') # 'tango/16x16/apps/accessories-calculator.png'
     
     def __init__(self, parent = None,
-                       minimum = camelot_minint,
-                       maximum = camelot_maxint,
                        calculator = True,
                        option = None,
                        decimal = False,
@@ -63,7 +59,6 @@ class IntegerEditor(CustomEditor):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         
         spin_box = CustomDoubleSpinBox(option, parent)
-        spin_box.setRange(minimum-1, maximum)
         spin_box.setDecimals(0)
         spin_box.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         spin_box.addAction(action)
@@ -104,6 +99,9 @@ class IntegerEditor(CustomEditor):
             spin_box.setPrefix(str(kwargs.get('prefix', '')))
             spin_box.setSuffix(str(kwargs.get('suffix', '')))
             spin_box.setSingleStep(kwargs.get('single_step', 1))
+            minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
+            if None not in (minimum, maximum):
+                spin_box.setRange(minimum-1, maximum)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

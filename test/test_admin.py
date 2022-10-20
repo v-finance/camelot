@@ -66,7 +66,10 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.app_admin = ApplicationAdmin()
 
     def test_not_editable_admin_class_decorator( self ):
-        OriginalAdmin = Translation.Admin
+
+        class OriginalAdmin(Translation.Admin):
+            list_actions = [list_filter.ComboBoxFilter(Translation.language)]
+
         original_admin = OriginalAdmin(self.app_admin, Translation)
         self.assertTrue(len(original_admin.get_list_actions()))
         self.assertTrue(original_admin.get_field_attributes('value')['editable'])
@@ -75,7 +78,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         #
         # enable the actions
         #
-        NewAdmin = not_editable_admin(Translation.Admin, actions = True)
+        NewAdmin = not_editable_admin(OriginalAdmin, actions=True)
         new_admin = NewAdmin(self.app_admin, Translation)
         self.assertTrue(len( new_admin.get_list_actions()))
         self.assertFalse(new_admin.get_field_attributes('value')['editable'])
@@ -94,8 +97,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         #
         # disable the actions
         #
-        NewAdmin = not_editable_admin( Translation.Admin, 
-                                       actions = False )
+        NewAdmin = not_editable_admin(OriginalAdmin, actions=False)
         new_admin = NewAdmin( self.app_admin, Translation )
         self.assertFalse( len( new_admin.get_list_actions() ) )
         self.assertFalse( new_admin.get_field_attributes( 'value' )['editable'] )
@@ -104,8 +106,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         #
         # keep the value field editable
         #
-        NewAdmin = not_editable_admin( Translation.Admin, 
-                                       editable_fields = ['value'] )
+        NewAdmin = not_editable_admin(OriginalAdmin, editable_fields=['value'])
         new_admin = NewAdmin( self.app_admin, Translation )
         self.assertFalse( len( new_admin.get_list_actions() ) )
         self.assertTrue( new_admin.get_field_attributes( 'value' )['editable'] )

@@ -13,7 +13,7 @@ from camelot.core.sql import metadata
 from camelot.model import authentication, memento, party, type_and_status
 from camelot.model.authentication import (get_current_authentication, update_last_login)
 from camelot.model.fixture import Fixture, FixtureVersion
-from camelot.model.i18n import ExportAsPO, Translation
+from camelot.model.i18n import Translation
 from camelot.model.party import Person
 from camelot.test.action import MockModelContext
 from camelot.view.import_utils import XlsReader
@@ -113,16 +113,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
                                    value = 'emmer' )
         orm.object_session( translation ).flush()
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
-        export_action = ExportAsPO()
-        model_context = MockModelContext()
-        model_context.obj = translation
-        try:
-            generator = export_action.model_run(model_context, None)
-            next( generator )
-            generator.send('/tmp/test.po')
-        except StopIteration:
-            pass
-    
+
     def test_current_authentication( self ):
         authentication.clear_current_authentication()
         mechanism = authentication.get_current_authentication()

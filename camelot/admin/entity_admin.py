@@ -46,7 +46,7 @@ from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
 
-from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
+from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
 from sqlalchemy.orm.exc import UnmappedClassError
@@ -317,19 +317,14 @@ and used as a custom action.
                     # the 'appropriate' way to get it from the class.  Getting it
                     # from the descriptor seems to manipulate  the actual descriptor
                     class_attribute = getattr(self.entity, field_name)
-                    # class attribute of hybrid properties is changed from
-                     # expression to comparator from sqla v1.2 onwards.
-                    if sqlalchemy_version.startswith('1.2') or sqlalchemy_version.startswith('1.3'):
-                        if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
-                            class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
+                        # Attribute should always have an expression because of the check made above.
+                        expression = class_attribute.expression
                         columns = []
-                        if isinstance(class_attribute, orm.attributes.InstrumentedAttribute):
-                            columns = [class_attribute]
-                        elif isinstance(class_attribute, sql.elements.Label):
-                            columns = [class_attribute]
-                        elif isinstance(class_attribute, sql.Select):
-                            columns = class_attribute.columns
+                        if isinstance(expression, (schema.Column, sql.elements.Label)):
+                            columns = [expression]
+                        elif isinstance(expression, sql.Select):
+                            columns = expression.columns
                         for k, v in self.get_sql_field_attributes(columns).items():
                             # the defaults or the nullable status of the column
                             # does not need to be the default or the nullable
