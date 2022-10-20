@@ -39,6 +39,7 @@ from ...core.qt import QtCore, QtWidgets, Qt,is_deleted, variant_to_py
 from ...core.serializable import NamedDataclassSerializable
 
 from ...core.item_model import ActionModeRole
+from .. import gui_naming_context
 from ..action_runner import ActionRunner
 from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.view.crud_action import VerboseIdentifierRole
@@ -289,18 +290,21 @@ class FormView(AbstractView):
         form.set_index(index)
         form_and_actions_layout.addWidget(form)
 
-        self.gui_context = FormActionGuiContext()
-        self.gui_context.workspace = self
-        self.gui_context.admin_route = admin_route
-        self.gui_context.view = self
-        self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
+        self.gui_context_obj = FormActionGuiContext()
+        self.gui_context_obj.workspace = self
+        self.gui_context_obj.admin_route = admin_route
+        self.gui_context_obj.view = self
+        self.gui_context_obj.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
                                                          'widget_mapper' )
         self.setLayout( layout )
         self.change_title(title)
 
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
-        self.gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
-        self.gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
+        self.gui_context_obj.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
+        self.gui_context_obj.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
+        self.gui_context = gui_naming_context.bind(
+            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        )
 
         #if hasattr(admin, 'form_size') and admin.form_size:
             #self.setMinimumSize(admin.form_size[0], admin.form_size[1])
@@ -334,7 +338,7 @@ class FormView(AbstractView):
             for action_route, render_hint in actions:
                 action_widget = self.render_action(
                     render_hint, tuple(action_route),
-                    self.gui_context, self
+                    self.gui_context_obj, self
                 )
                 self.model.add_action_route(tuple(action_route))
                 if render_hint == RenderHint.TOOL_BUTTON:
@@ -362,7 +366,7 @@ class FormView(AbstractView):
         self.run_action(qaction, self.gui_context, self.model.get_value(), qaction.data())
         
     def current_row_changed( self, current=None, previous=None ):
-        current_index = self.gui_context.widget_mapper.currentIndex()
+        current_index = self.gui_context_obj.widget_mapper.currentIndex()
         self.model.change_selection(None, current_index)
 
     def header_data_changed(self, orientation, first, last):
@@ -370,11 +374,12 @@ class FormView(AbstractView):
             return
         # the model might emit a dataChanged signal, while the widget mapper
         # has been deleted
-        if not is_deleted(self.gui_context.widget_mapper):
+        if not is_deleted(self.gui_context_obj.widget_mapper):
             self.current_row_changed(first)
 
     @QtCore.qt_slot()
     def validate_close( self ):
+        # widget_mapper.submit() ??
         action_runner = ActionRunner(self.close_route, self.gui_context, self.model.get_value(), None)
         action_runner.exec()
 

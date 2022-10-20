@@ -36,7 +36,8 @@ from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
 from camelot.core.exception import CancelRequest
 from ...core.serializable import DataclassSerializable
-from camelot.view.qml_view import qml_action_step
+from .. import gui_naming_context
+from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
@@ -46,17 +47,10 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
 
     verbose_name: str
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        qml_action_step(gui_context, 'PushProgressLevel', serialized_step)
-
 
 @dataclass
 class PopProgressLevel(ActionStep, DataclassSerializable):
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        qml_action_step(gui_context, 'PopProgressLevel', serialized_step)
+    pass
 
 
 @dataclass
@@ -99,12 +93,25 @@ updated.
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
+    def gui_run(cls, gui_context_name, serialized_step):
         """This method will update the progress dialog, if such dialog exists
         within the GuiContext
         
         :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
         """
+        # @TODO : this needs to be handled in the action runner
+        if is_cpp_gui_context_name(gui_context_name):
+            # C++ QmlProgressDialog
+            response = qml_action_step(gui_context_name, 'UpdateProgress', serialized_step)
+            if response['was_canceled']:
+                # reset progress dialog
+                reset_step = QtCore.QByteArray(json.dumps({ 'reset': True }).encode())
+                qml_action_step(gui_context_name, 'UpdateProgress', reset_step)
+                raise CancelRequest()
+            return
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        if gui_context is None:
+            return
         progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog:
             if isinstance(progress_dialog, QtWidgets.QProgressDialog):
@@ -135,12 +142,4 @@ updated.
                     progress_dialog.set_cancel_hidden(False)
                 if progress_dialog.wasCanceled():
                     progress_dialog.reset()
-                    raise CancelRequest()
-            else:
-                # C++ QmlProgressDialog
-                response = qml_action_step(gui_context, 'UpdateProgress', serialized_step)
-                if response['was_canceled']:
-                    # reset progress dialog
-                    reset_step = QtCore.QByteArray(json.dumps({ 'reset': True }).encode())
-                    qml_action_step(gui_context, 'UpdateProgress', reset_step)
                     raise CancelRequest()

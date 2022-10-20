@@ -116,7 +116,7 @@ class OpenFormView(AbstractCrudView):
         return initial_naming_context.resolve(self.admin_route)
 
     @classmethod
-    def render(self, gui_context, step):
+    def render(self, gui_context_name, step):
         model = CollectionProxy(tuple(step['admin_route']))
         list(model.add_columns((fn for fn, fa in step['fields'].items())))
         model.set_value(step['model_context_name'])
@@ -132,15 +132,14 @@ class OpenFormView(AbstractCrudView):
         return form
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
+    def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        window = gui_context.get_window()
-        formview = cls.render(gui_context, step)
+        formview = cls.render(gui_context_name, step)
         if formview is not None:
             formview.setObjectName('form.{}.{}'.format(
                 step['admin_route'], id(formview)
             ))
-            show_top_level(formview, window, step['form_state'])
+            show_top_level(formview, gui_context_name, step['form_state'])
 
 
 @dataclass

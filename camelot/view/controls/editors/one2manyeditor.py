@@ -33,6 +33,7 @@ import logging
 from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
+from ... import gui_naming_context
 from ..view import ViewWithActionsMixin
 from ..tableview import TableWidget
 from .wideeditor import WideEditor
@@ -102,10 +103,13 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         layout.addWidget(toolbar)
         self.setLayout(layout)
         self._new_message = None
-        self.list_gui_context = ListActionGuiContext()
-        self.list_gui_context.view = self
-        self.list_gui_context.admin_route = self.admin_route
-        self.list_gui_context.item_view = table
+        self.list_gui_context_obj = ListActionGuiContext()
+        self.list_gui_context_obj.view = self
+        self.list_gui_context_obj.admin_route = self.admin_route
+        self.list_gui_context_obj.item_view = table
+        self.list_gui_context = gui_naming_context.bind(
+            ('transient', str(id(self.list_gui_context_obj))), self.list_gui_context_obj
+        )
         self.add_actions(action_routes, toolbar)
         self.set_right_toolbar_actions(list_actions, toolbar)
         self.set_columns(columns)
@@ -144,10 +148,10 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         if action_routes is not None:
             for route_with_render_hint in action_routes:
                 action_route = route_with_render_hint.route
-                self.list_gui_context.item_view.model().add_action_route(action_route)
+                self.list_gui_context_obj.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(
                     route_with_render_hint.render_hint, action_route,
-                    self.list_gui_context, toolbar
+                    self.list_gui_context_obj, toolbar
                 )
                 qaction.action_route = action_route
                 if isinstance(qaction, QtWidgets.QWidget):
@@ -160,11 +164,11 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
-        self.list_gui_context.field_attributes = kwargs
+        self.list_gui_context_obj.field_attributes = kwargs
         self.update_list_action_states()
 
     def update_list_action_states(self):
-        table = self.list_gui_context.item_view
+        table = self.list_gui_context_obj.item_view
         selection_model = table.selectionModel()
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)

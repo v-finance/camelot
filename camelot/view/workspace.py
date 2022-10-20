@@ -36,6 +36,8 @@ logger = logging.getLogger('camelot.view.workspace')
 
 from ..core import constants
 from ..core.qt import QtCore, QtWidgets, transferto
+from .qml_view import is_cpp_gui_context_name, get_qml_window
+from . import gui_naming_context
 
 
 top_level_windows = []
@@ -84,7 +86,7 @@ def apply_form_state(view, parent, state):
                               point.y()-view.height()/2)
         view.move(point)
 
-def show_top_level(view, parent, state=None):
+def show_top_level(view, gui_context_name, state=None):
     """Show a widget as a top level window.  If a parent window is given, the new
     window will have the same modality as the parent.
 
@@ -93,6 +95,11 @@ def show_top_level(view, parent, state=None):
         window will be placed.
     :param state: the state of the form, 'maximized', or 'left' or 'right', ...
      """
+    if is_cpp_gui_context_name(gui_context_name):
+        parent = get_qml_window()
+    else:
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        parent = gui_context.get_window()
     #
     # assert the view has an objectname, so it can be retrieved later
     # by this object name, since a top level view might have no references

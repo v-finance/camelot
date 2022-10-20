@@ -680,10 +680,10 @@ class SearchFilter(Action, AbstractModelFilter):
                     query = query.order_by(sql.func.least(*[cls._order_by_decorator(order_by, search_text) for order_by in order_search_by]))
         return query
 
-    def gui_run(self, gui_context):
+    def gui_run(self, gui_context_name):
         # overload the action gui run to avoid a progress dialog
         # popping up while searching
-        super(SearchFilter, self).gui_run(gui_context)
+        super(SearchFilter, self).gui_run(gui_context_name)
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps

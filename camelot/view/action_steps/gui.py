@@ -38,7 +38,6 @@ from typing import List, Union
 from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
-from camelot.admin.action.form_action import FormActionGuiContext
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.naming import initial_naming_context
@@ -46,10 +45,11 @@ from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.qml_view import qml_action_step
+from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from ..art import FontIcon
+from .. import gui_naming_context
 from .crud import CompletionValue
 
 
@@ -59,10 +59,8 @@ class Refresh( ActionStep, DataclassSerializable ):
     from the database"""
 
     @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        if gui_context.workspace:
-            gui_context.workspace.refresh()
-        qml_action_step(gui_context, 'Refresh')
+    def gui_run(self, gui_context_name, serialized_step):
+        qml_action_step(gui_context_name, 'Refresh')
 
 class ItemSelectionDialog(StandaloneWizardPage):
 
@@ -138,7 +136,7 @@ class SelectItem(ActionStep, DataclassSerializable):
         return dialog
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
+    def gui_run(cls, gui_context_name, serialized_step):
         dialog = cls.render(step = json.loads(serialized_step))
         result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Rejected:
@@ -146,7 +144,7 @@ class SelectItem(ActionStep, DataclassSerializable):
         return dialog.get_value()
 
     @classmethod
-    def deserialize_result(cls, gui_context, serialized_result):
+    def deserialize_result(cls, gui_context_name, serialized_result):
         return tuple(serialized_result)
 
 @dataclass
@@ -165,15 +163,16 @@ class CloseView(ActionStep, DataclassSerializable):
     accept: bool = True
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if isinstance(gui_context, FormActionGuiContext):
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'CloseView', serialized_step)
+        else:
             # python implementation, still used for FormView
+            gui_context = gui_naming_context.resolve(gui_context_name)
             step = json.loads(serialized_step)
             view = gui_context.view
             if view is not None and not is_deleted(view):
                 view.close_view(step["accept"])
-        else:
-            qml_action_step(gui_context, 'CloseView', serialized_step)
 
 
 @dataclass
@@ -234,10 +233,10 @@ class MessageBox( ActionStep, DataclassSerializable ):
         return result
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
+    def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
         if step['hide_progress']:
-            with hide_progress_dialog(gui_context):
+            with hide_progress_dialog(gui_context_name):
                 return cls.show_message_box(step)
         else:
             return cls.show_message_box(step)

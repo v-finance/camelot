@@ -255,7 +255,7 @@ return immediately and the :meth:`model_run` will not be blocked.
     cancelable = True
 
     @classmethod
-    def gui_run( cls, gui_context, serialized_step=b'' ):
+    def gui_run( cls, gui_context_name, serialized_step=b'' ):
         """This method is called in the *GUI thread* upon execution of the
         action step.  The return value of this method is the result of the
         :keyword:`yield` statement in the *model thread*.
@@ -273,7 +273,7 @@ return immediately and the :meth:`model_run` will not be blocked.
         exception, if the user canceled the operation.
         """
         from camelot.view.qml_view import qml_action_step
-        return qml_action_step(gui_context, cls.__name__, serialized_step)
+        return qml_action_step(gui_context_name, cls.__name__, serialized_step)
 
     def model_run( self, model_context, mode ):
         raise Exception('This should not happen')
@@ -429,7 +429,7 @@ with a view.
         """
         yield
 
-    def gui_run( self, gui_context ):
+    def gui_run( self, gui_context_name ):
         raise Exception('This should not happen')
 
     def get_state( self, model_context ):

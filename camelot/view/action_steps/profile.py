@@ -374,13 +374,13 @@ class EditProfiles(ActionStep):
     profiles: List[Profile]
     current_profile: str = ''
     
-    def render(self, gui_context):
+    def render(self, gui_context_name):
         dialog = ProfileWizard(self.profiles)
         dialog.set_current_profile(self.current_profile)
         return dialog
     
-    def gui_run(self, gui_context):
-        dialog = self.render(gui_context)
+    def gui_run(self, gui_context_name):
+        dialog = self.render(gui_context_name)
         result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()

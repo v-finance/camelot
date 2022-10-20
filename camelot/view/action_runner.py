@@ -29,6 +29,7 @@
 
 import contextlib
 import functools
+import io
 import json
 import logging
 import typing
@@ -38,6 +39,7 @@ from ..core.naming import (
 )
 from ..core.serializable import DataclassSerializable, json_encoder
 from ..core.qt import QtCore, QtGui, is_deleted
+from . import gui_naming_context
 from camelot.admin.action import ActionStep
 from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import GuiException, CancelRequest
@@ -48,10 +50,15 @@ LOGGER = logging.getLogger('camelot.view.action_runner')
 REQUEST_LOGGER = logging.getLogger('camelot.view.action_runner.request')
 
 @contextlib.contextmanager
-def hide_progress_dialog( gui_context ):
+def hide_progress_dialog(gui_context_name):
     """A context manager to hide the progress dialog of the gui context when
     the context is entered, and restore the original state at exit"""
-    progress_dialog = gui_context.get_progress_dialog()
+    from .qml_view import is_cpp_gui_context_name
+    progress_dialog = None
+    if not is_cpp_gui_context_name(gui_context_name):
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        if gui_context is not None:
+            progress_dialog = gui_context.get_progress_dialog()
     if progress_dialog is None:
         yield
         return
@@ -83,7 +90,7 @@ class ActionRunner( QtCore.QEventLoop ):
     
     def __init__(self,
                  action_name: CompositeName,
-                 gui_context,
+                 gui_context: CompositeName,
                  model_context: CompositeName,
                  mode: typing.Union[str, dict, list, int]
                  ):
@@ -93,6 +100,7 @@ class ActionRunner( QtCore.QEventLoop ):
         super( ActionRunner, self ).__init__()
         self._return_code = None
         self._generator = None
+        gui_naming_context.validate_composite_name(gui_context)
         self._gui_context = gui_context
         self._non_blocking_cancel_request = False
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
@@ -185,15 +193,30 @@ class ActionRunner( QtCore.QEventLoop ):
 
     @QtCore.qt_slot( object )
     def non_blocking_action_step( self, action_step ):
+        from .qml_view import is_cpp_gui_context_name, qml_action_step
+        # dispatch to RootBackend if this is a cpp gui context
+        if is_cpp_gui_context_name(self._gui_context):
+            # FIXME: step is not (yet) serializable, use _to_dict for now
+            stream = io.BytesIO()
+            stream.write(json_encoder.encode(action_step._to_dict()).encode())
+            serialized_step = stream.getvalue()
+            return qml_action_step(
+                self._gui_context, type(action_step).__name__, serialized_step
+            )
         try:
-            self._was_canceled( self._gui_context )
-            action_step.gui_run( self._gui_context )
+            self._was_canceled(self._gui_context)
+            action_step.gui_run(self._gui_context)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             self._non_blocking_cancel_request = True
 
     @QtCore.qt_slot(str, bytes)
     def non_blocking_serializable_action_step(self, step_type, serialized_step):
+        from .qml_view import is_cpp_gui_context_name, qml_action_step
+        if is_cpp_gui_context_name(self._gui_context):
+            return qml_action_step(
+                self._gui_context,step_type, serialized_step
+            )
         cls = MetaActionStep.action_steps[step_type]
         try:
             self._was_canceled(self._gui_context)
@@ -241,15 +264,23 @@ class ActionRunner( QtCore.QEventLoop ):
         else:
             self.exit()
         
-    def _was_canceled( self, gui_context ):
+    def _was_canceled(self, gui_context_name):
         """raise a :class:`camelot.core.exception.CancelRequest` if the
         user pressed the cancel button of the progress dialog in the
         gui_context.
         """
-        progress_dialog = gui_context.get_progress_dialog()
-        if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
-            LOGGER.debug( 'progress dialog was canceled, raise request' )
-            raise CancelRequest()
+        from .qml_view import is_cpp_gui_context_name
+        if is_cpp_gui_context_name(gui_context_name):
+            # @TODO : check was canceled for cpp
+            return False
+        else:
+            gui_context = gui_naming_context.resolve(gui_context_name)
+            if gui_context is None:
+                return False
+            progress_dialog = gui_context.get_progress_dialog()
+            if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
+                LOGGER.debug( 'progress dialog was canceled, raise request' )
+                raise CancelRequest()
 
     @QtCore.qt_slot( object )
     def __next__( self, yielded ):
@@ -268,7 +299,7 @@ class ActionRunner( QtCore.QEventLoop ):
                     to_send = cls.deserialize_result(self._gui_context, to_send)
                 else:
                     to_send = yielded.gui_run(self._gui_context)
-                self._was_canceled( self._gui_context )
+                self._was_canceled(self._gui_context )
                 post( self._iterate_until_blocking, 
                       self.__next__, 
                       self.exception, 

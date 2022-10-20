@@ -1,11 +1,8 @@
 import logging
-import itertools
 import json
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, jsonvalue_to_py
 from camelot.core.exception import UserException
-from camelot.core.naming import initial_naming_context, NameNotFoundException
-from camelot.admin.action.application_action import ApplicationActionGuiContext
 from .action_runner import ActionRunner
 
 
@@ -107,100 +104,26 @@ def is_cpp_gui_context_name(gui_context_name):
         return False
     return gui_context_name[0] == 'cpp_gui_context'
 
-def is_cpp_gui_context(gui_context):
-    """
-    Check if a GUI context's name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
-    """
-    if gui_context is None:
-        return False
-    if gui_context.gui_context_name is None:
-        return False
-    return is_cpp_gui_context_name(gui_context.gui_context_name)
-
-
 # FIXME: add timeout + keep-alive on client
 class QmlActionDispatch(QtCore.QObject):
-
-    _gui_naming_context = initial_naming_context.bind_new_context(
-        'gui_context', immutable=True
-    )
-    _gui_naming_context_ids = itertools.count()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
-            root_backend.releaseContext.connect(self.unregister)
-        # register None gui_context as with ['gui_context', '0']
-        self.register(None)
-
-    def register(self, gui_context):
-        if gui_context is None:
-            gui_context_id = self._gui_naming_context_ids.__next__()
-            gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
-            return gui_context_name
-        assert not is_cpp_gui_context(gui_context)
-        if gui_context.gui_context_name is not None:
-            if id(initial_naming_context.resolve(gui_context.gui_context_name)) == id(gui_context):
-                return gui_context.gui_context_name
-        gui_context_id = self._gui_naming_context_ids.__next__()
-        gui_context_name = self._gui_naming_context.bind(str(gui_context_id), gui_context)
-        gui_context.gui_context_name = gui_context_name
-        return gui_context_name
-
-    def unregister(self, gui_context_name):
-        if not is_cpp_gui_context_name(gui_context_name):
-            initial_naming_context.unbind(tuple(gui_context_name))
-
-    def has_context(self, gui_context):
-        if gui_context is None:
-            return True
-        if gui_context.gui_context_name is None:
-            return False
-        try:
-            initial_naming_context.resolve(gui_context.gui_context_name)
-            return True
-        except NameNotFoundException:
-            return False
-
-    def get_context(self, gui_context_name):
-        return initial_naming_context.resolve(tuple(gui_context_name))
 
     def run_action(self, gui_context_name, route, args, model_context_name):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
-
-        class DummyGuiContext(ApplicationActionGuiContext):
-
-            def __init__(self, gui_context_name):
-                super().__init__()
-                self.admin_route = None
-                self.gui_context_name = gui_context_name
-
-        gui_context = DummyGuiContext(gui_context_name)
         action_runner = ActionRunner(
-            tuple(route), gui_context, model_context_name, args
+            tuple(route), tuple(gui_context_name), tuple(model_context_name), args
         )
         action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()
 
 
-# FIXME: rename to cpp_action_step?
-def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}):
-    """
-    Register the gui_context and execute the action step by specifying a name and serialized action step.
-    """
-    global qml_action_dispatch
-    if isinstance(gui_context, list):
-        gui_context_name = gui_context
-    else:
-        if gui_context is None:
-            gui_context_name = ('gui_context', '0')
-        elif gui_context.gui_context_name is None:
-            gui_context_name = qml_action_dispatch.register(gui_context)
-        else:
-            gui_context_name = gui_context.gui_context_name
+def qml_action_step(gui_context_name, name, step=QtCore.QByteArray(), props={}):
     backend = get_qml_root_backend()
     response = backend.actionStep(gui_context_name, name, step, props)
     return json.loads(response.data())
