@@ -113,36 +113,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
                                    value = 'emmer' )
         orm.object_session( translation ).flush()
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
-        
-    def test_batch_job_example( self ):
-        # begin batch job example
-        synchronize = BatchJobType.get_or_create( u'Synchronize' )
-        with BatchJob.create( synchronize ) as batch_job:
-            batch_job.add_strings_to_message( [ u'Synchronize part A',
-                                                u'Synchronize part B' ] )
-            batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
-        # end batch job example
-            
-    def test_batch_job( self ):
-        batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        self.assertTrue( six.text_type( batch_job_type ) )
-        batch_job = BatchJob.create( batch_job_type )
-        self.assertTrue( orm.object_session( batch_job ) )
-        self.assertFalse( batch_job.is_canceled() )
-        batch_job.change_status( 'canceled' )
-        self.assertTrue( batch_job.is_canceled() )
-        # run batch job without exception
-        with batch_job:
-            batch_job.add_strings_to_message( [ u'Doing something' ] )
-            batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
-        self.assertEqual( batch_job.current_status, 'success' )
-        # run batch job with exception
-        batch_job = BatchJob.create( batch_job_type )
-        with batch_job:
-            batch_job.add_strings_to_message( [ u'Doing something' ] )
-            raise Exception('Something went wrong')
-        self.assertEqual( batch_job.current_status, 'errors' )
-    
+
     def test_current_authentication( self ):
         authentication.clear_current_authentication()
         mechanism = authentication.get_current_authentication()
