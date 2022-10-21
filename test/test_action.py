@@ -1,5 +1,4 @@
 import datetime
-from dataclasses import dataclass
 import gc
 import io
 import logging
@@ -9,6 +8,7 @@ import openpyxl
 
 import camelot.types
 
+from camelot.core.dataclasses import dataclass
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.item_model import ObjectRole
