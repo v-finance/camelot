@@ -28,8 +28,7 @@
 #  ============================================================================
 
 """
-Various ``ActionStep`` subclasses that manipulate the `item_view` of 
-the `ListActionGuiContext`.
+Various ``ActionStep`` subclasses that manipulate the `item_view`
 """
 
 from dataclasses import dataclass, InitVar, field

@@ -30,7 +30,7 @@ from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
-from camelot.test.action import MockListActionGuiContext, MockModelContext
+from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils, utils, gui_naming_context
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
@@ -306,16 +306,10 @@ class ListActionsCase(
         self.movie_admin = app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
         self._load_data(self.item_model)
-        table_view = tableview.TableWidget()
+        self.view = One2ManyEditor(admin_route=self.admin_route)
+        table_view = self.view.item_view
         table_view.setModel(self.item_model)
-        self.gui_context_obj = list_action.ListActionGuiContext()
-        self.gui_context_obj.item_view = table_view
-        self.gui_context_obj.view = One2ManyEditor(admin_route=self.admin_route)
-        self.gui_context_obj.admin_route = self.admin_route
-        self.gui_context_obj.view.gui_context = self.gui_context_obj
-        self.gui_context = initial_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
-        )
+        self.gui_context = self.view.list_gui_context_name
         
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
@@ -339,7 +333,6 @@ class ListActionsCase(
         # FIXME: this unit test does not work with the new ToFirstRow/ToNextRow action steps...
         return
 
-        gui_context = MockListActionGuiContext()
         to_first = list_action.ToFirstRow()
         to_last = list_action.ToLastRow()
 
@@ -477,7 +470,7 @@ class ListActionsCase(
 
     def test_open_form_view( self ):
         # sort and filter the original model
-        item_view = self.gui_context_obj.item_view
+        item_view = self.view.item_view
         list_model = item_view.model()
         list_model.sort(1, Qt.SortOrder.DescendingOrder)
         list_model.timeout_slot()
@@ -486,7 +479,7 @@ class ListActionsCase(
         list_model.data(list_model.index(0, 0), Qt.ItemDataRole.DisplayRole)
         list_model.timeout_slot()
         self.process()
-        self.gui_context_obj.item_view.setCurrentIndex(list_model.index(0, 0))
+        self.view.item_view.setCurrentIndex(list_model.index(0, 0))
         model_context = initial_naming_context.resolve(self.model_context_name)
         open_form_view_action = list_action.OpenFormView()
         for step in open_form_view_action.model_run(model_context, None):
@@ -645,9 +638,9 @@ class ListActionsCase(
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        widget = self.gui_context_obj.view.render_action(
+        widget = self.view.render_action(
             self.combo_box_filter.render_hint, self.combo_box_filter_route,
-            self.gui_context_obj, None
+            self.view, None
         )
         AbstractActionWidget.set_combobox_state(widget, state._to_dict())
         self.assertTrue(widget.count())
