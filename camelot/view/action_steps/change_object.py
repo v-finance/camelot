@@ -47,6 +47,7 @@ from camelot.view.proxy.collection_proxy import CollectionProxy
 
 from .form_view import OpenFormView
 from .item_view import UpdateTableView
+from .. import gui_naming_context
 from ..controls.view import ViewWithActionsMixin
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
@@ -123,6 +124,9 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         model.set_value(proxy_route)
         self.model_context_name = proxy_route
         list(model.add_columns((fn for fn, _fa in fields.items())))
+        self.gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self))), self
+        )
 
     @property
     def widget_mapper(self):
@@ -133,12 +137,12 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
-        self.run_action(self.sender(), self.gui_context, self.model_context_name, None)
+        self.run_action(self.sender(), self.gui_context_name, self.model_context_name, None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.gui_context, self.model_context_name, qaction.data())
+        self.run_action(qaction, self.gui_context_name, self.model_context_name, qaction.data())
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
