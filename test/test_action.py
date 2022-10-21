@@ -12,10 +12,9 @@ from camelot.core.dataclasses import dataclass
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.item_model import ObjectRole
-from camelot.admin.action import Action, ActionStep, State
+from camelot.admin.action import Action, ActionStep, State, GuiContext
 from camelot.admin.action import (
-    list_action, application_action, form_action, list_filter,
-    ApplicationActionGuiContext, Mode
+    list_action, application_action, form_action, list_filter, Mode
 )
 from camelot.admin.action import export_mapping
 from camelot.admin.action.logging import ChangeLogging
@@ -119,7 +118,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     def setUp(self):
         get_qml_root_backend().setVisible(True, False)
-        self.gui_context_obj = ApplicationActionGuiContext()
+        self.gui_context_obj = GuiContext()
         self.gui_context = gui_naming_context.bind(
             ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
         )

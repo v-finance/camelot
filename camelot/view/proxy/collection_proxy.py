@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ...admin.action.application_action import ApplicationActionGuiContext
+from ...admin.action.base import GuiContext
 from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
@@ -98,10 +98,10 @@ initial_delay = 50
 maximum_delay = 1000
 
 
-# CollectionProxy subclasses ApplicationActionGuiContext to be able to behave
+# CollectionProxy subclasses GuiContext to be able to behave
 # as a gui_context when running field actions.  To be removed later on.
 
-class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
+class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
     :class:`QtWidgets.QTableView`  
@@ -123,7 +123,6 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         :param admin_route: the route to the view to display
         """
         super(CollectionProxy, self).__init__()
-        ApplicationActionGuiContext.__init__(self)
         assert object_thread(self)
         assert isinstance(admin_route, tuple)
         assert len(admin_route)
@@ -344,7 +343,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
     def copy(self, base_class=None):
         return super().copy(
-            base_class=base_class or ApplicationActionGuiContext
+            base_class=base_class or GuiContext
         )
 
     # End of methods to behave like a GuiContext. 

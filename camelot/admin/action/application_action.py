@@ -35,7 +35,7 @@ from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from .base import RenderHint
 from camelot.admin.icon import Icon, CompletionValue
-from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
+from camelot.admin.action.base import Action, Mode, ModelContext
 from camelot.core.exception import CancelRequest
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
@@ -82,57 +82,6 @@ class ApplicationActionModelContext(ModelContext):
     @property
     def session( self ):
         return Session()
-        
-class ApplicationActionGuiContext( GuiContext ):
-    """The GUI context for an :class:`camelot.admin.action.Action`.  On top of 
-    the attributes of the :class:`camelot.admin.action.base.GuiContext`, this 
-    context contains :
-    
-    .. attribute:: workspace
-    
-        the :class:`camelot.view.workspace.DesktopWorkspace` of the 
-        application in which views can be opened or adapted.
-        
-    .. attribute:: admin_route
-    
-        the route to the reference of the view on the server
-
-    .. attribute:: action_routes
-
-        a list with routes to actions in the current context, mapping the
-        route to the action to the route to the rendered action displaying the
-        action state.
-    """
-
-    def __init__( self ):
-        super( ApplicationActionGuiContext, self ).__init__()
-        self.gui_context_name = None
-        self.workspace = None
-        self.admin_route = ('admin', 'application', '0')
-        self.action_routes = {}
-    
-    def get_progress_dialog(self):
-        from camelot.view.qml_view import get_qml_root_backend
-        root_backend = get_qml_root_backend()
-        if root_backend is not None and root_backend.isVisible():
-            progress_dialog = root_backend.progressDialog()
-            if progress_dialog is not None:
-                return progress_dialog
-
-        # return the regular progress dialog
-        return super( ApplicationActionGuiContext, self ).get_progress_dialog()
-
-    def get_window(self):
-        from camelot.view.qml_view import get_qml_window
-        return get_qml_window()
-
-    def copy(self, base_class=None):
-        new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
-        new_context.gui_context_name = self.gui_context_name
-        new_context.workspace = self.workspace
-        new_context.admin_route = self.admin_route
-        new_context.action_routes = dict(self.action_routes)
-        return new_context
 
 
 class UpdateActions(Action):
