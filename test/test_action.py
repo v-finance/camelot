@@ -36,7 +36,7 @@ from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls.action_widget import AbstractActionWidget
-from camelot.view.controls import delegates, tableview
+from camelot.view.controls import delegates
 from camelot.view.controls.formview import FormView
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.forms import Form
@@ -337,10 +337,10 @@ class ListActionsCase(
 
         # the state does not change when the current row changes,
         # to make the actions usable in the main window toolbar
-        list(self.gui_run(to_last.gui_run, gui_context, None))
+        list(self.gui_run(to_last.gui_run, self.gui_context, None))
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
-        list(self.gui_run(to_first.gui_run, gui_context, None))
+        list(self.gui_run(to_first.gui_run, self.gui_context, None))
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
 
