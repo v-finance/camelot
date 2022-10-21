@@ -41,7 +41,7 @@ from ...core.serializable import NamedDataclassSerializable
 from ...core.item_model import ActionModeRole
 from .. import gui_naming_context
 from ..action_runner import ActionRunner
-from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.admin.action.base import GuiContext
 from camelot.view.crud_action import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
@@ -254,7 +254,7 @@ class FormWidget(QtWidgets.QWidget):
                 #break
         LOGGER.debug( 'done' )
 
-class FormView(AbstractView):
+class FormView(AbstractView, GuiContext):
     """A FormView is the combination of a FormWidget, possible actions and menu
     items
 
@@ -280,6 +280,7 @@ class FormView(AbstractView):
         self.admin_route = admin_route
         self.title_prefix = title
         self.close_route = close_route
+        self.action_routes = dict()
 
         form = FormWidget(
             admin_route=admin_route, model=model, form_display=form_display,
@@ -289,27 +290,23 @@ class FormView(AbstractView):
         form.changed_signal.connect( self.update_title )
         form.set_index(index)
         form_and_actions_layout.addWidget(form)
-
-        self.gui_context_obj = FormActionGuiContext()
-        self.gui_context_obj.workspace = self
-        self.gui_context_obj.admin_route = admin_route
-        self.gui_context_obj.view = self
-        self.gui_context_obj.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
-                                                         'widget_mapper' )
         self.setLayout( layout )
         self.change_title(title)
 
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
-        self.gui_context_obj.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
-        self.gui_context_obj.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
-        self.gui_context = gui_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        self.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
+        self.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
+        self.gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self))), self
         )
-
-        #if hasattr(admin, 'form_size') and admin.form_size:
-            #self.setMinimumSize(admin.form_size[0], admin.form_size[1])
-
         self.accept_close_event = False
+
+    @property
+    def widget_mapper(self):
+        return self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
+
+    def get_window(self):
+        return self.window()
 
     @QtCore.qt_slot()
     def refresh(self):
@@ -338,7 +335,7 @@ class FormView(AbstractView):
             for action_route, render_hint in actions:
                 action_widget = self.render_action(
                     render_hint, tuple(action_route),
-                    self.gui_context_obj, self
+                    self, self
                 )
                 self.model.add_action_route(tuple(action_route))
                 if render_hint == RenderHint.TOOL_BUTTON:
@@ -358,29 +355,30 @@ class FormView(AbstractView):
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
-        self.run_action(self.sender(), self.gui_context, self.model.get_value(), None)
+        self.run_action(self.sender(), self.gui_context_name, self.model.get_value(), None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.gui_context, self.model.get_value(), qaction.data())
+        self.run_action(qaction, self.gui_context_name, self.model.get_value(), qaction.data())
         
     def current_row_changed( self, current=None, previous=None ):
-        current_index = self.gui_context_obj.widget_mapper.currentIndex()
-        self.model.change_selection(None, current_index)
+        if self.widget_mapper is not None:
+            current_index = self.widget_mapper.currentIndex()
+            self.model.change_selection(None, current_index)
 
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Orientation.Horizontal:
             return
         # the model might emit a dataChanged signal, while the widget mapper
         # has been deleted
-        if not is_deleted(self.gui_context_obj.widget_mapper):
+        if (self.widget_mapper is not None) and (not is_deleted(self.widget_mapper)):
             self.current_row_changed(first)
 
     @QtCore.qt_slot()
     def validate_close( self ):
         # widget_mapper.submit() ??
-        action_runner = ActionRunner(self.close_route, self.gui_context, self.model.get_value(), None)
+        action_runner = ActionRunner(self.close_route, self.gui_context_name, self.model.get_value(), None)
         action_runner.exec()
 
     def close_view( self, accept ):

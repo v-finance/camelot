@@ -30,38 +30,10 @@
 from ...core.qt import QtGui, QtWidgets
 
 from ...admin.icon import Icon
-from ...admin.action import Mode, State
+from ...admin.action import Mode
 from camelot.view.art import from_admin_icon
 
-class AbstractActionWidget( object ):
-
-    def init(self, action_name, gui_context):
-        """Helper class to construct widget that when triggered run an action.
-        This class exists as a base class for custom ActionButton
-        implementations.
-        
-        The model is assumed to update its vertical header every time the object
-        in a row changes.  So listening to the vertical header changes should
-        be enough to update the state of the action.
-        """
-        assert isinstance(action_name, (tuple, list))
-        self.action_name = action_name
-        self.gui_context = gui_context
-        self.state = State()
-        # REMOVE THIS...
-        """
-        if isinstance( gui_context, FormActionGuiContext ):
-            gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
-            gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
-        """
-
-    def set_state(self, state):
-        self.state = state
-        self.setEnabled(state.enabled)
-        self.setVisible(state.visible)
-
-    def set_state_v2(self, state):
-        self.set_widget_state(self, state)
+class AbstractActionWidget(object):
 
     @classmethod
     def set_widget_state(cls, widget, state):

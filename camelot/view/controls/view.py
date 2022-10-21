@@ -120,6 +120,10 @@ class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
     icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
     close_clicked_signal = QtCore.qt_signal()
 
+    @property
+    def view(self):
+        return self
+
     @QtCore.qt_slot()
     def validate_close(self):
         return True

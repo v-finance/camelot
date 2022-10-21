@@ -38,7 +38,9 @@ from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls import delegates, tableview
+from camelot.view.controls.formview import FormView
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+from camelot.view.forms import Form
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.view.qml_view import get_qml_root_backend
@@ -683,36 +685,32 @@ class FormActionsCase(
         person_admin = app_admin.get_related_admin(Person)
         self.admin_route = person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, person_admin.get_name())
-        self.gui_context_obj = form_action.FormActionGuiContext()
-        self.gui_context_obj._model = self.item_model
-        self.gui_context_obj.widget_mapper = QtWidgets.QDataWidgetMapper()
-        self.gui_context_obj.widget_mapper.setModel(self.item_model)
-        self.gui_context_obj.admin_route = self.admin_route
-        self.gui_context_obj.admin = person_admin
-        self.gui_context = initial_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        self.form_view = FormView(
+            'Test form', self.admin_route, tuple(), self.item_model,
+            Form([])._to_dict(), {}, 0
         )
+        self.gui_context_name = self.form_view.gui_context_name
 
     def tearDown(self):
         super().tearDown()
 
     def test_previous_next( self ):
         previous_action = form_action.ToPreviousForm()
-        list(self.gui_run(previous_action, self.gui_context, None))
+        list(self.gui_run(previous_action, self.gui_context_name, None))
         next_action = form_action.ToNextForm()
-        list(self.gui_run(next_action, self.gui_context, None))
+        list(self.gui_run(next_action, self.gui_context_name, None))
         first_action = form_action.ToFirstForm()
-        list(self.gui_run(first_action, self.gui_context, None))
+        list(self.gui_run(first_action, self.gui_context_name, None))
         last_action = form_action.ToLastForm()
-        list(self.gui_run(last_action, self.gui_context, None))
+        list(self.gui_run(last_action, self.gui_context_name, None))
 
     def test_show_history( self ):
         show_history_action = form_action.ShowHistory()
-        list(self.gui_run(show_history_action, self.gui_context, None))
+        list(self.gui_run(show_history_action, self.gui_context_name, None))
 
     def test_close_form( self ):
         close_form_action = form_action.CloseForm()
-        list(self.gui_run(close_form_action, self.gui_context, None))
+        list(self.gui_run(close_form_action, self.gui_context_name, None))
 
 
 class ApplicationActionsCase(

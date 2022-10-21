@@ -153,8 +153,7 @@ class DbImageEditor(CustomEditor):
     
     @QtCore.qt_slot()
     def open(self):
-        options = QtWidgets.QFileDialog.Options()
-        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "", self.image_filter, options=options)
+        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "", self.image_filter)
         if file_name:
             statinfo = os.stat(file_name)
             image_size = statinfo.st_size         

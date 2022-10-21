@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 import json
 from typing import List, Union
 
-from camelot.admin.action.form_action import FormActionGuiContext
+from camelot.admin.action.base import GuiContext
 from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole
@@ -54,7 +54,7 @@ from ...admin.admin_route import AdminRoute, RouteWithRenderHint
 from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
 
 
-class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
+class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext):
     """A dialog to change an object.  This differs from a FormView in that
     it does not contains Actions, and has an OK button that is enabled when
     the object is valid.
@@ -84,6 +84,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         self.banner_widget().setStyleSheet('background-color: white;')
 
         model = CollectionProxy(admin_route)
+        self.action_routes = dict()
 
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
@@ -101,14 +102,6 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         model.headerDataChanged.connect(self.header_data_changed)
         form_widget.setObjectName( 'form' )
         self.main_widget().setLayout(layout)
-
-        self.gui_context = FormActionGuiContext()
-        self.gui_context.workspace = self
-        self.gui_context.admin_route = admin_route
-        self.gui_context.view = self
-        self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
-                                                         'widget_mapper' )
-
         cancel_button = QtWidgets.QPushButton(str(reject))
         cancel_button.setObjectName( 'cancel' )
         ok_button = QtWidgets.QPushButton(str(accept))
@@ -131,6 +124,13 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         self.model_context_name = proxy_route
         list(model.add_columns((fn for fn, _fa in fields.items())))
 
+    @property
+    def widget_mapper(self):
+        return self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
+
+    def get_window(self):
+        return self.window()
+
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
         self.run_action(self.sender(), self.gui_context, self.model_context_name, None)
@@ -148,7 +148,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
             for action in actions:
                 action_widget = self.render_action(
                     RenderHint(action['render_hint']), tuple(action['route']),
-                    self.gui_context, self
+                    self, self
                 )
                 side_panel_layout.addWidget(action_widget)
             side_panel_layout.addStretch()
