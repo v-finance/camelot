@@ -94,11 +94,11 @@ class ViewWithActionsMixin(object):
                 return
         LOGGER.warn('No widget found with action route {}'.format(action_route))
 
-    def run_action(self, action_widget, gui_context, model_context_name, mode):
+    def run_action(self, action_widget, gui_context_name, model_context_name, mode):
         action_name = tuple(action_widget.property('action_route') or [])
         if len(action_name):
             action_runner = ActionRunner(
-                action_name, gui_context, model_context_name, mode
+                action_name, gui_context_name, model_context_name, mode
             )
             action_runner.exec()
 
@@ -119,6 +119,10 @@ class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
     title_changed_signal = QtCore.qt_signal(str)
     icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
     close_clicked_signal = QtCore.qt_signal()
+
+    @property
+    def view(self):
+        return self
 
     @QtCore.qt_slot()
     def validate_close(self):

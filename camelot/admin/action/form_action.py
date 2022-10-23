@@ -29,52 +29,15 @@
 
 
 
-from ...core.qt import QtGui, QtWidgets, is_deleted
+from ...core.qt import QtGui, QtWidgets
 from camelot.admin.admin_route import register_list_actions
 from camelot.admin.icon import Icon
-from camelot.admin.action.base import Action, GuiContext
+from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 
-from .application_action import ApplicationActionGuiContext
 from . import list_action
 from .base import RenderHint
 
-
-class FormActionGuiContext( ApplicationActionGuiContext ):
-    """The context for an :class:`Action` on a form.  On top of the attributes of the 
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
-    this context contains :
-
-    .. attribute:: widget_mapper
-
-       the :class:`QtGui.QDataWidgetMapper` class that relates the form 
-       widget to the model.
-       
-    .. attribute:: view
-    
-       a :class:`camelot.view.controls.view.AbstractView` class that represents
-       the view in which the action is triggered.
-       
-    """
-
-    def __init__(self):
-        super( FormActionGuiContext, self ).__init__()
-        self.widget_mapper = None
-        self.view = None
-
-    def get_progress_dialog(self):
-        return GuiContext.get_progress_dialog(self)
-
-    def get_window(self):
-        if self.view is not None and not is_deleted(self.view):
-            return self.view.window()
-        return super(FormActionGuiContext, self).get_window()
-
-    def copy(self, base_class = None):
-        new_context = super( FormActionGuiContext, self ).copy( base_class )
-        new_context.widget_mapper = self.widget_mapper
-        new_context.view = self.view
-        return new_context
 
 class ShowHistory( Action ):
 

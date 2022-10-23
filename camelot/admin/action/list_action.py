@@ -34,70 +34,16 @@ import logging
 import itertools
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import QtGui, is_deleted
-from .base import Action, Mode, GuiContext, RenderHint
-from .application_action import ApplicationActionGuiContext
+from ...core.qt import QtGui
+from .base import Action, Mode, RenderHint
 from camelot.core.exception import UserException
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
-from camelot.view.qml_view import qml_action_dispatch
 
 import xlsxwriter
 
-LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
-
-
-class ListActionGuiContext( ApplicationActionGuiContext ):
-    """The context for an :class:`Action` on a table view.  On top of the attributes of the 
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
-    this context contains :
-
-    .. attribute:: item_view
-    
-       the :class:`QtWidgets.QAbstractItemView` class that relates to the table 
-       view on which the widget will be placed.
-       
-    .. attribute:: view
-    
-       a :class:`camelot.view.controls.view.AbstractView` class that represents
-       the view in which the action is triggered.
-       
-    .. attribute:: field_attributes
-    
-       a dictionary with the field attributes of the list.  This dictionary will
-       be filled in case if the list displayed is related to a field on another
-       object.  For example, the list of addresses of Person will have the field
-       attributes of the Person.addresses field when displayed on the Person 
-       form.
-       
-    """
-
-    def __init__( self ):
-        super( ListActionGuiContext, self ).__init__()
-        self.item_view = None
-        self.view = None
-        self.field_attributes = dict()
-
-    def get_progress_dialog(self):
-        return GuiContext.get_progress_dialog(self)
-
-    def get_window(self):
-        if self.item_view is not None and not is_deleted(self.item_view):
-            return self.item_view.window()
-        return super(ListActionGuiContext, self).get_window()
-
-    def get_item_model(self):
-        if self.item_view is not None:
-            return self.item_view.model()
-        return qml_action_dispatch.get_model(self.gui_context_name)
-
-    def copy( self, base_class = None ):
-        new_context = super( ListActionGuiContext, self ).copy( base_class )
-        new_context.item_view = self.item_view
-        new_context.view = self.view
-        new_context.field_attributes = self.field_attributes
-        return new_context
+LOGGER = logging.getLogger('camelot.admin.action.list_action')
 
 
 class RowNumberAction( Action ):

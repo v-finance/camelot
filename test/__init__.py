@@ -1,5 +1,7 @@
 import faulthandler
 import logging
+import sys
+import traceback
 
 from camelot.core.conf import settings
 
@@ -42,3 +44,10 @@ class TestSettings( object ):
         return self.engine
    
 settings.append( TestSettings() )
+
+def excepthook(type, value, tb):
+    print('Camelot Unit Test Excepthook')
+    for line in traceback.format_exception(type, value, tb):
+        print(line)
+
+sys.excepthook = excepthook

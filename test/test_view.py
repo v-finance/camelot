@@ -14,7 +14,6 @@ from .snippet.form.inherited_form import InheritedAdmin
 from .test_item_model import A, QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
 from camelot.admin.action import GuiContext
-from camelot.admin.action.application_action import ApplicationActionGuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
@@ -851,8 +850,6 @@ class ControlsTest(
         self.process()
         self.admin = self.app_admin.get_entity_admin(Person)
         self.admin_route = admin.get_admin_route()
-        self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin_route = self.admin_route
 
     def tearDown(self):
         super().tearDown()

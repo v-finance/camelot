@@ -30,8 +30,8 @@
 import json
 import logging
 
-from camelot.admin.action.list_action import ListActionGuiContext
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from ....admin.action.base import GuiContext
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
 from ... import gui_naming_context
 from ..view import ViewWithActionsMixin
@@ -42,7 +42,7 @@ from .customeditor import CustomEditor
 LOGGER = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
 
 
-class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
+class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext):
     """
     :param admin: the Admin interface for the objects on the one side of the
     relation
@@ -89,6 +89,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
+        self.action_routes = dict()
         model = CollectionProxy(admin_route)
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
         model.setParent(self)
@@ -103,12 +104,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         layout.addWidget(toolbar)
         self.setLayout(layout)
         self._new_message = None
-        self.list_gui_context_obj = ListActionGuiContext()
-        self.list_gui_context_obj.view = self
-        self.list_gui_context_obj.admin_route = self.admin_route
-        self.list_gui_context_obj.item_view = table
-        self.list_gui_context = gui_naming_context.bind(
-            ('transient', str(id(self.list_gui_context_obj))), self.list_gui_context_obj
+        self.list_gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self))), self
         )
         self.add_actions(action_routes, toolbar)
         self.set_right_toolbar_actions(list_actions, toolbar)
@@ -123,11 +120,22 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
                 self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
+    @property
+    def item_view(self):
+        return self.findChild(QtWidgets.QWidget, 'table')
+
+    @property
+    def view(self):
+        return self
+
+    def get_window(self):
+        return self.window()
+
     def _run_list_context_action(self, action_widget, mode):
         table = self.findChild(QtWidgets.QWidget, 'table')
         model = table.model()
         self.run_action(
-            action_widget, self.list_gui_context, model.get_value(), mode
+            action_widget, self.list_gui_context_name, model.get_value(), mode
         )
 
     @QtCore.qt_slot(int)
@@ -148,10 +156,10 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         if action_routes is not None:
             for route_with_render_hint in action_routes:
                 action_route = route_with_render_hint.route
-                self.list_gui_context_obj.item_view.model().add_action_route(action_route)
+                self.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(
                     route_with_render_hint.render_hint, action_route,
-                    self.list_gui_context_obj, toolbar
+                    self, toolbar
                 )
                 qaction.action_route = action_route
                 if isinstance(qaction, QtWidgets.QWidget):
@@ -164,11 +172,11 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
-        self.list_gui_context_obj.field_attributes = kwargs
+        self.field_attributes = kwargs
         self.update_list_action_states()
 
     def update_list_action_states(self):
-        table = self.list_gui_context_obj.item_view
+        table = self.item_view
         selection_model = table.selectionModel()
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)
