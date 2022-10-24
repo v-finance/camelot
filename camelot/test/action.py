@@ -29,9 +29,6 @@
 
 """Helper classes to create unit tests for Actions."""
 
-from ..core.qt import QtWidgets
-from ..admin.action.list_action import ListActionGuiContext
-
 class MockModelContext( object ):
     """Model Context to be used in unit tests
     
@@ -72,9 +69,3 @@ class MockModelContext( object ):
         if self._session is None and self.admin is not None:
             return self.admin.get_session(self.obj)
         return self._session
-
-class MockListActionGuiContext( ListActionGuiContext ):
-    
-    def __init__( self ):
-        super(MockListActionGuiContext, self).__init__()
-        self.item_view = QtWidgets.QTableWidget( 4, 4 )

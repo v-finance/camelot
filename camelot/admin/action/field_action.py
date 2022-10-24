@@ -46,7 +46,7 @@ from .application_action import ApplicationActionModelContext
 
 class FieldActionModelContext(ApplicationActionModelContext):
     """The context for a :class:`Action` on a field.  On top of the attributes of the
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`,
+    :class:`camelot.admin.action.application_action.ApplicationActionModelContext`,
     this context contains :
 
     .. attribute:: obj
