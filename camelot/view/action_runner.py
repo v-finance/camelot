@@ -28,7 +28,6 @@
 #  ============================================================================
 
 import contextlib
-import functools
 import io
 import json
 import logging
@@ -76,6 +75,18 @@ def hide_progress_dialog(gui_context_name):
             if original_state == False:
                 progress_dialog.show()
 
+run_names = initial_naming_context.bind_new_context('run')
+
+class Run(object):
+    """
+    Server side information of an ongoing action run
+    """
+
+    def __init__(self, gui_context: CompositeName, generator):
+        self.gui_context = gui_context
+        self.generator = generator
+        self.cancel = False
+
 class ActionRunner( QtCore.QEventLoop ):
     """Helper class for handling the signals and slots when an action
     is running.  This class takes a generator and iterates it within the
@@ -85,8 +96,8 @@ class ActionRunner( QtCore.QEventLoop ):
     This is class is intended for internal Camelot use only.
     """
     
-    non_blocking_action_step_signal = QtCore.qt_signal(object)
-    non_blocking_serializable_action_step_signal = QtCore.qt_signal(str, bytes)
+    non_blocking_action_step_signal = QtCore.qt_signal(tuple, tuple, object)
+    non_blocking_serializable_action_step_signal = QtCore.qt_signal(tuple, tuple, str, bytes)
     
     def __init__(self,
                  action_name: CompositeName,
@@ -99,15 +110,13 @@ class ActionRunner( QtCore.QEventLoop ):
         """
         super( ActionRunner, self ).__init__()
         self._return_code = None
-        self._generator = None
         gui_naming_context.validate_composite_name(gui_context)
-        self._gui_context = gui_context
-        self._non_blocking_cancel_request = False
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
         self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
         message = {
             'action_name': action_name,
             'model_context': model_context,
+            'gui_context': gui_context,
             'mode': mode,
         }
         serialized_message = json_encoder.encode(message)
@@ -135,16 +144,26 @@ class ActionRunner( QtCore.QEventLoop ):
         from camelot.view.action_steps import PushProgressLevel
         message = json.loads(serialized_message)
         action = initial_naming_context.resolve(tuple(message['action_name']))
+        gui_context_name = tuple(message['gui_context'])
         try:
             model_context = initial_naming_context.resolve(tuple(message['model_context']))
         except NameNotFoundException:
             # FIXME: DGCClient always uses ['model_context, '1'] for the unbind action which is not available in the tests
             LOGGER.error('Could not create model context, no binding for name: {}'.format(message['model_context']))
             return
-        self.non_blocking_serializable_action_step_signal.emit("PushProgressLevel", PushProgressLevel('Please wait')._to_bytes())
-        return action.model_run(model_context, message.get('mode'))
+        generator = action.model_run(model_context, message.get('mode'))
+        if generator is None:
+            return None
+        run = Run(gui_context_name, generator)
+        run_name = run_names.bind(str(id(run)), run)
+        self.non_blocking_serializable_action_step_signal.emit(
+            run_name, gui_context_name, "PushProgressLevel",
+            PushProgressLevel('Please wait')._to_bytes()
+        )
+        return run_name
 
-    def _iterate_until_blocking( self, generator_method, *args ):
+
+    def _iterate_until_blocking(self, run_name, method, *args):
         """Helper calling for generator methods.  The decorated method iterates
         the generator until the generator yields an :class:`ActionStep` object that
         is blocking.  If a non blocking :class:`ActionStep` object is yielded, then
@@ -153,80 +172,95 @@ class ActionRunner( QtCore.QEventLoop ):
         :param generator_method: the method of the generator to be called
         :param *args: the arguments to use when calling the generator method.
         """
+        run = initial_naming_context.resolve(run_name)
+        gui_context_name = run.gui_context
         try:
-            result = generator_method( *args )
+            if method == 'send':
+                result = run.generator.send(*args)
+            elif method == 'throw':
+                result = run.generator.throw(*args)
+            else:
+                raise Exception('Unhandled method')
             while True:
                 if isinstance(result, ActionStep):
                     if result.blocking and isinstance(result, (DataclassSerializable,)):
                         LOGGER.debug( 'serializable blocking step, yield it' )
-                        return (type(result).__name__, result._to_bytes())
+                        return (run_name, gui_context_name, (type(result).__name__, result._to_bytes()))
                     elif result.blocking:
                         LOGGER.debug( 'blocking step, yield it' )
-                        return result
+                        return (run_name, gui_context_name, result)
                     # for now, only send data class serializable steps over the wire
                     elif isinstance(result, (DataclassSerializable,)):
                         LOGGER.debug( 'non blocking serializable step, use signal slot' )
                         self.non_blocking_serializable_action_step_signal.emit(
-                            type(result).__name__, result._to_bytes()
+                            run_name, gui_context_name, type(result).__name__,
+                            result._to_bytes()
                         )
                     else:
                         LOGGER.debug( 'non blocking step, use signal slot' )
-                        self.non_blocking_action_step_signal.emit( result )
+                        self.non_blocking_action_step_signal.emit(
+                            run_name, gui_context_name, result
+                        )
                 #
                 # Cancel requests can arrive asynchronously through non 
                 # blocking ActionSteps such as UpdateProgress
                 #
-                if self._non_blocking_cancel_request == True:
+                if run.cancel == True:
                     LOGGER.debug( 'asynchronous cancel, raise request' )
-                    result = self._generator.throw( CancelRequest() )
+                    result = run.generator.throw(CancelRequest())
                 else:
                     LOGGER.debug( 'move iterator forward' )
-                    result = next(self._generator)
+                    result = next(run.generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
-            self.non_blocking_serializable_action_step_signal.emit("PopProgressLevel", b"")
-            return e
+            self.non_blocking_serializable_action_step_signal.emit(
+                gui_context_name, "PopProgressLevel", b""
+            )
+            return (run_name, gui_context_name, e)
         except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
-            self.non_blocking_serializable_action_step_signal.emit("PopProgressLevel", b"")
-            return e
+            self.non_blocking_serializable_action_step_signal.emit(
+                run_name, gui_context_name, "PopProgressLevel", b""
+            )
+            initial_naming_context.unbind(run_name)
+            return (run_name, gui_context_name, e)
 
-    @QtCore.qt_slot( object )
-    def non_blocking_action_step( self, action_step ):
+    @QtCore.qt_slot(tuple, tuple, object)
+    def non_blocking_action_step(self, run_name, gui_context_name, action_step ):
         from .qml_view import is_cpp_gui_context_name, qml_action_step
         # dispatch to RootBackend if this is a cpp gui context
-        if is_cpp_gui_context_name(self._gui_context):
+        if is_cpp_gui_context_name(gui_context_name):
             # FIXME: step is not (yet) serializable, use _to_dict for now
             stream = io.BytesIO()
             stream.write(json_encoder.encode(action_step._to_dict()).encode())
             serialized_step = stream.getvalue()
             return qml_action_step(
-                self._gui_context, type(action_step).__name__, serialized_step
+                gui_context_name, type(action_step).__name__, serialized_step
             )
         try:
-            self._was_canceled(self._gui_context)
-            action_step.gui_run(self._gui_context)
+            self._was_canceled(gui_context_name)
+            action_step.gui_run(gui_context_name)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            self._non_blocking_cancel_request = True
+            post(self.request_cancel, args=(run_name,))
 
-    @QtCore.qt_slot(str, bytes)
-    def non_blocking_serializable_action_step(self, step_type, serialized_step):
+    @QtCore.qt_slot(tuple, tuple, str, bytes)
+    def non_blocking_serializable_action_step(self, run_name, gui_context_name, step_type, serialized_step):
         from .qml_view import is_cpp_gui_context_name, qml_action_step
-        if is_cpp_gui_context_name(self._gui_context):
+        if is_cpp_gui_context_name(gui_context_name):
             return qml_action_step(
-                self._gui_context,step_type, serialized_step
+                gui_context_name, step_type, serialized_step
             )
         cls = MetaActionStep.action_steps[step_type]
         try:
-            self._was_canceled(self._gui_context)
-            cls.gui_run(self._gui_context, serialized_step)
+            self._was_canceled(gui_context_name)
+            cls.gui_run(gui_context_name, serialized_step)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            self._non_blocking_cancel_request = True
+            post(self.request_cancel, args=(run_name,))
 
     @QtCore.qt_slot( object )
-    def exception( self, exception_info ):
+    def exception(self, exception_info):
         """Handle an exception raised by the generator"""
         app = QtGui.QGuiApplication.instance()
         if app.platformName() == "offscreen":
@@ -244,23 +278,23 @@ class ActionRunner( QtCore.QEventLoop ):
             app.exit(-1)
         dialog = ExceptionDialog( exception_info )
         dialog.exec()
-        self.non_blocking_serializable_action_step_signal.emit("PopProgressLevel", b"")
+        self.non_blocking_serializable_action_step_signal.emit(
+            ('',), ('cpp_gui_context', 'root_backend'), "PopProgressLevel", b""
+        )
         self.exit()
-        
-    @QtCore.qt_slot( object )
-    def generator( self, generator ):
+
+    @QtCore.qt_slot(tuple)
+    def generator(self, run_name):
         """Handle the creation of the generator"""
-        self._generator = generator
         #
         # when model_run is not a generator, but a normal function it returns
         # no generator, and as such we can exit the event loop
         #
-        if self._generator != None:
+        if run_name is not None:
             post( self._iterate_until_blocking, 
                   self.__next__, 
                   self.exception,
-                  args = ( functools.partial( next,
-                                              self._generator ), ) )
+                  args = (run_name, 'send', None) )
         else:
             self.exit()
         
@@ -282,33 +316,34 @@ class ActionRunner( QtCore.QEventLoop ):
                 LOGGER.debug( 'progress dialog was canceled, raise request' )
                 raise CancelRequest()
 
-    @QtCore.qt_slot( object )
-    def __next__( self, yielded ):
+    @QtCore.qt_slot(object)
+    def __next__(self, run_yielded):
         """Handle the result of the __next__ call of the generator
         
         :param yielded: the object that was yielded by the generator in the
             *model thread*
         """
+        run_name, gui_context_name, yielded = run_yielded
         if isinstance(yielded, (ActionStep, tuple)):
             try:
-                self._was_canceled(self._gui_context)
+                self._was_canceled(gui_context_name)
                 if isinstance(yielded, tuple):
                     step_type, serialized_step = yielded
                     cls = MetaActionStep.action_steps[step_type]
-                    to_send = cls.gui_run(self._gui_context, serialized_step)
-                    to_send = cls.deserialize_result(self._gui_context, to_send)
+                    to_send = cls.gui_run(gui_context_name, serialized_step)
+                    to_send = cls.deserialize_result(gui_context_name, to_send)
                 else:
-                    to_send = yielded.gui_run(self._gui_context)
-                self._was_canceled(self._gui_context )
+                    to_send = yielded.gui_run(gui_context_name)
+                self._was_canceled(gui_context_name)
                 post( self._iterate_until_blocking, 
                       self.__next__, 
                       self.exception, 
-                      args = ( self._generator.send, to_send,) )
+                      args = (run_name, 'send', to_send,) )
             except CancelRequest as exc:
                 post( self._iterate_until_blocking,
                       self.__next__,
                       self.exception,
-                      args = ( self._generator.throw, exc,) )
+                      args = (run_name, 'throw', exc,) )
             except Exception as exc:
                 LOGGER.error( 'gui exception while executing action', 
                               exc_info=exc)
@@ -321,7 +356,7 @@ class ActionRunner( QtCore.QEventLoop ):
                 post( self._iterate_until_blocking,
                       self.__next__,
                       self.exception,
-                      args = ( self._generator.throw, GuiException(), ) )
+                      args = (run_name, 'throw', GuiException(),) )
         elif isinstance( yielded, (StopIteration, CancelRequest) ):
             #
             # Process the events before exiting, as there might be exceptions

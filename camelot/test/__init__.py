@@ -158,9 +158,9 @@ class ActionMixinCase(object):
                 cls.process()
 
             @QtCore.qt_slot( object )
-            def generator(self, generator):
+            def generator(self, run):
+                self.return_queue.append((run, None, None))
                 LOGGER.debug('got generator')
-                self._generator = generator
 
             @QtCore.qt_slot( object )
             def exception(self, exception_info):
@@ -168,14 +168,21 @@ class ActionMixinCase(object):
                 self.exception_queue.append(exception_info)
 
             @QtCore.qt_slot( object )
-            def __next__(self, yielded):
-                LOGGER.debug('got step {}'.format(yielded))
-                self.return_queue.append(yielded)
+            def __next__(self, run_and_yielded):
+                LOGGER.debug('got step {}'.format(run_and_yielded[1]))
+                self.return_queue.append(run_and_yielded)
 
             def run(self):
-                super(IteratingActionRunner, self).generator(self._generator)
                 cls.process()
-                step = self.return_queue.pop()
+                run_name, gui_context_name, step = self.return_queue.pop()
+                cls.thread.post(
+                    self._iterate_until_blocking, 
+                    self.__next__, 
+                    self.exception,
+                    args = (run_name, 'send', None)
+                )
+                cls.process()
+                run_name, gui_context_name, step = self.return_queue.pop()
                 while isinstance(step, (ActionStep, tuple)):
                     if isinstance(step, tuple):
                         serialized_step = json.loads(step[1])
@@ -192,12 +199,12 @@ class ActionMixinCase(object):
                         self._iterate_until_blocking,
                         self.__next__,
                         self.exception,
-                        args = (self._generator.send, gui_result,)
+                        args = (run_name, 'send', gui_result,)
                     )
                     cls.process()
                     if len(self.exception_queue):
                         raise Exception(self.exception_queue.pop().text)
-                    step = self.return_queue.pop()
+                    run_name, gui_context_name, step = self.return_queue.pop()
                 LOGGER.debug("iteration finished")
                 yield None
 
