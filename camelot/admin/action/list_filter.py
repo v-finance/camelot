@@ -31,7 +31,6 @@
 Actions to filter table views
 """
 
-import copy
 import datetime
 import decimal
 
