@@ -31,6 +31,7 @@
 Actions to filter table views
 """
 
+import copy
 import datetime
 import decimal
 
@@ -375,15 +376,15 @@ class DecimalSearch(FieldSearch):
             return sql.and_(self.attribute>=float_value-delta, self.attribute<=float_value+delta)
         except utils.ParsingError:
             pass
-    
+
     def value_to_string(self, value, admin):
         field_attributes = admin.get_field_attributes(self.attribute.key)
+        field_attributes = {h:copy.copy(v) for h,v in field_attributes.items()}
+        field_attributes['suffix'] = ''
         delegate = field_attributes.get('delegate')
-        suffix = ' ' + field_attributes.get('suffix', '')
         standard_item = delegate.get_standard_item(locale(), value, field_attributes)
-        value_str = standard_item.data(PreviewRole)
-        return value_str.replace(suffix, '')
-        
+        return standard_item.data(PreviewRole)
+
 class TimeSearch(FieldSearch):
     
     python_type = datetime.time
