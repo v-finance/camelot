@@ -379,7 +379,7 @@ class DecimalSearch(FieldSearch):
 
     def value_to_string(self, value, admin):
         field_attributes = admin.get_field_attributes(self.attribute.key)
-        field_attributes = {h:copy.copy(v) for h,v in field_attributes.items()}
+        field_attributes = field_attributes.copy()
         field_attributes['suffix'] = ''
         delegate = field_attributes.get('delegate')
         standard_item = delegate.get_standard_item(locale(), value, field_attributes)
