@@ -42,6 +42,7 @@ from . import gui_naming_context
 from camelot.admin.action import ActionStep
 from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import GuiException, CancelRequest
+from camelot.core.singleton import QSingleton
 from camelot.view.controls.exception import ExceptionDialog
 from camelot.view.model_thread import post
 
@@ -87,7 +88,7 @@ class Run(object):
         self.generator = generator
         self.cancel = False
 
-class ActionRunner( QtCore.QEventLoop ):
+class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     """Helper class for handling the signals and slots when an action
     is running.  This class takes a generator and iterates it within the
     model thread while taking care of Exceptions raised and ActionSteps
@@ -99,20 +100,18 @@ class ActionRunner( QtCore.QEventLoop ):
     non_blocking_action_step_signal = QtCore.qt_signal(tuple, tuple, object)
     non_blocking_serializable_action_step_signal = QtCore.qt_signal(tuple, tuple, str, bytes)
     
-    def __init__(self,
-                 action_name: CompositeName,
-                 gui_context: CompositeName,
-                 model_context: CompositeName,
-                 mode: typing.Union[str, dict, list, int]
-                 ):
-        """
-        :param gui_context: the GUI context of the generator
-        """
-        super( ActionRunner, self ).__init__()
-        self._return_code = None
-        gui_naming_context.validate_composite_name(gui_context)
+    def __init__(self):
+        super().__init__()
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
         self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
+
+    def run_action(self,
+        action_name: CompositeName,
+        gui_context: CompositeName,
+        model_context: CompositeName,
+        mode: typing.Union[str, dict, list, int]
+    ):
+        gui_naming_context.validate_composite_name(gui_context)
         message = {
             'action_name': action_name,
             'model_context': model_context,
@@ -123,26 +122,12 @@ class ActionRunner( QtCore.QEventLoop ):
         if REQUEST_LOGGER.isEnabledFor(logging.DEBUG):
             REQUEST_LOGGER.debug(serialized_message)
         post(self._initiate_generator, self.generator, self.exception, args=(serialized_message,))
-    
-    def exit( self, return_code = 0 ):
-        """Reimplementation of exit to store the return code"""
-        self._return_code = return_code
-        return super( ActionRunner, self ).exit( return_code )
-    
-    def exec( self, flags = QtCore.QEventLoop.ProcessEventsFlag.AllEvents ):
-        """Reimplementation of exec to prevent the event loop being started
-        when exit has been called prior to calling exec.
-        
-        This can be the case when running in single threaded mode.
-        """
-        if self._return_code == None:
-            return super( ActionRunner, self ).exec( flags )
-        return self._return_code
-        
+
     def _initiate_generator(self, serialized_message):
         """Create the model context and start the generator"""
         from camelot.view.action_steps import PushProgressLevel
         message = json.loads(serialized_message)
+        LOGGER.debug('Iniate run of action {}'.format(message['action_name']))
         action = initial_naming_context.resolve(tuple(message['action_name']))
         gui_context_name = tuple(message['gui_context'])
         try:
@@ -153,6 +138,7 @@ class ActionRunner( QtCore.QEventLoop ):
             return
         generator = action.model_run(model_context, message.get('mode'))
         if generator is None:
+            LOGGER.debug('Action {} finished'.format(message['action_name']))
             return None
         run = Run(gui_context_name, generator)
         run_name = run_names.bind(str(id(run)), run)
@@ -160,6 +146,7 @@ class ActionRunner( QtCore.QEventLoop ):
             run_name, gui_context_name, "PushProgressLevel",
             PushProgressLevel('Please wait')._to_bytes()
         )
+        LOGGER.debug('Action {} runs in generator {}'.format(message['action_name'], run_name))
         return run_name
 
 
@@ -359,15 +346,12 @@ class ActionRunner( QtCore.QEventLoop ):
                       args = (run_name, 'throw', GuiException(),) )
         elif isinstance( yielded, (StopIteration, CancelRequest) ):
             #
-            # Process the events before exiting, as there might be exceptions
-            # left in the signal slot queue
+            # Clear resources ?
             #
-            self.processEvents()
-            self.exit()
+            pass
         else:
             LOGGER.error( '__next__ call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
             LOGGER.error( str( yielded ) )
             raise Exception( 'this should not happen' )
 
-
-
+action_runner = ActionRunner()
