@@ -26,6 +26,7 @@ from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.qt import QtGui, QtWidgets, Qt, delete
 from camelot.core.orm import EntityBase, Session
+from camelot.core.profile import ProfileStore
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
@@ -750,8 +751,8 @@ class ApplicationActionsCase(
         profile_case = test_core.ProfileCase('setUp')
         profile_case.setUp()
         profile_store = profile_case.test_profile_store()
-        action = application_action.SelectProfileMixin(profile_store)
-        generator = action.select_profile()
+        action = application_action.SelectProfileMixin()
+        generator = action.select_profile(profile_store)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
                 generator.send(step.items[1].value)
