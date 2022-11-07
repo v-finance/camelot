@@ -76,7 +76,7 @@ class ColorEditor(CustomEditor):
 
     @QtCore.qt_slot(bool)
     def buttonClicked(self, raised):
-        options = QtWidgets.QColorDialog.ColorDialogOptions.ShowAlphaChannel
+        options = QtWidgets.QColorDialog.ColorDialogOption.ShowAlphaChannel
         qcolor = self.to_qcolor(self.get_value(), 'white')
         qcolor = QtWidgets.QColorDialog.getColor(
             qcolor, self.parent(), ugettext('Select Color'), options,
