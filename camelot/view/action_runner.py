@@ -251,7 +251,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         run = ModelRun(gui_run_name, generator)
         run_name = model_run_names.bind(str(id(run)), run)
         self.non_blocking_serializable_action_step_signal.emit(
-            run_name, gui_run_name, "PushProgressLevel",
+            run_name, gui_run_name, PushProgressLevel.__name__,
             PushProgressLevel('Please wait')._to_bytes()
         )
         LOGGER.debug('Action {} runs in generator {}'.format(message['action_name'], run_name))
@@ -267,7 +267,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         :param generator_method: the method of the generator to be called
         :param *args: the arguments to use when calling the generator method.
         """
-        from camelot.view.action_steps import MessageBox
+        from camelot.view.action_steps import MessageBox, PopProgressLevel
         run = initial_naming_context.resolve(run_name)
         gui_run_name = run.gui_run_name
         try:
@@ -310,13 +310,15 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, "PopProgressLevel", b"null"
+                run_name, gui_run_name, PopProgressLevel.__name__,
+                PopProgressLevel()._to_bytes()
             )
             return (run_name, gui_run_name, e)
         except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
             self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, "PopProgressLevel", b"null"
+                run_name, gui_run_name, PopProgressLevel.__name__,
+                PopProgressLevel()._to_bytes()
             )
             initial_naming_context.unbind(run_name)
             return (run_name, gui_run_name, e)
@@ -331,7 +333,8 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             )
             LOGGER.debug( 'iterator raised stop, pass it' )
             self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, "PopProgressLevel", b"null"
+                run_name, gui_run_name, PopProgressLevel.__name__,
+                PopProgressLevel()._to_bytes()
             )
             initial_naming_context.unbind(run_name)
             return (run_name, gui_run_name, e)
