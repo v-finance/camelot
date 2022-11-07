@@ -87,8 +87,8 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        # Presumed to be unnecessary, as ActionStep's gui_run constructs an ActionRunner on it's (empty) model_run,
-        # which results in a unwanted round-trip to the model thread / server.
+        # super would send the step to c++, which might or might not be a good
+        # idea
         #super(CreateUpdateDelete, self).gui_run(gui_context)
         crud_signal_handler = get_crud_signal_handler()
         if step['deleted'] is not None:

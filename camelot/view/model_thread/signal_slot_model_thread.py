@@ -32,7 +32,6 @@ Created on Sep 9, 2009
 @author: tw55413
 '''
 import logging
-import sys
 import time
 
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
@@ -40,13 +39,10 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 from ...core.qt import QtCore, is_deleted
 from ...core.threading import synchronized
 from ...view.model_thread import AbstractModelThread, object_thread
-from ...view.controls.exception import register_exception
-
 
 class Task(QtCore.QObject):
 
     finished = QtCore.qt_signal(object)
-    exception = QtCore.qt_signal(object)
 
     def __init__(self, request, name='', args=()):
         """A task to be executed in a different thread
@@ -70,33 +66,10 @@ class Task(QtCore.QObject):
         try:
             result = self._request( *self._args )
             self.finished.emit( result )
-        #
-        # don't handle StopIteration as a normal exception, but return a new
-        # instance of StopIteration (in order to not keep alive a stack trace),
-        # and to signal to the caller that an iterator has ended
-        #
-        except StopIteration:
-            self.finished.emit( StopIteration() )
         except Exception as e:
-            exc_info = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
-            self.exception.emit( exc_info )
-            self.clear_exception_info()
+            logger.fatal('Unhandled exception in model thread', exc_info=e)
         except:
-            logger.error( 'unhandled exception in model thread' )
-            exc_info = ( 'Unhandled exception', 
-                         sys.exc_info()[0], 
-                         None, 
-                         'Please contact the application developer', '')
-            # still emit the exception signal, to allow the gui to clean up things (such as closing dialogs)
-            self.exception.emit( exc_info )
-            self.clear_exception_info()
-            
-    def clear_exception_info( self ): #TODO empty function
-        # the exception info contains a stack that might contain references to 
-        # Qt objects which could be kept alive this way
-        # if not six.PY3:
-        #     sys.exc_clear()
-        pass
+            logger.fatal('Unhandled something in model thread')
 
 class TaskHandler(QtCore.QObject):
     """A task handler is an object that handles tasks that appear in a queue,
@@ -182,7 +155,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         self.thread_busy_signal.emit( busy_state )
 
     @synchronized
-    def post( self, request, response = None, exception = None, args = () ):
+    def post( self, request, response = None, args = () ):
         if not self._connected and self._task_handler:
             # creating this connection in the model thread throws QT exceptions
             self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.ConnectionType.QueuedConnection )
@@ -198,8 +171,6 @@ class SignalSlotModelThread( AbstractModelThread ):
             # verify if the response has been defined as a slot
             #assert hasattr(response, '__pyqtSignature__')
             task.finished.connect(response, QtCore.Qt.ConnectionType.QueuedConnection)
-        if exception:
-            task.exception.connect( exception, QtCore.Qt.ConnectionType.QueuedConnection )
         # task.moveToThread(self)
         # only put the task in the queue when it is completely set up
         self._request_queue.append(task)

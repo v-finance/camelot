@@ -26,14 +26,13 @@ from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_p
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import forms
-from camelot.view.action_steps import OpenFormView
+from camelot.view.action_steps import OpenFormView, MessageBox
 from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates, editors
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.delegates import DelegateManager
 from camelot.view.controls.editors.datetimeeditor import TimeValidator
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
-from camelot.view.controls.exception import ExceptionDialog, register_exception
 from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
@@ -937,8 +936,8 @@ class ControlsTest(
         except Exception as e:
             exc = e
 
-        exc_info = register_exception(logger, 'unit test', exc)
-        dialog = ExceptionDialog( exc_info )
+        step = MessageBox.from_exception(logger, 'Test', exc)
+        dialog = MessageBox.render(step._to_dict())
         self.grab_widget( dialog )
 
 
