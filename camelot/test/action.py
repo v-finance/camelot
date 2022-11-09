@@ -62,7 +62,7 @@ class MockModelContext( object ):
 
     @property
     def selection_count(self):
-        return len(self.selection)
+        return len(self.get_selection())
 
     @property
     def session( self ):

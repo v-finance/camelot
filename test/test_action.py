@@ -499,15 +499,6 @@ class ListActionsCase(
                 updated.extend(initial_naming_context.resolve(step.updated) if step.updated else [])
         return steps, created, updated
 
-    def test_delete_selection(self):
-        model_context = initial_naming_context.resolve(self.model_context_name)
-        selected_object = model_context.get_object()
-        self.assertTrue(selected_object in self.session)
-        delete_selection_action = list_action.DeleteSelection()
-        list(self.gui_run(delete_selection_action, self.gui_context, None))
-        #self.process()
-        self.assertFalse(selected_object in self.session)
-
     def test_remove_selection(self):
         remove_selection_action = list_action.RemoveSelection()
         model_context = initial_naming_context.resolve(self.model_context_name)
