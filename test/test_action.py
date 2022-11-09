@@ -684,9 +684,6 @@ class FormActionsCase(
         )
         self.gui_context_name = self.form_view.gui_context_name
 
-    def tearDown(self):
-        super().tearDown()
-
     def test_previous_next( self ):
         previous_action = form_action.ToPreviousForm()
         list(self.gui_run(previous_action, self.gui_context_name, None))
@@ -696,10 +693,6 @@ class FormActionsCase(
         list(self.gui_run(first_action, self.gui_context_name, None))
         last_action = form_action.ToLastForm()
         list(self.gui_run(last_action, self.gui_context_name, None))
-
-    def test_show_history( self ):
-        show_history_action = form_action.ShowHistory()
-        list(self.gui_run(show_history_action, self.gui_context_name, None))
 
     def test_close_form( self ):
         close_form_action = form_action.CloseForm()
