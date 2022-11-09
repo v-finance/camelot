@@ -47,8 +47,9 @@ class OpenFile( ActionStep, DataclassSerializable ):
     The :keyword:`yield` statement will return :const:`True` if the file was
     opend successfull.
     """
-        
+
     path: str
+    blocking: bool = False
 
     def __str__( self ):
         return u'Open file {}'.format( self.path )

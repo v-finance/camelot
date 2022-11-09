@@ -209,7 +209,6 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
 
     def run_gui_run(self, gui_run):
         gui_naming_context.validate_composite_name(gui_run.gui_context_name)
-        assert gui_run.gui_context_name != ('constant', 'null')
         gui_run_name = gui_run_names.bind(str(id(gui_run)), gui_run)
         message = {
             'action_name': gui_run.action_name,
@@ -379,17 +378,17 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         from .qml_view import is_cpp_gui_context_name
         if is_cpp_gui_context_name(gui_context_name):
             # @TODO : check was canceled for cpp
-            return False
-        else:
-            try:
-                gui_context = gui_naming_context.resolve(gui_context_name)
-            except NameNotFoundException:
-                return False
-            assert gui_context, '{} python gui context resolves to none'.format(gui_context_name)
-            progress_dialog = gui_context.get_progress_dialog()
-            if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
-                LOGGER.debug( 'progress dialog was canceled, raise request' )
-                raise CancelRequest()
+            return
+        try:
+            gui_context = gui_naming_context.resolve(gui_context_name)
+        except NameNotFoundException:
+            return
+        if gui_context is None:
+            return
+        progress_dialog = gui_context.get_progress_dialog()
+        if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
+            LOGGER.debug( 'progress dialog was canceled, raise request' )
+            raise CancelRequest()
 
     @QtCore.qt_slot(object)
     def __next__(self, run_yielded):
