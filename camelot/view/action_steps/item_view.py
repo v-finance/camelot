@@ -150,7 +150,6 @@ class UpdateTableView(AbstractCrudView):
 
     columns: List[Column] = field(init=False, default_factory=list)
     list_action: Union[Route, None] = field(init=False)
-    blocking: bool = False
 
     def __post_init__(self, value, admin, proxy, search_text):
         assert (search_text is None) or isinstance(search_text, str)
@@ -227,6 +226,7 @@ class OpenTableView( UpdateTableView ):
     """
     new_tab: bool = False
     admin_route: Route = field(init=False)
+    blocking: bool = False
 
     def __post_init__(self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
