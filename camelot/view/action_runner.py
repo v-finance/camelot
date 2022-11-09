@@ -119,10 +119,11 @@ class GuiRun(object):
         return time.time() - self.started_at
 
     def handle_action_step(self, action_step):
+        from .action_steps.crud import crud_action_steps
         from .qml_view import is_cpp_gui_context_name, qml_action_step
         self.steps.append(type(action_step).__name__)
-        # dispatch to RootBackend if this is a cpp gui context
-        if is_cpp_gui_context_name(self.gui_context_name) and action_step.blocking==False:
+        # force crud actions steps with a cpp gui context towards qml
+        if is_cpp_gui_context_name(self.gui_context_name) and isinstance(action_step, crud_action_steps):
             # FIXME: step is not (yet) serializable, use _to_dict for now
             stream = io.BytesIO()
             stream.write(json_encoder.encode(action_step._to_dict()).encode())
@@ -133,6 +134,7 @@ class GuiRun(object):
         return action_step.gui_run(self.gui_context_name)
 
     def handle_serialized_action_step(self, step_type, serialized_step):
+        from .action_steps.crud import crud_action_steps
         from .qml_view import is_cpp_gui_context_name, qml_action_step
         self.steps.append(step_type)
         cls = MetaActionStep.action_steps[step_type]
@@ -150,7 +152,8 @@ class GuiRun(object):
                 print("======================================================================")
                 print()
                 app.exit(-1)
-        if is_cpp_gui_context_name(self.gui_context_name) and cls.blocking==False:
+        # force crud actions steps with a cpp gui context towards qml
+        if is_cpp_gui_context_name(self.gui_context_name) and issubclass(cls, crud_action_steps):
             result = qml_action_step(
                 self.gui_context_name, step_type, serialized_step
             )

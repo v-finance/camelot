@@ -231,3 +231,7 @@ class ChangeSelection(ActionStep, DataclassSerializable):
             item_model.action_state_changed_cpp_signal.emit(
                 route, json_encoder.encode(state).encode('utf-8')
             )
+
+crud_action_steps = (
+    RowCount, SetColumns, Completion, Created, Update, ChangeSelection
+)
