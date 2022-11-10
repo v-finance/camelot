@@ -52,8 +52,7 @@ LOGGER = logging.getLogger('camelot.core.profile')
 
 profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
                    'port', 'media_location', 'locale_language', 'proxy_host',
-                   'proxy_port', 'proxy_username', 'proxy_password',
-                   'primary_color', 'accent_color']
+                   'proxy_port', 'proxy_username', 'proxy_password']
 
 @functools.total_ordering
 class Profile(object):
