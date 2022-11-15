@@ -34,7 +34,7 @@ import logging
 
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
-from ..action_runner import ActionRunner
+from ..action_runner import action_runner
 from .action_widget import AbstractActionWidget
 
 LOGGER = logging.getLogger(__name__)
@@ -97,10 +97,9 @@ class ViewWithActionsMixin(object):
     def run_action(self, action_widget, gui_context_name, model_context_name, mode):
         action_name = tuple(action_widget.property('action_route') or [])
         if len(action_name):
-            action_runner = ActionRunner(
+            action_runner.run_action(
                 action_name, gui_context_name, model_context_name, mode
             )
-            action_runner.exec()
 
 class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
     """A string used to format the title of the view ::

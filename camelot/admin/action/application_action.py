@@ -108,25 +108,18 @@ class SelectProfileMixin:
     """
 
     file_name_filter = _('Profiles file (*.ini)')
-    
-    def __init__( self, profile_store):
-        from camelot.core.profile import ProfileStore
-        if profile_store==None:
-            profile_store=ProfileStore()
-        self.profile_store = profile_store
-        self.selected_profile = None
-    
-    def select_profile(self):
+
+    @classmethod
+    def select_profile(cls, profile_store):
         from camelot.view import action_steps
         from camelot.view.action_steps.profile import EditProfiles
-
-        selected_profile = new_profile_name
+        selected_profile = new_profile
         try:
-            while selected_profile in (None, new_profile_name, 
-                                       save_profiles_name, load_profiles_name):
-                profiles = self.profile_store.read_profiles()
+            while selected_profile in (None, new_profile,
+                                       save_profiles, load_profiles):
+                profiles = profile_store.read_profiles()
                 profiles.sort()
-                last_profile = self.profile_store.get_last_profile()
+                last_profile = profile_store.get_last_profile()
                 last_profile_name = initial_naming_context._bind_object(None)
                 items = [CompletionValue(
                     value = initial_naming_context._bind_object(None),
@@ -177,9 +170,9 @@ class SelectProfileMixin:
                     edit_profile_name = ''
                     while selected_profile is new_profile:
                         profile_info = yield EditProfiles(profiles, current_profile=edit_profile_name)
-                        profile = self.profile_store.read_profile(profile_info['name'])
+                        profile = profile_store.read_profile(profile_info['name'])
                         if profile is None:
-                            profile = self.profile_store.profile_class(**profile_info)
+                            profile = profile_store.profile_class(**profile_info)
                         else:
                             profile.__dict__.update(profile_info)
                         yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
@@ -201,23 +194,22 @@ class SelectProfileMixin:
                             profiles.append(profile)
                             profiles.sort()
                             continue
-                        self.profile_store.write_profile(profile)
+                        profile_store.write_profile(profile)
                         selected_profile = profile
                 elif selected_profile is save_profiles:
-                    file_name = yield action_steps.SaveFile(file_name_filter=self.file_name_filter)
-                    self.profile_store.write_to_file(file_name)
+                    file_name = yield action_steps.SaveFile(file_name_filter=cls.file_name_filter)
+                    profile_store.write_to_file(file_name)
                 elif selected_profile is load_profiles:
-                    file_names =  yield action_steps.SelectFile(file_name_filter=self.file_name_filter)
+                    file_names =  yield action_steps.SelectFile(file_name_filter=cls.file_name_filter)
                     for file_name in file_names:
-                        self.profile_store.read_from_file(file_name)
+                        profile_store.read_from_file(file_name)
         except CancelRequest:
             # explicit handling of exit when cancel button is pressed,
             # to avoid the use of subgenerators in the main action
             yield Exit()
         message = ugettext(u'Use {} profile'.format(selected_profile.name))
         yield action_steps.UpdateProgress(text=message)
-        self.profile_store.set_last_profile( selected_profile )
-        self.selected_profile = selected_profile
+        profile_store.set_last_profile(selected_profile)
 
 
 class EntityAction( Action ):

@@ -80,7 +80,10 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
     def setUp(self):
         super().setUp()
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context = ('constant', 'null')
+        self.gui_context_obj = GuiContext()
+        self.gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        )
 
     def test_action_step(self):
         ActionStep()
@@ -96,8 +99,8 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
             ]
 
         action = CustomAction()
-        list(self.gui_run(action, self.gui_context, 'mode_1'))
-        state = self.get_state(action, self.gui_context)
+        list(self.gui_run(action, self.gui_context_name, 'mode_1'))
+        state = self.get_state(action, self.gui_context_name)
         self.assertTrue(state.verbose_name)
         # serialize the state of an action
         deserialized_state = self._write_read(state)
@@ -222,10 +225,10 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         # end select item
 
         action = SendDocumentAction()
-        for step in self.gui_run(action, self.gui_context, None):
-            if isinstance(step, tuple):
-                dialog = SelectItem.render(step[1])
-                self.grab_widget(dialog)
+        step = list(self.gui_run(action, self.gui_context, None))[-2]
+        self.assertEqual(step[0], SelectItem.__name__)
+        dialog = SelectItem.render(step[1])
+        self.grab_widget(dialog)
         self.assertTrue(dialog)
 
     def test_edit_profile(self):
@@ -257,11 +260,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         dialog = step.render(serialized_step)
         dialog.show()
         self.grab_widget(dialog)
-
-    #def test_main_menu(self):
-        #main_menu = action_steps.MainMenu(app_admin.get_main_menu())
-        #main_menu = self._write_read(main_menu)
-        #main_menu.gui_run(self.gui_context)
 
 
 class ListActionsCase(
@@ -417,9 +415,10 @@ class ListActionsCase(
         self.assertEqual(mapping.field, 'first_name')
 
     def test_import_from_xls_file( self ):
-        with self.assertRaises(Exception) as ec:
-            self.test_import_from_file('import_example.xls')
-        self.assertIn('xls is not a supported', str(ec.exception))
+        exception_step, pop_progress_step = self.test_import_from_file('import_example.xls')[-2:]
+        self.assertEqual(exception_step[0], action_steps.MessageBox.__name__)
+        self.assertIn('xls is not a supported', exception_step[1]['text'])
+        self.assertEqual(pop_progress_step[0], action_steps.PopProgressLevel.__name__)
 
     def test_import_from_xlsx_file( self ):
         self.test_import_from_file( 'import_example.xlsx' )
@@ -441,10 +440,11 @@ class ListActionsCase(
 
     def test_import_from_file(self, filename='import_example.csv'):
         action = list_action.ImportFromFile()
-        generator = self.gui_run(action, self.gui_context, None)
-        for step in generator:
-            if isinstance(step, tuple) and step[0] == 'SelectFile':
-                generator.send([os.path.join(self.example_folder, filename)])
+        replies = {
+            action_steps.SelectFile: [os.path.join(self.example_folder, filename)]
+        }
+        steps = list(self.gui_run(action, self.gui_context, None, replies))
+        for step in steps:
             if isinstance(step, action_steps.ChangeObject):
                 dialog = step.render(self.gui_context)
                 dialog.show()
@@ -457,6 +457,7 @@ class ListActionsCase(
                 dialog = step.render()
                 dialog.show()
                 self.grab_widget(dialog, suffix='confirmation')
+        return steps
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
@@ -497,15 +498,6 @@ class ListActionsCase(
             elif isinstance(step, action_steps.UpdateObjects):
                 updated.extend(initial_naming_context.resolve(step.updated) if step.updated else [])
         return steps, created, updated
-
-    def test_delete_selection(self):
-        model_context = initial_naming_context.resolve(self.model_context_name)
-        selected_object = model_context.get_object()
-        self.assertTrue(selected_object in self.session)
-        delete_selection_action = list_action.DeleteSelection()
-        list(self.gui_run(delete_selection_action, self.gui_context, None))
-        #self.process()
-        self.assertFalse(selected_object in self.session)
 
     def test_remove_selection(self):
         remove_selection_action = list_action.RemoveSelection()
@@ -683,9 +675,6 @@ class FormActionsCase(
         )
         self.gui_context_name = self.form_view.gui_context_name
 
-    def tearDown(self):
-        super().tearDown()
-
     def test_previous_next( self ):
         previous_action = form_action.ToPreviousForm()
         list(self.gui_run(previous_action, self.gui_context_name, None))
@@ -695,10 +684,6 @@ class FormActionsCase(
         list(self.gui_run(first_action, self.gui_context_name, None))
         last_action = form_action.ToLastForm()
         list(self.gui_run(last_action, self.gui_context_name, None))
-
-    def test_show_history( self ):
-        show_history_action = form_action.ShowHistory()
-        list(self.gui_run(show_history_action, self.gui_context_name, None))
 
     def test_close_form( self ):
         close_form_action = form_action.CloseForm()
@@ -750,8 +735,8 @@ class ApplicationActionsCase(
         profile_case = test_core.ProfileCase('setUp')
         profile_case.setUp()
         profile_store = profile_case.test_profile_store()
-        action = application_action.SelectProfileMixin(profile_store)
-        generator = action.select_profile()
+        action = application_action.SelectProfileMixin()
+        generator = action.select_profile(profile_store)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
                 generator.send(step.items[1].value)
@@ -760,19 +745,19 @@ class ApplicationActionsCase(
 
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()
-        generator = self.gui_run(backup_action, self.gui_context, None)
+        replies = {action_steps.SaveFile: 'unittest-backup.db'}
+        generator = self.gui_run(backup_action, self.gui_context, None, replies)
         file_saved = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SaveFile':
-                generator.send('unittest-backup.db')
                 file_saved = True
         self.assertTrue(file_saved)
         restore_action = application_action.Restore()
-        generator = self.gui_run(restore_action, self.gui_context, None)
+        replies = {action_steps.SelectFile: ['unittest-backup.db']}
+        generator = self.gui_run(restore_action, self.gui_context, None, replies)
         file_selected = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SelectFile':
-                generator.send(['unittest-backup.db'])
                 file_selected = True
         self.assertTrue(file_selected)
 

@@ -40,7 +40,7 @@ from ...core.serializable import NamedDataclassSerializable
 
 from ...core.item_model import ActionModeRole
 from .. import gui_naming_context
-from ..action_runner import ActionRunner
+from ..action_runner import action_runner
 from camelot.admin.action.base import GuiContext
 from camelot.view.crud_action import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
@@ -378,8 +378,10 @@ class FormView(AbstractView, GuiContext):
     @QtCore.qt_slot()
     def validate_close( self ):
         # widget_mapper.submit() ??
-        action_runner = ActionRunner(self.close_route, self.gui_context_name, self.model.get_value(), None)
-        action_runner.exec()
+        action_runner.run_action(
+            self.close_route, self.gui_context_name,
+            self.model.get_value(), None
+        )
 
     def close_view( self, accept ):
         self.accept_close_event = accept

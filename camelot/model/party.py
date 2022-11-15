@@ -1140,7 +1140,7 @@ class PartyAdmin( EntityAdmin ):
     def get_query(self, session=None):
         query = super(PartyAdmin, self).get_query(session)
         query = query.options( orm.selectinload('contact_mechanisms') )
-        query = query.options( orm.selectinload('addresses').joinedload('address') )
+        query = query.options( orm.selectinload('addresses').joinedload('address').joinedload('city') )
         return query
 
     #def flush(self, party):

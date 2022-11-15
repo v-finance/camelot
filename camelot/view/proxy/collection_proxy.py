@@ -73,7 +73,7 @@ from ..qml_view import LiveRef
 from .. import gui_naming_context
 from camelot.view.model_thread import object_thread
 from camelot.view.art import from_admin_icon
-from camelot.view.action_runner import ActionRunner
+from camelot.view.action_runner import action_runner
 
 
 invalid_data = py_to_variant()
@@ -269,8 +269,10 @@ class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
             while len(self.__crud_requests):
                 model_context, request_id, request, mode = self.__crud_requests.popleft() # <- too soon
                 self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
-                runner = ActionRunner(request, self._gui_context, model_context.property('name'), mode)
-                runner.exec()
+                action_runner.run_action(
+                    request, self._gui_context,
+                    model_context.property('name'), mode
+                )
 
     def _start_timer(self):
         """
