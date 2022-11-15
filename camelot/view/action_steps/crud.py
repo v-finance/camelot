@@ -52,7 +52,10 @@ class UpdateMixin(object):
         }
 
     def update_item_model(self, gui_context_name):
-        item_model = gui_naming_context.resolve(gui_context_name)
+        try:
+            item_model = gui_naming_context.resolve(gui_context_name)
+        except NameError:
+            return
         if is_deleted(item_model):
             return
         root_item = item_model.invisibleRootItem()
@@ -74,19 +77,27 @@ class UpdateMixin(object):
         
         logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))    
 
+class CrudActionStep(ActionStep, DataclassSerializable):
+    """Helper class to implement ActionSteps that require access to the item model"""
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        try:
+            item_model = gui_naming_context.resolve(gui_context_name)
+        except NameError:
+            return
+        if is_deleted(item_model):
+            return
+        return cls._update_item_model(item_model, json.loads(serialized_step))
+
 @dataclass
-class RowCount(ActionStep, DataclassSerializable):
+class RowCount(CrudActionStep):
 
     blocking = False
-
     rows: typing.Optional[int] = None
 
     @classmethod
-    def gui_run(self, gui_context_name, serialized_step):
-        item_model = gui_naming_context.resolve(gui_context_name)
-        if is_deleted(item_model):
-            return
-        step = json.loads(serialized_step)
+    def _update_item_model(cls, item_model, step):
         if step["rows"] is not None:
             item_model._refresh_content(step["rows"])
 
@@ -159,24 +170,19 @@ class SetColumns(ActionStep):
         item_model.endResetModel()
 
 @dataclass
-class Completion(ActionStep, DataclassSerializable):
+class Completion(CrudActionStep):
     
     blocking = False
-
     row: int
     column: int
     prefix: str
     completions: typing.List[CompletionValue]
 
     @classmethod
-    def gui_run(self, gui_context_name, serialized_step):
-        item_model = gui_naming_context.resolve(gui_context_name)
-        if is_deleted(item_model):
-            return
+    def _update_item_model(cls, item_model, step):
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return
-        step = json.loads(serialized_step)
         logger.debug('begin gui update {0} completions'.format(len(step['completions'])))
         child = root_item.child(step['row'], step['column'])
         if child is not None:
@@ -215,18 +221,14 @@ class Update(ActionStep, UpdateMixin):
         self.update_item_model(gui_context_name)
 
 @dataclass
-class ChangeSelection(ActionStep, DataclassSerializable):
+class ChangeSelection(CrudActionStep):
 
     blocking = False
 
     action_states: List[Tuple[Route, State]] = field(default_factory=list)
 
     @classmethod
-    def gui_run(self, gui_context_name, serialized_step):
-        item_model = gui_naming_context.resolve(gui_context_name)
-        if is_deleted(item_model):
-            return
-        step = json.loads(serialized_step)
+    def _update_item_model(cls, item_model, step):
         for route, state in step["action_states"]:
             item_model.action_state_changed_cpp_signal.emit(
                 route, json_encoder.encode(state).encode('utf-8')
