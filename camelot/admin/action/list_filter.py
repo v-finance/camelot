@@ -809,7 +809,7 @@ class Filter(Action):
 
         state.verbose_name = self.verbose_name or self.filter_names[0]
         # sort outside the query to sort on the verbose name of the value
-        modes.sort(key=lambda state:state.verbose_name)
+        modes.sort(key=lambda state:str(state.verbose_name))
         # put all mode first, no mater of its verbose name
         if self.exclusive:
             all_mode = FilterMode(value=All,
