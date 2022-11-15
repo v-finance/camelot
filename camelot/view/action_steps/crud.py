@@ -10,6 +10,7 @@ from typing import List, Tuple
 from ...admin.admin_route import Route
 from ...admin.action.base import ActionStep, State
 from ...admin.icon import CompletionValue
+from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
@@ -54,7 +55,7 @@ class UpdateMixin(object):
     def update_item_model(self, gui_context_name):
         try:
             item_model = gui_naming_context.resolve(gui_context_name)
-        except NameError:
+        except NameNotFoundException:
             return
         if is_deleted(item_model):
             return
@@ -84,7 +85,7 @@ class CrudActionStep(ActionStep, DataclassSerializable):
     def gui_run(cls, gui_context_name, serialized_step):
         try:
             item_model = gui_naming_context.resolve(gui_context_name)
-        except NameError:
+        except NameNotFoundException:
             return
         if is_deleted(item_model):
             return
