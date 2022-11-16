@@ -871,9 +871,8 @@ class SetFilters(Action, AbstractModelFilter):
                 # So let the user select one, and programmatically set the filter value to the selected entity's id.
                 if isinstance(filter_field_strategy, (Many2OneFilter, One2ManyFilter)):
                     admin = filter_field_strategy.admin or model_context.admin.get_related_admin(filter_field_strategy.entity)
-                    query = None
+                    query = admin.get_query()
                     if filter_field_strategy.where is not None:
-                        query = admin.get_query()
                         query = query.filter(filter_field_strategy.where)
                     objects = yield action_steps.SelectObjects(query, admin)
                     filter_value.set_operands(*objects)
