@@ -223,6 +223,27 @@ class Country( GeographicBoundary ):
         list_display = ['name', 'code']
 
 
+class Region(GeographicBoundary):
+
+    __tablename__ = 'geographic_boundary_region'
+
+    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
+                                          primary_key=True, nullable=False)
+    country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
+                                                  schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                                                  nullable=False, index=True)
+    country = orm.relationship(Country, foreign_keys=[country_geographicboundary_id])
+
+    __mapper_args__ = {'polymorphic_identity': 'region'}
+
+    def __str__(self):
+        return '{} {} {}'.format(self.code, self.name, self.country)
+
+    class Admin(GeographicBoundary.Admin):
+        verbose_name = _('Region')
+        verbose_name_plural = _('Regions')
+        list_display = ['code', 'name', 'country']
+
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
@@ -309,7 +330,6 @@ class City( GeographicBoundary ):
         field_attributes = {k:copy.copy(v) for k,v in GeographicBoundary.Admin.field_attributes.items()}
         field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
         field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
-
 
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
