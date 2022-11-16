@@ -12,7 +12,7 @@ from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
 from .test_item_model import A, QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData
 from camelot.admin.action import GuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
@@ -469,7 +469,7 @@ class FormTest(
     def setUpClass(cls):
         super().setUpClass()
         cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
         cls.process()
 
     @classmethod
@@ -952,7 +952,7 @@ class SnippetsTest(RunningThreadCase,
     def setUpClass(cls):
         super(SnippetsTest, cls).setUpClass()
         cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
         cls.thread.post(cls.setup_proxy)
         cls.app_admin = ApplicationAdmin()
         cls.gui_context = GuiContext()

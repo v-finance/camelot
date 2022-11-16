@@ -52,7 +52,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -166,7 +166,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     def setUpClass(cls):
         super().setUpClass()
         cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
         cls.process()
 
     @classmethod
@@ -275,7 +275,7 @@ class ListActionsCase(
     def setUpClass(cls):
         super().setUpClass()
         cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
         cls.group_box_filter = list_filter.GroupBoxFilter(Person.last_name, exclusive=True)
         cls.combo_box_filter = list_filter.ComboBoxFilter(Person.last_name)
         cls.process()
@@ -653,7 +653,7 @@ class FormActionsCase(
     def setUpClass(cls):
         super(FormActionsCase, cls).setUpClass()
         cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
         cls.process()
 
     @classmethod
@@ -703,7 +703,7 @@ class ApplicationActionsCase(
     def setUpClass(cls):
         super().setUpClass()
         cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
         cls.process()
 
     @classmethod
@@ -779,7 +779,7 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         super().setUpClass()
         movie_admin = app_admin.get_related_admin(Movie)
         cls.setup_sample_model()
-        cls.load_example_data()
+        LoadSampleData().model_run(None, None)
         cls.movie = cls.session.query(Movie).offset(1).first()
         movie_list_model_context = ObjectsModelContext(
             movie_admin, movie_admin.get_proxy([cls.movie]), None

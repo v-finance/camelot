@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 from sqlalchemy import create_engine, orm, schema, types
 
 from .test_orm import TestMetaData
+from camelot.admin.action import Action
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Entity, Session
@@ -17,6 +18,7 @@ from camelot.model.i18n import Translation
 from camelot.model.party import Person
 from camelot.test.action import MockModelContext
 from camelot.view.import_utils import XlsReader
+from camelot.view import action_steps
 from camelot_example.fixtures import load_movie_fixtures
 from camelot_example.view import setup_views
 
@@ -26,6 +28,15 @@ app_admin = ApplicationAdmin()
 # This creates an in memory database per thread
 #
 model_engine = create_engine('sqlite://')
+
+class LoadSampleData(Action):
+
+    def model_run(self, model_context, mode):
+        load_movie_fixtures()
+        print('FIXTURES LOADED')
+        yield action_steps.UpdateProgress(detail='sample data loaded')
+        #cls.first_person_id = cls.session.query(Person).first().id
+
 
 class ExampleModelMixinCase(object):
 
@@ -42,14 +53,6 @@ class ExampleModelMixinCase(object):
     def tear_down_sample_model(cls):
         cls.session.expunge_all()
         metadata.bind = None
-
-    @classmethod
-    def load_example_data(cls):
-        """
-        set cls.first_person_id, to have the id of a person available in the gui
-        """
-        load_movie_fixtures()
-        cls.first_person_id = cls.session.query(Person).first().id
 
     @classmethod
     def dirty_session(cls):
