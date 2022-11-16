@@ -99,7 +99,7 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
             ]
 
         action = CustomAction()
-        list(self.gui_run(action, self.gui_context_name, 'mode_1'))
+        self.gui_run(action, self.gui_context_name, 'mode_1')
         state = self.get_state(action, self.gui_context_name)
         self.assertTrue(state.verbose_name)
         # serialize the state of an action
@@ -166,7 +166,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     def setUpClass(cls):
         super().setUpClass()
         cls.thread.post(cls.setup_sample_model)
-        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
+        cls.gui_run(LoadSampleData())
         cls.process()
 
     @classmethod
@@ -225,7 +225,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         # end select item
 
         action = SendDocumentAction()
-        step = list(self.gui_run(action, self.gui_context, None))[-2]
+        step = self.gui_run(action, self.gui_context, model_context_name=self.model_context_name)[-2]
         self.assertEqual(step[0], SelectItem.__name__)
         dialog = SelectItem.render(step[1])
         self.grab_widget(dialog)
@@ -275,7 +275,7 @@ class ListActionsCase(
     def setUpClass(cls):
         super().setUpClass()
         cls.thread.post(cls.setup_sample_model)
-        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
+        cls.gui_run(LoadSampleData())
         cls.group_box_filter = list_filter.GroupBoxFilter(Person.last_name, exclusive=True)
         cls.combo_box_filter = list_filter.ComboBoxFilter(Person.last_name)
         cls.process()
@@ -335,16 +335,16 @@ class ListActionsCase(
 
         # the state does not change when the current row changes,
         # to make the actions usable in the main window toolbar
-        list(self.gui_run(to_last.gui_run, self.gui_context, None))
+        list(self.gui_run(to_last.gui_run, self.gui_context, None, model_context_name=self.model_context_name))
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
-        list(self.gui_run(to_first.gui_run, self.gui_context, None))
+        list(self.gui_run(to_first.gui_run, self.gui_context, None, model_context_name=self.model_context_name))
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
 
     def test_export_spreadsheet( self ):
         action = list_action.ExportSpreadsheet()
-        for step in self.gui_run(action, self.gui_context, None):
+        for step in self.gui_run(action, self.gui_context, None, model_context_name=self.model_context_name):
             if isinstance(step, tuple) and step[0] == 'OpenFile':
                 filename = step[1]["path"]
         self.assertTrue(filename)
@@ -443,7 +443,7 @@ class ListActionsCase(
         replies = {
             action_steps.SelectFile: [os.path.join(self.example_folder, filename)]
         }
-        steps = list(self.gui_run(action, self.gui_context, None, replies))
+        steps = self.gui_run(action, self.gui_context, None, replies, model_context_name=self.model_context_name)
         for step in steps:
             if isinstance(step, action_steps.ChangeObject):
                 dialog = step.render(self.gui_context)
@@ -615,7 +615,7 @@ class ListActionsCase(
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        list(self.gui_run(SetFilters, self.gui_context, set_filters_step[1]))
+        self.gui_run(SetFilters, self.gui_context, set_filters_step[1], model_context_name=self.model_context_name)
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
@@ -624,7 +624,7 @@ class ListActionsCase(
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        list(self.gui_run(self.group_box_filter, self.gui_context, state.modes[0].value))
+        self.gui_run(self.group_box_filter, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
 
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
@@ -635,7 +635,7 @@ class ListActionsCase(
         )
         AbstractActionWidget.set_combobox_state(widget, state._to_dict())
         self.assertTrue(widget.count())
-        list(self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value))
+        self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
         self.grab_widget(widget)
 
 
@@ -779,7 +779,7 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         super().setUpClass()
         movie_admin = app_admin.get_related_admin(Movie)
         cls.setup_sample_model()
-        LoadSampleData().model_run(None, None)
+        list(LoadSampleData().model_run(None, None))
         cls.movie = cls.session.query(Movie).offset(1).first()
         movie_list_model_context = ObjectsModelContext(
             movie_admin, movie_admin.get_proxy([cls.movie]), None

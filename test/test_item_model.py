@@ -5,7 +5,7 @@ import unittest
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData
 from .test_proxy import A, B
 from . import app_admin
 
@@ -188,7 +188,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         super(ItemModelThreadCase, cls).setUpClass()
         cls.first_person_id = None
         cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData())
         cls.process()
         
     def setUp( self ):
@@ -626,9 +626,8 @@ class QueryQStandardItemModelCase(
     @classmethod
     def setUpClass(cls):
         super(QueryQStandardItemModelCase, cls).setUpClass()
-        cls.first_person_id = None
         cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData())
         cls.process()
 
     @classmethod
@@ -723,7 +722,7 @@ class QueryQStandardItemModelCase(
                 return query.filter_by(id=values)
 
         model_context = initial_naming_context.resolve(cls.model_context_name)
-        model_context.proxy.filter(SingleItemFilter(Person.id), cls.first_person_id)
+        model_context.proxy.filter(SingleItemFilter(Person.id), 1)
         
     def test_single_query(self):
         # after constructing a queryproxy, 4 queries are issued

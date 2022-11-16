@@ -234,7 +234,7 @@ class QueryModelProxyCase(ListModelProxyCase, ExampleModelMixinCase):
     def setUpClass(cls):
         super(QueryModelProxyCase, cls).setUpClass()
         cls.setup_sample_model()
-        LoadSampleData().model_run(None, None)
+        list(LoadSampleData().model_run(None, None))
 
     @classmethod
     def tearDownClass(cls):

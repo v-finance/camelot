@@ -32,9 +32,11 @@ model_engine = create_engine('sqlite://')
 class LoadSampleData(Action):
 
     def model_run(self, model_context, mode):
+        session = Session()
         load_movie_fixtures()
-        print('FIXTURES LOADED')
-        yield action_steps.UpdateProgress(detail='sample data loaded')
+        yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
+            session.query(Person).count(), id(session)
+        ))
         #cls.first_person_id = cls.session.query(Person).first().id
 
 
