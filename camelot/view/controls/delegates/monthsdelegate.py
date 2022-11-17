@@ -39,8 +39,11 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     custom delegate for showing and editing months and years
     """
 
-    editor = MonthsEditor
     horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+
+    @classmethod
+    def get_editor_class(cls):
+        return MonthsEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

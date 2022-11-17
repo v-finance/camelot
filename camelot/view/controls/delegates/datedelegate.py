@@ -39,13 +39,16 @@ from camelot.view.utils import local_date_format
 class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for date values"""
     
-    editor = editors.DateEditor
     horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
     
     def __init__(self, parent=None, **kwargs):
         CustomDelegate.__init__(self, parent, **kwargs)
         self.date_format = local_date_format()
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 2)  + (camelot_small_icon_width*2)
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.DateEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

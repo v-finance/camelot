@@ -34,7 +34,9 @@ from camelot.view.controls.editors.noteeditor import NoteEditor
 
 class NoteDelegate(TextEditDelegate, metaclass=DocumentationMetaclass):
     
-    editor = NoteEditor
+    @classmethod
+    def get_editor_class(cls):
+        return NoteEditor
 
 
 

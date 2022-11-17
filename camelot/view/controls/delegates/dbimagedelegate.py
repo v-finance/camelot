@@ -11,7 +11,9 @@ from camelot.view.controls import editors
 class DbImageDelegate(CustomDelegate):
     # Delegate for images that are saved in the database as a base64 string.
     
-    editor = editors.DbImageEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.DbImageEditor
     
     @classmethod
     def get_standard_item(cls, locale, model_context):

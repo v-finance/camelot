@@ -45,8 +45,6 @@ DEFAULT_COLUMN_WIDTH = 20
 class PlainTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
 
-    editor = editors.TextLineEditor
-
     def __init__( self,
                   parent = None,
                   length = DEFAULT_COLUMN_WIDTH,
@@ -56,6 +54,10 @@ class PlainTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         self._translate_content = translate_content
         char_width = self._font_metrics.averageCharWidth()
         self._width = char_width * min( DEFAULT_COLUMN_WIDTH, length or DEFAULT_COLUMN_WIDTH )
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.TextLineEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

@@ -39,7 +39,9 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     :class:`camelot.core.files.storage.StoredFile`.
     """
     
-    editor = editors.FileEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.FileEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

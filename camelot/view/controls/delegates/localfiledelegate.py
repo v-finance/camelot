@@ -44,14 +44,16 @@ class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     either point to a file or a directory
     """
 
-    editor = editors.LocalFileEditor
-
     def __init__(
         self, 
         parent=None,
         **kw
     ):
         CustomDelegate.__init__(self, parent, **kw)
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.LocalFileEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

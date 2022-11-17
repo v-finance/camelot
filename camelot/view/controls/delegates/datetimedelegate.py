@@ -35,7 +35,9 @@ from camelot.view.controls import editors
 
 class DateTimeDelegate(DateDelegate, metaclass=DocumentationMetaclass):
 
-    editor = editors.DateTimeEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.DateTimeEditor
 
 
 
