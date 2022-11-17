@@ -40,12 +40,6 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
-    def __init__( self,
-                 parent=None,
-                 **kwargs ):
-        super(FloatDelegate, self).__init__(parent=parent,
-                                            **kwargs )
-
     @classmethod
     def get_editor_class(cls):
         return editors.FloatEditor

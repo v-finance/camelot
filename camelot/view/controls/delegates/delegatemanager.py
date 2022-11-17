@@ -30,11 +30,10 @@
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
-
-from ....core.item_model import FieldAttributesRole
+from ....core.serializable import NamedDataclassSerializable
+from ....core.item_model import FieldAttributesRole, ColumnAttributesRole
 from ....core.qt import QtCore, QtWidgets, Qt, variant_to_py, is_deleted
 from .plaintextdelegate import PlainTextDelegate
-
 
 class DelegateManager(QtWidgets.QItemDelegate):
     """Manages custom delegates, should not be used by the application
@@ -46,7 +45,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def __init__(self, parent=None):
         QtWidgets.QItemDelegate.__init__(self, parent)
         # set a delegate for the vertical header
-        self.insert_column_delegate(-1, PlainTextDelegate(parent=self))
+        self.insert_column_delegate(-1, PlainTextDelegate(_parent=self))
 
     def get_column_delegate(self, index):
         column = index.column()
@@ -55,7 +54,11 @@ class DelegateManager(QtWidgets.QItemDelegate):
             field_attributes = index.model().headerData(
                 column, Qt.Orientation.Horizontal, FieldAttributesRole
             )
-            delegate = field_attributes['delegate'](parent=self, **field_attributes)
+            delegate_cls_name, column_attributes = tuple(index.model().headerData(
+                column, Qt.Orientation.Horizontal, ColumnAttributesRole
+            ))
+            delegate_cls = NamedDataclassSerializable.get_cls_by_name(delegate_cls_name)
+            delegate = delegate_cls(_parent=self, kwargs=field_attributes, **column_attributes)
             self.insert_column_delegate(column, delegate)
         return delegate
 

@@ -49,12 +49,9 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
   their __unicode__ method.
   """
 
-    def __init__(self,
-                 parent=None,
-                 editable=True,
-                 **kwargs):
+    def __post_init__(self, parent, kwargs):
         logger.debug('create many2onecolumn delegate')
-        CustomDelegate.__init__(self, parent, editable, **kwargs)
+        super().__post_init__(parent, kwargs)
         self._kwargs = kwargs
         self._width = self._width * 2
 
