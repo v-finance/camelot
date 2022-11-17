@@ -53,6 +53,7 @@ class Exit(ActionStep, DataclassSerializable):
     """
 
     return_code: int = 0
+    blocking: bool = False
 
     @classmethod
     def gui_run(self, gui_context, serialized_step):
@@ -71,6 +72,7 @@ class SetThemeColors(ActionStep, DataclassSerializable):
 
     primary_color: str
     accent_color: str
+    blocking: bool = False
 
 
 @dataclass
@@ -103,7 +105,7 @@ class MainWindow(ActionStep, DataclassSerializable):
 
     admin: InitVar[ApplicationAdmin]
     window_title: str = field(init=False)
-
+    blocking: bool = False
     admin_route: Route = field(init=False)
 
     def __post_init__(self, admin):
@@ -138,6 +140,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     model_context_name: Route = field(default_factory=list)
     action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
     model_context: InitVar(ModelContext) = None
+    blocking: bool = False
 
     # noinspection PyDataclass
     def __post_init__(self, model_context):

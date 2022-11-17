@@ -3,7 +3,7 @@ import json
 
 from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, jsonvalue_to_py
 from camelot.core.exception import UserException
-from .action_runner import ActionRunner
+from .action_runner import action_runner
 
 
 LOGGER = logging.getLogger(__name__)
@@ -115,10 +115,9 @@ class QmlActionDispatch(QtCore.QObject):
 
     def run_action(self, gui_context_name, route, args, model_context_name):
         LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
-        action_runner = ActionRunner(
+        action_runner.run_action(
             tuple(route), tuple(gui_context_name), tuple(model_context_name), args
         )
-        action_runner.exec()
 
 qml_action_dispatch = QmlActionDispatch()
 

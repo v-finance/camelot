@@ -63,8 +63,10 @@ class Sort( ActionStep, DataclassSerializable ):
             :param column: the index of the column on which to sort
             :param order: a :class:`Qt.SortOrder`
     """
+
     column: int
     order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
+    blocking: bool = False
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
@@ -224,6 +226,7 @@ class OpenTableView( UpdateTableView ):
     """
     new_tab: bool = False
     admin_route: Route = field(init=False)
+    blocking: bool = False
 
     def __post_init__(self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
@@ -284,15 +287,20 @@ class OpenQmlTableView(OpenTableView):
 class ToFirstRow(ActionStep, DataclassSerializable):
     """Move to the first row in a table"""
 
+    blocking: bool = False
+
 
 @dataclass
 class ToLastRow(ActionStep, DataclassSerializable):
     """Move to the last row in a table"""
 
+    blocking: bool = False
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
     """Deselect all selected items."""
+
+    blocking: bool = False
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
@@ -307,6 +315,8 @@ class ClearSelection(ActionStep, DataclassSerializable):
 class SetSelection(ActionStep, DataclassSerializable):
     """Set selection."""
 
+    blocking: bool = False
+
     rows: List[int] = field(default_factory=list)
 
 
@@ -315,6 +325,8 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     """
     Refresh only the current item view
     """
+
+    blocking: bool = False
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):

@@ -386,14 +386,11 @@ class RowData(Update):
         from camelot.view import action_steps
         rows = mode["rows"]
         columns = mode["columns"]
-        changed_ranges = []
         offset, limit = self.offset_and_limit_rows_to_get(rows)
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
-            changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        yield action_steps.Update(changed_ranges)
+            yield action_steps.Update(self.add_data(model_context, row, columns, obj, True))
 
-            
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
 

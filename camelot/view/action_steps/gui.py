@@ -31,15 +31,17 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 import functools
+from io import StringIO
 import json
 import typing
+import traceback
 from typing import List, Union
 
 from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
 from camelot.admin.icon import Icon
-from camelot.core.exception import CancelRequest
+from camelot.core.exception import CancelRequest, UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.controls import editors
@@ -57,6 +59,8 @@ from .crud import CompletionValue
 class Refresh( ActionStep, DataclassSerializable ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
+
+    blocking: bool = False
 
     @classmethod
     def gui_run(self, gui_context_name, serialized_step):
@@ -160,6 +164,7 @@ class CloseView(ActionStep, DataclassSerializable):
         the user.
     """
 
+    blocking: bool = False
     accept: bool = True
 
     @classmethod
@@ -219,7 +224,8 @@ class MessageBox( ActionStep, DataclassSerializable ):
             QtWidgets.QMessageBox.StandardButton(
                 functools.reduce(lambda a, b: a | b, step["standard_buttons"])
             ))
-        message_box.setIconPixmap(FontIcon(**step["icon"]).getQPixmap())
+        if step.get("icon"):
+            message_box.setIconPixmap(FontIcon(**step["icon"]).getQPixmap())
         message_box.setInformativeText(str(step["informative_text"]))
         message_box.setDetailedText(str(step["detailed_text"]))
         return message_box
@@ -240,3 +246,35 @@ class MessageBox( ActionStep, DataclassSerializable ):
                 return cls.show_message_box(step)
         else:
             return cls.show_message_box(step)
+
+    @classmethod
+    def from_exception(cls, logger, text, exception):
+        """
+        Turn an exception in a MessageBox action step
+        """
+        if isinstance(exception, UserException):
+            # this exception is not supposed to generate any logging
+            # or inform the developer about something
+            step = cls(
+                title=exception.title,
+                text=exception.text,
+                icon=exception.icon,
+                standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
+            )
+            step.informative_text=exception.resolution
+            step.detailed_text=exception.detail
+        else:
+            logger.error(text, exc_info=exception)
+            sio = StringIO()
+            traceback.print_exc(file=sio)
+            step = cls(
+                title=_('Exception'),
+                text=_('An unexpected event occurred'),
+                icon=None,
+                standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
+            )
+            # chop the size of the text to prevent error dialogs larger than the screen
+            step.informative_text=str(exception)[:1000]
+            step.detailed_text=sio.getvalue()
+            sio.close()
+        return step
