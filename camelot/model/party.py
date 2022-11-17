@@ -241,8 +241,16 @@ class Region(GeographicBoundary):
 
     class Admin(GeographicBoundary.Admin):
         verbose_name = _('Administrative division')
-        verbose_name_plural = _('Administrative divisions')
+        verbose_name_plural = _('Administrative divisions (NUTS 3)')
         list_display = ['code', 'name', 'country']
+        form_display = list_display + ['alternative_names']
+
+        field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
+        attributes_dict = {
+            'code': {'name': _('NUTS code')},
+        }
+        for field_name, attributes in attributes_dict.items():
+            field_attributes.setdefault(field_name, {}).update(attributes)
 
 class City( GeographicBoundary ):
     """A subclass of GeographicBoundary used to store the name, the postal code
@@ -328,6 +336,7 @@ class City( GeographicBoundary ):
              'alternative_names'],
             columns=2)
         field_attributes = {k:copy.copy(v) for k,v in GeographicBoundary.Admin.field_attributes.items()}
+        field_attributes['code'] = {'name': _('Postal code')}
         field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
         field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
 
