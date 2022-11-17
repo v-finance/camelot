@@ -240,8 +240,8 @@ class Region(GeographicBoundary):
         return '{} {} {}'.format(self.code, self.name, self.country)
 
     class Admin(GeographicBoundary.Admin):
-        verbose_name = _('Region')
-        verbose_name_plural = _('Regions')
+        verbose_name = _('Administrative division')
+        verbose_name_plural = _('Administrative divisions')
         list_display = ['code', 'name', 'country']
 
 class City( GeographicBoundary ):
