@@ -40,6 +40,7 @@ import datetime
 import sqlalchemy.types
 
 from sqlalchemy.ext import hybrid
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import orm, schema, sql, ForeignKey
@@ -222,8 +223,23 @@ class Country( GeographicBoundary ):
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
 
+class WithCountry(object):
+    """
+    Declarative mixin class that shares shema constructs and functionality across GeographicBoundary classes
+    that are part of a country.
+    """
 
-class AdministrativeDivision(GeographicBoundary):
+    @declared_attr
+    def country_id(cls):
+        return schema.Column(sqlalchemy.types.Integer(),
+                            schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                            nullable=False, index=True)
+
+    @declared_attr
+    def country(cls):
+        return orm.relationship(Country, foreign_keys=[cls.country_id])
+
+class AdministrativeDivision(GeographicBoundary, WithCountry):
 
     __tablename__ = 'geographic_boundary_administrative_division'
 
@@ -231,10 +247,6 @@ class AdministrativeDivision(GeographicBoundary):
                                           schema.ForeignKey(GeographicBoundary.id,
                                                             name='fk_geographic_boundary_administrative_division_boundary_id'),
                                           primary_key=True, nullable=False)
-    country_id = schema.Column(sqlalchemy.types.Integer(),
-                            schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
-                            nullable=False, index=True)
-    country = orm.relationship(Country, foreign_keys=[country_id])
 
     __mapper_args__ = {'polymorphic_identity': 'administrative_division'}
 
@@ -337,7 +349,8 @@ class City( GeographicBoundary ):
         list_display = ['code', 'name', 'administrative_name', 'administrative_division', 'country']
         form_display = Form(
             [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
-             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name', None, 'administrative_division'], columns=2),
+             GroupBoxForm(_('Administrative division'), ['administrative_division'], columns=2),
+             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
              GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
              GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
