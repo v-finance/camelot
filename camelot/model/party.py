@@ -227,12 +227,14 @@ class AdministrativeDivision(GeographicBoundary):
 
     __tablename__ = 'geographic_boundary_administrative_division'
 
-    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
+    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
+                                          schema.ForeignKey(GeographicBoundary.id,
+                                                            name='fk_geographic_boundary_administrative_division_boundary_id'),
                                           primary_key=True, nullable=False)
-    country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
-                                                  schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
-                                                  nullable=False, index=True)
-    country = orm.relationship(Country, foreign_keys=[country_geographicboundary_id])
+    country_id = schema.Column(sqlalchemy.types.Integer(),
+                            schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                            nullable=False, index=True)
+    country = orm.relationship(Country, foreign_keys=[country_id])
 
     __mapper_args__ = {'polymorphic_identity': 'administrative_division'}
 
@@ -257,8 +259,8 @@ class City( GeographicBoundary ):
     and the Country of a city"""
     __tablename__ = 'geographic_boundary_city'
     country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
-                                                  schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
-                                                  nullable=False, index=True)
+                               schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                               nullable=False, index=True)
     country = orm.relationship(Country, backref='city', foreign_keys=[country_geographicboundary_id])
     geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
                                           primary_key=True, nullable=False)
