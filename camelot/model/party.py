@@ -262,6 +262,11 @@ class City( GeographicBoundary ):
     country = orm.relationship(Country, backref='city', foreign_keys=[country_geographicboundary_id])
     geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
                                           primary_key=True, nullable=False)
+    region_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
+                                                  schema.ForeignKey(Region.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                                                  nullable=True, index=True)
+    region = orm.relationship(Region, foreign_keys=[region_geographicboundary_id])
+
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
@@ -300,7 +305,7 @@ class City( GeographicBoundary ):
 
     @hybrid.hybrid_property
     def administrative_name(cls):
-       return cls.administrative_translation(language=None)
+        return cls.administrative_translation(language=None)
 
     @hybrid.hybrid_property
     def administrative_name_NL(cls):
@@ -326,10 +331,10 @@ class City( GeographicBoundary ):
     class Admin(GeographicBoundary.Admin):
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
-        list_display = ['code', 'name', 'administrative_name', 'country']
+        list_display = ['code', 'name', 'administrative_name', 'region', 'country']
         form_display = Form(
             [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
-             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
+             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name', None, 'region'], columns=2),
              GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
              GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
@@ -339,6 +344,7 @@ class City( GeographicBoundary ):
         field_attributes['code'] = {'name': _('Postal code')}
         field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
         field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
+        field_attributes['region'] = {'name': _('Administrative division (NUTS)')}
 
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
