@@ -225,7 +225,7 @@ class Country( GeographicBoundary ):
 
 class WithCountry(object):
     """
-    Declarative mixin class that shares shema constructs and functionality across GeographicBoundary classes
+    Declarative mixin class that shares schema constructs and functionality across GeographicBoundary classes
     that are part of a country.
     """
 
@@ -266,14 +266,12 @@ class AdministrativeDivision(GeographicBoundary, WithCountry):
         for field_name, attributes in attributes_dict.items():
             field_attributes.setdefault(field_name, {}).update(attributes)
 
-class City( GeographicBoundary ):
+class City(GeographicBoundary, WithCountry):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
+
     __tablename__ = 'geographic_boundary_city'
-    country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
-                               schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
-                               nullable=False, index=True)
-    country = orm.relationship(Country, backref='city', foreign_keys=[country_geographicboundary_id])
+
     geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
                                           primary_key=True, nullable=False)
     administrative_division_id = schema.Column(sqlalchemy.types.Integer(),
