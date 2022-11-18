@@ -223,9 +223,9 @@ class Country( GeographicBoundary ):
         list_display = ['name', 'code']
 
 
-class Region(GeographicBoundary):
+class AdministrativeDivision(GeographicBoundary):
 
-    __tablename__ = 'geographic_boundary_region'
+    __tablename__ = 'geographic_boundary_administrative_division'
 
     geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
                                           primary_key=True, nullable=False)
@@ -234,7 +234,7 @@ class Region(GeographicBoundary):
                                                   nullable=False, index=True)
     country = orm.relationship(Country, foreign_keys=[country_geographicboundary_id])
 
-    __mapper_args__ = {'polymorphic_identity': 'region'}
+    __mapper_args__ = {'polymorphic_identity': 'administrative_division'}
 
     def __str__(self):
         return '{} {} {}'.format(self.code, self.name, self.country)
@@ -262,11 +262,10 @@ class City( GeographicBoundary ):
     country = orm.relationship(Country, backref='city', foreign_keys=[country_geographicboundary_id])
     geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
                                           primary_key=True, nullable=False)
-    region_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
-                                                  schema.ForeignKey(Region.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
-                                                  nullable=True, index=True)
-    region = orm.relationship(Region, foreign_keys=[region_geographicboundary_id])
-
+    administrative_division_id = schema.Column(sqlalchemy.types.Integer(),
+                                               schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                                               nullable=True, index=True)
+    administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
@@ -329,22 +328,29 @@ class City( GeographicBoundary ):
         return city
 
     class Admin(GeographicBoundary.Admin):
+
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
-        list_display = ['code', 'name', 'administrative_name', 'region', 'country']
+
+        list_display = ['code', 'name', 'administrative_name', 'administrative_division', 'country']
         form_display = Form(
             [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
-             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name', None, 'region'], columns=2),
+             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name', None, 'administrative_division'], columns=2),
              GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
              GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
              'alternative_names'],
             columns=2)
-        field_attributes = {k:copy.copy(v) for k,v in GeographicBoundary.Admin.field_attributes.items()}
-        field_attributes['code'] = {'name': _('Postal code')}
-        field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
-        field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
-        field_attributes['region'] = {'name': _('Administrative division (NUTS)')}
+
+        field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
+        attributes_dict = {
+            'code': {'name': _('Postal code')},
+            'administrative_name_NL': {'name': _('Administrative name')},
+            'administrative_name_FR': {'name': _('Administrative name')},
+            'administrative_division': {'name': _('Administrative division (NUTS)')},
+        }
+        for field_name, attributes in attributes_dict.items():
+            field_attributes.setdefault(field_name, {}).update(attributes)
 
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
