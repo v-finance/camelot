@@ -37,7 +37,7 @@ class ColorEditor(CustomEditor):
     completely transparent, the value of the editor will be None.
     """
 
-    def __init__(self, parent=None, editable=True, field_name='color', **kwargs):
+    def __init__(self, parent=None, field_name='color', **kwargs):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Preferred,
@@ -54,6 +54,7 @@ class ColorEditor(CustomEditor):
         color_button.clicked.connect(self.buttonClicked)
         self.setLayout(layout)
         self._color = None
+        self.editable = None
 
     @classmethod
     def to_qcolor(self, value, invalid):
@@ -74,8 +75,14 @@ class ColorEditor(CustomEditor):
             if color_button is not None:
                 color_button.setIcon(QtGui.QIcon(pixmap))
 
+    def set_field_attributes(self, **kwargs):
+        super().set_field_attributes(**kwargs)
+        self.editable = kwargs.get('editable', False)
+
     @QtCore.qt_slot(bool)
     def buttonClicked(self, raised):
+        if self.editable != True:
+            return
         options = QtWidgets.QColorDialog.ShowAlphaChannel
         qcolor = self.to_qcolor(self.get_value(), 'white')
         qcolor = QtWidgets.QColorDialog.getColor(
