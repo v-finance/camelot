@@ -12,7 +12,7 @@ from camelot.view.controls import delegates
 
 LOGGER = logging.getLogger(__name__)
 
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData
 
 class B(object):
 
@@ -234,7 +234,7 @@ class QueryModelProxyCase(ListModelProxyCase, ExampleModelMixinCase):
     def setUpClass(cls):
         super(QueryModelProxyCase, cls).setUpClass()
         cls.setup_sample_model()
-        cls.load_example_data()
+        list(LoadSampleData().model_run(None, None))
 
     @classmethod
     def tearDownClass(cls):

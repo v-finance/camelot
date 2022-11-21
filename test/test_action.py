@@ -1,5 +1,4 @@
 import datetime
-import gc
 import io
 import logging
 import os
@@ -52,7 +51,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -99,7 +98,7 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
             ]
 
         action = CustomAction()
-        list(self.gui_run(action, self.gui_context_name, 'mode_1'))
+        self.gui_run(action, self.gui_context_name, 'mode_1')
         state = self.get_state(action, self.gui_context_name)
         self.assertTrue(state.verbose_name)
         # serialize the state of an action
@@ -165,15 +164,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), mode=True)
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
@@ -225,7 +216,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         # end select item
 
         action = SendDocumentAction()
-        step = list(self.gui_run(action, self.gui_context, None))[-2]
+        step = self.gui_run(action, self.gui_context, model_context_name=self.model_context_name)[-2]
         self.assertEqual(step[0], SelectItem.__name__)
         dialog = SelectItem.render(step[1])
         self.grab_widget(dialog)
@@ -274,24 +265,13 @@ class ListActionsCase(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), mode=True)
         cls.group_box_filter = list_filter.GroupBoxFilter(Person.last_name, exclusive=True)
         cls.combo_box_filter = list_filter.ComboBoxFilter(Person.last_name)
-        cls.process()
-        gc.disable()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
-        gc.enable()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
-        self.thread.post(self.session.close)
-        self.process()
+        self.gui_run(SetupSession(), mode=True)
         self.admin = app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
         self.process()
@@ -335,16 +315,16 @@ class ListActionsCase(
 
         # the state does not change when the current row changes,
         # to make the actions usable in the main window toolbar
-        list(self.gui_run(to_last.gui_run, self.gui_context, None))
+        list(self.gui_run(to_last.gui_run, self.gui_context, None, model_context_name=self.model_context_name))
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
-        list(self.gui_run(to_first.gui_run, self.gui_context, None))
+        list(self.gui_run(to_first.gui_run, self.gui_context, None, model_context_name=self.model_context_name))
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
 
     def test_export_spreadsheet( self ):
         action = list_action.ExportSpreadsheet()
-        for step in self.gui_run(action, self.gui_context, None):
+        for step in self.gui_run(action, self.gui_context, None, model_context_name=self.model_context_name):
             if isinstance(step, tuple) and step[0] == 'OpenFile':
                 filename = step[1]["path"]
         self.assertTrue(filename)
@@ -443,7 +423,7 @@ class ListActionsCase(
         replies = {
             action_steps.SelectFile: [os.path.join(self.example_folder, filename)]
         }
-        steps = list(self.gui_run(action, self.gui_context, None, replies))
+        steps = self.gui_run(action, self.gui_context, None, replies, model_context_name=self.model_context_name)
         for step in steps:
             if isinstance(step, action_steps.ChangeObject):
                 dialog = step.render(self.gui_context)
@@ -529,8 +509,6 @@ class ListActionsCase(
 
         metadata.create_all()
         model_context = initial_naming_context.resolve(self.model_context_name)
-        selected_object = model_context.get_object()
-        self.assertTrue(selected_object in self.session)
 
         # The actions should not be present in the related toolbar actions of the entity if its not rank-based.
         related_toolbar_actions = [action.route[-1] for action in model_context.admin.get_related_toolbar_actions('onetomany')]
@@ -615,7 +593,7 @@ class ListActionsCase(
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        list(self.gui_run(SetFilters, self.gui_context, set_filters_step[1]))
+        self.gui_run(SetFilters, self.gui_context, set_filters_step[1], model_context_name=self.model_context_name)
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
@@ -624,7 +602,7 @@ class ListActionsCase(
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        list(self.gui_run(self.group_box_filter, self.gui_context, state.modes[0].value))
+        self.gui_run(self.group_box_filter, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
 
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
@@ -635,7 +613,7 @@ class ListActionsCase(
         )
         AbstractActionWidget.set_combobox_state(widget, state._to_dict())
         self.assertTrue(widget.count())
-        list(self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value))
+        self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
         self.grab_widget(widget)
 
 
@@ -652,15 +630,7 @@ class FormActionsCase(
     @classmethod
     def setUpClass(cls):
         super(FormActionsCase, cls).setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
@@ -702,19 +672,11 @@ class ApplicationActionsCase(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
-        self.context = MockModelContext(session=self.session)
+        self.context = MockModelContext(session=Session())
         self.context.admin = app_admin
         self.gui_context = ('cpp_gui_context', 'root_backend')
 
@@ -779,7 +741,7 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         super().setUpClass()
         movie_admin = app_admin.get_related_admin(Movie)
         cls.setup_sample_model()
-        cls.load_example_data()
+        list(LoadSampleData().model_run(None, None))
         cls.movie = cls.session.query(Movie).offset(1).first()
         movie_list_model_context = ObjectsModelContext(
             movie_admin, movie_admin.get_proxy([cls.movie]), None
