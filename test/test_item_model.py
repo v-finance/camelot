@@ -9,6 +9,7 @@ from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession
 from .test_proxy import A, B
 from . import app_admin
 
+from camelot.admin.action import Action
 from camelot.admin.action.field_action import ClearObject, SelectObject
 from camelot.admin.action.list_filter import Filter
 from camelot.admin.application_admin import ApplicationAdmin
@@ -26,6 +27,7 @@ from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.core.cache import ValueCache
 from camelot.view.proxy.collection_proxy import CollectionProxy, invalid_item
+from camelot.view import action_steps
 
 LOGGER = logging.getLogger(__name__)
 
@@ -591,6 +593,21 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.item_model.timeout_slot()
         self.process()
         self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
+
+
+class SetupQueryProxy(Action):
+
+    def __init__(self, model_context_name, admin_cls=Person.Admin):
+        self.model_context_name = model_context_name
+        self.admin_cls = admin_cls
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        admin = self.admin_cls(app_admin, Person)
+        proxy = QueryModelProxy(session.query(Person))
+        model_context = ObjectsModelContext(admin, proxy, None)
+        initial_naming_context.rebind(self.model_context_name, model_context)
+        yield action_steps.UpdateProgress(detail='Proxy setup')
 
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """

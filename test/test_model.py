@@ -53,27 +53,9 @@ class SetupSession(Action):
         yield action_steps.UpdateProgress(detail='Session closed')
 
 
-class ExampleModelMixinCase(object):
-
-    @classmethod
-    def setup_sample_model(cls):
-        setup_views()
-        metadata.bind = model_engine
-        metadata.create_all(model_engine)
-        cls.session = Session()
-        cls.session.expunge_all()
-        update_last_login()
-
-    @classmethod
-    def tear_down_sample_model(cls):
-        cls.session.expunge_all()
-        metadata.bind = None
-
-    @classmethod
-    def dirty_session(cls):
-        """
-        Create objects in various states to make the session dirty
-        """
+class DirtySession(Action):
+    
+    def model_run(self, model_context, mode):
         session = Session()
         session.expunge_all()
         # create objects in various states
@@ -94,6 +76,23 @@ class ExampleModelMixinCase(object):
         session.execute(
             person_table.delete().where( person_table.c.party_id == p6.id )
         )
+        yield action_steps.UpdateProgress(detail='Session dirty')
+
+class ExampleModelMixinCase(object):
+
+    @classmethod
+    def setup_sample_model(cls):
+        setup_views()
+        metadata.bind = model_engine
+        metadata.create_all(model_engine)
+        cls.session = Session()
+        cls.session.expunge_all()
+        update_last_login()
+
+    @classmethod
+    def tear_down_sample_model(cls):
+        cls.session.expunge_all()
+        metadata.bind = None
 
 
 class ModelCase(unittest.TestCase, ExampleModelMixinCase):
