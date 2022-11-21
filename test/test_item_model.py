@@ -617,20 +617,6 @@ class SetupQueryProxy(Action):
         yield action_steps.UpdateProgress(detail='Proxy setup')
 
 
-class SetupQueryProxy(Action):
-
-    def __init__(self, model_context_name, admin_cls=Person.Admin):
-        self.model_context_name = model_context_name
-        self.admin_cls = admin_cls
-
-    def model_run(self, model_context, mode):
-        session = Session()
-        admin = self.admin_cls(app_admin, Person)
-        proxy = QueryModelProxy(session.query(Person))
-        model_context = ObjectsModelContext(admin, proxy, None)
-        initial_naming_context.rebind(self.model_context_name, model_context)
-        yield action_steps.UpdateProgress(detail='Proxy setup')
-
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
     methods to setup a QStandardItemModel representing a query
