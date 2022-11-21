@@ -1,5 +1,4 @@
 import datetime
-import gc
 import io
 import logging
 import os
@@ -52,7 +51,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from . import app_admin, test_core, test_view
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import ExampleModelMixinCase, LoadSampleData
+from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -165,15 +164,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.gui_run(LoadSampleData())
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), mode=True)
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
@@ -274,24 +265,13 @@ class ListActionsCase(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.gui_run(LoadSampleData())
+        cls.gui_run(LoadSampleData(), mode=True)
         cls.group_box_filter = list_filter.GroupBoxFilter(Person.last_name, exclusive=True)
         cls.combo_box_filter = list_filter.ComboBoxFilter(Person.last_name)
-        cls.process()
-        gc.disable()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
-        gc.enable()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
-        self.thread.post(self.session.close)
-        self.process()
+        self.gui_run(SetupSession(), mode=True)
         self.admin = app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)
         self.process()
@@ -529,8 +509,6 @@ class ListActionsCase(
 
         metadata.create_all()
         model_context = initial_naming_context.resolve(self.model_context_name)
-        selected_object = model_context.get_object()
-        self.assertTrue(selected_object in self.session)
 
         # The actions should not be present in the related toolbar actions of the entity if its not rank-based.
         related_toolbar_actions = [action.route[-1] for action in model_context.admin.get_related_toolbar_actions('onetomany')]
@@ -652,15 +630,7 @@ class FormActionsCase(
     @classmethod
     def setUpClass(cls):
         super(FormActionsCase, cls).setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
@@ -702,19 +672,11 @@ class ApplicationActionsCase(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.gui_run(LoadSampleData(), ('constant', 'null'), None)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
-        self.context = MockModelContext(session=self.session)
+        self.context = MockModelContext(session=Session())
         self.context.admin = app_admin
         self.gui_context = ('cpp_gui_context', 'root_backend')
 

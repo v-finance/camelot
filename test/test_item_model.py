@@ -5,7 +5,7 @@ import unittest
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from .test_model import ExampleModelMixinCase, LoadSampleData
+from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession
 from .test_proxy import A, B
 from . import app_admin
 
@@ -20,6 +20,7 @@ from camelot.core.item_model import (
 )
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
+from camelot.core.orm import Session
 from camelot.core.qt import Qt, QtCore, is_deleted, delete, py_to_variant, variant_to_py
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
@@ -186,11 +187,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     @classmethod
     def setUpClass(cls):
         super(ItemModelThreadCase, cls).setUpClass()
-        cls.first_person_id = None
-        cls.thread.post(cls.setup_sample_model)
-        cls.gui_run(LoadSampleData())
-        cls.process()
-        
+        cls.gui_run(LoadSampleData(), mode=True)
+
     def setUp( self ):
         super(ItemModelThreadCase, self).setUp()
         self.A = A
@@ -601,8 +599,9 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
 
     @classmethod
     def setup_proxy(cls, admin_cls=Person.Admin):
+        session = Session()
         admin = admin_cls(app_admin, Person)
-        proxy = QueryModelProxy(cls.session.query(Person))
+        proxy = QueryModelProxy(session.query(Person))
         model_context = ObjectsModelContext(admin, proxy, None)
         initial_naming_context.rebind(cls.model_context_name, model_context)
 
@@ -626,18 +625,11 @@ class QueryQStandardItemModelCase(
     @classmethod
     def setUpClass(cls):
         super(QueryQStandardItemModelCase, cls).setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.gui_run(LoadSampleData())
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        super(QueryQStandardItemModelCase, cls).tearDownClass()
-        cls.tear_down_sample_model()
+        cls.gui_run(LoadSampleData(), mode=True)
         
     def setUp(self):
         super(QueryQStandardItemModelCase, self).setUp()
-        self.session.expunge_all()
+        self.gui_run(SetupSession(), mode=True)
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin(Person)
         self.thread.post(self.setup_proxy)

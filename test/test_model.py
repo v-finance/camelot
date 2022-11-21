@@ -33,11 +33,24 @@ class LoadSampleData(Action):
 
     def model_run(self, model_context, mode):
         session = Session()
-        load_movie_fixtures()
-        yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
-            session.query(Person).count(), id(session)
-        ))
-        #cls.first_person_id = cls.session.query(Person).first().id
+        setup_views()
+        metadata.bind = model_engine
+        metadata.create_all(model_engine)
+        session.expunge_all()
+        update_last_login()
+        if mode in (None, True):
+            load_movie_fixtures()
+            yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
+                session.query(Person).count(), id(session)
+            ))
+
+
+class SetupSession(Action):
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        session.close()
+        yield action_steps.UpdateProgress(detail='Session closed')
 
 
 class ExampleModelMixinCase(object):
@@ -61,23 +74,24 @@ class ExampleModelMixinCase(object):
         """
         Create objects in various states to make the session dirty
         """
-        cls.session.expunge_all()
+        session = Session()
+        session.expunge_all()
         # create objects in various states
         #
         p2 = Person(first_name = u'p2', last_name = u'dirty' )
         p3 = Person(first_name = u'p3', last_name = u'deleted' )
         p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
         p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
-        cls.session.flush()
+        session.flush()
         p3.delete()
-        cls.session.flush()
+        session.flush()
         p4.delete()
         p2.last_name = u'clean'
         #
         # delete p6 without the session being aware
         #
         person_table = Person.table
-        cls.session.execute(
+        session.execute(
             person_table.delete().where( person_table.c.party_id == p6.id )
         )
 
