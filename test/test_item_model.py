@@ -631,18 +631,34 @@ class SetupQueryProxy(Action):
         initial_naming_context.rebind(self.model_context_name, model_context)
         yield action_steps.UpdateProgress(detail='Proxy setup')
 
+
+class ApplyFilter(Action):
+
+    def __init__(self, model_context_name):
+        self.model_context_name = model_context_name
+
+    def model_run(self, model_context, mode):
+
+        class SingleItemFilter(Filter):
+        
+            def decorate_query(self, query, values):
+                return query.filter_by(id=values)
+
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        model_context.proxy.filter(SingleItemFilter(Person.id), 1)
+
+
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
     methods to setup a QStandardItemModel representing a query
     """
 
-    @classmethod
-    def setup_item_model(cls, admin_route, admin_name):
-        cls.item_model = CollectionProxy(admin_route)
-        cls.item_model.set_value(cls.model_context_name)
-        cls.columns = ('first_name', 'last_name')
-        list(cls.item_model.add_columns(cls.columns))
-        cls.item_model.timeout_slot()
+    def setup_item_model(self, admin_route, admin_name):
+        self.item_model = CollectionProxy(admin_route)
+        self.item_model.set_value(self.model_context_name)
+        self.columns = ('first_name', 'last_name')
+        list(self.item_model.add_columns(self.columns))
+        self.item_model.timeout_slot()
 
 class QueryQStandardItemModelCase(
     RunningThreadCase,
@@ -651,8 +667,6 @@ class QueryQStandardItemModelCase(
     representing a query
     """
 
-    model_context_name = ('test_query_item_model_model_context',)
-
     @classmethod
     def setUpClass(cls):
         super(QueryQStandardItemModelCase, cls).setUpClass()
@@ -660,6 +674,7 @@ class QueryQStandardItemModelCase(
         
     def setUp(self):
         super(QueryQStandardItemModelCase, self).setUp()
+        self.model_context_name = ('test_query_item_model_model_context_{0}'.format(next(context_counter)),)
         self.gui_run(SetupSession(), mode=True)
         self.gui_run(SetupQueryProxy(self.model_context_name))
         self.app_admin = ApplicationAdmin()
@@ -736,17 +751,6 @@ class QueryQStandardItemModelCase(
         # get the object at the new row (eg, to display a form view)
         self.assertEqual(self._header_data(new_row, Qt.Orientation.Vertical, ObjectRole, self.item_model), id(person))
 
-    @classmethod
-    def apply_filter(cls):
-
-        class SingleItemFilter(Filter):
-        
-            def decorate_query(self, query, values):
-                return query.filter_by(id=values)
-
-        model_context = initial_naming_context.resolve(cls.model_context_name)
-        model_context.proxy.filter(SingleItemFilter(Person.id), 1)
-        
     def test_single_query(self):
         # after constructing a queryproxy, 4 queries are issued
         # before data is returned : 
@@ -755,7 +759,7 @@ class QueryQStandardItemModelCase(
         # - contact mechanism select in load
         # - address select in load
         # those last 2 are needed for the validation of the compounding objects
-        self.thread.post(self.apply_filter)
+        self.gui_run(ApplyFilter(self.model_context_name))
         start = self.query_counter
         item_model = CollectionProxy(self.admin_route)
         item_model.set_value(self.model_context_name)
