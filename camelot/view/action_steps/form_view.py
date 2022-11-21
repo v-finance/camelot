@@ -80,6 +80,7 @@ class OpenFormView(AbstractCrudView):
     admin_route: AdminRoute = field(init=False)
     row: int = field(init=False)
     form_state: str = field(init=False)
+    blocking: bool = False
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None

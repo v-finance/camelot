@@ -66,6 +66,8 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
 
     _lease_counter = itertools.count()
 
+    blocking: bool = False
+
     objects_deleted: InitVar[tuple] = tuple()
     objects_updated: InitVar[tuple] = tuple()
     objects_created: InitVar[tuple] = tuple()

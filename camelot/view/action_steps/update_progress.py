@@ -46,11 +46,13 @@ _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 class PushProgressLevel(ActionStep, DataclassSerializable):
 
     verbose_name: str
+    blocking: bool = False
 
 
 @dataclass
 class PopProgressLevel(ActionStep, DataclassSerializable):
-    pass
+
+    blocking: bool = False
 
 
 @dataclass

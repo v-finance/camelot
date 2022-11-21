@@ -280,6 +280,7 @@ class ChangeObject(OpenFormView):
     subtitle: typing.Union[str, ugettext_lazy, None] = _('Complete the form and press the OK button')
     accept: typing.Union[str, ugettext_lazy] = _('OK')
     reject: typing.Union[str, ugettext_lazy] = _('Cancel')
+    blocking: bool = True
 
     @staticmethod
     def _add_actions(admin, actions):

@@ -60,6 +60,8 @@ class Refresh( ActionStep, DataclassSerializable ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
 
+    blocking: bool = False
+
     @classmethod
     def gui_run(self, gui_context_name, serialized_step):
         qml_action_step(gui_context_name, 'Refresh')
@@ -162,6 +164,7 @@ class CloseView(ActionStep, DataclassSerializable):
         the user.
     """
 
+    blocking: bool = False
     accept: bool = True
 
     @classmethod

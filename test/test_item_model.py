@@ -1,3 +1,4 @@
+import itertools
 import json
 import logging
 import unittest
@@ -5,10 +6,11 @@ import unittest
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession
 from .test_proxy import A, B
 from . import app_admin
 
+from camelot.admin.action import Action
 from camelot.admin.action.field_action import ClearObject, SelectObject
 from camelot.admin.action.list_filter import Filter
 from camelot.admin.application_admin import ApplicationAdmin
@@ -20,13 +22,16 @@ from camelot.core.item_model import (
 )
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
+from camelot.core.orm import Session
 from camelot.core.qt import Qt, QtCore, is_deleted, delete, py_to_variant, variant_to_py
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.core.cache import ValueCache
 from camelot.view.proxy.collection_proxy import CollectionProxy, invalid_item
+from camelot.view import action_steps
 
 LOGGER = logging.getLogger(__name__)
+context_counter = itertools.count()
 
 
 class ItemModelSignalRegister(QtCore.QObject):
@@ -112,13 +117,6 @@ class ItemModelCaseMixin(object):
     Helper methods to test a QAbstractItemModel
     """
 
-    @classmethod
-    def setup_proxy(cls, type_, collection):
-        admin = app_admin.get_related_admin(type_)
-        proxy = admin.get_proxy(collection)
-        model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
-        initial_naming_context.rebind(cls.model_context_name, model_context)
-
     def _load_data(self, item_model):
         """Trigger the loading of data by the QAbstractItemModel"""
         item_model.timeout_slot()
@@ -175,31 +173,39 @@ class ItemModelTests(object):
         self.assertEqual(variant_to_py(invalid_clone.data(Qt.ItemDataRole.EditRole)), None)
         self.assertEqual(variant_to_py(invalid_clone.data(FieldAttributesRole)), {'editable': False, 'focus_policy': Qt.FocusPolicy.NoFocus})
 
+class SetupProxy(Action):
+
+    def __init__(self, model_context_name, collection):
+        self.model_context_name = model_context_name
+        self.collection = collection
+
+    def model_run(self, model_context, mode):
+        admin = app_admin.get_related_admin(A)
+        proxy = admin.get_proxy(self.collection)
+        model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
+        initial_naming_context.rebind(self.model_context_name, model_context)
+        yield action_steps.UpdateProgress(detail='Proxy setup')
 
 class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
     pass
 
 class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests, ExampleModelMixinCase):
 
-    model_context_name = ('test_item_model_thread_model_context',)
-
     @classmethod
     def setUpClass(cls):
         super(ItemModelThreadCase, cls).setUpClass()
-        cls.first_person_id = None
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-        
+        cls.gui_run(LoadSampleData(), mode=True)
+
     def setUp( self ):
         super(ItemModelThreadCase, self).setUp()
         self.A = A
         self.collection = [A(0), A(1), A(2)]
+        self.model_context_name = ('test_item_model_thread_model_context_{0}'.format(next(context_counter)),)
+        self.gui_run(SetupProxy(self.model_context_name, self.collection))
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
         self.item_model = CollectionProxy(self.admin_route)
-        self.thread.post(self.setup_proxy, args=(self.A, self.collection,))
         self.item_model.set_value(self.model_context_name)
         self.columns = self.admin.list_display
         list(self.item_model.add_columns(self.columns))
@@ -208,6 +214,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register = ItemModelSignalRegister(self.item_model)
 
     def tearDown(self):
+        self.process()
         # since multiple tests share the same model context name, avoid
         # interaction between tests by deleting item_models holding a reference
         # to that name
@@ -594,17 +601,40 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.process()
         self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
 
+
+class SetupQueryProxy(Action):
+
+    def __init__(self, model_context_name, admin_cls=Person.Admin):
+        self.model_context_name = model_context_name
+        self.admin_cls = admin_cls
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        admin = self.admin_cls(app_admin, Person)
+        proxy = QueryModelProxy(session.query(Person))
+        model_context = ObjectsModelContext(admin, proxy, None)
+        initial_naming_context.rebind(self.model_context_name, model_context)
+        yield action_steps.UpdateProgress(detail='Proxy setup')
+
+
+class SetupQueryProxy(Action):
+
+    def __init__(self, model_context_name, admin_cls=Person.Admin):
+        self.model_context_name = model_context_name
+        self.admin_cls = admin_cls
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        admin = self.admin_cls(app_admin, Person)
+        proxy = QueryModelProxy(session.query(Person))
+        model_context = ObjectsModelContext(admin, proxy, None)
+        initial_naming_context.rebind(self.model_context_name, model_context)
+        yield action_steps.UpdateProgress(detail='Proxy setup')
+
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
     methods to setup a QStandardItemModel representing a query
     """
-
-    @classmethod
-    def setup_proxy(cls, admin_cls=Person.Admin):
-        admin = admin_cls(app_admin, Person)
-        proxy = QueryModelProxy(cls.session.query(Person))
-        model_context = ObjectsModelContext(admin, proxy, None)
-        initial_naming_context.rebind(cls.model_context_name, model_context)
 
     @classmethod
     def setup_item_model(cls, admin_route, admin_name):
@@ -626,22 +656,14 @@ class QueryQStandardItemModelCase(
     @classmethod
     def setUpClass(cls):
         super(QueryQStandardItemModelCase, cls).setUpClass()
-        cls.first_person_id = None
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        super(QueryQStandardItemModelCase, cls).tearDownClass()
-        cls.tear_down_sample_model()
+        cls.gui_run(LoadSampleData(), mode=True)
         
     def setUp(self):
         super(QueryQStandardItemModelCase, self).setUp()
-        self.session.expunge_all()
+        self.gui_run(SetupSession(), mode=True)
+        self.gui_run(SetupQueryProxy(self.model_context_name))
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin(Person)
-        self.thread.post(self.setup_proxy)
         self.process()
         self.admin_route = self.person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, self.person_admin.get_name())
@@ -723,7 +745,7 @@ class QueryQStandardItemModelCase(
                 return query.filter_by(id=values)
 
         model_context = initial_naming_context.resolve(cls.model_context_name)
-        model_context.proxy.filter(SingleItemFilter(Person.id), cls.first_person_id)
+        model_context.proxy.filter(SingleItemFilter(Person.id), 1)
         
     def test_single_query(self):
         # after constructing a queryproxy, 4 queries are issued

@@ -53,14 +53,23 @@ REQUEST_LOGGER = logging.getLogger('camelot.view.action_runner.request')
 def hide_progress_dialog(gui_context_name):
     """A context manager to hide the progress dialog of the gui context when
     the context is entered, and restore the original state at exit"""
-    from .qml_view import is_cpp_gui_context_name
+    from .qml_view import is_cpp_gui_context_name, qml_action_step
     progress_dialog = None
     if not is_cpp_gui_context_name(gui_context_name):
         gui_context = gui_naming_context.resolve(gui_context_name)
         if gui_context is not None:
             progress_dialog = gui_context.get_progress_dialog()
     if progress_dialog is None:
+        is_hidden = None
+        if is_cpp_gui_context_name(gui_context_name):
+            response = qml_action_step(gui_context_name, 'GetProgressState')
+            is_hidden = response["is_hidden"]
+            if not is_hidden:
+                qml_action_step(gui_context_name, 'HideProgress')
         yield
+        if is_cpp_gui_context_name(gui_context_name):
+            if not is_hidden:
+                qml_action_step(gui_context_name, 'ShowProgress')
         return
     original_state, original_minimum_duration = None, None
     original_state = progress_dialog.isHidden()
@@ -119,10 +128,11 @@ class GuiRun(object):
         return time.time() - self.started_at
 
     def handle_action_step(self, action_step):
+        from .action_steps.crud import crud_action_steps
         from .qml_view import is_cpp_gui_context_name, qml_action_step
         self.steps.append(type(action_step).__name__)
-        # dispatch to RootBackend if this is a cpp gui context
-        if is_cpp_gui_context_name(self.gui_context_name) and action_step.blocking==False:
+        # force crud actions steps with a cpp gui context towards qml
+        if is_cpp_gui_context_name(self.gui_context_name) and isinstance(action_step, crud_action_steps):
             # FIXME: step is not (yet) serializable, use _to_dict for now
             stream = io.BytesIO()
             stream.write(json_encoder.encode(action_step._to_dict()).encode())
@@ -133,6 +143,7 @@ class GuiRun(object):
         return action_step.gui_run(self.gui_context_name)
 
     def handle_serialized_action_step(self, step_type, serialized_step):
+        from .action_steps.crud import crud_action_steps
         from .qml_view import is_cpp_gui_context_name, qml_action_step
         self.steps.append(step_type)
         cls = MetaActionStep.action_steps[step_type]
@@ -150,7 +161,8 @@ class GuiRun(object):
                 print("======================================================================")
                 print()
                 app.exit(-1)
-        if is_cpp_gui_context_name(self.gui_context_name) and cls.blocking==False:
+        # force crud actions steps with a cpp gui context towards qml
+        if is_cpp_gui_context_name(self.gui_context_name) and issubclass(cls, crud_action_steps):
             result = qml_action_step(
                 self.gui_context_name, step_type, serialized_step
             )
@@ -209,7 +221,6 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
 
     def run_gui_run(self, gui_run):
         gui_naming_context.validate_composite_name(gui_run.gui_context_name)
-        assert gui_run.gui_context_name != ('constant', 'null')
         gui_run_name = gui_run_names.bind(str(id(gui_run)), gui_run)
         message = {
             'action_name': gui_run.action_name,
@@ -251,7 +262,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         run = ModelRun(gui_run_name, generator)
         run_name = model_run_names.bind(str(id(run)), run)
         self.non_blocking_serializable_action_step_signal.emit(
-            run_name, gui_run_name, "PushProgressLevel",
+            run_name, gui_run_name, PushProgressLevel.__name__,
             PushProgressLevel('Please wait')._to_bytes()
         )
         LOGGER.debug('Action {} runs in generator {}'.format(message['action_name'], run_name))
@@ -266,7 +277,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         :param generator_method: the method of the generator to be called
         :param *args: the arguments to use when calling the generator method.
         """
-        from camelot.view.action_steps import MessageBox
+        from camelot.view.action_steps import MessageBox, PopProgressLevel
         run = initial_naming_context.resolve(run_name)
         gui_run_name = run.gui_run_name
         try:
@@ -311,13 +322,15 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, "PopProgressLevel", b"null"
+                run_name, gui_run_name, PopProgressLevel.__name__,
+                PopProgressLevel()._to_bytes()
             )
             return (run_name, gui_run_name, e)
         except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
             self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, "PopProgressLevel", b"null"
+                run_name, gui_run_name, PopProgressLevel.__name__,
+                PopProgressLevel()._to_bytes()
             )
             initial_naming_context.unbind(run_name)
             return (run_name, gui_run_name, e)
@@ -332,7 +345,8 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             )
             LOGGER.debug( 'iterator raised stop, pass it' )
             self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, "PopProgressLevel", b"null"
+                run_name, gui_run_name, PopProgressLevel.__name__,
+                PopProgressLevel()._to_bytes()
             )
             initial_naming_context.unbind(run_name)
             return (run_name, gui_run_name, e)
@@ -365,17 +379,17 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         from .qml_view import is_cpp_gui_context_name
         if is_cpp_gui_context_name(gui_context_name):
             # @TODO : check was canceled for cpp
-            return False
-        else:
-            try:
-                gui_context = gui_naming_context.resolve(gui_context_name)
-            except NameNotFoundException:
-                return False
-            assert gui_context, '{} python gui context resolves to none'.format(gui_context_name)
-            progress_dialog = gui_context.get_progress_dialog()
-            if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
-                LOGGER.debug( 'progress dialog was canceled, raise request' )
-                raise CancelRequest()
+            return
+        try:
+            gui_context = gui_naming_context.resolve(gui_context_name)
+        except NameNotFoundException:
+            return
+        if gui_context is None:
+            return
+        progress_dialog = gui_context.get_progress_dialog()
+        if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
+            LOGGER.debug( 'progress dialog was canceled, raise request' )
+            raise CancelRequest()
 
     @QtCore.qt_slot(object)
     def __next__(self, run_yielded):
