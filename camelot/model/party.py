@@ -403,6 +403,23 @@ class Address( Entity ):
     administrative_division_id = schema.Column(sqlalchemy.types.Integer(),
                                                schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='restrict', onupdate='cascade'),
                                                nullable=True, index=True)
+    _administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
+
+    @property
+    def administrative_division(self):
+        """
+        Returns the administrative division of this address.
+        If the set city is part of an administrative division, it is always defined as such.
+        Otherwise, it can be set manually.
+        """
+        if self.city is not None and self.city.administrative_division is not None:
+            return self.city.administrative_division
+        return self._administrative_division
+
+    @administrative_division.setter
+    def administrative_division(self, value):
+        if self.city is not None and self.city.administrative_division is None:
+            self._administrative_division = value
 
     @hybrid.hybrid_property
     def zip_code( self ):
@@ -436,13 +453,18 @@ class Address( Entity ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
         list_display = ['street1', 'street2', 'city']
-        form_display = ['street1', 'street2', 'zip_code', 'city']
+        form_display = ['street1', 'street2', 'zip_code', 'city', 'administrative_division']
         form_size = ( 700, 150 )
         field_attributes = {
             'street1': {'minimal_column_width':30},
-            'zip_code': {'editable': lambda o: o.city is not None and o.city.code == ''}
+            'zip_code': {'editable': lambda o: o.city is not None and o.city.code == ''},
+            'administrative_division': {
+                'delegate':delegates.Many2OneDelegate,
+                'target': AdministrativeDivision,
+                'editable': lambda o: o.city is not None and o.city.administrative_division is None
+            },
         }
-        
+
         def get_depending_objects( self, address ):
             for party_address in address.party_addresses:
                 yield party_address
