@@ -42,13 +42,14 @@ import sqlalchemy.types
 
 from sqlalchemy.ext import hybrid
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm.base import NEVER_SET
 from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
-from sqlalchemy import orm, schema, sql, ForeignKey
+from sqlalchemy import event, orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action.list_filter import StringFilter
-from camelot.admin.action import list_filter
+from camelot.admin.action import field_action, list_filter
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
@@ -412,9 +413,10 @@ class Address( Entity ):
         If the set city is part of an administrative division, it is always defined as such.
         Otherwise, it can be set manually.
         """
-        if self.city is not None and self.city.administrative_division is not None:
-            return self.city.administrative_division
-        return self._administrative_division
+        if self.city is not None:
+            if self.city.administrative_division is not None:
+                return self.city.administrative_division
+            return self._administrative_division
 
     @administrative_division.setter
     def administrative_division(self, value):
@@ -470,6 +472,12 @@ class Address( Entity ):
                 yield party_address
                 if party_address.party != None:
                     yield party_address.party
+
+@event.listens_for(Address.city, 'set', propagate=True)
+def receive_city_set(target, city, oldvalue, initiator):
+    if oldvalue is not NEVER_SET and oldvalue != city and city is not None:
+        if city.administrative_division is not None:
+            target._administrative_division = None
 
 class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
@@ -990,6 +998,14 @@ class Addressable(object):
     def city( self ):
         return Address.city_geographicboundary_id
 
+    @property
+    def administrative_division(self):
+        return self._get_address_field( u'administrative_division' )
+
+    @administrative_division.setter
+    def administrative_division( self, value ):
+        return self._set_address_field( u'administrative_division', value )
+
     class Admin(object):
         field_attributes = dict(
             street1 = dict( editable = True,
@@ -1000,8 +1016,10 @@ class Addressable(object):
                             minimal_column_width = 50 ),
             city = dict( editable = True, 
                          delegate = delegates.Many2OneDelegate,
-                         target = City,
-                         actions = []),
+                         target = City),
+            administrative_division = dict( editable = lambda o: o.city is not None and o.city.administrative_division is None,
+                                            delegate = delegates.Many2OneDelegate,
+                                            target = AdministrativeDivision),
             zip_code = dict( editable = lambda o: o.city is not None and o.city.code == ''),
             email = dict( editable = True, 
                           minimal_column_width = 20,
