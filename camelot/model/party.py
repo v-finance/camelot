@@ -283,7 +283,7 @@ class City(GeographicBoundary, WithCountry):
     geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
                                           primary_key=True, nullable=False)
     administrative_division_id = schema.Column(sqlalchemy.types.Integer(),
-                                               schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                                               schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='restrict', onupdate='cascade'),
                                                nullable=True, index=True)
     administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
@@ -398,9 +398,12 @@ class Address( Entity ):
                                                nullable=False, index=True)
     city = orm.relationship(City, lazy='subquery')
     
-    # Way for user to overrule the zip code on the address level (e.g. when its not known or incomplete on the city).
+    # Way for user to overrule the zip code and/or administrative division on the address level (e.g. when its not known or incomplete on the city).
     _zip_code = schema.Column(Unicode(10))
-    
+    administrative_division_id = schema.Column(sqlalchemy.types.Integer(),
+                                               schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='restrict', onupdate='cascade'),
+                                               nullable=True, index=True)
+
     @hybrid.hybrid_property
     def zip_code( self ):
         if self.city is not None:
