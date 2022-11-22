@@ -48,6 +48,7 @@ from sqlalchemy import orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action.list_filter import StringFilter
+from camelot.admin.action import list_filter
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
@@ -123,9 +124,10 @@ class GeographicBoundary( Entity ):
         
         list_display = ['row_type', 'name', 'code']
         form_display = Form(
-            [GroupBoxForm(_('General'), ['name', 'code'], columns=2),
-             GroupBoxForm(_('NL'), ['name_NL'], columns=2),
-             GroupBoxForm(_('FR'), ['name_FR'], columns=2),
+            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
+             GroupBoxForm(_('NL'), ['name_NL', None], columns=2),
+             GroupBoxForm(_('FR'), ['name_FR', None], columns=2),
+             GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
              'alternative_names'],
             columns=2)
         
@@ -133,8 +135,11 @@ class GeographicBoundary( Entity ):
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
+                'filter_strategy': list_filter.NoFilter,
                 'editable': False,
             },
+            'id': {'filter_strategy': list_filter.NoFilter},
+            'geographicboundary_id': {'name': _('Id')},
             'name_NL': {'name': _('Name')},
             'name_FR': {'name': _('Name')},
         }
@@ -255,14 +260,16 @@ class AdministrativeDivision(GeographicBoundary, WithCountry):
         return '{} {} {}'.format(self.code, self.name, self.country)
 
     class Admin(GeographicBoundary.Admin):
+
         verbose_name = _('Administrative division')
         verbose_name_plural = _('Administrative divisions (NUTS 3)')
+
         list_display = ['code', 'name', 'country']
-        form_display = list_display + ['alternative_names']
 
         field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
         attributes_dict = {
             'code': {'name': _('NUTS code')},
+            'country_id': {'filter_strategy': list_filter.NoFilter},
         }
         for field_name, attributes in attributes_dict.items():
             field_attributes.setdefault(field_name, {}).update(attributes)
@@ -374,6 +381,8 @@ class City(GeographicBoundary, WithCountry):
             'administrative_name_NL': {'name': _('Administrative name')},
             'administrative_name_FR': {'name': _('Administrative name')},
             'administrative_division': {'name': _('Administrative division (NUTS)')},
+            'administrative_division_id': {'filter_strategy': list_filter.NoFilter},
+            'country_id': {'filter_strategy': list_filter.NoFilter},
         }
         for field_name, attributes in attributes_dict.items():
             field_attributes.setdefault(field_name, {}).update(attributes)
