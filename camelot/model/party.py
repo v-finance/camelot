@@ -36,6 +36,7 @@ by Len Silverston, Chapter 2
 
 import copy
 import datetime
+import enum
 
 import sqlalchemy.types
 
@@ -339,6 +340,17 @@ class City(GeographicBoundary, WithCountry):
             orm.object_session( city ).flush()
         return city
 
+    # TODO: refactor this to MessageEnum after move to vFinance repo.
+    class Message(enum.Enum):
+
+        invalid_administrative_division = '{} is geen geldige administratieve indeling voor {}'
+
+    @property
+    def note(self) -> Note:
+        if None not in (self.country, self.administrative_division):
+            if self.country != self.administrative_division.country:
+                return _(self.Message.invalid_administrative_division.value, self.administrative_division, self.country)
+
     class Admin(GeographicBoundary.Admin):
 
         verbose_name = _('City')
@@ -347,12 +359,13 @@ class City(GeographicBoundary, WithCountry):
         list_display = ['code', 'name', 'administrative_name', 'administrative_division', 'country']
         form_display = Form(
             [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
-             GroupBoxForm(_('Administrative division'), ['administrative_division'], columns=2),
+             GroupBoxForm(_('Administrative division'), ['administrative_division', None], columns=2),
              GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
              GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
              GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
-             'alternative_names'],
+             'alternative_names',
+             WidgetOnlyForm('note')],
             columns=2)
 
         field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
