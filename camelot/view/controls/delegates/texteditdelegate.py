@@ -37,12 +37,10 @@ from camelot.view.controls import editors
 class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
   
-    editor = editors.TextEditEditor
-      
-    def __init__( self, 
-                  parent = None,
-                  **kwargs ):
-        CustomDelegate.__init__( self, parent, **kwargs )
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.TextEditEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

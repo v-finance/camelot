@@ -49,16 +49,15 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
   their __unicode__ method.
   """
 
-    editor = editors.Many2OneEditor
-
-    def __init__(self,
-                 parent=None,
-                 editable=True,
-                 **kwargs):
+    def __post_init__(self, parent, kwargs):
         logger.debug('create many2onecolumn delegate')
-        CustomDelegate.__init__(self, parent, editable, **kwargs)
+        super().__post_init__(parent, kwargs)
         self._kwargs = kwargs
         self._width = self._width * 2
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.Many2OneEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

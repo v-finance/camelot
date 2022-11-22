@@ -30,7 +30,8 @@
 from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
 from camelot.view.proxy import ValueLoading
-
+from camelot.view.art import FontIcon
+from camelot.core.naming import initial_naming_context
 
 def set_background_color_palette(widget, background_color):
     """
@@ -167,11 +168,13 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
 
     def add_actions(self, action_routes, layout):
         for action_route in action_routes:
+            action = initial_naming_context.resolve(tuple(action_route))
             action_widget = QtWidgets.QToolButton(parent=self)
             action_widget.setAutoRaise(True)
             action_widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
             action_widget.setProperty('action_route', action_route)
             action_widget.setFixedHeight(min(action_widget.height(), self.get_height()))
+            action_widget.setIcon(FontIcon(action.icon.name).getQIcon())
             action_widget.clicked.connect(self.action_button_clicked)
             layout.addWidget(action_widget)
 

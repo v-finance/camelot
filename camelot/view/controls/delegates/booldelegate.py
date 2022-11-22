@@ -35,7 +35,9 @@ from camelot.view.controls import editors
 class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for boolean values"""
 
-    editor = editors.BoolEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.BoolEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

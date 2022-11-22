@@ -36,7 +36,9 @@ class VirtualAddressDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """
     """
 
-    editor = editors.VirtualAddressEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.VirtualAddressEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

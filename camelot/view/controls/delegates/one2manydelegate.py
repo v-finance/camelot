@@ -48,10 +48,9 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
   .. image:: /_static/onetomany.png
   """
 
-    def __init__( self, parent = None, **kwargs ):
-        super( One2ManyDelegate, self ).__init__( parent=parent, **kwargs )
+    def __post_init__(self, parent, kwargs):
+        super().__post_init__(parent, kwargs)
         logger.debug( 'create one2manycolumn delegate' )
-        self.kwargs = kwargs
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

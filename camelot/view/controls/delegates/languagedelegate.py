@@ -34,7 +34,9 @@ class LanguageDelegate( PlainTextDelegate ):
     values.
     """
     
-    editor = LanguageEditor
+    @classmethod
+    def get_editor_class(cls):
+        return LanguageEditor
 
 
 

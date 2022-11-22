@@ -38,14 +38,11 @@ from camelot.core import constants
 class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for float values"""
 
-    editor = editors.FloatEditor
     horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
-    def __init__( self,
-                 parent=None,
-                 **kwargs ):
-        super(FloatDelegate, self).__init__(parent=parent,
-                                            **kwargs )
+    @classmethod
+    def get_editor_class(cls):
+        return editors.FloatEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

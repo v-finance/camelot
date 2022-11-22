@@ -37,12 +37,18 @@ from camelot.core.naming import initial_naming_context
 from ....admin.icon import CompletionValue
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
-from ....core.serializable import json_encoder
+from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
     ChoicesRole, FieldAttributesRole, ProxyDict
 )
 from ..action_widget import AbstractActionWidget
+from camelot.view.controls.editors import ChoicesEditor
+from camelot.admin.admin_route import Route
+from dataclasses import dataclass, field, InitVar
+from typing import List, Optional
+
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,7 +123,11 @@ def DocumentationMetaclass(name, bases, dct):
 color_groups = {True: QtGui.QPalette.ColorGroup.Inactive,
                 False: QtGui.QPalette.ColorGroup.Disabled}
 
-class CustomDelegate(QtWidgets.QItemDelegate):
+class CustomDelegateMeta(type(NamedDataclassSerializable), type(QtWidgets.QItemDelegate)):
+    pass
+
+@dataclass
+class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metaclass=CustomDelegateMeta):
     """Base class for implementing custom delegates.
 
     .. attribute:: editor
@@ -126,21 +136,31 @@ class CustomDelegate(QtWidgets.QItemDelegate):
 
     """
 
-    editor = None
+    _parent: InitVar[QtCore.QObject] = None
+    kwargs: InitVar[dict] = {}
+
+    editable: Optional[bool] = None # Will be set in __post_init__
+    action_routes: List[Route] = field(default_factory=list)
+    #horizontal_align: list = field(default_factory=lambda: [Qt.AlignmentFlag.AlignLeft, Qt.AlignmentFlag.AlignVCenter])
     horizontal_align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
-    def __init__(self, parent=None, editable=True, **kwargs):
+    def __post_init__(self, parent, kwargs):
         """:param parent: the parent object for the delegate
         :param editable: a boolean indicating if the field associated to the delegate
         is editable
-
         """
-        super( CustomDelegate, self ).__init__(parent)
-        self.editable = editable
+        super().__init__(parent)
+        if self.editable is None:
+            self.editable = kwargs.get('editable', True)
         self.kwargs = kwargs
         self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
+
+    @classmethod
+    def get_editor_class(cls):
+        """Get the editor class for this delegate."""
+        raise NotImplementedError
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
@@ -201,8 +221,11 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         :param option: use an option with version 5 to indicate the widget
         will be put onto a form
         """
-
-        editor = self.editor(parent, editable = self.editable, option = option, **self.kwargs)
+        editor_cls = self.get_editor_class()
+        if editor_cls == ChoicesEditor:
+            editor = editor_cls(parent, self.action_routes)
+        else:
+            editor = editor_cls(parent, option = option, **self.kwargs)
         assert editor != None
         assert isinstance(editor, QtWidgets.QWidget)
         if option.version != 5:

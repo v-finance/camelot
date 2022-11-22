@@ -28,34 +28,34 @@
 #  ============================================================================
 
 import logging
-logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
+from dataclasses import dataclass
 
+logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate
-from .customdelegate import DocumentationMetaclass
 from camelot.core.qt import QtWidgets
 
 from camelot.view.controls import editors
 
 DEFAULT_COLUMN_WIDTH = 20
 
-class PlainTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
+@dataclass
+class PlainTextDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
 
-    editor = editors.TextLineEditor
+    length: int = DEFAULT_COLUMN_WIDTH
 
-    def __init__( self,
-                  parent = None,
-                  length = DEFAULT_COLUMN_WIDTH,
-                  translate_content=False,
-                  **kw ):
-        CustomDelegate.__init__( self, parent, length = length, **kw )
-        self._translate_content = translate_content
+    def __post_init__(self, parent, kwargs):
+        super().__post_init__(parent, { 'length': self.length, **kwargs })
         char_width = self._font_metrics.averageCharWidth()
-        self._width = char_width * min( DEFAULT_COLUMN_WIDTH, length or DEFAULT_COLUMN_WIDTH )
+        self._width = char_width * min( DEFAULT_COLUMN_WIDTH, self.length or DEFAULT_COLUMN_WIDTH )
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.TextLineEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

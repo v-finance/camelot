@@ -14,7 +14,7 @@ from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole, ObjectRole
+    FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole, ObjectRole, ColumnAttributesRole
 )
 from .. import gui_naming_context
 
@@ -46,6 +46,10 @@ class UpdateMixin(object):
                     if role_data is not None:
                         cell_data[role] = role_data
                 cell_data[Qt.ItemDataRole.DisplayRole] = item.data(PreviewRole)
+                # serialize EditRole if it is a tuple/name
+                edit = item.data(Qt.ItemDataRole.EditRole)
+                if isinstance(edit, tuple):
+                    cell_data[Qt.ItemDataRole.EditRole] = edit
                 cells.append(cell_data)
         return {
             "header_items": header_items,
@@ -108,14 +112,21 @@ class SetColumns(ActionStep):
     
     def __init__(self, static_field_attributes):
         self.static_field_attributes = static_field_attributes
+        self.column_attributes = []
+        for fa in static_field_attributes:
+            attrs = {}
+            if fa['delegate'].__name__ == 'ComboBoxDelegate':
+                attrs['action_routes'] = fa['action_routes']
+            self.column_attributes.append(attrs)
 
     def _to_dict(self):
         columns = []
-        for fa in self.static_field_attributes:
+        for i, fa in enumerate(self.static_field_attributes):
             columns.append({
                 'verbose_name': str(fa['name']),
                 'field_name': fa['field_name'],
                 'width': fa['column_width'],
+                'delegate': fa['delegate'](**self.column_attributes[i])._to_dict(),
             })
         return {
             'columns': columns,
@@ -151,6 +162,7 @@ class SetColumns(ActionStep):
             set_header_data(py_to_variant(field_name), Qt.ItemDataRole.UserRole)
             set_header_data(py_to_variant(verbose_name), Qt.ItemDataRole.DisplayRole)
             set_header_data(fa_copy, FieldAttributesRole)
+            set_header_data(fa['delegate'](**self.column_attributes[i])._to_dict(), ColumnAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.ItemDataRole.FontRole)
             else:

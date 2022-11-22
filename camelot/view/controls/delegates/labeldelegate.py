@@ -36,7 +36,9 @@ class LabelDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate to display an attribute as a label
     """
     
-    editor = editors.LabelEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.LabelEditor
 
 
 
