@@ -353,11 +353,15 @@ class City(GeographicBoundary, WithCountry):
 
         invalid_administrative_division = '{} is geen geldige administratieve indeling voor {}'
 
-    @property
-    def note(self) -> Note:
+    def get_messages(self):
         if None not in (self.country, self.administrative_division):
             if self.country != self.administrative_division.country:
-                return _(self.Message.invalid_administrative_division.value, self.administrative_division, self.country)
+                yield _(self.Message.invalid_administrative_division.value, self.administrative_division, self.country)
+
+    @property
+    def note(self) -> Note:
+        for msg in self.get_messages():
+            return msg
 
     class Admin(GeographicBoundary.Admin):
 
@@ -446,6 +450,12 @@ class Address( Entity ):
             address = cls( street1 = street1, street2 = street2, city = city, zip_code = zip_code )
             orm.object_session( address ).flush()
         return address
+
+    def get_messages(self):
+        if self.city is not None:
+            yield from self.city.get_messages()
+            if self.administrative_division is not None and self.city.country != self.administrative_division.country:
+                yield _(City.Message.invalid_administrative_division.value, self.administrative_division, self.city.country)
 
     def __str__(self):
         city_name = self.city.name if self.city is not None else ''
