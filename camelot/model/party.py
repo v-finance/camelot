@@ -485,8 +485,8 @@ class Address( Entity ):
 
 @event.listens_for(Address.city, 'set', propagate=True)
 def receive_city_set(target, city, oldvalue, initiator):
-    if oldvalue is not NEVER_SET and oldvalue != city and city is not None:
-        if city.administrative_division is not None:
+    if oldvalue is not NEVER_SET and oldvalue != city:
+        if city is None or city.administrative_division is not None:
             target._administrative_division = None
 
 class PartyContactMechanismAdmin( EntityAdmin ):
@@ -578,6 +578,14 @@ class WithAddresses(object):
                               cls.first_address_filter()
                               ),
                           limit=1).as_scalar()
+
+    @property
+    def administrative_division(self):
+        return self._get_address_field('administrative_division')
+
+    @administrative_division.setter
+    def administrative_division( self, value ):
+        return self._set_address_field('administrative_division', value)
 
     def get_first_address(self):
         raise NotImplementedError()
