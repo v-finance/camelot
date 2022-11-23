@@ -182,10 +182,13 @@ class GeographicBoundaryAlternativeName(Entity):
     )
 
     class Admin(EntityAdmin):
+
         verbose_name = _('Alternative name')
         verbose_name_plural = _('Alternative names')
+
         list_display = ['name', 'row_type', 'language']
-        form_state = 'right'
+        form_display = list_display
+
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
