@@ -139,7 +139,12 @@ class ActionMixinCase(object):
         return state_register.state
 
     @classmethod
-    def gui_run(cls, action, gui_context_name, mode, replies={}):
+    def gui_run(cls,
+                action,
+                gui_context_name=('constant', 'null'),
+                mode=None,
+                replies={},
+                model_context_name=('constant', 'null')):
         """
         Simulates the gui_run of an action, but instead of blocking,
         yields progress each time a message is received from the model.
@@ -163,12 +168,10 @@ class ActionMixinCase(object):
                 cls = MetaActionStep.action_steps[step_type]
                 return replies.get(cls)
 
-        gui_run = GuiRunRecorder(
-            gui_context_name, action_name, cls.model_context_name, mode
-        )
+        gui_run = GuiRunRecorder(gui_context_name, action_name, model_context_name, mode)
         action_runner.run_gui_run(gui_run)
         action_runner.wait_for_completion()
-        yield from gui_run.steps
+        return gui_run.steps
 
 
 class RunningThreadCase(unittest.TestCase, ActionMixinCase):

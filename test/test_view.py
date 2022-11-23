@@ -12,7 +12,7 @@ from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
 from .test_item_model import A, QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData
 from camelot.admin.action import GuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
@@ -468,15 +468,7 @@ class FormTest(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
 
     def setUp(self):
         super().setUp()
@@ -840,7 +832,7 @@ class ControlsTest(
     @classmethod
     def setUpClass(cls):
         super(ControlsTest, cls).setUpClass()
-        cls.thread.post(cls.setup_sample_model)
+        cls.gui_run(LoadSampleData(), mode=True)
         cls.app_admin = MyApplicationAdmin()
         cls.process()
 
@@ -849,9 +841,6 @@ class ControlsTest(
         self.process()
         self.admin = self.app_admin.get_entity_admin(Person)
         self.admin_route = admin.get_admin_route()
-
-    def tearDown(self):
-        super().tearDown()
 
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
@@ -951,8 +940,7 @@ class SnippetsTest(RunningThreadCase,
     @classmethod
     def setUpClass(cls):
         super(SnippetsTest, cls).setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
         cls.thread.post(cls.setup_proxy)
         cls.app_admin = ApplicationAdmin()
         cls.gui_context = GuiContext()

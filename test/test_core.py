@@ -22,7 +22,7 @@ from decimal import Decimal
 from sqlalchemy import MetaData, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData
 from .test_orm import EntityMetaMock
 
 memento_id_counter = 0
@@ -882,7 +882,7 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
     def setUpClass(cls):
         super(InitialNamingContextCase, cls).setUpClass()
         cls.setup_sample_model()
-        cls.load_example_data()
+        LoadSampleData().model_run(None, None)
         cls.session = Session()
 
         class CompositePkEntity(Entity):
@@ -1052,7 +1052,7 @@ class AbstractEntityNamingContextCase(AbstractNamingContextCase, ExampleModelMix
     def setUpClass(cls):
         super(AbstractEntityNamingContextCase, cls).setUpClass()
         cls.setup_sample_model()
-        cls.load_example_data()
+        LoadSampleData().model_run(None, None)
         cls.session = Session()
 
     @classmethod

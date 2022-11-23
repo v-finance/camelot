@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 from sqlalchemy import create_engine, orm, schema, types
 
 from .test_orm import TestMetaData
+from camelot.admin.action import Action
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Entity, Session
@@ -17,6 +18,7 @@ from camelot.model.i18n import Translation
 from camelot.model.party import Person
 from camelot.test.action import MockModelContext
 from camelot.view.import_utils import XlsReader
+from camelot.view import action_steps
 from camelot_example.fixtures import load_movie_fixtures
 from camelot_example.view import setup_views
 
@@ -26,6 +28,30 @@ app_admin = ApplicationAdmin()
 # This creates an in memory database per thread
 #
 model_engine = create_engine('sqlite://')
+
+class LoadSampleData(Action):
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        setup_views()
+        metadata.bind = model_engine
+        metadata.create_all(model_engine)
+        session.expunge_all()
+        update_last_login()
+        if mode in (None, True):
+            load_movie_fixtures()
+            yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
+                session.query(Person).count(), id(session)
+            ))
+
+
+class SetupSession(Action):
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        session.close()
+        yield action_steps.UpdateProgress(detail='Session closed')
+
 
 class ExampleModelMixinCase(object):
 
@@ -44,35 +70,28 @@ class ExampleModelMixinCase(object):
         metadata.bind = None
 
     @classmethod
-    def load_example_data(cls):
-        """
-        set cls.first_person_id, to have the id of a person available in the gui
-        """
-        load_movie_fixtures()
-        cls.first_person_id = cls.session.query(Person).first().id
-
-    @classmethod
     def dirty_session(cls):
         """
         Create objects in various states to make the session dirty
         """
-        cls.session.expunge_all()
+        session = Session()
+        session.expunge_all()
         # create objects in various states
         #
         p2 = Person(first_name = u'p2', last_name = u'dirty' )
         p3 = Person(first_name = u'p3', last_name = u'deleted' )
         p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
         p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
-        cls.session.flush()
+        session.flush()
         p3.delete()
-        cls.session.flush()
+        session.flush()
         p4.delete()
         p2.last_name = u'clean'
         #
         # delete p6 without the session being aware
         #
         person_table = Person.table
-        cls.session.execute(
+        session.execute(
             person_table.delete().where( person_table.c.party_id == p6.id )
         )
 
