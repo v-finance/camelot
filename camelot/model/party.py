@@ -49,7 +49,7 @@ from sqlalchemy import event, orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action.list_filter import StringFilter
-from camelot.admin.action import field_action, list_filter
+from camelot.admin.action import list_filter
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
