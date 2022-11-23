@@ -135,7 +135,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
 
     """
 
-    _parent: InitVar[QtCore.QObject]
+    _parent: InitVar[QtCore.QObject] = None
 
     horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
@@ -240,6 +240,8 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
             editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes)
         elif issubclass(editor_cls, editors.TextEditEditor):
             editor = editor_cls(parent, self.length, self.editable)
+        elif issubclass(editor_cls, editors.VirtualAddressEditor):
+            editor = editor_cls(parent, self.address_type)
         else:
             raise NotImplementedError()
         assert editor != None
