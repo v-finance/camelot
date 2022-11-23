@@ -55,9 +55,9 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     action_routes: List[Route]
 
-    def __post_init__(self, parent, kwargs):
+    def __post_init__(self, parent):
         logger.debug('create many2onecolumn delegate')
-        super().__post_init__(parent, kwargs)
+        super().__post_init__(parent)
         self._width = self._width * 2
 
     @classmethod

@@ -47,8 +47,8 @@ class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
     
-    def __post_init__(self, parent, kwargs):
-        super().__post_init__(parent, kwargs)
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         self.date_format = local_date_format()
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 2)  + (camelot_small_icon_width*2)
 

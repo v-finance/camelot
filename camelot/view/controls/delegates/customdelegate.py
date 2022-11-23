@@ -137,17 +137,15 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
     """
 
     _parent: InitVar[QtCore.QObject]
-    kwargs: InitVar[dict]
 
     horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
-    def __post_init__(self, parent, kwargs):
+    def __post_init__(self, parent):
         """:param parent: the parent object for the delegate
         :param editable: a boolean indicating if the field associated to the delegate
         is editable
         """
         super().__init__(parent)
-        self.kwargs = kwargs
         self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20

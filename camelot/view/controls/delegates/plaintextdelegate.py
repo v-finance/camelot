@@ -53,8 +53,8 @@ class PlainTextDelegate(CustomDelegate):
     column_width: Optional[int]
     action_routes: List[Route]
 
-    def __post_init__(self, parent, kwargs):
-        super().__post_init__(parent, { 'length': self.length, **kwargs })
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         char_width = self._font_metrics.averageCharWidth()
         self._width = char_width * min( DEFAULT_COLUMN_WIDTH, self.length or DEFAULT_COLUMN_WIDTH )
 

@@ -41,8 +41,8 @@ class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for rich text (HTML) string values
   """
     
-    def __post_init__(self, parent, kwargs):
-        super().__post_init__(parent, kwargs)
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         self._height = self._height * 10
         self._width = self._width * 3
 

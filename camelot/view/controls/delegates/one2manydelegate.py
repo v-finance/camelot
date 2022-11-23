@@ -62,8 +62,8 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     list_actions: List[RouteWithRenderHint]
     list_action: Optional[Route]
 
-    def __post_init__(self, parent, kwargs):
-        super().__post_init__(parent, kwargs)
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         logger.debug( 'create one2manycolumn delegate' )
 
     @classmethod
