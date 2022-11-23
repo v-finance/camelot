@@ -27,18 +27,26 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+from typing import List, Optional, ClassVar, Any
 
-
+from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core import constants
 
+
+@dataclass
 class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for float values"""
 
-    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    calculator: bool
+    decimal: bool
+    action_routes: List[Route]
+
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
     @classmethod
     def get_editor_class(cls):

@@ -27,14 +27,19 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+from typing import Optional
 
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
+@dataclass
 class VirtualAddressDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """
     """
+
+    address_type: Optional[str]
 
     @classmethod
     def get_editor_class(cls):

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-
+from dataclasses import dataclass
 
 from camelot.core.qt import Qt
 from camelot.view.controls import editors
@@ -35,6 +35,7 @@ from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 
+@dataclass
 class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod

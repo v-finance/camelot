@@ -39,9 +39,8 @@ class LabelEditor(QtWidgets.QLabel, AbstractCustomEditor):
     
     def __init__(self, 
                  parent = None, 
-                 text = "<loading>", 
-                 field_name = 'label',
-                 **kwargs):
+                 text = "<loading>",
+                 field_name = 'label'):
         QtWidgets.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )

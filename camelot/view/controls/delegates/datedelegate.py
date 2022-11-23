@@ -28,10 +28,12 @@
 #  ============================================================================
 
 from dataclasses import dataclass
+from typing import ClassVar, Any
 
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, QtCore, py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
+from ...validator import DateValidator
 from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.view.utils import local_date_format
@@ -40,7 +42,10 @@ from camelot.view.utils import local_date_format
 class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for date values"""
     
-    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    nullable: bool
+    validator: Any
+
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
     
     def __post_init__(self, parent, kwargs):
         super().__post_init__(parent, kwargs)

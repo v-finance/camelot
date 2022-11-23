@@ -45,11 +45,9 @@ class IntegerEditor(CustomEditor):
     
     def __init__(self, parent = None,
                        calculator = True,
-                       option = None,
                        decimal = False,
-                       field_name = 'integer',
-                       **kwargs):
-        
+                       option = None,
+                       field_name = 'integer'):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,

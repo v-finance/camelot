@@ -29,6 +29,7 @@
 
 import logging
 from dataclasses import dataclass
+from typing import List
 
 logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
 
@@ -39,6 +40,7 @@ from ....core.naming import initial_naming_context
 from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
 from ....admin.icon import CompletionValue
+from ....admin.admin_route import Route
 from ...art import ColorScheme
 
 
@@ -48,6 +50,8 @@ none_item = CompletionValue(none_name, verbose_name=' ')._to_dict()
 
 @dataclass
 class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
+
+    action_routes: List[Route]
 
     @classmethod
     def get_editor_class(cls):

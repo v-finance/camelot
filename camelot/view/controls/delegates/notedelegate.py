@@ -27,11 +27,12 @@
 #
 #  ============================================================================
 
-
+from dataclasses import dataclass
 
 from .texteditdelegate import TextEditDelegate, DocumentationMetaclass
 from camelot.view.controls.editors.noteeditor import NoteEditor
 
+@dataclass
 class NoteDelegate(TextEditDelegate, metaclass=DocumentationMetaclass):
     
     @classmethod

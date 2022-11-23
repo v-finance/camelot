@@ -43,10 +43,10 @@ from ....core.item_model import (
     ChoicesRole, FieldAttributesRole, ProxyDict
 )
 from ..action_widget import AbstractActionWidget
-from camelot.view.controls.editors import ChoicesEditor
+from camelot.view.controls import editors
 from camelot.admin.admin_route import Route
 from dataclasses import dataclass, field, InitVar
-from typing import List, Optional
+from typing import List, Optional, Any, ClassVar
 
 
 
@@ -136,13 +136,10 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
 
     """
 
-    _parent: InitVar[QtCore.QObject] = None
-    kwargs: InitVar[dict] = {}
+    _parent: InitVar[QtCore.QObject]
+    kwargs: InitVar[dict]
 
-    editable: Optional[bool] = None # Will be set in __post_init__
-    action_routes: List[Route] = field(default_factory=list)
-    #horizontal_align: list = field(default_factory=lambda: [Qt.AlignmentFlag.AlignLeft, Qt.AlignmentFlag.AlignVCenter])
-    horizontal_align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
     def __post_init__(self, parent, kwargs):
         """:param parent: the parent object for the delegate
@@ -150,8 +147,6 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         is editable
         """
         super().__init__(parent)
-        if self.editable is None:
-            self.editable = kwargs.get('editable', True)
         self.kwargs = kwargs
         self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
@@ -222,10 +217,34 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         will be put onto a form
         """
         editor_cls = self.get_editor_class()
-        if editor_cls == ChoicesEditor:
+        if issubclass(editor_cls, (editors.BoolEditor, editors.ColorEditor, editors.LanguageEditor,
+                                   editors.NoteEditor, editors.RichTextEditor)):
+            editor = editor_cls(parent)
+        elif issubclass(editor_cls, (editors.ChoicesEditor, editors.Many2OneEditor,
+                                     editors.FileEditor)):
             editor = editor_cls(parent, self.action_routes)
+        elif issubclass(editor_cls, editors.DateEditor):
+            editor = editor_cls(parent, self.nullable, self.validator)
+        elif issubclass(editor_cls, editors.DateTimeEditor):
+            editor = editor_cls(parent, self.editable, self.nullable)
+        elif issubclass(editor_cls, editors.DbImageEditor):
+            editor = editor_cls(parent, self.preview_width, self.preview_height, self.max_size)
+        elif issubclass(editor_cls, editors.FloatEditor):
+            editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)
+        elif issubclass(editor_cls, editors.IntegerEditor):
+            editor = editor_cls(parent, self.calculator, self.decimal, option)
+        elif issubclass(editor_cls, editors.LabelEditor):
+            editor = editor_cls(parent, self.text, option)
+        elif issubclass(editor_cls, editors.LocalFileEditor):
+            editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
+        elif issubclass(editor_cls, editors.MonthsEditor):
+            editor = editor_cls(parent, self.minimum, self.maximum)
+        elif issubclass(editor_cls, editors.TextLineEditor):
+            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes)
+        elif issubclass(editor_cls, editors.TextEditEditor):
+            editor = editor_cls(parent, self.length, self.editable)
         else:
-            editor = editor_cls(parent, option = option, **self.kwargs)
+            raise NotImplementedError()
         assert editor != None
         assert isinstance(editor, QtWidgets.QWidget)
         if option.version != 5:

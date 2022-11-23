@@ -26,9 +26,13 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+
+from dataclasses import dataclass
+
 from .plaintextdelegate import PlainTextDelegate
 from camelot.view.controls.editors import LanguageEditor
 
+@dataclass
 class LanguageDelegate( PlainTextDelegate ):
     """Delegate for :class:`camelot.types.Language` columns.  Expects string
     values.

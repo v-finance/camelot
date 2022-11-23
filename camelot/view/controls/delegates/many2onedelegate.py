@@ -27,8 +27,11 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+from typing import List
 import logging
 
+from ....admin.admin_route import Route
 from ....core.naming import initial_naming_context
 from ....core.qt import Qt, QtCore, py_to_variant, variant_to_py
 from ....core.item_model import (
@@ -39,6 +42,7 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 
+@dataclass
 class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for many 2 one relations
 
@@ -49,10 +53,11 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
   their __unicode__ method.
   """
 
+    action_routes: List[Route]
+
     def __post_init__(self, parent, kwargs):
         logger.debug('create many2onecolumn delegate')
         super().__post_init__(parent, kwargs)
-        self._kwargs = kwargs
         self._width = self._width * 2
 
     @classmethod
@@ -73,7 +78,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return item
 
     def createEditor(self, parent, option, index):
-        editor = editors.Many2OneEditor(parent, **self._kwargs)
+        editor = editors.Many2OneEditor(parent, self.action_routes)
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect(self.commitAndCloseEditor)

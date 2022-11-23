@@ -27,15 +27,16 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
-
-
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
 from ...utils import text_from_richtext
 
+@dataclass
 class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for rich text (HTML) string values
   """

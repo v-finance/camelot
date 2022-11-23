@@ -17,6 +17,9 @@ from ...core.item_model import (
     FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole, ObjectRole, ColumnAttributesRole
 )
 from .. import gui_naming_context
+from ..controls import delegates
+#from ..validator import DateValidator
+
 
 non_serializable_roles = (
     FieldAttributesRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole
@@ -115,8 +118,56 @@ class SetColumns(ActionStep):
         self.column_attributes = []
         for fa in static_field_attributes:
             attrs = {}
-            if fa['delegate'].__name__ == 'ComboBoxDelegate':
-                attrs['action_routes'] = fa['action_routes']
+            if issubclass(fa['delegate'], (delegates.ComboBoxDelegate, delegates.Many2OneDelegate,
+                                           delegates.FileDelegate)):
+                attrs['action_routes'] = fa.get('action_routes', [])
+            elif issubclass(fa['delegate'], delegates.DateDelegate):
+                attrs['nullable'] = fa.get('nullable', True)
+                attrs['validator'] = fa.get('validator', None)
+                # FIXME: validators not serializable
+                #attrs['validator'] = fa.get('validator', DateValidator())
+                if issubclass(fa['delegate'], delegates.DateTimeDelegate):
+                    attrs['editable'] = fa.get('editable', True)
+            elif issubclass(fa['delegate'], delegates.DbImageDelegate):
+                attrs['preview_width'] = fa.get('preview_width', 100)
+                attrs['preview_height'] = fa.get('preview_height', 100)
+                attrs['max_size'] = fa.get('max_size', 50000)
+            elif issubclass(fa['delegate'], delegates.FloatDelegate):
+                attrs['calculator'] = fa.get('calculator', True)
+                attrs['decimal'] = fa.get('decimal', False)
+                attrs['action_routes'] = fa.get('action_routes', [])
+            elif issubclass(fa['delegate'], delegates.IntegerDelegate):
+                attrs['calculator'] = fa.get('calculator', True)
+                attrs['decimal'] = fa.get('decimal', False)
+            elif issubclass(fa['delegate'], delegates.LabelDelegate):
+                attrs['text'] = fa.get('text', '<loading>')
+            elif issubclass(fa['delegate'], delegates.LocalFileDelegate):
+                attrs['directory'] = fa.get('directory', False)
+                attrs['save_as'] = fa.get('save_as', False)
+                attrs['file_filter'] = fa.get('file_filter', 'All files (*)')
+            elif issubclass(fa['delegate'], delegates.MonthsDelegate):
+                attrs['minimum'] = fa.get('minimum', 0)
+                attrs['maximum'] = fa.get('maximum', 10000)
+            elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
+                attrs['admin_route'] = fa.get('admin_route', None)
+                attrs['create_inline'] = fa.get('create_inline', False)
+                attrs['direction'] = fa.get('direction', 'onetomany')
+                attrs['column_width'] = fa.get('column_width', None)
+                attrs['columns'] = fa.get('columns', [])
+                attrs['rows'] = fa.get('rows', 5)
+                attrs['action_routes'] = fa.get('action_routes', [])
+                attrs['list_actions'] = fa.get('list_actions', [])
+                attrs['list_action'] = fa.get('list_action', None)
+            elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
+                attrs['length'] = fa.get('length', 20)
+                attrs['echo_mode'] = fa.get('echo_mode', None)
+                attrs['column_width'] = fa.get('column_width', None)
+                attrs['action_routes'] = fa.get('action_routes', [])
+            elif issubclass(fa['delegate'], delegates.TextEditDelegate):
+                attrs['length'] = fa.get('length', 20)
+                attrs['editable'] = fa.get('editable', True)
+            elif issubclass(fa['delegate'], delegates.VirtualAddressDelegate):
+                attrs['address_type'] = fa.get('address_type', None)
             self.column_attributes.append(attrs)
 
     def _to_dict(self):
@@ -126,7 +177,7 @@ class SetColumns(ActionStep):
                 'verbose_name': str(fa['name']),
                 'field_name': fa['field_name'],
                 'width': fa['column_width'],
-                'delegate': fa['delegate'](**self.column_attributes[i])._to_dict(),
+                'delegate': [fa['delegate'].__name__, self.column_attributes[i]],
             })
         return {
             'columns': columns,
@@ -162,7 +213,7 @@ class SetColumns(ActionStep):
             set_header_data(py_to_variant(field_name), Qt.ItemDataRole.UserRole)
             set_header_data(py_to_variant(verbose_name), Qt.ItemDataRole.DisplayRole)
             set_header_data(fa_copy, FieldAttributesRole)
-            set_header_data(fa['delegate'](**self.column_attributes[i])._to_dict(), ColumnAttributesRole)
+            set_header_data([fa['delegate'].__name__, self.column_attributes[i]], ColumnAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.ItemDataRole.FontRole)
             else:

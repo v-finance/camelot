@@ -27,16 +27,19 @@
 #
 #  ============================================================================
 
-
+from dataclasses import dataclass
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
+@dataclass
 class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
-  
+
+    length: int
+    editable: bool
 
     @classmethod
     def get_editor_class(cls):

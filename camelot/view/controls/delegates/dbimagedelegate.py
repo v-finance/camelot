@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.dbimagedelegate')
 
@@ -8,9 +9,14 @@ from camelot.core.qt import QtGui, QtCore, Qt
 
 from camelot.view.controls import editors
 
+@dataclass
 class DbImageDelegate(CustomDelegate):
     # Delegate for images that are saved in the database as a base64 string.
-    
+
+    preview_width: int
+    preview_height: int
+    max_size: int
+
     @classmethod
     def get_editor_class(cls):
         return editors.DbImageEditor

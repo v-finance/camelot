@@ -27,7 +27,8 @@
 #
 #  ============================================================================
 
-
+from dataclasses import dataclass
+from typing import ClassVar, Any
 
 from ....core.qt import py_to_variant, Qt
 from ....core.item_model import PreviewRole
@@ -37,10 +38,14 @@ from camelot.view.controls import editors
 
 long_int = int
 
+@dataclass
 class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
-    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    calculator: bool
+    decimal: bool
+
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
     @classmethod
     def get_editor_class(cls):

@@ -17,11 +17,10 @@ class DbImageEditor(CustomEditor):
 
     def __init__(self,
                  parent,
-                 field_name='db_image',
                  preview_width=100,
                  preview_height=100,
                  max_size=50000,
-                 **kwargs):
+                 field_name='db_image'):
         self.preview_width = preview_width
         self.preview_height = preview_height
         self.max_size = max_size
