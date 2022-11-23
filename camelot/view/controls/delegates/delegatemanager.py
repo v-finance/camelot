@@ -45,8 +45,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def __init__(self, parent=None):
         QtWidgets.QItemDelegate.__init__(self, parent)
         # set a delegate for the vertical header
-        self.insert_column_delegate(-1, PlainTextDelegate(_parent=self, length=20, echo_mode=None,
-                                                          column_width=None, action_routes=[]))
+        self.insert_column_delegate(-1, PlainTextDelegate(_parent=self))
 
     def get_column_delegate(self, index):
         column = index.column()

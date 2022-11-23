@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 import logging
 
@@ -53,7 +53,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
   their __unicode__ method.
   """
 
-    action_routes: List[Route]
+    action_routes: List[Route] = field(default_factory=list)
 
     def __post_init__(self, parent):
         logger.debug('create many2onecolumn delegate')

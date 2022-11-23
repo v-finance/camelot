@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, List
 import itertools
 
@@ -52,15 +52,15 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
   .. image:: /_static/onetomany.png
   """
 
-    admin_route: Optional[Route]
-    create_inline: bool
-    direction: str
-    column_width: Optional[int]
-    columns: List[str]
-    rows: int
-    action_routes: List[Route]
-    list_actions: List[RouteWithRenderHint]
-    list_action: Optional[Route]
+    admin_route: Optional[Route] = None
+    create_inline: bool = False
+    direction: str = 'onetomany'
+    column_width: Optional[int] = None
+    columns: List[str] = field(default_factory=list)
+    rows: int = 5
+    action_routes: List[Route] = field(default_factory=list)
+    list_actions: List[RouteWithRenderHint] = field(default_factory=list)
+    list_action: Optional[Route] = None
 
     def __post_init__(self, parent):
         super().__post_init__(parent)

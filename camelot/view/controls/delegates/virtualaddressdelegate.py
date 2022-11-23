@@ -39,7 +39,7 @@ class VirtualAddressDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """
     """
 
-    address_type: Optional[str]
+    address_type: Optional[str] = None
 
     @classmethod
     def get_editor_class(cls):

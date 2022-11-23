@@ -45,9 +45,9 @@ class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     either point to a file or a directory
     """
 
-    directory: bool
-    save_as: bool
-    file_filter: str
+    directory: bool = False
+    save_as: bool = False
+    file_filter: str = 'All files (*)'
 
     @classmethod
     def get_editor_class(cls):

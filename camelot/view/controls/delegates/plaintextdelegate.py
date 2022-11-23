@@ -28,7 +28,7 @@
 #  ============================================================================
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, List
 
 logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
@@ -48,10 +48,10 @@ DEFAULT_COLUMN_WIDTH = 20
 class PlainTextDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
 
-    length: int
-    echo_mode: Optional[int]
-    column_width: Optional[int]
-    action_routes: List[Route]
+    length: int = DEFAULT_COLUMN_WIDTH
+    echo_mode: Optional[int] = None
+    column_width: Optional[int] = None
+    action_routes: List[Route] = field(default_factory=list)
 
     def __post_init__(self, parent):
         super().__post_init__(parent)

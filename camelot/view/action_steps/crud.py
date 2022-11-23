@@ -120,55 +120,41 @@ class SetColumns(ActionStep):
             attrs = {}
             if issubclass(fa['delegate'], (delegates.ComboBoxDelegate, delegates.Many2OneDelegate,
                                            delegates.FileDelegate)):
-                attrs['action_routes'] = fa.get('action_routes', [])
+                attrs = self.filter_attributes(fa, ['action_routes'])
             elif issubclass(fa['delegate'], delegates.DateDelegate):
-                attrs['nullable'] = fa.get('nullable', True)
-                attrs['validator'] = fa.get('validator', None)
-                # FIXME: validators not serializable
-                #attrs['validator'] = fa.get('validator', DateValidator())
+                attrs = self.filter_attributes(fa, ['nullable', 'validator'])
                 if issubclass(fa['delegate'], delegates.DateTimeDelegate):
-                    attrs['editable'] = fa.get('editable', True)
+                    if 'editable' in fa:
+                        attrs['editable'] = fa['editable']
             elif issubclass(fa['delegate'], delegates.DbImageDelegate):
-                attrs['preview_width'] = fa.get('preview_width', 100)
-                attrs['preview_height'] = fa.get('preview_height', 100)
-                attrs['max_size'] = fa.get('max_size', 50000)
+                attrs = self.filter_attributes(fa, ['preview_width', 'preview_height', 'max_size'])
             elif issubclass(fa['delegate'], delegates.FloatDelegate):
-                attrs['calculator'] = fa.get('calculator', True)
-                attrs['decimal'] = fa.get('decimal', False)
-                attrs['action_routes'] = fa.get('action_routes', [])
+                attrs = self.filter_attributes(fa, ['calculator', 'decimal', 'action_routes'])
             elif issubclass(fa['delegate'], delegates.IntegerDelegate):
-                attrs['calculator'] = fa.get('calculator', True)
-                attrs['decimal'] = fa.get('decimal', False)
+                attrs = self.filter_attributes(fa, ['calculator', 'decimal'])
             elif issubclass(fa['delegate'], delegates.LabelDelegate):
-                attrs['text'] = fa.get('text', '<loading>')
+                attrs = self.filter_attributes(fa, ['text'])
             elif issubclass(fa['delegate'], delegates.LocalFileDelegate):
-                attrs['directory'] = fa.get('directory', False)
-                attrs['save_as'] = fa.get('save_as', False)
-                attrs['file_filter'] = fa.get('file_filter', 'All files (*)')
+                attrs = self.filter_attributes(fa, ['directory', 'save_as', 'file_filter'])
             elif issubclass(fa['delegate'], delegates.MonthsDelegate):
-                attrs['minimum'] = fa.get('minimum', 0)
-                attrs['maximum'] = fa.get('maximum', 10000)
+                attrs = self.filter_attributes(fa, ['minimum', 'maximum'])
             elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
-                attrs['admin_route'] = fa.get('admin_route', None)
-                attrs['create_inline'] = fa.get('create_inline', False)
-                attrs['direction'] = fa.get('direction', 'onetomany')
-                attrs['column_width'] = fa.get('column_width', None)
-                attrs['columns'] = fa.get('columns', [])
-                attrs['rows'] = fa.get('rows', 5)
-                attrs['action_routes'] = fa.get('action_routes', [])
-                attrs['list_actions'] = fa.get('list_actions', [])
-                attrs['list_action'] = fa.get('list_action', None)
+                attrs = self.filter_attributes(fa, ['admin_route', 'create_inline', 'direction', 'column_width',
+                                                    'columns', 'rows', 'action_routes', 'list_actions', 'list_action'])
             elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
-                attrs['length'] = fa.get('length', 20)
-                attrs['echo_mode'] = fa.get('echo_mode', None)
-                attrs['column_width'] = fa.get('column_width', None)
-                attrs['action_routes'] = fa.get('action_routes', [])
+                attrs = self.filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes'])
             elif issubclass(fa['delegate'], delegates.TextEditDelegate):
-                attrs['length'] = fa.get('length', 20)
-                attrs['editable'] = fa.get('editable', True)
+                attrs = self.filter_attributes(fa, ['length', 'editable'])
             elif issubclass(fa['delegate'], delegates.VirtualAddressDelegate):
-                attrs['address_type'] = fa.get('address_type', None)
+                attrs = self.filter_attributes(fa, ['address_type'])
             self.column_attributes.append(attrs)
+
+    def filter_attributes(self, attributes, keys):
+        filtered = {}
+        for key in keys:
+            if key in attributes:
+                filtered[key] = attributes[key]
+        return filtered
 
     def _to_dict(self):
         columns = []

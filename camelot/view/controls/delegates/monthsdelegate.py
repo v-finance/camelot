@@ -42,8 +42,8 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     custom delegate for showing and editing months and years
     """
 
-    minimum: int
-    maximum: int
+    minimum: int = 0
+    maximum: int = 10000
 
     horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 

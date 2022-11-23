@@ -28,7 +28,7 @@
 #  ============================================================================
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
@@ -51,7 +51,7 @@ none_item = CompletionValue(none_name, verbose_name=' ')._to_dict()
 @dataclass
 class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
-    action_routes: List[Route]
+    action_routes: List[Route] = field(default_factory=list)
 
     @classmethod
     def get_editor_class(cls):

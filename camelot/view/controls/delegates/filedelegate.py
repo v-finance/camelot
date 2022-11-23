@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 from ....admin.admin_route import Route
@@ -42,7 +42,7 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     :class:`camelot.core.files.storage.StoredFile`.
     """
     
-    action_routes: List[Route]
+    action_routes: List[Route] = field(default_factory=list)
 
     @classmethod
     def get_editor_class(cls):

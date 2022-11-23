@@ -42,8 +42,8 @@ long_int = int
 class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
-    calculator: bool
-    decimal: bool
+    calculator: bool = True
+    decimal: bool = False
 
     horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 

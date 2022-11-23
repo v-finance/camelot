@@ -38,8 +38,8 @@ from camelot.view.controls import editors
 class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
 
-    length: int
-    editable: bool
+    length: int = 20
+    editable: bool = True
 
     @classmethod
     def get_editor_class(cls):

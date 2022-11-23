@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, ClassVar, Any
 
 from ....admin.admin_route import Route
@@ -42,9 +42,9 @@ from camelot.core import constants
 class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for float values"""
 
-    calculator: bool
-    decimal: bool
-    action_routes: List[Route]
+    calculator: bool = True
+    decimal: bool = False
+    action_routes: List[Route] = field(default_factory=list)
 
     horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 

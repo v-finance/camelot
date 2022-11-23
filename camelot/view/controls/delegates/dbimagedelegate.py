@@ -13,9 +13,9 @@ from camelot.view.controls import editors
 class DbImageDelegate(CustomDelegate):
     # Delegate for images that are saved in the database as a base64 string.
 
-    preview_width: int
-    preview_height: int
-    max_size: int
+    preview_width: int = 100
+    preview_height: int = 100
+    max_size: int = 50000
 
     @classmethod
     def get_editor_class(cls):
