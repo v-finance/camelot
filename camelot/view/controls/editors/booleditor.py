@@ -29,7 +29,6 @@
 
 from ....core.qt import QtCore, Qt, QtWidgets
 from .customeditor import AbstractCustomEditor
-from camelot.core import constants
 
 class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""

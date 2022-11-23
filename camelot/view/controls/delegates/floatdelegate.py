@@ -28,7 +28,7 @@
 #  ============================================================================
 
 from dataclasses import dataclass
-from typing import List, Optional, ClassVar, Any
+from typing import List, ClassVar, Any
 
 from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole

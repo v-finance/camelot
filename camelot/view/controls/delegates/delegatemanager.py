@@ -31,7 +31,7 @@ import logging
 logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 from ....core.serializable import NamedDataclassSerializable
-from ....core.item_model import FieldAttributesRole, ColumnAttributesRole
+from ....core.item_model import ColumnAttributesRole
 from ....core.qt import QtCore, QtWidgets, Qt, variant_to_py, is_deleted
 from .plaintextdelegate import PlainTextDelegate
 
@@ -52,9 +52,6 @@ class DelegateManager(QtWidgets.QItemDelegate):
         column = index.column()
         delegate = self.findChild(QtWidgets.QAbstractItemDelegate, str(column))
         if delegate is None:
-            field_attributes = index.model().headerData(
-                column, Qt.Orientation.Horizontal, FieldAttributesRole
-            )
             delegate_cls_name, column_attributes = tuple(index.model().headerData(
                 column, Qt.Orientation.Horizontal, ColumnAttributesRole
             ))

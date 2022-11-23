@@ -44,9 +44,8 @@ from ....core.item_model import (
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
-from camelot.admin.admin_route import Route
-from dataclasses import dataclass, field, InitVar
-from typing import List, Optional, Any, ClassVar
+from dataclasses import dataclass, InitVar
+from typing import Any, ClassVar
 
 
 

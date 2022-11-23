@@ -33,7 +33,6 @@ from typing import ClassVar, Any
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, QtCore, py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from ...validator import DateValidator
 from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.view.utils import local_date_format
