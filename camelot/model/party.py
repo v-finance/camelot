@@ -143,6 +143,7 @@ class GeographicBoundary( Entity ):
             'geographicboundary_id': {'name': _('Id')},
             'name_NL': {'name': _('Name')},
             'name_FR': {'name': _('Name')},
+            'alternative_names': {'editable': False},
         }
     
 class GeographicBoundaryAlternativeName(Entity):
