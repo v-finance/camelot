@@ -435,8 +435,8 @@ class Address( Entity ):
 
     @zip_code.setter
     def zip_code(self, value):
-        # Only allow to overrule the address' zip code if its city's code is unknown.
-        if self.city is not None and self.city.code == '':
+        # Only allow to overrule the address' zip code if its city's code is undefined.
+        if self.city is not None and self.city.code is None:
             self._zip_code = value
 
     name = orm.column_property(sql.select(
@@ -469,7 +469,7 @@ class Address( Entity ):
         form_size = ( 700, 150 )
         field_attributes = {
             'street1': {'minimal_column_width':30},
-            'zip_code': {'editable': lambda o: o.city is not None and o.city.code == ''},
+            'zip_code': {'editable': lambda o: o.city is not None and o.city.code is None},
             'administrative_division': {
                 'delegate':delegates.Many2OneDelegate,
                 'target': AdministrativeDivision,
@@ -1030,7 +1030,7 @@ class Addressable(object):
             administrative_division = dict( editable = lambda o: o.city is not None and o.city.administrative_division is None,
                                             delegate = delegates.Many2OneDelegate,
                                             target = AdministrativeDivision),
-            zip_code = dict( editable = lambda o: o.city is not None and o.city.code == ''),
+            zip_code = dict( editable = lambda o: o.city is not None and o.city.code is None),
             email = dict( editable = True, 
                           minimal_column_width = 20,
                           name = _('Email'),
@@ -1090,7 +1090,7 @@ class PartyAddress( Entity, Addressable ):
                          'from_date', 'thru_date']
         form_size = ( 700, 200 )
         field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30),
-                                zip_code=dict(editable=lambda o: o.city is not None and o.city.code == ''))
+                                zip_code=dict(editable=lambda o: o.city is not None and o.city.code is None))
         
         def get_compounding_objects( self, party_address ):
             if party_address.address!=None:
@@ -1111,7 +1111,7 @@ class AddressAdmin( PartyAddress.Admin ):
                                         nullable=False,
                                         delegate=delegates.Many2OneDelegate,
                                         target=City),
-                            zip_code = dict(editable=lambda o: o.city is not None and o.city.code == ''),
+                            zip_code = dict(editable=lambda o: o.city is not None and o.city.code is None),
                             )
         
     def get_depending_objects( self, party_address ):
