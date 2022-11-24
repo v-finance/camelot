@@ -648,6 +648,21 @@ class ApplyFilter(Action):
         model_context.proxy.filter(SingleItemFilter(Person.id), 1)
 
 
+class InsertObject(Action):
+
+    def __init__(self, model_context_name):
+        self.model_context_name = model_context_name
+
+    def model_run(self, model_context, persons_name):
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        person = Person()
+        initial_naming_context.bind(tuple(persons_name), [person])
+        count = len(model_context.proxy)
+        model_context.proxy.append(person)
+        assert model_context.proxy.index(person)==count
+        yield action_steps.UpdateProgress(detail='person inserted')
+
+
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
     methods to setup a QStandardItemModel representing a query
@@ -659,6 +674,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
         self.columns = ('first_name', 'last_name')
         list(self.item_model.add_columns(self.columns))
         self.item_model.timeout_slot()
+
 
 class QueryQStandardItemModelCase(
     RunningThreadCase,
@@ -695,14 +711,6 @@ class QueryQStandardItemModelCase(
             self.query_counter, str(statement)
         ))
 
-    def insert_object(self):
-        model_context = initial_naming_context.resolve(self.model_context_name)
-        person = Person()
-        count = len(model_context.proxy)
-        model_context.proxy.append(person)
-        self.assertEqual(model_context.proxy.index(person), count)
-        self.person = person
-
     def test_insert_after_sort(self):
         self.item_model.timeout_slot()
         self.assertTrue( self.item_model.columnCount() > 0 )
@@ -722,17 +730,16 @@ class QueryQStandardItemModelCase(
         data1 = self._data( 1, 1, self.item_model )
         self.assertTrue( data0 > data1 )
         # insert a new object
-        self.thread.post(self.insert_object)
-        self.process()
-        person = self.person
-        name = initial_naming_context._bind_object((person,))
-        self.item_model.objectsCreated(list(name))
+        persons_name = ('inserted_persons',)
+        self.gui_run(InsertObject(self.model_context_name), mode=persons_name)
+        self.item_model.objectsCreated(list(persons_name))
         self.item_model.timeout_slot()
         self.process()
         new_rowcount = self.item_model.rowCount()
         self.assertEqual(new_rowcount, rowcount + 1)
         new_row = new_rowcount - 1
         model_context = initial_naming_context.resolve(self.model_context_name)
+        person = initial_naming_context.resolve(persons_name)[0]
         self.assertEqual([person], list(model_context.proxy[new_row:new_rowcount]))
         # fill in the required fields
         self.assertFalse( self.person_admin.is_persistent( person ) )
