@@ -105,3 +105,5 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         field_attributes = variant_to_py(index.data(FieldAttributesRole))
         editor.set_field_attributes(**(field_attributes or {}))
         editor.set_value(value)
+        # update actions
+        self.update_field_action_states(editor, index)
