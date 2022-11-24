@@ -72,6 +72,3 @@ class ModelProcess(multiprocessing.Process):
         """
         self._request_queue.put(StopProcess())
         self.join()
-
-    def wait_on_work(self):
-        self._request_queue.join()

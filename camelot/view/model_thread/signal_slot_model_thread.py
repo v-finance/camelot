@@ -38,7 +38,7 @@ logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
 from ...core.qt import QtCore, is_deleted
 from ...core.threading import synchronized
-from ...view.model_thread import AbstractModelThread, object_thread
+from ...view.model_thread import AbstractModelThread
 
 class Task(QtCore.QObject):
 
@@ -197,15 +197,3 @@ class SignalSlotModelThread( AbstractModelThread ):
         while not self._task_handler:
             time.sleep(0.1)
         return len(self._request_queue) or self._task_handler.busy()
-
-    def wait_on_work(self):
-        """Wait for all work to be finished, this function should only be used
-        to do unit testing and such, since it will block the calling thread until
-        all work is done"""
-        assert object_thread( self )
-        while self.busy():
-            time.sleep(0.1)
-
-
-
-

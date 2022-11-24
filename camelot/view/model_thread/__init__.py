@@ -92,12 +92,6 @@ class AbstractModelThread(QtCore.QThread):
     def run(self):
         pass
 
-    def wait_on_work(self):
-        """Wait for all work to be finished, this function should only be used
-    to do unit testing and such, since it will block the calling thread until
-    all work is done"""
-        pass
-
     def post(self, request, response=None, args=()):
         """Post a request to the model thread, request should be a function
         that takes args as arguments. The request function will be called within the

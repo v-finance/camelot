@@ -1,3 +1,5 @@
+import time
+
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.view.model_thread.signal_slot_model_thread import Task, TaskHandler
 
@@ -38,7 +40,7 @@ class ModelThreadCase(RunningThreadCase):
 
     def test_post_task(self):
         self.thread.post(lambda:None)
-        self.thread.wait_on_work()
+        time.sleep(1)
         self.assertFalse(len(self.thread._request_queue))
 
 class ModelProcessCase(RunningProcessCase):
@@ -49,5 +51,5 @@ class ModelProcessCase(RunningProcessCase):
 
     def test_post_task(self):
         self.thread.post(self._request)
-        self.thread.wait_on_work()
+        time.sleep(1)
         self.assertFalse(self.thread._request_queue.qsize())

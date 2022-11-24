@@ -208,7 +208,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                     if run.time_running() >= max_wait:
                         raise Exception('Action running for more then {} seconds'.format(max_wait))
             QtCore.QCoreApplication.instance().processEvents()
-            time.sleep(0.1)
+            time.sleep(0.05)
 
     def run_action(self,
         action_name: CompositeName,
