@@ -59,18 +59,17 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
     """
 
     def __init__(self,
-                 admin_route=None,
                  parent=None,
+                 admin_route=None,
                  create_inline=False,
                  direction='onetomany',
-                 field_name='onetomany',
                  column_width=None,
                  columns=[],
                  rows=5,
                  action_routes=[],
                  list_actions=[],
                  list_action=None,
-                 **kw):
+                 field_name='onetomany'):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setObjectName(field_name)
         self.setProperty('action_route', list_action)

@@ -27,19 +27,26 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass, field
+from typing import List
 
-
+from ....admin.admin_route import Route
 from ....core.qt import py_to_variant
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
+@dataclass
 class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for :class:`camelot.types.File` columns.  Expects values of type 
     :class:`camelot.core.files.storage.StoredFile`.
     """
     
-    editor = editors.FileEditor
+    action_routes: List[Route] = field(default_factory=list)
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.FileEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

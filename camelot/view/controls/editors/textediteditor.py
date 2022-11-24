@@ -43,8 +43,7 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
                  parent,
                  length=20,
                  editable=True,
-                 field_name='text',
-                 **kwargs):
+                 field_name='text'):
         QtWidgets.QTextEdit.__init__(self, parent)
         self.setObjectName(field_name)
         AbstractCustomEditor.__init__(self)

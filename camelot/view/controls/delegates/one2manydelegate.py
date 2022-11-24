@@ -27,8 +27,11 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass, field
+from typing import Optional, List
 import itertools
 
+from ....admin.admin_route import Route, RouteWithRenderHint
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
 from ....core.item_model import FieldAttributesRole
@@ -42,16 +45,26 @@ logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
 transient = initial_naming_context.resolve_context('transient')
 transient_counter = itertools.count()
 
+@dataclass
 class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for many 2 one relations
 
   .. image:: /_static/onetomany.png
   """
 
-    def __init__( self, parent = None, **kwargs ):
-        super( One2ManyDelegate, self ).__init__( parent=parent, **kwargs )
+    admin_route: Optional[Route] = None
+    create_inline: bool = False
+    direction: str = 'onetomany'
+    column_width: Optional[int] = None
+    columns: List[str] = field(default_factory=list)
+    rows: int = 5
+    action_routes: List[Route] = field(default_factory=list)
+    list_actions: List[RouteWithRenderHint] = field(default_factory=list)
+    list_action: Optional[Route] = None
+
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         logger.debug( 'create one2manycolumn delegate' )
-        self.kwargs = kwargs
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
@@ -72,7 +85,10 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     def createEditor( self, parent, option, index ):
         logger.debug( 'create a one2many editor' )
-        editor = editors.One2ManyEditor(parent = parent, **self.kwargs)
+        editor = editors.One2ManyEditor(parent, self.admin_route, self.create_inline,
+                                        self.direction, self.column_width, self.columns,
+                                        self.rows, self.action_routes, self.list_actions,
+                                        self.list_action)
         editor.editingFinished.connect(self.commitAndCloseEditor)
         return editor
 

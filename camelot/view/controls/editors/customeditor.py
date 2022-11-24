@@ -31,7 +31,6 @@ from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
 
 from camelot.view.proxy import ValueLoading
 
-
 def set_background_color_palette(widget, background_color):
     """
     Set the palette of a widget to have a cerain background color.

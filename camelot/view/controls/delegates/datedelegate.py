@@ -27,7 +27,8 @@
 #
 #  ============================================================================
 
-
+from dataclasses import dataclass
+from typing import ClassVar, Any
 
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, QtCore, py_to_variant
@@ -36,16 +37,23 @@ from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.view.utils import local_date_format
 
+@dataclass
 class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for date values"""
     
-    editor = editors.DateEditor
-    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    nullable: bool = True
+    validator: Any = None #DateValidator() # FIXME
+
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
     
-    def __init__(self, parent=None, **kwargs):
-        CustomDelegate.__init__(self, parent, **kwargs)
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         self.date_format = local_date_format()
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 2)  + (camelot_small_icon_width*2)
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.DateEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
