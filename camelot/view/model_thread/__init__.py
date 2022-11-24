@@ -92,7 +92,7 @@ class AbstractModelThread(QtCore.QThread):
     def run(self):
         pass
 
-    def post(self, request, response=None, args=()):
+    def post(self, request, args=()):
         """Post a request to the model thread, request should be a function
         that takes args as arguments. The request function will be called within the
         model thread. When the request is finished, on first occasion, the
@@ -128,10 +128,10 @@ def get_model_thread():
         _model_thread_[0].start()
         return _model_thread_[0]
 
-def post(request, response=None, args=()):
+def post(request, args=()):
     """Post a request and a response to the default model thread"""
     mt = get_model_thread()
-    mt.post(request, response, args)
+    mt.post(request, args)
 
 
 

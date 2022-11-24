@@ -155,7 +155,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         self.thread_busy_signal.emit( busy_state )
 
     @synchronized
-    def post( self, request, response = None, args = () ):
+    def post( self, request, args = () ):
         if not self._connected and self._task_handler:
             # creating this connection in the model thread throws QT exceptions
             self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.ConnectionType.QueuedConnection )
@@ -163,14 +163,6 @@ class SignalSlotModelThread( AbstractModelThread ):
         # response should be a slot method of a QObject
         name = request.__name__
         task = Task(request, name = name, args = args)
-        # QObject::connect is a thread safe function
-        if response:
-            assert getattr( response, "__self__") != None
-            assert isinstance( getattr( response, "__self__"),
-                               QtCore.QObject )
-            # verify if the response has been defined as a slot
-            #assert hasattr(response, '__pyqtSignature__')
-            task.finished.connect(response, QtCore.Qt.ConnectionType.QueuedConnection)
         # task.moveToThread(self)
         # only put the task in the queue when it is completely set up
         self._request_queue.append(task)

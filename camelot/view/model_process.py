@@ -8,23 +8,8 @@ class StopProcess(object):
     """Sentinel task to and all tasks to be executed by a process"""
     pass
 
-class RenderResponse(object):
-    """
-    Class to render the response from a task to a GUI object by
-    calling the render method of that object.
-
-    This class acts as a reference to the GUI object to be passed from
-    the GUI to the model and back.
-    """
-
-    def __init__(self, qobject):
-        pass
-
-    def __call__(self, response):
-        pass
 
 class ModelProcess(multiprocessing.Process):
-
 
     def __init__(self):
         super(ModelProcess, self).__init__()
@@ -43,7 +28,7 @@ class ModelProcess(multiprocessing.Process):
                     LOGGER.info("Request to stop process, terminating")
                     break
                 else:
-                    request, response, args = task
+                    request, args = task
                     request(*args)
             except Exception as e:
                 LOGGER.error('Unhandled exception in model process', exc_info=e)
@@ -55,10 +40,9 @@ class ModelProcess(multiprocessing.Process):
                 self._request_queue.task_done()
         LOGGER.info("Terminated")
 
-    def post(self, request, response=None, exception=None, args = ()):
+    def post(self, request, exception=None, args = ()):
         assert exception is None
-        assert isinstance(response, (type(None), RenderResponse))
-        self._request_queue.put((request, response, args))
+        self._request_queue.put((request, args))
 
     def _validate_parent(self):
         if not self.is_alive():
