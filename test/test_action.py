@@ -49,9 +49,9 @@ from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
 from . import app_admin, test_core, test_view
-from .test_item_model import QueryQStandardItemModelMixinCase
+from .test_item_model import QueryQStandardItemModelMixinCase, SetupQueryProxy
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession
+from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession, DirtySession
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -272,9 +272,8 @@ class ListActionsCase(
     def setUp( self ):
         super(ListActionsCase, self).setUp()
         self.gui_run(SetupSession(), mode=True)
+        self.gui_run(SetupQueryProxy(self.model_context_name))
         self.admin = app_admin.get_related_admin(Person)
-        self.thread.post(self.setup_proxy)
-        self.process()
         self.admin_route = self.admin.get_admin_route()
         self.combo_box_filter_route = self.admin._register_action_route(
             self.admin_route, self.combo_box_filter
@@ -634,8 +633,7 @@ class FormActionsCase(
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
-        self.thread.post(self.setup_proxy)
-        self.process()
+        self.gui_run(SetupQueryProxy(self.model_context_name))
         person_admin = app_admin.get_related_admin(Person)
         self.admin_route = person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, person_admin.get_name())
@@ -681,9 +679,8 @@ class ApplicationActionsCase(
         self.gui_context = ('cpp_gui_context', 'root_backend')
 
     def test_refresh(self):
+        self.gui_run(DirtySession(), ('constant', 'null'), mode=True)
         refresh_action = application_action.Refresh()
-        self.thread.post(self.dirty_session)
-        self.process()
         #
         # refresh the session through the action
         #

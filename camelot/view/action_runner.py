@@ -231,7 +231,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         serialized_message = json_encoder.encode(message)
         if REQUEST_LOGGER.isEnabledFor(logging.DEBUG):
             REQUEST_LOGGER.debug(serialized_message)
-        post(self._initiate_generator, self.generator, args=(serialized_message,))
+        post(self._initiate_generator, self.__next__, args=(serialized_message,))
 
     def _initiate_generator(self, serialized_message):
         """Create the model context and start the generator"""
@@ -244,7 +244,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             model_context = initial_naming_context.resolve(tuple(message['model_context']))
         except NameNotFoundException:
             LOGGER.error('Could not create model context, no binding for name: {}'.format(message['model_context']))
-            return
+            return (None, gui_run_name, None)
         try:
             generator = action.model_run(model_context, message.get('mode'))
         except Exception as exception:
@@ -256,9 +256,9 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                     exception
                 )._to_bytes()
             )
-            return None
+            return (None, gui_run_name, None)
         if generator is None:
-            return None
+            return (None, gui_run_name, None)
         run = ModelRun(gui_run_name, generator)
         run_name = model_run_names.bind(str(id(run)), run)
         self.non_blocking_serializable_action_step_signal.emit(
@@ -266,8 +266,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             PushProgressLevel('Please wait')._to_bytes()
         )
         LOGGER.debug('Action {} runs in generator {}'.format(message['action_name'], run_name))
-        return run_name
-
+        return self._iterate_until_blocking(run_name, 'continue')
 
     def _iterate_until_blocking(self, run_name, method, *args):
         """Helper calling for generator methods.  The decorated method iterates
@@ -282,7 +281,9 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         run = initial_naming_context.resolve(run_name)
         gui_run_name = run.gui_run_name
         try:
-            if method == 'send':
+            if method == 'continue':
+                result = None
+            elif method == 'send':
                 result = run.generator.send(*args)
             elif method == 'throw':
                 result = run.generator.throw(*args)
@@ -369,18 +370,6 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
             post(self.request_cancel, args=(run_name,))
-
-    @QtCore.qt_slot(tuple)
-    def generator(self, run_name):
-        """Handle the creation of the generator"""
-        #
-        # when model_run is not a generator, but a normal function it returns
-        # no generator, and as such we can exit the event loop
-        #
-        if run_name is not None:
-            post( self._iterate_until_blocking, 
-                  self.__next__, 
-                  args = (run_name, 'send', None) )
 
     def _was_canceled(self, gui_context_name):
         """raise a :class:`camelot.core.exception.CancelRequest` if the
