@@ -41,21 +41,24 @@ machine.
 import base64
 import functools
 import logging
+import pkgutil
+import sqlalchemy.dialects
 
 
-
-from .qt import QtCore, variant_to_py, py_to_variant
+from .qt import QtCore, QtWidgets, variant_to_py, py_to_variant
 
 from camelot.core.conf import settings
+from camelot.core.dataclasses import dataclass
+from camelot.admin.dataclass_admin import DataclassAdmin
+from camelot.view.controls import delegates
+
 
 LOGGER = logging.getLogger('camelot.core.profile')
 
-profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
-                   'port', 'media_location', 'locale_language', 'proxy_host',
-                   'proxy_port', 'proxy_username', 'proxy_password']
 
 @functools.total_ordering
-class Profile(object):
+@dataclass
+class Profile:
     """This class holds the local configuration of the application, such as
     the location of the database.  It provides some convenience functions to
     store and retrieve this information to :class:`QtCore.QSettings`
@@ -66,13 +69,16 @@ class Profile(object):
     object.
     """
     
-    def __init__( self, name, **kwargs ):
-        kwargs['name'] = name
-        for profile_field in profile_fields:
-            kwargs.setdefault( profile_field, '' )
-        for key, value in kwargs.items():
-            setattr(self, key, value )
-    
+    name: str = ''
+    dialect: str = ''
+    host: str = ''
+    port: str = ''
+    database: str = ''
+    user: str = ''
+    password: str = ''
+    media_location: str = ''
+    locale_language: str = QtCore.QLocale.system().name()
+
     def get_connection_string( self ):
         """The database connection string according to SQLAlchemy conventions,
         as specified by this profile.
@@ -152,6 +158,37 @@ class Profile(object):
     
     def __hash__(self):
         return hash(self.name)
+
+    class Admin(DataclassAdmin):
+        list_display = ['name', 'dialect', 'host', 'port', 'database']
+        form_display = ['name', 'dialect', 'host', 'port', 'database', 'user', 'password', 'media_location', 'language']
+        field_attributes = {
+            'dialect': {
+                'choices': [(name,name) for i, name in enumerate([name for _importer, name, is_package in pkgutil.iter_modules(sqlalchemy.dialects.__path__)])]
+            },
+            'host': { 'nullable': True },
+            'port': { 'nullable': True },
+            'database': { 'nullable': True },
+            'user': { 'nullable': True },
+            'password': {
+                'nullable': True,
+                'echo_mode': QtWidgets.QLineEdit.EchoMode.Password
+            },
+            'media_location': {
+                'nullable': True,
+                'delegate': delegates.LocalFileDelegate,
+                'directory': True
+            },
+            'language': {
+                'nullable': True,
+                'delegate': delegates.LanguageDelegate
+            },
+        }
+
+        def copy(self, entity_instance):
+            new_entity_instance = super().copy(entity_instance)
+            new_entity_instance.name = new_entity_instance.name + ' - Copy'
+            return new_entity_instance
 
 
 class ProfileStore(object):
