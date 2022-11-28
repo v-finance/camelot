@@ -112,7 +112,8 @@ class SelectProfileMixin:
     @classmethod
     def select_profile(cls, profile_store):
         from camelot.view import action_steps
-        from camelot.view.action_steps.profile import EditProfiles
+        from vfinance.admin.application_admin import app_admin
+        from camelot.core.profile import Profile
         selected_profile = new_profile
         try:
             while selected_profile in (None, new_profile,
@@ -167,35 +168,13 @@ class SelectProfileMixin:
                 selected_name = yield select_profile
                 selected_profile = initial_naming_context.resolve(selected_name)
                 if selected_profile is new_profile:
-                    edit_profile_name = ''
                     while selected_profile is new_profile:
-                        profile_info = yield EditProfiles(profiles, current_profile=edit_profile_name)
-                        profile = profile_store.read_profile(profile_info['name'])
-                        if profile is None:
-                            profile = profile_store.profile_class(**profile_info)
-                        else:
-                            profile.__dict__.update(profile_info)
-                        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
-                        engine = profile.create_engine()
-                        try:
-                            connection = engine.raw_connection()
-                            cursor = connection.cursor()
-                            cursor.close()
-                            connection.close()
-                        except Exception as e:
-                            exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
-                                                                     text = _('Verify driver, host and port or contact your system administrator'),
-                                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
-                            exception_box.informative_text = str(e)
-                            yield exception_box
-                            edit_profile_name = profile.name
-                            if profile in profiles:
-                                profiles.remove(profile)
-                            profiles.append(profile)
-                            profiles.sort()
-                            continue
-                        profile_store.write_profile(profile)
-                        selected_profile = profile
+                        profile_admin = app_admin.get_related_admin(Profile)
+                        proxy = profile_admin.get_proxy(profiles)
+                        yield action_steps.ChangeObjects(profiles, profile_admin, proxy)
+                        # FIXME: validate profiles (i.e. database connection)
+                        profile_store.write_profiles(proxy.get_model())
+                        selected_profile = None
                 elif selected_profile is save_profiles:
                     file_name = yield action_steps.SaveFile(file_name_filter=cls.file_name_filter)
                     profile_store.write_to_file(file_name)

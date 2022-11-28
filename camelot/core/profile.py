@@ -161,7 +161,7 @@ class Profile:
 
     class Admin(DataclassAdmin):
         list_display = ['name', 'dialect', 'host', 'port', 'database']
-        form_display = ['name', 'dialect', 'host', 'port', 'database', 'user', 'password', 'media_location', 'language']
+        form_display = ['name', 'dialect', 'host', 'port', 'database', 'user', 'password', 'media_location', 'locale_language']
         field_attributes = {
             'dialect': {
                 'choices': [(name,name) for i, name in enumerate([name for _importer, name, is_package in pkgutil.iter_modules(sqlalchemy.dialects.__path__)])]
@@ -179,7 +179,7 @@ class Profile:
                 'delegate': delegates.LocalFileDelegate,
                 'directory': True
             },
-            'language': {
+            'locale_language': {
                 'nullable': True,
                 'delegate': delegates.LanguageDelegate
             },
