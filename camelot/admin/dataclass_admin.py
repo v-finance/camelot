@@ -2,6 +2,7 @@ import dataclasses
 from enum import Enum
 
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.core.serializable import DataclassSerializable
 
 
 class DataclassAdmin(ObjectAdmin):
@@ -33,4 +34,13 @@ class DataclassAdmin(ObjectAdmin):
     def _get_entity_descriptor(self, field_name):
         if not field_name in self.entity.__dataclass_fields__:
             return super()._get_entity_descriptor(field_name)
+
+    def copy(self, entity_instance):
+        """Duplicate this dataclass entity instance"""
+        if isinstance(entity_instance, DataclassSerializable):
+            fields = DataclassSerializable.asdict(entity_instance)
+        else:
+            fields = dataclasses.asdict(entity_instance)
+        new_entity_instance = entity_instance.__class__(**fields)
+        return new_entity_instance
 
