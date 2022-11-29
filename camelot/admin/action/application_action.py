@@ -113,7 +113,7 @@ class SelectProfileMixin:
     def select_profile(cls, profile_store):
         from camelot.view import action_steps
         from vfinance.admin.application_admin import app_admin
-        from camelot.core.profile import Profile
+        from camelot.core.profile import Profile, NonEditableProfileAdmin
         selected_profile = new_profile
         try:
             while selected_profile in (None, new_profile,
@@ -169,7 +169,7 @@ class SelectProfileMixin:
                 selected_profile = initial_naming_context.resolve(selected_name)
                 if selected_profile is new_profile:
                     while selected_profile is new_profile:
-                        profile_admin = app_admin.get_related_admin(Profile)
+                        profile_admin = NonEditableProfileAdmin(app_admin, Profile)
                         proxy = profile_admin.get_proxy(profiles)
                         try:
                             yield action_steps.ChangeObjects(profiles, profile_admin, proxy)

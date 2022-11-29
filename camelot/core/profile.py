@@ -44,6 +44,7 @@ import logging
 import pkgutil
 import sqlalchemy.dialects
 from typing import Optional
+import copy
 
 
 from .qt import QtCore, QtWidgets, variant_to_py, py_to_variant
@@ -172,9 +173,6 @@ class Profile:
         ]
         list_action = list_action.edit_profile
         field_attributes = {
-            'name': {
-                'editable': False
-            },
             'dialect': {
                 'choices': [(name,name) for i, name in enumerate([name for _importer, name, is_package in pkgutil.iter_modules(sqlalchemy.dialects.__path__)])]
             },
@@ -206,6 +204,11 @@ class Profile:
             new_entity_instance.name = new_entity_instance.name + ' - Copy'
             return new_entity_instance
 
+class NonEditableProfileAdmin(Profile.Admin):
+        field_attributes = copy.deepcopy(Profile.Admin.field_attributes)
+
+for field in Profile.Admin.list_display:
+    NonEditableProfileAdmin.field_attributes.setdefault(field, {})['editable'] = False
 
 class ProfileStore(object):
     """Class that reads/writes profiles, either to a file or to the local

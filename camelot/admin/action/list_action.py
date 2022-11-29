@@ -1057,11 +1057,14 @@ class EditProfile(Action):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        from camelot.core.profile import Profile
         profile = model_context.get_object()
         profile_copy = self.copy_profile(profile)
         while True:
             try:
-                yield action_steps.ChangeObject(profile, model_context.admin)
+                app_admin = model_context.admin.get_application_admin()
+                profile_admin = app_admin.get_related_admin(Profile)
+                yield action_steps.ChangeObject(profile, profile_admin)
             except CancelRequest:
                 # Restore profile
                 self.copy_profile(profile_copy, profile)
