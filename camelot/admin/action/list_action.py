@@ -1083,18 +1083,8 @@ class EditProfile(Action):
         from camelot.view import action_steps
         # Validate database settings
         yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
-        if profile.port:
-            try:
-                int(profile.port)
-            except ValueError as e:
-                exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database'),
-                                                         text = _('Port must be an integer (i.e. number)'),
-                                                         standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
-                exception_box.informative_text = str(e)
-                yield exception_box
-                return False
-        engine = profile.create_engine()
         try:
+            engine = profile.create_engine()
             connection = engine.raw_connection()
             cursor = connection.cursor()
             cursor.close()

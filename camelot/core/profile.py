@@ -75,7 +75,7 @@ class Profile:
     name: str = ''
     dialect: Optional[str] = None
     host: str = ''
-    port: str = ''
+    port: Optional[int] = None
     database: str = ''
     user: str = ''
     password: str = ''
@@ -172,11 +172,18 @@ class Profile:
         ]
         list_action = list_action.edit_profile
         field_attributes = {
+            'name': {
+                'editable': False
+            },
             'dialect': {
                 'choices': [(name,name) for i, name in enumerate([name for _importer, name, is_package in pkgutil.iter_modules(sqlalchemy.dialects.__path__)])]
             },
             'host': { 'nullable': True },
-            'port': { 'nullable': True },
+            'port': {
+                'nullable': True,
+                'delegate': delegates.IntegerDelegate,
+                'calculator': False
+            },
             'database': { 'nullable': True },
             'user': { 'nullable': True },
             'password': {
@@ -289,6 +296,11 @@ class ProfileStore(object):
                     value = value
                 state[key] = value
             profile.__setstate__(state)
+            # Port used to be stored as string
+            try:
+                profile.port = int(profile.port)
+            except ValueError:
+                profile.port = None
             # only profiles with a name can be selected and handled
             if profile.name:
                 profiles.append(profile)
