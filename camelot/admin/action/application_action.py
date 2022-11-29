@@ -185,7 +185,9 @@ class SelectProfileMixin:
         except CancelRequest:
             # explicit handling of exit when cancel button is pressed,
             # to avoid the use of subgenerators in the main action
+            from camelot.view.action_steps.application import Exit
             yield Exit()
+            return
         message = ugettext(u'Use {} profile'.format(selected_profile.name))
         yield action_steps.UpdateProgress(text=message)
         profile_store.set_last_profile(selected_profile)
