@@ -443,7 +443,7 @@ and used as a custom action.
                         attributes['editable'] = False
             yield attributes
 
-    def get_completions(self, obj, field_name, prefix):
+    def get_completions(self, obj, field_name, prefix, **kwargs):
         """
         Overwrites `ObjectAdmin.get_completions` and searches for autocompletion
         along relationships.
@@ -456,9 +456,9 @@ and used as a custom action.
                 search_filter = initial_naming_context.resolve(action_route.route)
                 if isinstance(search_filter, list_filter.SearchFilter):
                     query = admin.get_query(session)
-                    query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]))
+                    query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]), **kwargs)
                     return [e for e in query.limit(20).all()]
-        return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
+        return super(EntityAdmin, self).get_completions(obj, field_name, prefix, **kwargs)
 
     @register_list_actions('_admin_route', '_filter_actions')
     def get_filters( self ):

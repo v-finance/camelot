@@ -561,7 +561,7 @@ be specified using the verbose_name attribute.
                     dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
 
-    def get_completions(self, obj, field_name, prefix):
+    def get_completions(self, obj, field_name, prefix, **kwargs):
         """
         Generate autocompletion possibilities for a specific field.
         Autocompletion differs from dynamic field attributes such as choices :
@@ -573,7 +573,8 @@ be specified using the verbose_name attribute.
 
         :param obj: the instance of the object on which to do autocompletion.
         :param field_name: the field of the object on which to do autocompletion.
-        :param prefix: text entered by the user to guide the autocompletion
+        :param prefix: text entered by the user to guide the autocompletion.
+        :param kwargs: optional completion context kwargs that will be passed to the related search filter's query decoration.
 
         :return: `None` if the field does not support autocompletion, an empty
             list if there are no possible values for the requested prefix,
@@ -593,7 +594,7 @@ be specified using the verbose_name attribute.
                     for action_route in admin.get_list_toolbar_actions():
                         search_filter = initial_naming_context.resolve(action_route.route)
                         if isinstance(search_filter, list_filter.SearchFilter):
-                            query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]))
+                            query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]), **kwargs)
                     query = admin.decorate_search_query(query, prefix)
                 return [e for e in query.limit(20).all()]
 
