@@ -49,6 +49,7 @@ class SelectObjects(OpenTableView):
     """
 
     verbose_name_plural: str = field(init=False)
+    blocking: bool = True
 
     def __post_init__(self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)

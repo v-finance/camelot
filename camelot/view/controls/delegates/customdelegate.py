@@ -37,12 +37,17 @@ from camelot.core.naming import initial_naming_context
 from ....admin.icon import CompletionValue
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
-from ....core.serializable import json_encoder
+from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
     ChoicesRole, FieldAttributesRole, ProxyDict
 )
 from ..action_widget import AbstractActionWidget
+from camelot.view.controls import editors
+from dataclasses import dataclass, InitVar
+from typing import Any, ClassVar
+
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,7 +122,11 @@ def DocumentationMetaclass(name, bases, dct):
 color_groups = {True: QtGui.QPalette.ColorGroup.Inactive,
                 False: QtGui.QPalette.ColorGroup.Disabled}
 
-class CustomDelegate(QtWidgets.QItemDelegate):
+class CustomDelegateMeta(type(NamedDataclassSerializable), type(QtWidgets.QItemDelegate)):
+    pass
+
+@dataclass
+class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metaclass=CustomDelegateMeta):
     """Base class for implementing custom delegates.
 
     .. attribute:: editor
@@ -126,21 +135,24 @@ class CustomDelegate(QtWidgets.QItemDelegate):
 
     """
 
-    editor = None
-    horizontal_align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+    _parent: InitVar[QtCore.QObject] = None
 
-    def __init__(self, parent=None, editable=True, **kwargs):
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+
+    def __post_init__(self, parent):
         """:param parent: the parent object for the delegate
         :param editable: a boolean indicating if the field associated to the delegate
         is editable
-
         """
-        super( CustomDelegate, self ).__init__(parent)
-        self.editable = editable
-        self.kwargs = kwargs
+        super().__init__(parent)
         self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
+
+    @classmethod
+    def get_editor_class(cls):
+        """Get the editor class for this delegate."""
+        raise NotImplementedError
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
@@ -201,8 +213,37 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         :param option: use an option with version 5 to indicate the widget
         will be put onto a form
         """
-
-        editor = self.editor(parent, editable = self.editable, option = option, **self.kwargs)
+        editor_cls = self.get_editor_class()
+        if issubclass(editor_cls, (editors.BoolEditor, editors.ColorEditor, editors.LanguageEditor,
+                                   editors.NoteEditor, editors.RichTextEditor)):
+            editor = editor_cls(parent)
+        elif issubclass(editor_cls, (editors.ChoicesEditor, editors.Many2OneEditor,
+                                     editors.FileEditor)):
+            editor = editor_cls(parent, self.action_routes)
+        elif issubclass(editor_cls, editors.DateEditor):
+            editor = editor_cls(parent, self.nullable, self.validator)
+        elif issubclass(editor_cls, editors.DateTimeEditor):
+            editor = editor_cls(parent, self.editable, self.nullable)
+        elif issubclass(editor_cls, editors.DbImageEditor):
+            editor = editor_cls(parent, self.preview_width, self.preview_height, self.max_size)
+        elif issubclass(editor_cls, editors.FloatEditor):
+            editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)
+        elif issubclass(editor_cls, editors.IntegerEditor):
+            editor = editor_cls(parent, self.calculator, self.decimal, option)
+        elif issubclass(editor_cls, editors.LabelEditor):
+            editor = editor_cls(parent, self.text, option)
+        elif issubclass(editor_cls, editors.LocalFileEditor):
+            editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
+        elif issubclass(editor_cls, editors.MonthsEditor):
+            editor = editor_cls(parent, self.minimum, self.maximum)
+        elif issubclass(editor_cls, editors.TextLineEditor):
+            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes)
+        elif issubclass(editor_cls, editors.TextEditEditor):
+            editor = editor_cls(parent, self.length, self.editable)
+        elif issubclass(editor_cls, editors.VirtualAddressEditor):
+            editor = editor_cls(parent, self.address_type)
+        else:
+            raise NotImplementedError()
         assert editor != None
         assert isinstance(editor, QtWidgets.QWidget)
         if option.version != 5:

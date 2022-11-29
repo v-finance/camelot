@@ -50,8 +50,8 @@ class Many2OneEditor(CustomEditor):
 
     def __init__(self,
                  parent=None,
-                 field_name='manytoone',
-                 **kwargs):
+                 action_routes = [],
+                 field_name='manytoone'):
         """
         :param entity_admin : The Admin interface for the object on the one
         side of the relation
@@ -104,7 +104,7 @@ class Many2OneEditor(CustomEditor):
         # Setup layout
         layout.addWidget(self.search_input)
         self.setLayout(layout)
-        self.add_actions(kwargs['action_routes'], layout)
+        self.add_actions(action_routes, layout)
 
     @QtCore.qt_slot()
     @QtCore.qt_slot(str)

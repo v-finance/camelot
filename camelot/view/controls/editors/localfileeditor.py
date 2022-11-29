@@ -29,8 +29,6 @@
 
 import os.path
 
-
-
 from ....core.qt import QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 
@@ -46,11 +44,10 @@ class LocalFileEditor( CustomEditor ):
 
     def __init__(self,
                  parent = None,
-                 field_name = 'local_file',
                  directory = False,
                  save_as = False,
                  file_filter = 'All files (*)',
-                 **kwargs):
+                 field_name = 'local_file'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )

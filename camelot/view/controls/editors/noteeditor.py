@@ -47,8 +47,7 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
     
     def __init__( self, 
                   parent = None,
-                  field_name = 'note',
-                  **kwargs ):
+                  field_name = 'note'):
         QtWidgets.QLabel.__init__( self, parent )
         AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )

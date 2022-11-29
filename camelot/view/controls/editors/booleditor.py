@@ -29,7 +29,6 @@
 
 from ....core.qt import QtCore, Qt, QtWidgets
 from .customeditor import AbstractCustomEditor
-from camelot.core import constants
 
 class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
@@ -39,15 +38,10 @@ class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     
     def __init__(self,
                  parent=None,
-                 minimum=constants.camelot_minint,
-                 maximum=constants.camelot_maxint,
-                 nullable=True,
-                 field_name = 'boolean',
-                 **kwargs):
+                 field_name = 'boolean'):
         QtWidgets.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
-        self._nullable = nullable
         self.clicked.connect( self._state_changed )
 
     def set_value(self, value):

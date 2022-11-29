@@ -14,9 +14,12 @@ from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole, ObjectRole
+    FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole, ObjectRole, ColumnAttributesRole
 )
 from .. import gui_naming_context
+from ..controls import delegates
+#from ..validator import DateValidator
+
 
 non_serializable_roles = (
     FieldAttributesRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole
@@ -46,6 +49,10 @@ class UpdateMixin(object):
                     if role_data is not None:
                         cell_data[role] = role_data
                 cell_data[Qt.ItemDataRole.DisplayRole] = item.data(PreviewRole)
+                # serialize EditRole if it is a tuple/name
+                edit = item.data(Qt.ItemDataRole.EditRole)
+                if isinstance(edit, tuple):
+                    cell_data[Qt.ItemDataRole.EditRole] = edit
                 cells.append(cell_data)
         return {
             "header_items": header_items,
@@ -108,14 +115,55 @@ class SetColumns(ActionStep):
     
     def __init__(self, static_field_attributes):
         self.static_field_attributes = static_field_attributes
+        self.column_attributes = []
+        for fa in static_field_attributes:
+            attrs = {}
+            if issubclass(fa['delegate'], (delegates.ComboBoxDelegate, delegates.Many2OneDelegate,
+                                           delegates.FileDelegate)):
+                attrs = self.filter_attributes(fa, ['action_routes'])
+            elif issubclass(fa['delegate'], delegates.DateDelegate):
+                attrs = self.filter_attributes(fa, ['nullable', 'validator'])
+                if issubclass(fa['delegate'], delegates.DateTimeDelegate):
+                    if 'editable' in fa:
+                        attrs['editable'] = fa['editable']
+            elif issubclass(fa['delegate'], delegates.DbImageDelegate):
+                attrs = self.filter_attributes(fa, ['preview_width', 'preview_height', 'max_size'])
+            elif issubclass(fa['delegate'], delegates.FloatDelegate):
+                attrs = self.filter_attributes(fa, ['calculator', 'decimal', 'action_routes'])
+            elif issubclass(fa['delegate'], delegates.IntegerDelegate):
+                attrs = self.filter_attributes(fa, ['calculator', 'decimal'])
+            elif issubclass(fa['delegate'], delegates.LabelDelegate):
+                attrs = self.filter_attributes(fa, ['text'])
+            elif issubclass(fa['delegate'], delegates.LocalFileDelegate):
+                attrs = self.filter_attributes(fa, ['directory', 'save_as', 'file_filter'])
+            elif issubclass(fa['delegate'], delegates.MonthsDelegate):
+                attrs = self.filter_attributes(fa, ['minimum', 'maximum'])
+            elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
+                attrs = self.filter_attributes(fa, ['admin_route', 'create_inline', 'direction', 'column_width',
+                                                    'columns', 'rows', 'action_routes', 'list_actions', 'list_action'])
+            elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
+                attrs = self.filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes'])
+            elif issubclass(fa['delegate'], delegates.TextEditDelegate):
+                attrs = self.filter_attributes(fa, ['length', 'editable'])
+            elif issubclass(fa['delegate'], delegates.VirtualAddressDelegate):
+                attrs = self.filter_attributes(fa, ['address_type'])
+            self.column_attributes.append(attrs)
+
+    def filter_attributes(self, attributes, keys):
+        filtered = {}
+        for key in keys:
+            if key in attributes:
+                filtered[key] = attributes[key]
+        return filtered
 
     def _to_dict(self):
         columns = []
-        for fa in self.static_field_attributes:
+        for i, fa in enumerate(self.static_field_attributes):
             columns.append({
                 'verbose_name': str(fa['name']),
                 'field_name': fa['field_name'],
                 'width': fa['column_width'],
+                'delegate': [fa['delegate'].__name__, self.column_attributes[i]],
             })
         return {
             'columns': columns,
@@ -151,6 +199,7 @@ class SetColumns(ActionStep):
             set_header_data(py_to_variant(field_name), Qt.ItemDataRole.UserRole)
             set_header_data(py_to_variant(verbose_name), Qt.ItemDataRole.DisplayRole)
             set_header_data(fa_copy, FieldAttributesRole)
+            set_header_data([fa['delegate'].__name__, self.column_attributes[i]], ColumnAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.ItemDataRole.FontRole)
             else:

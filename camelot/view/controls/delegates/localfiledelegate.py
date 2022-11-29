@@ -27,10 +27,10 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
-
-
 
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
@@ -39,19 +39,19 @@ from .customdelegate import DocumentationMetaclass
 
 from camelot.view.controls import editors
 
+@dataclass
 class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for displaying a path on the local file system.  This path can
     either point to a file or a directory
     """
 
-    editor = editors.LocalFileEditor
+    directory: bool = False
+    save_as: bool = False
+    file_filter: str = 'All files (*)'
 
-    def __init__(
-        self, 
-        parent=None,
-        **kw
-    ):
-        CustomDelegate.__init__(self, parent, **kw)
+    @classmethod
+    def get_editor_class(cls):
+        return editors.LocalFileEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
