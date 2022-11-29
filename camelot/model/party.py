@@ -36,16 +36,20 @@ by Len Silverston, Chapter 2
 
 import copy
 import datetime
+import enum
 
 import sqlalchemy.types
 
 from sqlalchemy.ext import hybrid
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm.base import NEVER_SET
 from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
-from sqlalchemy import orm, schema, sql, ForeignKey
+from sqlalchemy import event, orm, schema, sql, ForeignKey
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action.list_filter import StringFilter
+from camelot.admin.action import list_filter
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
@@ -121,9 +125,10 @@ class GeographicBoundary( Entity ):
         
         list_display = ['row_type', 'name', 'code']
         form_display = Form(
-            [GroupBoxForm(_('General'), ['name', 'code'], columns=2),
-             GroupBoxForm(_('NL'), ['name_NL'], columns=2),
-             GroupBoxForm(_('FR'), ['name_FR'], columns=2),
+            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
+             GroupBoxForm(_('NL'), ['name_NL', None], columns=2),
+             GroupBoxForm(_('FR'), ['name_FR', None], columns=2),
+             GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
              'alternative_names'],
             columns=2)
         
@@ -131,10 +136,14 @@ class GeographicBoundary( Entity ):
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
+                'filter_strategy': list_filter.NoFilter,
                 'editable': False,
             },
+            'id': {'filter_strategy': list_filter.NoFilter},
+            'geographicboundary_id': {'name': _('Id')},
             'name_NL': {'name': _('Name')},
             'name_FR': {'name': _('Name')},
+            'alternative_names': {'editable': False},
         }
     
 class GeographicBoundaryAlternativeName(Entity):
@@ -174,10 +183,13 @@ class GeographicBoundaryAlternativeName(Entity):
     )
 
     class Admin(EntityAdmin):
+
         verbose_name = _('Alternative name')
         verbose_name_plural = _('Alternative names')
+
         list_display = ['name', 'row_type', 'language']
-        form_state = 'right'
+        form_display = list_display
+
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
@@ -222,17 +234,63 @@ class Country( GeographicBoundary ):
         verbose_name_plural = _('Countries')
         list_display = ['name', 'code']
 
+class WithCountry(object):
+    """
+    Declarative mixin class that shares schema constructs and functionality across GeographicBoundary classes
+    that are part of a country.
+    """
 
-class City( GeographicBoundary ):
+    @declared_attr
+    def country_id(cls):
+        return schema.Column(sqlalchemy.types.Integer(),
+                            schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
+                            nullable=False, index=True)
+
+    @declared_attr
+    def country(cls):
+        return orm.relationship(Country, foreign_keys=[cls.country_id])
+
+class AdministrativeDivision(GeographicBoundary, WithCountry):
+
+    __tablename__ = 'geographic_boundary_administrative_division'
+
+    geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
+                                          schema.ForeignKey(GeographicBoundary.id,
+                                                            name='fk_geographic_boundary_administrative_division_boundary_id'),
+                                          primary_key=True, nullable=False)
+
+    __mapper_args__ = {'polymorphic_identity': 'administrative_division'}
+
+    def __str__(self):
+        return '{} {} {}'.format(self.code, self.name, self.country)
+
+    class Admin(GeographicBoundary.Admin):
+
+        verbose_name = _('Administrative division')
+        verbose_name_plural = _('Administrative divisions (NUTS 3)')
+
+        list_display = ['code', 'name', 'country']
+
+        field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
+        attributes_dict = {
+            'code': {'name': _('NUTS code')},
+            'country_id': {'filter_strategy': list_filter.NoFilter},
+        }
+        for field_name, attributes in attributes_dict.items():
+            field_attributes.setdefault(field_name, {}).update(attributes)
+
+class City(GeographicBoundary, WithCountry):
     """A subclass of GeographicBoundary used to store the name, the postal code
     and the Country of a city"""
+
     __tablename__ = 'geographic_boundary_city'
-    country_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
-                                                  schema.ForeignKey(Country.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
-                                                  nullable=False, index=True)
-    country = orm.relationship(Country, backref='city', foreign_keys=[country_geographicboundary_id])
+
     geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),schema.ForeignKey(GeographicBoundary.id),
                                           primary_key=True, nullable=False)
+    administrative_division_id = schema.Column(sqlalchemy.types.Integer(),
+                                               schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='restrict', onupdate='cascade'),
+                                               nullable=True, index=True)
+    administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
@@ -271,7 +329,7 @@ class City( GeographicBoundary ):
 
     @hybrid.hybrid_property
     def administrative_name(cls):
-       return cls.administrative_translation(language=None)
+        return cls.administrative_translation(language=None)
 
     @hybrid.hybrid_property
     def administrative_name_NL(cls):
@@ -294,22 +352,49 @@ class City( GeographicBoundary ):
             orm.object_session( city ).flush()
         return city
 
+    # TODO: refactor this to MessageEnum after move to vFinance repo.
+    class Message(enum.Enum):
+
+        invalid_administrative_division = '{} is geen geldige administratieve indeling voor {}'
+
+    def get_messages(self):
+        if None not in (self.country, self.administrative_division):
+            if self.country != self.administrative_division.country:
+                yield _(self.Message.invalid_administrative_division.value, self.administrative_division, self.country)
+
+    @property
+    def note(self) -> Note:
+        for msg in self.get_messages():
+            return msg
+
     class Admin(GeographicBoundary.Admin):
+
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
-        list_display = ['code', 'name', 'administrative_name', 'country']
+
+        list_display = ['code', 'name', 'administrative_name', 'administrative_division', 'country']
         form_display = Form(
             [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
+             GroupBoxForm(_('Administrative division'), ['administrative_division', None], columns=2),
              GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
              GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
              GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
-             'alternative_names'],
+             'alternative_names',
+             WidgetOnlyForm('note')],
             columns=2)
-        field_attributes = {k:copy.copy(v) for k,v in GeographicBoundary.Admin.field_attributes.items()}
-        field_attributes['administrative_name_NL'] = {'name': _('Administrative name')}
-        field_attributes['administrative_name_FR'] = {'name': _('Administrative name')}
 
+        field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
+        attributes_dict = {
+            'code': {'name': _('Postal code')},
+            'administrative_name_NL': {'name': _('Administrative name')},
+            'administrative_name_FR': {'name': _('Administrative name')},
+            'administrative_division': {'name': _('Administrative division (NUTS)')},
+            'administrative_division_id': {'filter_strategy': list_filter.NoFilter},
+            'country_id': {'filter_strategy': list_filter.NoFilter},
+        }
+        for field_name, attributes in attributes_dict.items():
+            field_attributes.setdefault(field_name, {}).update(attributes)
 
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
@@ -322,9 +407,30 @@ class Address( Entity ):
                                                nullable=False, index=True)
     city = orm.relationship(City, lazy='subquery')
     
-    # Way for user to overrule the zip code on the address level (e.g. when its not known or incomplete on the city).
+    # Way for user to overrule the zip code and/or administrative division on the address level (e.g. when its not known or incomplete on the city).
     _zip_code = schema.Column(Unicode(10))
-    
+    administrative_division_id = schema.Column(sqlalchemy.types.Integer(),
+                                               schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='restrict', onupdate='cascade'),
+                                               nullable=True, index=True)
+    _administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
+
+    @property
+    def administrative_division(self):
+        """
+        Returns the administrative division of this address.
+        If the set city is part of an administrative division, it is always defined as such.
+        Otherwise, it can be set manually.
+        """
+        if self.city is not None:
+            if self.city.administrative_division is not None:
+                return self.city.administrative_division
+            return self._administrative_division
+
+    @administrative_division.setter
+    def administrative_division(self, value):
+        if self.city is not None and self.city.administrative_division is None:
+            self._administrative_division = value
+
     @hybrid.hybrid_property
     def zip_code( self ):
         if self.city is not None:
@@ -333,8 +439,8 @@ class Address( Entity ):
 
     @zip_code.setter
     def zip_code(self, value):
-        # Only allow to overrule the address' zip code if its city's code is unknown.
-        if self.city is not None and self.city.code == '':
+        # Only allow to overrule the address' zip code if its city's code is undefined.
+        if self.city is not None and self.city.code is None:
             self._zip_code = value
 
     name = orm.column_property(sql.select(
@@ -349,6 +455,12 @@ class Address( Entity ):
             orm.object_session( address ).flush()
         return address
 
+    def get_messages(self):
+        if self.city is not None:
+            yield from self.city.get_messages()
+            if self.administrative_division is not None and self.city.country != self.administrative_division.country:
+                yield _(City.Message.invalid_administrative_division.value, self.administrative_division, self.city.country)
+
     def __str__(self):
         city_name = self.city.name if self.city is not None else ''
         return u'%s, %s %s' % ( self.street1 or '', self.zip_code or '', city_name or '' )
@@ -357,18 +469,29 @@ class Address( Entity ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
         list_display = ['street1', 'street2', 'city']
-        form_display = ['street1', 'street2', 'zip_code', 'city']
+        form_display = ['street1', 'street2', 'zip_code', 'city', 'administrative_division']
         form_size = ( 700, 150 )
         field_attributes = {
             'street1': {'minimal_column_width':30},
-            'zip_code': {'editable': lambda o: o.city is not None and o.city.code == ''}
+            'zip_code': {'editable': lambda o: o.city is not None and o.city.code is None},
+            'administrative_division': {
+                'delegate':delegates.Many2OneDelegate,
+                'target': AdministrativeDivision,
+                'editable': lambda o: o.city is not None and o.city.administrative_division is None
+            },
         }
-        
+
         def get_depending_objects( self, address ):
             for party_address in address.party_addresses:
                 yield party_address
                 if party_address.party != None:
                     yield party_address.party
+
+@event.listens_for(Address.city, 'set', propagate=True)
+def receive_city_set(target, city, oldvalue, initiator):
+    if oldvalue is not NEVER_SET and oldvalue != city:
+        if city is None or city.administrative_division is not None:
+            target._administrative_division = None
 
 class PartyContactMechanismAdmin( EntityAdmin ):
     form_size = ( 700, 200 )
@@ -459,6 +582,14 @@ class WithAddresses(object):
                               cls.first_address_filter()
                               ),
                           limit=1).as_scalar()
+
+    @property
+    def administrative_division(self):
+        return self._get_address_field('administrative_division')
+
+    @administrative_division.setter
+    def administrative_division( self, value ):
+        return self._set_address_field('administrative_division', value)
 
     def get_first_address(self):
         raise NotImplementedError()
@@ -889,6 +1020,14 @@ class Addressable(object):
     def city( self ):
         return Address.city_geographicboundary_id
 
+    @property
+    def administrative_division(self):
+        return self._get_address_field( u'administrative_division' )
+
+    @administrative_division.setter
+    def administrative_division( self, value ):
+        return self._set_address_field( u'administrative_division', value )
+
     class Admin(object):
         field_attributes = dict(
             street1 = dict( editable = True,
@@ -899,9 +1038,11 @@ class Addressable(object):
                             minimal_column_width = 50 ),
             city = dict( editable = True, 
                          delegate = delegates.Many2OneDelegate,
-                         target = City,
-                         actions = []),
-            zip_code = dict( editable = lambda o: o.city is not None and o.city.code == ''),
+                         target = City),
+            administrative_division = dict( editable = lambda o: o.city is not None and o.city.administrative_division is None,
+                                            delegate = delegates.Many2OneDelegate,
+                                            target = AdministrativeDivision),
+            zip_code = dict( editable = lambda o: o.city is not None and o.city.code is None),
             email = dict( editable = True, 
                           minimal_column_width = 20,
                           name = _('Email'),
@@ -961,7 +1102,7 @@ class PartyAddress( Entity, Addressable ):
                          'from_date', 'thru_date']
         form_size = ( 700, 200 )
         field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30),
-                                zip_code=dict(editable=lambda o: o.city is not None and o.city.code == ''))
+                                zip_code=dict(editable=lambda o: o.city is not None and o.city.code is None))
         
         def get_compounding_objects( self, party_address ):
             if party_address.address!=None:
@@ -982,7 +1123,7 @@ class AddressAdmin( PartyAddress.Admin ):
                                         nullable=False,
                                         delegate=delegates.Many2OneDelegate,
                                         target=City),
-                            zip_code = dict(editable=lambda o: o.city is not None and o.city.code == ''),
+                            zip_code = dict(editable=lambda o: o.city is not None and o.city.code is None),
                             )
         
     def get_depending_objects( self, party_address ):

@@ -319,7 +319,7 @@ class FormView(AbstractView, GuiContext):
             current_index, Qt.Orientation.Vertical, VerboseIdentifierRole
         ))
         if verbose_identifier is not None:
-            self.change_title(u'%s %s'%(self.title_prefix,verbose_identifier))
+            self.change_title(u'%s'%verbose_identifier)
         else:
             self.change_title(u'')
 

@@ -658,7 +658,7 @@ class SearchFilter(Action, AbstractModelFilter):
         return state
 
     @classmethod
-    def decorate_query(cls, query, value):
+    def decorate_query(cls, query, value, **kwargs):
         if value is not None:
             search_text, *search_strategies = value
             if search_text is not None and len(search_text.strip()) > 0:
