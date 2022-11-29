@@ -975,9 +975,9 @@ class AddNewObjectMixin(object):
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield from self.edit_object(new_object, admin)
+            yield from self.edit_object(new_object, model_context, admin)
 
-    def edit_object(self, new_object, admin):
+    def edit_object(self, new_object, model_context, admin):
         from camelot.view import action_steps
         yield action_steps.OpenFormView(new_object, admin)
 
@@ -1051,20 +1051,66 @@ class RemoveSelection(DeleteSelection):
 
 remove_selection = RemoveSelection()
 
-class AddNewProfile(AddNewObject):
+class EditProfileMixin:
+
+    def validate_profile(self, profile):
+        from camelot.view import action_steps
+        # Validate database settings
+        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
+        try:
+            #if not profile.dialect:
+            #    raise RuntimeError('No database dialect selected')
+            engine = profile.create_engine()
+            connection = engine.raw_connection()
+            cursor = connection.cursor()
+            cursor.close()
+            connection.close()
+        except Exception as e:
+            exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
+                                                     text = _('Verify driver, host and port or contact your system administrator'),
+                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            exception_box.informative_text = str(e)
+            yield exception_box
+            return False
+        # Validate media location
+        info = QtCore.QFileInfo(profile.media_location)
+        if not info.isReadable(): # or not profile.media_location:
+            yield action_steps.MessageBox( title = ugettext('Media location path is not accessible'),
+                                                     text = _('Verify that the path exists and it is readable or contact your system administrator'),
+                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            return False
+        if not info.isWritable():
+            yield action_steps.MessageBox( title = ugettext('Media location path is not writeable'),
+                                                     text = _('Verify that the path is writeable or contact your system administrator'),
+                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            return False
+        # Success
+        return True
+
+class AddNewProfile(AddNewObject, EditProfileMixin):
 
     name = 'add_new_profile'
 
-    def edit_object(self, new_object, admin):
+    def edit_object(self, new_object, model_context, admin):
         from camelot.view import action_steps
         from camelot.core.profile import Profile
         app_admin = admin.get_application_admin()
         profile_admin = app_admin.get_related_admin(Profile)
-        yield action_steps.ChangeObject(new_object, profile_admin)
+        while True:
+            try:
+                yield action_steps.ChangeObject(new_object, profile_admin)
+            except CancelRequest:
+                # Remove profile
+                model_context.proxy.remove(new_object)
+                yield action_steps.DeleteObjects([new_object])
+                return
+            is_valid = yield from self.validate_profile(new_object)
+            if is_valid:
+                break
 
 add_new_profile = AddNewProfile()
 
-class EditProfile(Action):
+class EditProfile(Action, EditProfileMixin):
     """Edit a profile and validate it."""
 
     shortcut = QtGui.QKeySequence.StandardKey.Open
@@ -1077,10 +1123,10 @@ class EditProfile(Action):
         from camelot.core.profile import Profile
         profile = model_context.get_object()
         profile_copy = self.copy_profile(profile)
+        app_admin = model_context.admin.get_application_admin()
+        profile_admin = app_admin.get_related_admin(Profile)
         while True:
             try:
-                app_admin = model_context.admin.get_application_admin()
-                profile_admin = app_admin.get_related_admin(Profile)
                 yield action_steps.ChangeObject(profile, profile_admin)
             except CancelRequest:
                 # Restore profile
@@ -1098,38 +1144,6 @@ class EditProfile(Action):
         for field in dataclasses.fields(Profile):
             setattr(to_profile, field.name, getattr(from_profile, field.name))
         return to_profile
-
-    def validate_profile(self, profile):
-        from camelot.view import action_steps
-        # Validate database settings
-        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
-        try:
-            engine = profile.create_engine()
-            connection = engine.raw_connection()
-            cursor = connection.cursor()
-            cursor.close()
-            connection.close()
-        except Exception as e:
-            exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
-                                                     text = _('Verify driver, host and port or contact your system administrator'),
-                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
-            exception_box.informative_text = str(e)
-            yield exception_box
-            return False
-        # Validate media location
-        info = QtCore.QFileInfo(profile.media_location)
-        if not info.isReadable():
-            yield action_steps.MessageBox( title = ugettext('Media location path is not accessible'),
-                                                     text = _('Verify that the path exists and it is readable or contact your system administrator'),
-                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
-            return False
-        if not info.isWritable():
-            yield action_steps.MessageBox( title = ugettext('Media location path is not writeable'),
-                                                     text = _('Verify that the path is writeable or contact your system administrator'),
-                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
-            return False
-        # Success
-        return True
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
