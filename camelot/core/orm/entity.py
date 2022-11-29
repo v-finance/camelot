@@ -219,7 +219,12 @@ class EntityMeta( DeclarativeMeta ):
             if entity_args is not None:
                 discriminator = entity_args.get('discriminator')
                 if discriminator is not None:
-                    assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator must be a sql.schema.Column or an InstrumentedAttribute'
+                    subdiscriminator = None
+                    if isinstance(discriminator, tuple):
+                        assert len(discriminator) == 2, 'Discriminator definition must be an instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`,'
+                        'either singular or contained within a binary tuple together with a `orm.properties.RelationshipProperty` secondary discriminator'
+                        discriminator, subdiscriminator = discriminator
+                    assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
                     discriminator_col = discriminator
                     if isinstance(discriminator, orm.attributes.InstrumentedAttribute):
                         discriminator_col = discriminator.prop.columns[0]
@@ -229,6 +234,8 @@ class EntityMeta( DeclarativeMeta ):
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
+                    if subdiscriminator is not None:
+                        assert isinstance(subdiscriminator, orm.properties.RelationshipProperty), 'Secondary discriminator must be an instance of `orm.properties.RelationshipProperty`'
 
                 ranked_by = entity_args.get('ranked_by')
                 if ranked_by is not None:
@@ -357,6 +364,7 @@ class EntityMeta( DeclarativeMeta ):
     def get_cls_discriminator(cls):
         discriminator = cls._get_entity_arg('discriminator')
         if discriminator is not None:
+            discriminator = discriminator[0] if isinstance(discriminator, tuple) else discriminator
             if isinstance(discriminator, sql.schema.Column):
                 return getattr(cls, discriminator.key)
             return discriminator
