@@ -205,7 +205,6 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         table_widget = editors.One2ManyEditor(
             admin_route = admin_route,
             parent = self,
-            create_inline = True,
             columns=columns,
             # assume all actions are list actions and no field action,
             list_actions=action_routes,

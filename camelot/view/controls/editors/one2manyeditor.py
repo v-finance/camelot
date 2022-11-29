@@ -47,9 +47,6 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
     :param admin: the Admin interface for the objects on the one side of the
     relation
 
-    :param create_inline: if False, then a new entity will be created within a
-    new window, if True, it will be created inline
-
     :param column_width: the width of the editor in number of characters
 
     :param rows: minimum number of rows visible
@@ -61,8 +58,6 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
     def __init__(self,
                  parent=None,
                  admin_route=None,
-                 create_inline=False,
-                 direction='onetomany',
                  column_width=None,
                  columns=[],
                  rows=5,
@@ -94,8 +89,6 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         model.setParent(self)
         table.setModel(model)
         self.admin_route = admin_route
-        self.direction = direction
-        self.create_inline = create_inline
         layout.addWidget(table)
         toolbar = QtWidgets.QToolBar(self)
         toolbar.setIconSize(QtCore.QSize(16, 16))

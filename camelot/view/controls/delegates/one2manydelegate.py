@@ -53,8 +53,6 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
   """
 
     admin_route: Optional[Route] = None
-    create_inline: bool = False
-    direction: str = 'onetomany'
     column_width: Optional[int] = None
     columns: List[str] = field(default_factory=list)
     rows: int = 5
@@ -85,8 +83,7 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     def createEditor( self, parent, option, index ):
         logger.debug( 'create a one2many editor' )
-        editor = editors.One2ManyEditor(parent, self.admin_route, self.create_inline,
-                                        self.direction, self.column_width, self.columns,
+        editor = editors.One2ManyEditor(parent, self.admin_route, self.column_width, self.columns,
                                         self.rows, self.action_routes, self.list_actions,
                                         self.list_action)
         editor.editingFinished.connect(self.commitAndCloseEditor)
