@@ -1102,6 +1102,9 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
                     return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day, obj.hour, obj.minute, obj.second]])
                 if isinstance(obj, Constant.date.composite_type):
                     return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day]])
+                if isinstance(obj, Constant.decimal.composite_type):
+                    # Normalize decimals to remove trailing zeros, to allow equality comparisons between named bindings.
+                    return (*base_name, str(obj.normalize()))
                 return (*base_name, str(obj))
         if isinstance(obj, Entity):
             primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
