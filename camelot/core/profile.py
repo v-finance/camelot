@@ -169,7 +169,7 @@ class Profile:
         related_toolbar_actions = [
             vf_delete_selection,
             list_action.duplicate_selection,
-            list_action.add_new_object
+            list_action.add_new_profile
         ]
         list_action = list_action.edit_profile
         field_attributes = {

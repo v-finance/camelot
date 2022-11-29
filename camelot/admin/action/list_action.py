@@ -975,7 +975,11 @@ class AddNewObjectMixin(object):
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView(new_object, admin)
+            yield from self.edit_object(new_object, admin)
+
+    def edit_object(self, new_object, admin):
+        from camelot.view import action_steps
+        yield action_steps.OpenFormView(new_object, admin)
 
     def get_modes(self, model_context):
         """
@@ -1046,6 +1050,19 @@ class RemoveSelection(DeleteSelection):
         return True
 
 remove_selection = RemoveSelection()
+
+class AddNewProfile(AddNewObject):
+
+    name = 'add_new_profile'
+
+    def edit_object(self, new_object, admin):
+        from camelot.view import action_steps
+        from camelot.core.profile import Profile
+        app_admin = admin.get_application_admin()
+        profile_admin = app_admin.get_related_admin(Profile)
+        yield action_steps.ChangeObject(new_object, profile_admin)
+
+add_new_profile = AddNewProfile()
 
 class EditProfile(Action):
     """Edit a profile and validate it."""
