@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-
+from dataclasses import dataclass
 
 from camelot.core.qt import Qt
 from camelot.view.controls import editors
@@ -35,9 +35,12 @@ from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 
+@dataclass
 class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
-    editor = editors.ColorEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.ColorEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

@@ -27,16 +27,21 @@
 #
 #  ============================================================================
 
-
+from dataclasses import dataclass
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
+@dataclass
 class LabelDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate to display an attribute as a label
     """
     
-    editor = editors.LabelEditor
+    text: str = '<loading>'
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.LabelEditor
 
 
 

@@ -80,8 +80,7 @@ class DateTimeEditor(CustomEditor):
                  parent,
                  editable=True,
                  nullable=True,
-                 field_name = 'datetime',
-                 **kwargs):
+                 field_name = 'datetime'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )        
@@ -90,7 +89,7 @@ class DateTimeEditor(CustomEditor):
         self.nullable = nullable
 
         layout = QtWidgets.QHBoxLayout()
-        self.dateedit = DateEditor(self, editable=editable, nullable=nullable, **kwargs)
+        self.dateedit = DateEditor(self, nullable=nullable)
         self.dateedit.editingFinished.connect( self.editing_finished )
         layout.addWidget(self.dateedit, 1)
 

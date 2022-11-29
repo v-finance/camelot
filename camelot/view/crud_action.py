@@ -149,17 +149,26 @@ class ChangeSelection(Action):
                 model_context.current_row = mode['current_row']
             else:
                 logger.error('Invalid current_row_id used for selection')
-        # validfate & set selected rows
+        # validate & set selected rows
         model_context.selected_rows = []
         if len(mode['selected_rows']) == len(mode['selected_rows_ids']):
             for i in range(len(mode['selected_rows'])):
                 row_range = mode['selected_rows'][i]
-                if row_range[0] == -1 or row_range[1] == -1:
-                    continue
                 row_range_ids = mode['selected_rows_ids'][i]
-                begin_obj = model_context.get_object(row_range[0])
-                end_obj = model_context.get_object(row_range[1])
-                if id(begin_obj) == row_range_ids[0] and id(end_obj) == row_range_ids[1]:
+                # -1 is a sentinal value which can be used to construct python slice like selections.
+                begin_valid = True
+                if row_range[0] == -1:
+                    row_range[0] = 0
+                else:
+                    begin_obj = model_context.get_object(row_range[0])
+                    begin_valid = id(begin_obj) == row_range_ids[0]
+                end_valid = True
+                if row_range[1] == -1:
+                    row_range[1] = len(model_context.proxy) - 1
+                else:
+                    end_obj = model_context.get_object(row_range[1])
+                    end_valid = id(end_obj) == row_range_ids[1]
+                if begin_valid and end_valid:
                     model_context.selected_rows.append(row_range)
                 else:
                     logger.error('Invalid selected_rows_ids used for selection')
@@ -168,7 +177,7 @@ class ChangeSelection(Action):
         model_context.current_field_name = mode['current_field_name']
         model_context.collection_count = len(model_context.proxy)
         model_context.selection_count = 0
-        for row_range in mode['selected_rows']:
+        for row_range in model_context.selected_rows:
             model_context.selection_count += (row_range[1] - row_range[0]) + 1
         action_states = []
         for action_route in mode['action_routes']:

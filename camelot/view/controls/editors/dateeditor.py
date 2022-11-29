@@ -48,11 +48,9 @@ class DateEditor(CustomEditor):
     special_date_icon = FontIcon('calendar-alt') # 'tango/16x16/apps/office-calendar.png'
     
     def __init__(self, parent = None,
-                       editable = True,
-                       nullable = True, 
-                       field_name = 'date',
+                       nullable = True,
                        validator = DateValidator(),
-                       **kwargs):
+                       field_name = 'date'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )

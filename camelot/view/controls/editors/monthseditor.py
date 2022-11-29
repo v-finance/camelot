@@ -41,13 +41,12 @@ class MonthsEditor(CustomEditor):
     composite months and years editor
     """
 
-    def __init__(self, parent=None,
-                 editable=True,
-                 field_name='months',
+    def __init__(self,
+                 parent=None,
                  # Min & max, defined in years.
                  minimum = 0,
                  maximum = 10000,
-                 **kw):
+                 field_name='months'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )
