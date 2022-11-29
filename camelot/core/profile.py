@@ -51,6 +51,8 @@ from camelot.core.conf import settings
 from camelot.core.dataclasses import dataclass
 from camelot.admin.dataclass_admin import DataclassAdmin
 from camelot.view.controls import delegates
+from camelot.admin.action import list_action
+from vfinance.admin.action.list_action import vf_delete_selection
 
 
 LOGGER = logging.getLogger('camelot.core.profile')
@@ -162,6 +164,11 @@ class Profile:
     class Admin(DataclassAdmin):
         list_display = ['name', 'dialect', 'host', 'port', 'database']
         form_display = ['name', 'dialect', 'host', 'port', 'database', 'user', 'password', 'media_location', 'locale_language']
+        related_toolbar_actions = [
+            vf_delete_selection,
+            list_action.duplicate_selection,
+            list_action.add_new_object
+        ]
         field_attributes = {
             'dialect': {
                 'choices': [(name,name) for i, name in enumerate([name for _importer, name, is_package in pkgutil.iter_modules(sqlalchemy.dialects.__path__)])]

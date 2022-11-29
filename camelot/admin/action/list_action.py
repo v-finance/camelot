@@ -941,7 +941,10 @@ class AddNewObjectMixin(object):
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
         """
-        new_object = admin.entity(_session=session)
+        if issubclass(admin.entity, Entity):
+            new_object = admin.entity(_session=session)
+        else:
+            new_object = admin.entity()
         admin.add(new_object)
         # defaults might depend on object being part of a collection
         self.get_proxy(model_context, admin).append(admin.get_subsystem_object(new_object))
