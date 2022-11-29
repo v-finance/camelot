@@ -43,6 +43,7 @@ import functools
 import logging
 import pkgutil
 import sqlalchemy.dialects
+from typing import Optional
 
 
 from .qt import QtCore, QtWidgets, variant_to_py, py_to_variant
@@ -72,7 +73,7 @@ class Profile:
     """
     
     name: str = ''
-    dialect: str = ''
+    dialect: Optional[str] = None
     host: str = ''
     port: str = ''
     database: str = ''
