@@ -32,14 +32,17 @@ import datetime
 import enum
 import logging
 import itertools
+import dataclasses
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import QtGui
+from ...core.qt import QtCore, QtGui, QtWidgets
 from .base import Action, Mode, RenderHint
 from camelot.core.exception import UserException
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
+from camelot.view.action_runner import CancelRequest
+
 
 import xlsxwriter
 
@@ -1044,3 +1047,84 @@ class RemoveSelection(DeleteSelection):
         return True
 
 remove_selection = RemoveSelection()
+
+class EditProfile(Action):
+    """Edit a profile and validate it."""
+
+    shortcut = QtGui.QKeySequence.StandardKey.Open
+    icon = Icon('folder')
+    tooltip = _('Edit Profile')
+    name = 'edit_profile'
+
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        profile = model_context.get_object()
+        profile_copy = self.copy_profile(profile)
+        while True:
+            try:
+                yield action_steps.ChangeObject(profile, model_context.admin)
+            except CancelRequest:
+                # Restore profile
+                self.copy_profile(profile_copy, profile)
+                yield action_steps.UpdateObjects([profile])
+                return
+            is_valid = yield from self.validate_profile(profile)
+            if is_valid:
+                break
+
+    def copy_profile(self, from_profile, to_profile=None):
+        from camelot.core.profile import Profile
+        if to_profile is None:
+            to_profile = Profile()
+        for field in dataclasses.fields(Profile):
+            setattr(to_profile, field.name, getattr(from_profile, field.name))
+        return to_profile
+
+    def validate_profile(self, profile):
+        from camelot.view import action_steps
+        # Validate database settings
+        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
+        if profile.port:
+            try:
+                int(profile.port)
+            except ValueError as e:
+                exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database'),
+                                                         text = _('Port must be an integer (i.e. number)'),
+                                                         standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+                exception_box.informative_text = str(e)
+                yield exception_box
+                return False
+        engine = profile.create_engine()
+        try:
+            connection = engine.raw_connection()
+            cursor = connection.cursor()
+            cursor.close()
+            connection.close()
+        except Exception as e:
+            exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
+                                                     text = _('Verify driver, host and port or contact your system administrator'),
+                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            exception_box.informative_text = str(e)
+            yield exception_box
+            return False
+        # Validate media location
+        info = QtCore.QFileInfo(profile.media_location)
+        if not info.isReadable():
+            yield action_steps.MessageBox( title = ugettext('Media location path is not accessible'),
+                                                     text = _('Verify that the path exists and it is readable or contact your system administrator'),
+                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            return False
+        if not info.isWritable():
+            yield action_steps.MessageBox( title = ugettext('Media location path is not writeable'),
+                                                     text = _('Verify that the path is writeable or contact your system administrator'),
+                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            return False
+        # Success
+        return True
+
+    def get_state( self, model_context ):
+        state = Action.get_state(self, model_context)
+        state.verbose_name = str()
+        return state
+
+edit_profile = EditProfile()

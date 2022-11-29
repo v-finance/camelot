@@ -169,6 +169,7 @@ class Profile:
             list_action.duplicate_selection,
             list_action.add_new_object
         ]
+        list_action = list_action.edit_profile
         field_attributes = {
             'dialect': {
                 'choices': [(name,name) for i, name in enumerate([name for _importer, name, is_package in pkgutil.iter_modules(sqlalchemy.dialects.__path__)])]

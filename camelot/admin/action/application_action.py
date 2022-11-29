@@ -171,9 +171,11 @@ class SelectProfileMixin:
                     while selected_profile is new_profile:
                         profile_admin = app_admin.get_related_admin(Profile)
                         proxy = profile_admin.get_proxy(profiles)
-                        yield action_steps.ChangeObjects(profiles, profile_admin, proxy)
-                        # FIXME: validate profiles (i.e. database connection)
-                        profile_store.write_profiles(proxy.get_model())
+                        try:
+                            yield action_steps.ChangeObjects(profiles, profile_admin, proxy)
+                            profile_store.write_profiles(proxy.get_model())
+                        except CancelRequest:
+                            pass
                         selected_profile = None
                 elif selected_profile is save_profiles:
                     file_name = yield action_steps.SaveFile(file_name_filter=cls.file_name_filter)
