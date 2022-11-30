@@ -219,11 +219,11 @@ class EntityMeta( DeclarativeMeta ):
             if entity_args is not None:
                 discriminator = entity_args.get('discriminator')
                 if discriminator is not None:
-                    subdiscriminator = None
+                    secondary_discriminator = None
                     if isinstance(discriminator, tuple):
                         assert len(discriminator) == 2, 'Discriminator definition must be an instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`,'
                         'either singular or contained within a binary tuple together with a `orm.properties.RelationshipProperty` secondary discriminator'
-                        discriminator, subdiscriminator = discriminator
+                        discriminator, secondary_discriminator = discriminator
                     assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
                     discriminator_col = discriminator
                     if isinstance(discriminator, orm.attributes.InstrumentedAttribute):
@@ -234,8 +234,8 @@ class EntityMeta( DeclarativeMeta ):
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
-                    if subdiscriminator is not None:
-                        assert isinstance(subdiscriminator, orm.properties.RelationshipProperty), 'Secondary discriminator must be an instance of `orm.properties.RelationshipProperty`'
+                    if secondary_discriminator is not None:
+                        assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminator must be an instance of `orm.properties.RelationshipProperty`'
 
                 ranked_by = entity_args.get('ranked_by')
                 if ranked_by is not None:
@@ -362,20 +362,31 @@ class EntityMeta( DeclarativeMeta ):
                 return cls_.__entity_args__[key]
     
     def get_cls_discriminator(cls):
+        """
+        Retrieve the clas
+        """
         discriminator = cls._get_entity_arg('discriminator')
         if discriminator is not None:
-            discriminator = discriminator[0] if isinstance(discriminator, tuple) else discriminator
-            if isinstance(discriminator, sql.schema.Column):
-                return getattr(cls, discriminator.key)
-            return discriminator
+            discriminator = discriminator if isinstance(discriminator, tuple) else (discriminator,)
+            discriminator_cols = [
+                getattr(cls, discriminator_col.key) \
+                if isinstance(discriminator_col, (sql.schema.Column, orm.properties.RelationshipProperty)) \
+                else discriminator_col for discriminator_col in discriminator
+            ]
+            return tuple(discriminator_cols)
 
     def set_discriminator_value(cls, entity_instance, discriminator_value):
         """Set the given entity instance's discriminator with the provided discriminator value."""
         assert isinstance(entity_instance, cls)
         discriminator = cls.get_cls_discriminator()
         if discriminator is not None:
-            assert discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(discriminator_value)
-            discriminator.__set__(entity_instance, discriminator_value)
+            discriminator_values = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
+            assert len(discriminator) == len(discriminator_values),\
+               'The dimension of the provided discriminator values ({}) does not match that of the registered discriminator ({}).'.format(
+                   len(discriminator_values), len(discriminator))
+            assert discriminator_values[0] in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(discriminator_values[0])
+            for discriminator_prop, discriminator_value in zip(discriminator, discriminator_values):
+                discriminator_prop.__set__(entity_instance, discriminator_value)
 
     def get_ranked_by(cls):
         ranked_by = cls._get_entity_arg('ranked_by')
