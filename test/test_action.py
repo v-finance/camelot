@@ -222,12 +222,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         self.grab_widget(dialog)
         self.assertTrue(dialog)
 
-    def test_edit_profile(self):
-        step = yield EditProfiles([], '')
-        dialog = EditProfiles.render(self.gui_context, step)
-        dialog.show()
-        self.grab_widget(dialog)
-
     def test_open_file( self ):
         stream = io.BytesIO(b'1, 2, 3, 4')
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )

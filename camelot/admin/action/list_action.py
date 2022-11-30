@@ -1053,6 +1053,10 @@ remove_selection = RemoveSelection()
 
 class EditProfileMixin:
 
+    database_error_title = ugettext('Could not connect to database, please check host and port')
+    media_location_not_readable_title = ugettext('Media location path is not accessible')
+    media_location_not_writeable_title = ugettext('Media location path is not writeable')
+
     def validate_profile(self, profile):
         from camelot.view import action_steps
         # Validate database settings
@@ -1066,7 +1070,7 @@ class EditProfileMixin:
             cursor.close()
             connection.close()
         except Exception as e:
-            exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
+            exception_box = action_steps.MessageBox( title = self.database_error_title,
                                                      text = _('Verify driver, host and port or contact your system administrator'),
                                                      standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
             exception_box.informative_text = str(e)
@@ -1075,14 +1079,14 @@ class EditProfileMixin:
         # Validate media location
         info = QtCore.QFileInfo(profile.media_location)
         if not info.isReadable(): # or not profile.media_location:
-            yield action_steps.MessageBox( title = ugettext('Media location path is not accessible'),
-                                                     text = _('Verify that the path exists and it is readable or contact your system administrator'),
-                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            yield action_steps.MessageBox( title = self.media_location_not_readable_title,
+                                                   text = _('Verify that the path exists and it is readable or contact your system administrator'),
+                                                   standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
             return False
         if not info.isWritable():
-            yield action_steps.MessageBox( title = ugettext('Media location path is not writeable'),
-                                                     text = _('Verify that the path is writeable or contact your system administrator'),
-                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            yield action_steps.MessageBox( title = self.media_location_not_writeable_title,
+                                                   text = _('Verify that the path is writeable or contact your system administrator'),
+                                                   standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
             return False
         # Success
         return True
