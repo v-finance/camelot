@@ -40,12 +40,12 @@ import json
 
 
 
-from ..admin.action.base import MetaActionStep
+from ..admin.action.base import MetaActionStep, Action
 from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..view.action_runner import action_runner, GuiRun
 from ..view.model_process import ModelProcess
-from ..view import model_thread
+from ..view import model_thread, action_steps
 from ..view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 
 has_programming_error = False
@@ -112,6 +112,7 @@ class ActionMixinCase(object):
 
     # specify a model context name in each test case
     model_context_name = None
+    state_register = None
 
     @classmethod
     def get_state(cls, action, gui_context):
@@ -120,23 +121,17 @@ class ActionMixinCase(object):
         the result.
         """
 
-        class StateRegister(QtCore.QObject):
+        cls.state_register = None
 
-            def __init__(self):
-                super(StateRegister, self).__init__()
-                self.state = None
+        class GetActionState(Action):
 
-            @QtCore.qt_slot(object)
-            def set_state(self, state):
-                self.state = state
+            def model_run(self, model_context, name):
+                model_context = initial_naming_context.resolve(cls.model_context_name)
+                cls.state_register = action.get_state(model_context)
+                yield action_steps.UpdateProgress('Got state')
 
-        model_context = initial_naming_context.resolve(cls.model_context_name)
-        state_register = StateRegister()
-        cls.thread.post(
-            action.get_state, state_register.set_state, args=(model_context,)
-        )
-        cls.process()
-        return state_register.state
+        cls.gui_run(GetActionState())
+        return cls.state_register
 
     @classmethod
     def gui_run(cls,
@@ -194,8 +189,6 @@ class RunningThreadCase(unittest.TestCase, ActionMixinCase):
     def process(cls):
         """Wait until all events are processed and the queues of the model thread are empty"""
         action_runner.wait_for_completion()
-        cls.thread.wait_on_work()
-        QtCore.QCoreApplication.instance().processEvents()
 
 class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     """
@@ -217,5 +210,3 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     def process(cls):
         """Wait until all events are processed and the queues of the model thread are empty"""
         action_runner.wait_for_completion()
-        cls.thread.wait_on_work()
-        QtCore.QCoreApplication.instance().processEvents()
