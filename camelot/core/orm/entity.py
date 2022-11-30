@@ -92,7 +92,7 @@ class EntityMeta( DeclarativeMeta ):
        This metaclass will also provide entity classes with the `get_cls_discriminator` method, which returns the registered discriminator property,
        and `set_discriminator_value` to set the discriminator value one a provided entity instance.
        In unison with discriminator entity argument, the metaclass also imparts an entity class with the ability to register and later retrieve classes for a specify discriminator type or type group.
-       These registered classes are stored in the __cls_for_type__ class argument and registered classes can be retrieved for a specific type (group) with the 'get_cls_by_type' method.
+       These registered classes are stored in the __cls_for_type__ class argument and registered classes can be retrieved for a specific type (group) with the 'get_cls_by_discriminator' method.
        See its documentation for more details.
 
        All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
@@ -317,44 +317,60 @@ class EntityMeta( DeclarativeMeta ):
             if isinstance(polymorphic_on_col.type, Enumeration):
                 return polymorphic_on_col.type.enum
 
-    def get_cls_by_type(cls, _type):
+    def get_cls_by_discriminator(cls, discriminator_value):
         """
-        Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
-        This can be the class that is specifically registered for the given type or type group, or a possible registered default class otherwise.
-        Providing no type will also return the default registered class if present.
+        Retrieve the corresponding class for the given discriminator value if one is registered on this class or its base.
+        This can be the class that is specifically registered for the given discriminator value, or a possible registered default class otherwise.
+        Providing no value will also return the default registered class if present.
         Additionally, in case of a polymorphic base class, passing one of the polymorphic identities will also retrieve
         the entity corresponding to the identity based on the polymorphic map.
 
-        :param _type:  either None which will lookup a possible registered default class, or a member of a sqlalchemy.util.OrderedProperties instance.
-                       If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
-                       __type_groups__, that get auto-set in case the set types are grouped.
-        :return:       the class that is registered for the given type, which inherits from the class where the allowed types are registered on, or the class itself if not.
-                       In case the given type is:
-                        * None; the registered default class will be returned, if present.
-                        * a member of the allowed __type_groups__; a possible registered class for the type group will be returned, or the registered default class otherwise.
-                        * a member of the allowed __types__; a possible registered class for the type will be returned,
-                          otherwise a possible registered class for the group of the type, if applicable, and otherwise the registered default class.
-                       Examples:
-                       | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
-                       | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
-                       | BaseClass.get_cls_by_type(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
-        :raises :      an AttributeException when the given argument is not a valid type
+        :param discriminator_value: can be one of either following values:
+          * None: will lookup a possible registered default class
+          * a member of a sqlalchemy.util.OrderedProperties instance, in case of a singular primary discriminator.
+            If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
+            __type_groups__, that get auto-set in case the set types are grouped.
+          * a tuple containing multi-level discriminator values, with a primary discriminator value of the type above,
+            and a secondary Entity class discriminator value.
+        :return: the class that is registered for the given discriminator value, which inherits from the class where the discriminator is registered on, or the class itself if not.
+                 In case the discriminator value is:
+                   * None; the registered default class will be returned, if present.
+                   * a member of the allowed __type_groups__; a possible registered class for the type group will be returned, or the registered default class otherwise.
+                   * a member of the allowed __types__; a possible registered class for the type will be returned,
+                     otherwise a possible registered class for the group of the type, if applicable, and otherwise the registered default class.
+                   * a tuple combining a primar
+                 Examples:
+                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_type.name) == CertainTypeClass
+                  | BaseClass.get_cls_by_discriminator(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
+                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
+        :raises : an AttributeException when the given argument is not a valid type
         """
-        if 'polymorphic_on' in cls.__mapper_args__ and _type in cls.__mapper__.polymorphic_map:
-            return cls.__mapper__.polymorphic_map[_type].entity
+        discriminator_values = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
+        primary_discriminator = discriminator_values[0]
+        if 'polymorphic_on' in cls.__mapper_args__ and primary_discriminator in cls.__mapper__.polymorphic_map:
+            return cls.__mapper__.polymorphic_map[primary_discriminator].entity
         if cls.__types__ is not None:
+            discriminator = cls.get_cls_discriminator()
+            assert len(discriminator) == len(discriminator_values),\
+               'The dimension of the provided discriminator values ({}) does not match that of the registered discriminator ({}).'.format(
+                   len(discriminator_values), len(discriminator))
             groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
             types = cls.__types__
-            if _type is None or _type in types.__members__ or _type in groups:
-                group = _type
-                if groups and _type in types.__members__ and types[_type].grouped_by is not None:
-                    group = types[_type].grouped_by.name
+            if primary_discriminator is None or primary_discriminator in types.__members__ or primary_discriminator in groups:
+                group = primary_discriminator
+                if groups and primary_discriminator in types.__members__ and types[primary_discriminator].grouped_by is not None:
+                    group = types[primary_discriminator].grouped_by.name
                 
-                return cls.__cls_for_type__.get(_type) or \
-                       cls.__cls_for_type__.get(group) or \
-                       cls.__cls_for_type__.get(None)
-            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
-            raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
+                result = cls.__cls_for_type__.get(primary_discriminator) or \
+                         cls.__cls_for_type__.get(group) or \
+                         cls.__cls_for_type__.get(None)
+                if len(discriminator) > 1:
+                    assert isinstance(result, dict)
+                    return result.get(discriminator_values[1])
+                return result
+
+            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
+            raise Exception("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
     
     def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
