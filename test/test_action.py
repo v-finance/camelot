@@ -33,7 +33,6 @@ from camelot.view import action_steps, import_utils, utils, gui_naming_context
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
-from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls import delegates
 from camelot.view.controls.formview import FormView
