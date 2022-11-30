@@ -354,9 +354,14 @@ class EntityMeta( DeclarativeMeta ):
                 if groups and primary_discriminator in types.__members__ and types[primary_discriminator].grouped_by is not None:
                     group = types[primary_discriminator].grouped_by.name
 
-                secondary_discriminators = [secondary_discriminator.__class__ for secondary_discriminator in secondary_discriminators]
+                # Support passed secondary discriminator arguments both on the instance as the class level.
+                secondary_discriminators = [
+                    secondary_discriminator.__class__ if not isinstance(secondary_discriminator, EntityMeta) \
+                    else secondary_discriminator for secondary_discriminator in secondary_discriminators]
                 return cls.__cls_for_type__.get((primary_discriminator, *secondary_discriminators)) or \
+                       cls.__cls_for_type__.get((primary_discriminator,)) or \
                        cls.__cls_for_type__.get((group, *secondary_discriminators)) or \
+                       cls.__cls_for_type__.get((group,)) or \
                        cls.__cls_for_type__.get(None)
 
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
