@@ -957,6 +957,8 @@ class AddNewObjectMixin(object):
             raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin, mode)
+        # Deduct admin again as it may have gotten secondary discriminators set.
+        admin = self.get_admin(model_context, admin.get_discriminator_value(new_object))
         subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
