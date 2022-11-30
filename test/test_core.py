@@ -974,8 +974,9 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (0,               ('constant', 'int', '0')),
             (-1,              ('constant', 'int', '-1')),
             (Decimal('-2.1'), ('constant', 'decimal', '-2.1')),
-            (Decimal('0.0'),  ('constant', 'decimal', '0.0')),
+            (Decimal('0.0'),  ('constant', 'decimal', '0')), # Should remove trailing zeros.
             (Decimal('3.5'),  ('constant', 'decimal', '3.5')),
+            (Decimal('4.7500'),('constant', 'decimal', '4.75')),
             (obj1,            ('object', str(id(obj1)))),
             (obj2,            ('object', str(id(obj2)),)),
             (entity1,         ('entity', 'organization', str(entity1.id))),
