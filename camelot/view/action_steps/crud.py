@@ -139,8 +139,8 @@ class SetColumns(ActionStep):
             elif issubclass(fa['delegate'], delegates.MonthsDelegate):
                 attrs = self.filter_attributes(fa, ['minimum', 'maximum'])
             elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
-                attrs = self.filter_attributes(fa, ['admin_route', 'create_inline', 'direction', 'column_width',
-                                                    'columns', 'rows', 'action_routes', 'list_actions', 'list_action'])
+                attrs = self.filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
+                                                    'action_routes', 'list_actions', 'list_action'])
             elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
                 attrs = self.filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes'])
             elif issubclass(fa['delegate'], delegates.TextEditDelegate):

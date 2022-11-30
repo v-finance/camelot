@@ -33,7 +33,6 @@ from camelot.view import action_steps, import_utils, utils, gui_naming_context
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
-from camelot.view.action_steps.profile import EditProfiles
 from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls import delegates
 from camelot.view.controls.formview import FormView
@@ -221,12 +220,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         dialog = SelectItem.render(step[1])
         self.grab_widget(dialog)
         self.assertTrue(dialog)
-
-    def test_edit_profile(self):
-        step = yield EditProfiles([], '')
-        dialog = EditProfiles.render(self.gui_context, step)
-        dialog.show()
-        self.grab_widget(dialog)
 
     def test_open_file( self ):
         stream = io.BytesIO(b'1, 2, 3, 4')
@@ -695,7 +688,7 @@ class ApplicationActionsCase(
         profile_case.setUp()
         profile_store = profile_case.test_profile_store()
         action = application_action.SelectProfileMixin()
-        generator = action.select_profile(profile_store)
+        generator = action.select_profile(profile_store, app_admin)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
                 generator.send(step.items[1].value)

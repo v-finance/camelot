@@ -197,6 +197,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   action_routes,
                   invalid_rows,
                   action_states,
+                  list_action,
                   parent = None,
                   flags = QtCore.Qt.WindowType.Window ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
@@ -204,10 +205,10 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         table_widget = editors.One2ManyEditor(
             admin_route = admin_route,
             parent = self,
-            create_inline = True,
             columns=columns,
             # assume all actions are list actions and no field action,
             list_actions=action_routes,
+            list_action=list_action,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -395,6 +396,7 @@ class ChangeObjects(UpdateTableView):
             tuple(step['admin_route']), step['columns'],
             [RouteWithRenderHint(tuple(rwrh['route']), RenderHint(rwrh['render_hint'])) for rwrh in step['actions']],
             set(step['invalid_rows']), step['action_states'],
+            step['list_action']
         )
         dialog.setWindowTitle(step['window_title'])
         dialog.set_banner_title(step['title'])
