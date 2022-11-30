@@ -219,23 +219,21 @@ class EntityMeta( DeclarativeMeta ):
             if entity_args is not None:
                 discriminator = entity_args.get('discriminator')
                 if discriminator is not None:
-                    secondary_discriminator = None
-                    if isinstance(discriminator, tuple):
-                        assert len(discriminator) == 2, 'Discriminator definition must be an instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`,'
-                        'either singular or contained within a binary tuple together with a `orm.properties.RelationshipProperty` secondary discriminator'
-                        discriminator, secondary_discriminator = discriminator
-                    assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
-                    discriminator_col = discriminator
-                    if isinstance(discriminator, orm.attributes.InstrumentedAttribute):
-                        discriminator_col = discriminator.prop.columns[0]
+                    (primary_discriminator, *secondary_discriminators) = discriminator if isinstance(discriminator, tuple) else (discriminator,)
+                    assert isinstance(primary_discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)),\
+                           'Primary discriminator definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
+                    discriminator_col = primary_discriminator
+                    if isinstance(primary_discriminator, orm.attributes.InstrumentedAttribute):
+                        discriminator_col = primary_discriminator.prop.columns[0]
                     assert isinstance(discriminator_col.type, Enumeration), 'Discriminator column must be of type Enumeration'
                     assert isinstance(discriminator_col.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
                     dict_['__types__'] = discriminator_col.type.enum
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
                     dict_['__cls_for_type__'] = dict()
-                    if secondary_discriminator is not None:
-                        assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminator must be an instance of `orm.properties.RelationshipProperty`'
+                    assert len(secondary_discriminators) <= 1, 'Only a single secondary discriminator is supported'
+                    for secondary_discriminator in secondary_discriminators:
+                        assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must instances of `orm.properties.RelationshipProperty`'
 
                 ranked_by = entity_args.get('ranked_by')
                 if ranked_by is not None:
@@ -345,33 +343,24 @@ class EntityMeta( DeclarativeMeta ):
                   | BaseClass.get_cls_by_discriminator(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
         :raises : an AttributeException when the given argument is not a valid type
         """
-        discriminator_values = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
-        primary_discriminator = discriminator_values[0]
+        (primary_discriminator, *secondary_discriminators) = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
         if 'polymorphic_on' in cls.__mapper_args__ and primary_discriminator in cls.__mapper__.polymorphic_map:
             return cls.__mapper__.polymorphic_map[primary_discriminator].entity
         if cls.__types__ is not None:
-            discriminator = cls.get_cls_discriminator()
-            assert len(discriminator) == len(discriminator_values),\
-               'The dimension of the provided discriminator values ({}) does not match that of the registered discriminator ({}).'.format(
-                   len(discriminator_values), len(discriminator))
             groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
             types = cls.__types__
             if primary_discriminator is None or primary_discriminator in types.__members__ or primary_discriminator in groups:
                 group = primary_discriminator
                 if groups and primary_discriminator in types.__members__ and types[primary_discriminator].grouped_by is not None:
                     group = types[primary_discriminator].grouped_by.name
-                
-                result = cls.__cls_for_type__.get(primary_discriminator) or \
-                         cls.__cls_for_type__.get(group) or \
-                         cls.__cls_for_type__.get(None)
-                if len(discriminator) > 1:
-                    assert isinstance(result, dict)
-                    return result.get(discriminator_values[1])
-                return result
+
+                return cls.__cls_for_type__.get((primary_discriminator, *secondary_discriminators)) or \
+                       cls.__cls_for_type__.get((group, *secondary_discriminators)) or \
+                       cls.__cls_for_type__.get(None)
 
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
-    
+
     def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
             if hasattr(cls_, '__entity_args__') and key in cls_.__entity_args__:
