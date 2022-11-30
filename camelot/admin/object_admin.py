@@ -1124,11 +1124,15 @@ be specified using the verbose_name attribute.
     def get_subsystem_object(self, obj):
         """Return the given object's applicable subsystem object."""
         return obj
-    
+
+    def get_discriminator_value(self, obj):
+        """return the given object's discriminator value."""
+        pass
+
     def set_discriminator_value(self, obj, discriminator_value):
         """Set the given discriminator value on the provided obj."""
         pass
-    
+
     def get_field_filters(self, priority_level=None):
         """
         Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.

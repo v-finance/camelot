@@ -783,6 +783,9 @@ and used as a custom action.
             return [strategy for strategy in field_strategies if strategy.priority_level == priority_level]
         return field_strategies
 
+    def get_discriminator_value(self, obj):
+        return self.entity.get_discriminator_value(obj)
+
     def set_discriminator_value(self, obj, discriminator_value):
         if discriminator_value is not None:
             self.entity.set_discriminator_value(obj, discriminator_value)
