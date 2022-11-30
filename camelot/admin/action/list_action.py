@@ -935,7 +935,7 @@ set_filters = SetFilters()
 
 class AddNewObjectMixin(object):
     
-    def create_object(self, model_context, admin, type_=None, session=None):
+    def create_object(self, model_context, admin, discriminator_value=None, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.

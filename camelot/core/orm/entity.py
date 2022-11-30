@@ -354,6 +354,7 @@ class EntityMeta( DeclarativeMeta ):
                 if groups and primary_discriminator in types.__members__ and types[primary_discriminator].grouped_by is not None:
                     group = types[primary_discriminator].grouped_by.name
 
+                secondary_discriminators = [secondary_discriminator.__class__ for secondary_discriminator in secondary_discriminators]
                 return cls.__cls_for_type__.get((primary_discriminator, *secondary_discriminators)) or \
                        cls.__cls_for_type__.get((group, *secondary_discriminators)) or \
                        cls.__cls_for_type__.get(None)
@@ -385,13 +386,14 @@ class EntityMeta( DeclarativeMeta ):
         assert isinstance(entity_instance, cls)
         discriminator = cls.get_cls_discriminator()
         if discriminator is not None:
-            discriminator_values = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
-            assert len(discriminator) == len(discriminator_values),\
-               'The dimension of the provided discriminator values ({}) does not match that of the registered discriminator ({}).'.format(
-                   len(discriminator_values), len(discriminator))
-            assert discriminator_values[0] in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(discriminator_values[0])
-            for discriminator_prop, discriminator_value in zip(discriminator, discriminator_values):
-                discriminator_prop.__set__(entity_instance, discriminator_value)
+            (primary_discriminator, *secondary_discriminators) = discriminator
+            (primary_discriminator_value, *secondary_discriminator_values) = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
+            assert primary_discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
+            primary_discriminator.__set__(entity_instance, primary_discriminator_value)
+            for secondary_discriminator_prop, secondary_discriminator_value in zip(secondary_discriminators, secondary_discriminator_values):
+                entity = secondary_discriminator_prop.prop.entity.entity
+                assert isinstance(secondary_discriminator_value, entity), '{} is not a valid secondary discriminator value for this entity. Must be of type {}'.format(secondary_discriminator_value, entity)
+                secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
 
     def get_ranked_by(cls):
         ranked_by = cls._get_entity_arg('ranked_by')
