@@ -935,7 +935,7 @@ set_filters = SetFilters()
 
 class AddNewObjectMixin(object):
     
-    def create_object(self, model_context, admin, type_=None, session=None):
+    def create_object(self, model_context, admin, discriminator_value=None, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
@@ -957,6 +957,8 @@ class AddNewObjectMixin(object):
             raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin, mode)
+        # Deduct admin again as it may have gotten secondary discriminators set.
+        admin = self.get_admin(model_context, admin.get_discriminator_value(new_object))
         subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
@@ -1006,7 +1008,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
         """
         admin = model_context.admin
         if (admin is not None) and (mode is not None):
-            cls_for_type = admin.entity.get_cls_by_type(mode)
+            cls_for_type = admin.entity.get_cls_by_discriminator(mode)
             if cls_for_type is not None:
                 return admin.get_related_admin(cls_for_type)
         return admin
