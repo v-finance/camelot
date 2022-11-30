@@ -381,6 +381,13 @@ class EntityMeta( DeclarativeMeta ):
             ]
             return tuple(discriminator_cols)
 
+    def get_discriminator_value(cls, entity_instance):
+        """Return the given entity instance's discriminator value."""
+        assert isinstance(entity_instance, cls)
+        discriminator = cls.get_cls_discriminator()
+        if discriminator is not None:
+            return tuple([discriminator_prop.__get__(entity_instance, None) for discriminator_prop in discriminator])
+
     def set_discriminator_value(cls, entity_instance, discriminator_value):
         """Set the given entity instance's discriminator with the provided discriminator value."""
         assert isinstance(entity_instance, cls)
