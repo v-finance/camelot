@@ -110,9 +110,8 @@ class SelectProfileMixin:
     file_name_filter = _('Profiles file (*.ini)')
 
     @classmethod
-    def select_profile(cls, profile_store):
+    def select_profile(cls, profile_store, app_admin):
         from camelot.view import action_steps
-        from vfinance.admin.application_admin import app_admin
         from camelot.core.profile import Profile, NonEditableProfileAdmin
         selected_profile = new_profile
         try:

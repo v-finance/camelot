@@ -688,7 +688,7 @@ class ApplicationActionsCase(
         profile_case.setUp()
         profile_store = profile_case.test_profile_store()
         action = application_action.SelectProfileMixin()
-        generator = action.select_profile(profile_store)
+        generator = action.select_profile(profile_store, app_admin)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
                 generator.send(step.items[1].value)
