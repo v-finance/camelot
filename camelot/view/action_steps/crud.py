@@ -25,6 +25,17 @@ non_serializable_roles = (
     FieldAttributesRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole
 )
 
+serializable_field_attributes = (
+    'editable', 'tooltip'
+)
+
+def filter_attributes(attributes, keys):
+    filtered = {}
+    for key in keys:
+        if key in attributes:
+            filtered[key] = attributes[key]
+    return filtered
+
 class UpdateMixin(object):
 
     def _to_dict(self):
@@ -53,6 +64,9 @@ class UpdateMixin(object):
                 edit = item.data(Qt.ItemDataRole.EditRole)
                 if isinstance(edit, tuple):
                     cell_data[Qt.ItemDataRole.EditRole] = edit
+                # serialize field attributes
+                field_attributes = item.data(FieldAttributesRole)
+                cell_data[FieldAttributesRole] = filter_attributes(field_attributes, serializable_field_attributes)
                 cells.append(cell_data)
         return {
             "header_items": header_items,
@@ -120,41 +134,34 @@ class SetColumns(ActionStep):
             attrs = {}
             if issubclass(fa['delegate'], (delegates.ComboBoxDelegate, delegates.Many2OneDelegate,
                                            delegates.FileDelegate)):
-                attrs = self.filter_attributes(fa, ['action_routes'])
+                attrs = filter_attributes(fa, ['action_routes'])
             elif issubclass(fa['delegate'], delegates.DateDelegate):
-                attrs = self.filter_attributes(fa, ['nullable', 'validator'])
+                attrs = filter_attributes(fa, ['nullable', 'validator'])
                 if issubclass(fa['delegate'], delegates.DateTimeDelegate):
                     if 'editable' in fa:
                         attrs['editable'] = fa['editable']
             elif issubclass(fa['delegate'], delegates.DbImageDelegate):
-                attrs = self.filter_attributes(fa, ['preview_width', 'preview_height', 'max_size'])
+                attrs = filter_attributes(fa, ['preview_width', 'preview_height', 'max_size'])
             elif issubclass(fa['delegate'], delegates.FloatDelegate):
-                attrs = self.filter_attributes(fa, ['calculator', 'decimal', 'action_routes'])
+                attrs = filter_attributes(fa, ['calculator', 'decimal', 'action_routes'])
             elif issubclass(fa['delegate'], delegates.IntegerDelegate):
-                attrs = self.filter_attributes(fa, ['calculator', 'decimal'])
+                attrs = filter_attributes(fa, ['calculator', 'decimal'])
             elif issubclass(fa['delegate'], delegates.LabelDelegate):
-                attrs = self.filter_attributes(fa, ['text'])
+                attrs = filter_attributes(fa, ['text'])
             elif issubclass(fa['delegate'], delegates.LocalFileDelegate):
-                attrs = self.filter_attributes(fa, ['directory', 'save_as', 'file_filter'])
+                attrs = filter_attributes(fa, ['directory', 'save_as', 'file_filter'])
             elif issubclass(fa['delegate'], delegates.MonthsDelegate):
-                attrs = self.filter_attributes(fa, ['minimum', 'maximum'])
+                attrs = filter_attributes(fa, ['minimum', 'maximum'])
             elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
-                attrs = self.filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
+                attrs = filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
                                                     'action_routes', 'list_actions', 'list_action'])
             elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
-                attrs = self.filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes'])
+                attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes'])
             elif issubclass(fa['delegate'], delegates.TextEditDelegate):
-                attrs = self.filter_attributes(fa, ['length', 'editable'])
+                attrs = filter_attributes(fa, ['length', 'editable'])
             elif issubclass(fa['delegate'], delegates.VirtualAddressDelegate):
-                attrs = self.filter_attributes(fa, ['address_type'])
+                attrs = filter_attributes(fa, ['address_type'])
             self.column_attributes.append(attrs)
-
-    def filter_attributes(self, attributes, keys):
-        filtered = {}
-        for key in keys:
-            if key in attributes:
-                filtered[key] = attributes[key]
-        return filtered
 
     def _to_dict(self):
         columns = []
