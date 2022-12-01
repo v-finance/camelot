@@ -105,9 +105,9 @@ class EntityMeta( DeclarativeMeta ):
        | OtherClass.__types__ == other_class_types
 
        This metaclass will also provide entity classes with the `get_cls_discriminator` method, which returns the registered discriminator definition,
-       and the `get_discriminator_value` & `set_discriminator_value` method to retrieve or set the discriminator value one a provided entity instance.
+       and the `get_discriminator_value` & `set_discriminator_value` method to retrieve or set the discriminator value on a provided entity instance.
        In unison with the discriminator argument, the metaclass also imparts entity classes with the ability to register and later retrieve classes for concrete discriminator values.
-       These registered classes are stored in the __cls_for_type__ class argument and registered classes can be retrieved for a specific discriminator value with the 'get_cls_by_discriminator' method.
+       These registered classes are stored in the __discriminator_cls_registry__ class argument and registered classes can be retrieved for a specific discriminator value with the 'get_cls_by_discriminator' method.
        See its documentation for more details.
 
        All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
@@ -225,10 +225,10 @@ class EntityMeta( DeclarativeMeta ):
                 dict_.setdefault('__type_groups__', None)
             
             for base in bases:
-                if hasattr(base, '__cls_for_type__'):
+                if hasattr(base, '__discriminator_cls_registry__'):
                     break
             else:
-                dict_.setdefault('__cls_for_type__', dict())
+                dict_.setdefault('__discriminator_cls_registry__', dict())
         
             entity_args = dict_.get('__entity_args__')
             if entity_args is not None:
@@ -245,7 +245,7 @@ class EntityMeta( DeclarativeMeta ):
                     dict_['__types__'] = discriminator_col.type.enum
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
-                    dict_['__cls_for_type__'] = dict()
+                    dict_['__discriminator_cls_registry__'] = dict()
                     assert len(secondary_discriminators) <= 1, 'Only a single secondary discriminator is currently supported'
                     for secondary_discriminator in secondary_discriminators:
                         assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must be instances of `orm.properties.RelationshipProperty`'
@@ -375,11 +375,11 @@ class EntityMeta( DeclarativeMeta ):
                 secondary_discriminators = [
                     secondary_discriminator.__class__ if not isinstance(secondary_discriminator, EntityMeta) \
                     else secondary_discriminator for secondary_discriminator in secondary_discriminators]
-                return cls.__cls_for_type__.get((primary_discriminator, *secondary_discriminators)) or \
-                       cls.__cls_for_type__.get((primary_discriminator,)) or \
-                       cls.__cls_for_type__.get((group, *secondary_discriminators)) or \
-                       cls.__cls_for_type__.get((group,)) or \
-                       cls.__cls_for_type__.get(None)
+                return cls.__discriminator_cls_registry__.get((primary_discriminator, *secondary_discriminators)) or \
+                       cls.__discriminator_cls_registry__.get((primary_discriminator,)) or \
+                       cls.__discriminator_cls_registry__.get((group, *secondary_discriminators)) or \
+                       cls.__discriminator_cls_registry__.get((group,)) or \
+                       cls.__discriminator_cls_registry__.get(None)
 
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))

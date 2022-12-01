@@ -1008,9 +1008,9 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
         """
         admin = model_context.admin
         if (admin is not None) and (mode is not None):
-            cls_for_type = admin.entity.get_cls_by_discriminator(mode)
-            if cls_for_type is not None:
-                return admin.get_related_admin(cls_for_type)
+            facade_cls = admin.entity.get_cls_by_discriminator(mode)
+            if facade_cls is not None:
+                return admin.get_related_admin(facade_cls)
         return admin
 
     def get_proxy(self, model_context, admin):
