@@ -180,12 +180,14 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     """
     
     non_blocking_action_step_signal = QtCore.qt_signal(tuple, tuple, object)
-    non_blocking_serializable_action_step_signal = QtCore.qt_signal(tuple, tuple, str, bytes)
-    
+    serializable_action_step_signal = QtCore.qt_signal(tuple, tuple, str, bool, bytes)
+    action_stopped_signal = QtCore.qt_signal(tuple, tuple, object)
+
     def __init__(self):
         super().__init__()
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
-        self.non_blocking_serializable_action_step_signal.connect(self.non_blocking_serializable_action_step)
+        self.serializable_action_step_signal.connect(self.serializable_action_step)
+        self.action_stopped_signal.connect(self.action_stopped)
 
     @classmethod
     def wait_for_completion(cls, max_wait=5):
@@ -208,7 +210,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                     if run.time_running() >= max_wait:
                         raise Exception('Action running for more then {} seconds'.format(max_wait))
             QtCore.QCoreApplication.instance().processEvents()
-            time.sleep(0.1)
+            time.sleep(0.05)
 
     def run_action(self,
         action_name: CompositeName,
@@ -231,7 +233,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         serialized_message = json_encoder.encode(message)
         if REQUEST_LOGGER.isEnabledFor(logging.DEBUG):
             REQUEST_LOGGER.debug(serialized_message)
-        post(self._initiate_generator, self.__next__, args=(serialized_message,))
+        post(self._initiate_generator, args=(serialized_message,))
 
     def _initiate_generator(self, serialized_message):
         """Create the model context and start the generator"""
@@ -244,25 +246,25 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             model_context = initial_naming_context.resolve(tuple(message['model_context']))
         except NameNotFoundException:
             LOGGER.error('Could not create model context, no binding for name: {}'.format(message['model_context']))
-            return (None, gui_run_name, None)
+            self.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
         try:
             generator = action.model_run(model_context, message.get('mode'))
         except Exception as exception:
-            self.non_blocking_serializable_action_step_signal.emit(
-                ('constant', 'null'), gui_run_name, MessageBox.__name__,
+            self.serializable_action_step_signal.emit(
+                ('constant', 'null'), gui_run_name, MessageBox.__name__, False,
                 MessageBox.from_exception(
                     LOGGER,
                     'Exception caught in {}'.format(type(action).__name__),
                     exception
                 )._to_bytes()
             )
-            return (None, gui_run_name, None)
+            self.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
         if generator is None:
-            return (None, gui_run_name, None)
+            self.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
         run = ModelRun(gui_run_name, generator)
         run_name = model_run_names.bind(str(id(run)), run)
-        self.non_blocking_serializable_action_step_signal.emit(
-            run_name, gui_run_name, PushProgressLevel.__name__,
+        self.serializable_action_step_signal.emit(
+            run_name, gui_run_name, PushProgressLevel.__name__, False,
             PushProgressLevel('Please wait')._to_bytes()
         )
         LOGGER.debug('Action {} runs in generator {}'.format(message['action_name'], run_name))
@@ -291,19 +293,18 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                 raise Exception('Unhandled method')
             while True:
                 if isinstance(result, ActionStep):
-                    if result.blocking and isinstance(result, (DataclassSerializable,)):
-                        LOGGER.debug( 'serializable blocking step, yield it' )
-                        return (run_name, gui_run_name, (type(result).__name__, result._to_bytes()))
-                    elif result.blocking:
-                        LOGGER.debug( 'blocking step, yield it' )
-                        return (run_name, gui_run_name, result)
-                    # for now, only send data class serializable steps over the wire
-                    elif isinstance(result, (DataclassSerializable,)):
-                        LOGGER.debug( 'non blocking serializable step, use signal slot' )
-                        self.non_blocking_serializable_action_step_signal.emit(
+                    if isinstance(result, (DataclassSerializable,)):
+                        LOGGER.debug('serializable step, use signal slot')
+                        self.serializable_action_step_signal.emit(
                             run_name, gui_run_name, type(result).__name__,
-                            result._to_bytes()
+                            result.blocking, result._to_bytes()
                         )
+                        if result.blocking:
+                            # this step is blocking, interrupt the loop
+                            return
+                    elif result.blocking:
+                        LOGGER.debug( 'non serializable blocking step !' )
+                        raise Exception('This should not happen')
                     else:
                         LOGGER.debug( 'non blocking step, use signal slot' )
                         self.non_blocking_action_step_signal.emit(
@@ -321,22 +322,22 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                     result = next(run.generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
-            self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__,
+            self.serializable_action_step_signal.emit(
+                run_name, gui_run_name, PopProgressLevel.__name__, False,
                 PopProgressLevel()._to_bytes()
             )
-            return (run_name, gui_run_name, e)
+            self.action_stopped_signal.emit(run_name, gui_run_name, e)
         except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
-            self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__,
+            self.serializable_action_step_signal.emit(
+                run_name, gui_run_name, PopProgressLevel.__name__, False,
                 PopProgressLevel()._to_bytes()
             )
             initial_naming_context.unbind(run_name)
-            return (run_name, gui_run_name, e)
+            self.action_stopped_signal.emit(run_name, gui_run_name, e)
         except Exception as e:
-            self.non_blocking_serializable_action_step_signal.emit(
-                ('constant', 'null'), gui_run_name, MessageBox.__name__,
+            self.serializable_action_step_signal.emit(
+                ('constant', 'null'), gui_run_name, MessageBox.__name__, False,
                 MessageBox.from_exception(
                     LOGGER,
                     'Exception caught',
@@ -344,12 +345,12 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                 )._to_bytes()
             )
             LOGGER.debug( 'iterator raised stop, pass it' )
-            self.non_blocking_serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__,
+            self.serializable_action_step_signal.emit(
+                run_name, gui_run_name, PopProgressLevel.__name__, False,
                 PopProgressLevel()._to_bytes()
             )
             initial_naming_context.unbind(run_name)
-            return (run_name, gui_run_name, e)
+            self.action_stopped_signal.emit(run_name, gui_run_name, e)
 
     @QtCore.qt_slot(tuple, tuple, object)
     def non_blocking_action_step(self, run_name, gui_run_name, action_step ):
@@ -359,17 +360,33 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             return gui_run.handle_action_step(action_step)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            post(self.request_cancel, args=(run_name,))
+            self._throw(run_name, CancelRequest())
 
-    @QtCore.qt_slot(tuple, tuple, str, bytes)
-    def non_blocking_serializable_action_step(self, run_name, gui_run_name, step_type, serialized_step):
+    @QtCore.qt_slot(tuple, tuple, str, bool, bytes)
+    def serializable_action_step(self, run_name, gui_run_name, step_type, blocking, serialized_step):
         gui_run = gui_naming_context.resolve(gui_run_name)
         try:
             self._was_canceled(gui_run.gui_context_name)
-            return gui_run.handle_serialized_action_step(step_type, serialized_step)
+            to_send = gui_run.handle_serialized_action_step(step_type, serialized_step)
+            if blocking==True:
+                self._send(run_name, to_send)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            post(self.request_cancel, args=(run_name,))
+            self._throw(run_name, CancelRequest())
+        except Exception as exc:
+            LOGGER.error('gui exception while executing action', exc_info=exc)
+            # In case of an exception in the GUI thread, propagate an
+            # exception to make sure the generator ends.  Don't propagate
+            # the very same exception, because no references from the GUI
+            # should be past to the model.
+            self._throw(run_name, GuiException())
+
+    @QtCore.qt_slot(tuple, tuple, object)
+    def action_stopped(self, run_name, gui_run_name, exc):
+        try:
+            gui_naming_context.unbind(gui_run_name)
+        except NameNotFoundException:
+            LOGGER.error('Could not unbind gui_run {}'.format(gui_run_name))
 
     def _was_canceled(self, gui_context_name):
         """raise a :class:`camelot.core.exception.CancelRequest` if the
@@ -391,53 +408,17 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             LOGGER.debug( 'progress dialog was canceled, raise request' )
             raise CancelRequest()
 
-    @QtCore.qt_slot(object)
-    def __next__(self, run_yielded):
-        """Handle the result of the __next__ call of the generator
-        
-        :param yielded: the object that was yielded by the generator in the
-            *model thread*
-        """
-        run_name, gui_run_name, yielded = run_yielded
-        gui_run = gui_naming_context.resolve(gui_run_name)
-        gui_context_name = gui_run.gui_context_name
+    def _throw(self, run_name, exc):
+        post(
+            self._iterate_until_blocking,
+            args = (run_name, 'throw', exc,)
+        )
 
-        if isinstance(yielded, (ActionStep, tuple)):
-            try:
-                self._was_canceled(gui_context_name)
-                if isinstance(yielded, tuple):
-                    step_type, serialized_step = yielded
-                    to_send = gui_run.handle_serialized_action_step(step_type, serialized_step)
-                else:
-                    to_send = gui_run.handle_action_step(yielded)
-                self._was_canceled(gui_context_name)
-                post( self._iterate_until_blocking, 
-                      self.__next__, 
-                      args = (run_name, 'send', to_send,) )
-            except CancelRequest as exc:
-                post( self._iterate_until_blocking,
-                      self.__next__,
-                      args = (run_name, 'throw', exc,) )
-            except Exception as exc:
-                LOGGER.error( 'gui exception while executing action', 
-                              exc_info=exc)
-                #
-                # In case of an exception in the GUI thread, propagate an
-                # exception to make sure the generator ends.  Don't propagate
-                # the very same exception, because no references from the GUI
-                # should be past to the model.
-                #
-                post( self._iterate_until_blocking,
-                      self.__next__,
-                      args = (run_name, 'throw', GuiException(),) )
-        elif isinstance( yielded, (StopIteration, CancelRequest, Exception) ):
-            try:
-                gui_naming_context.unbind(gui_run_name)
-            except NameNotFoundException:
-                LOGGER.error('Could not unbind gui_run {}'.format(gui_run_name))
-        else:
-            LOGGER.error( '__next__ call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
-            LOGGER.error( str( yielded ) )
-            raise Exception( 'this should not happen' )
+    def _send(self, run_name, to_send):
+        post(
+            self._iterate_until_blocking,
+            args = (run_name, 'send', to_send,)
+        )
+
 
 action_runner = ActionRunner()
