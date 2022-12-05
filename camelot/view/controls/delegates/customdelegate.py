@@ -221,7 +221,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                                      editors.FileEditor)):
             editor = editor_cls(parent, self.action_routes)
         elif issubclass(editor_cls, editors.DateEditor):
-            editor = editor_cls(parent, self.nullable, self.validator)
+            editor = editor_cls(parent, self.nullable)
         elif issubclass(editor_cls, editors.DateTimeEditor):
             editor = editor_cls(parent, self.editable, self.nullable)
         elif issubclass(editor_cls, editors.DbImageEditor):
