@@ -49,7 +49,6 @@ class DateEditor(CustomEditor):
     
     def __init__(self, parent = None,
                        nullable = True,
-                       validator = DateValidator(),
                        field_name = 'date'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
@@ -57,7 +56,7 @@ class DateEditor(CustomEditor):
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
-        line_edit.setValidator(validator)
+        line_edit.setValidator(DateValidator())
         line_edit.setObjectName('date_line_edit')
         line_edit.set_minimum_width(str(QtCore.QDate(2000,12,22).toString(self.date_format)))
         line_edit.setPlaceholderText(QtCore.QDate(2000,1,1).toString(self.date_format))

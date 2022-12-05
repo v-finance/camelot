@@ -136,7 +136,7 @@ class SetColumns(ActionStep):
                                            delegates.FileDelegate)):
                 attrs = filter_attributes(fa, ['action_routes'])
             elif issubclass(fa['delegate'], delegates.DateDelegate):
-                attrs = filter_attributes(fa, ['nullable', 'validator'])
+                attrs = filter_attributes(fa, ['nullable'])
                 if issubclass(fa['delegate'], delegates.DateTimeDelegate):
                     if 'editable' in fa:
                         attrs['editable'] = fa['editable']
