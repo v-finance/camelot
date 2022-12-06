@@ -417,12 +417,13 @@ class EntityMeta( DeclarativeMeta ):
         if discriminator is not None:
             (primary_discriminator, *secondary_discriminators) = discriminator
             (primary_discriminator_value, *secondary_discriminator_values) = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
-            assert primary_discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
-            primary_discriminator.__set__(entity_instance, primary_discriminator_value)
-            for secondary_discriminator_prop, secondary_discriminator_value in zip(secondary_discriminators, secondary_discriminator_values):
-                entity = secondary_discriminator_prop.prop.entity.entity
-                assert isinstance(secondary_discriminator_value, entity), '{} is not a valid secondary discriminator value for this entity. Must be of type {}'.format(secondary_discriminator_value, entity)
-                secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
+            if primary_discriminator_value is not None:
+                assert primary_discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
+                primary_discriminator.__set__(entity_instance, primary_discriminator_value)
+                for secondary_discriminator_prop, secondary_discriminator_value in zip(secondary_discriminators, secondary_discriminator_values):
+                    entity = secondary_discriminator_prop.prop.entity.entity
+                    assert isinstance(secondary_discriminator_value, entity), '{} is not a valid secondary discriminator value for this entity. Must be of type {}'.format(secondary_discriminator_value, entity)
+                    secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
 
     def get_ranked_by(cls):
         ranked_by = cls._get_entity_arg('ranked_by')
