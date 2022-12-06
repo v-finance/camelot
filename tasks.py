@@ -1,11 +1,15 @@
-import os
 import json
+import os
+import re
 
 from invoke import task
 
 python_interpreter = '/vortex/x86_64-redhat-linux/default/bin/python3'
 build_dir = 'build'
 default_test_env = os.path.join(build_dir, 'env')
+
+JIRA_project_keys = ['VFIN', 'POLAPP', 'WP']
+JIRA_ticket_nr_regex = '('+ '|'.join(JIRA_project_keys) +')-[1-9][0-9]*'
 
 @task()
 def test(ctx, tests="test"):
@@ -15,7 +19,10 @@ def test(ctx, tests="test"):
     env_dir = default_test_env
     ctx.run(
         '{}/bin/python -m nose.core -v -s {}'.format(env_dir, tests),
-        env = {'QT_QPA_PLATFORM': 'offscreen'}
+        env = {'QT_QPA_PLATFORM': 'offscreen',
+               # Set the XDB base directory to the current working directory to prevent
+               # profile registry intermingling between multiple jobs or test runs.
+               'XDG_CONFIG_HOME': os.getcwd()}
     )
 
 @task()
@@ -93,3 +100,14 @@ def source_check(ctx):
     """
     ctx.run('{}/bin/python -m pyflakes camelot camelot_example test'.format(default_test_env))
     ctx.run('echo Done')
+
+@task(positional=['ticket_nr', 'msg'], optional=['paths'])
+def commit(ctx, ticket_nr, msg, paths=None):
+    if not re.match(JIRA_ticket_nr_regex, ticket_nr):
+        print('ERROR: the given JIRA ticket number is not valid. It should be in the form of VFIN-xxxx.')
+    else:
+        message = '{} #comment {}'.format(ticket_nr, msg)
+        if paths is None:
+            ctx.run('git commit -am "{}"'.format(message))
+        else:
+            ctx.run('git commit -m "{}" {}'.format(message, ' '.join(paths.split(','))))

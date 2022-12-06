@@ -42,7 +42,7 @@ import json
 
 from ..admin.action.base import ActionStep
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
-from ..view.action_steps.orm import AbstractCrudSignal
+from ..view.action_steps.orm import CreateUpdateDelete
 from ..view.action_runner import ActionRunner
 from ..view.model_process import ModelProcess
 from ..view import model_thread
@@ -86,13 +86,13 @@ class GrabMixinCase(object):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        QtWidgets.QApplication.flush()
+        QtWidgets.QApplication.sendPostedEvents()
         widget.repaint()
         inner_pixmap = QtWidgets.QWidget.grab(widget)
         # add a border to the image
         border = 4
-        outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
-        outer_image.fill(Qt.gray)
+        outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format.Format_RGB888)
+        outer_image.fill(Qt.GlobalColor.gray)
         painter = QtGui.QPainter()
         painter.begin(outer_image)
         painter.drawPixmap(QtCore.QRectF(border, border, inner_pixmap.width(), inner_pixmap.height()), 
@@ -172,7 +172,7 @@ class ActionMixinCase(object):
                         serialized_step = json.loads(step[1])
                         gui_result = yield tuple([step[0], serialized_step])                    
                     else:
-                        if isinstance(step, AbstractCrudSignal):
+                        if isinstance(step, CreateUpdateDelete):
                             LOGGER.debug('crud step, update view')
                             step.gui_run(gui_context)
                         gui_result = yield step

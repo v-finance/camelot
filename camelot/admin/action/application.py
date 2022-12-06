@@ -70,7 +70,7 @@ class Application( Action ):
             from ...view.controls import exception
             exc_info = exception.register_exception( logger, 'exception in initialization', e )
             dialog = exception.ExceptionDialog(exc_info)
-            dialog.exec_()
+            dialog.exec()
             QtCore.QCoreApplication.exit(-1)
 
     def set_application_attributes(self):
@@ -126,7 +126,8 @@ class Application( Action ):
         connection = metadata.bind.connect()
         load_translations(connection)
         yield action_steps.UpdateProgress( 3, 5, _('Install translator') )
-        yield action_steps.InstallTranslator( model_context.admin ) 
+        language = QtCore.QLocale.languageToCode(QtCore.QLocale().language())
+        yield action_steps.InstallTranslator( language )
         yield action_steps.UpdateProgress( 4, 5, _('Create main window') )
         yield action_steps.NavigationPanel(
             self.application_admin.get_navigation_menu(), model_context=model_context

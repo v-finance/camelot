@@ -114,8 +114,7 @@ shortcut confusion and reduce the number of status updates.
                      list_action.delete_selection,
                      list_action.duplicate_selection ]
     help_actions = []
-    export_actions = [ list_action.print_preview,
-                       list_action.export_spreadsheet ]
+    export_actions = [ list_action.export_spreadsheet ]
     form_toolbar_actions = [ form_action.close_form,
                              form_action.to_first_form,
                              form_action.to_previous_form,
@@ -123,14 +122,15 @@ shortcut confusion and reduce the number of status updates.
                              form_action.to_last_form,
                              application_action.refresh,
                              form_action.show_history ]
-    onetomany_actions = [ list_action.add_new_object,
-                          list_action.delete_selection,
-                          list_action.duplicate_selection,
-                          list_action.export_spreadsheet ]
+    onetomany_actions = [
+        list_action.delete_selection,
+        list_action.duplicate_selection,
+        list_action.export_spreadsheet
+    ]
     manytomany_actions = [
-        list_action.add_existing_object,
         list_action.remove_selection,
-        list_action.export_spreadsheet ]
+        list_action.export_spreadsheet
+    ]
 
     def __init__(self, name=None, author=None, domain=None):
         #
@@ -544,7 +544,7 @@ shortcut confusion and reduce the number of status updates.
         locale_name = QtCore.QLocale().name()
         logger.info( u'using locale %s'%locale_name )
         if qt_translator.load( "qt_" + locale_name,
-                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
+                               QtCore.QLibraryInfo.path( QtCore.QLibraryInfo.LibraryPath.TranslationsPath ) ):
             translators.append(qt_translator)
         logger.debug("Qt translator found for {} : {}".format(locale_name, len(translators)>0))
         camelot_translator = self._load_translator_from_file(

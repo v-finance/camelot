@@ -343,27 +343,28 @@ class ChangeStatus( Action ):
                 raise UserException(message)
         with model_context.session.begin():
             for obj in model_context.get_selection():
+                subsystem_obj = model_context.admin.get_subsystem_object(obj)
                 # the number of status changes as seen in the UI
-                number_of_statuses = len(obj.status)
-                history_type = obj._status_history
+                number_of_statuses = len(subsystem_obj.status)
+                history_type = subsystem_obj._status_history
                 history = model_context.session.query(history_type)
-                history = history.filter(history_type.status_for==obj)
+                history = history.filter(history_type.status_for==subsystem_obj)
                 history = history.with_for_update(nowait=True)
                 history_count = sum(1 for _h in history.yield_per(10))
                 if number_of_statuses != history_count:
-                    if obj not in model_context.session.new:
-                        model_context.session.expire(obj)
-                    yield action_steps.UpdateObjects([obj])
+                    if subsystem_obj not in model_context.session.new:
+                        model_context.session.expire(subsystem_obj)
+                    yield action_steps.UpdateObjects([subsystem_obj])
                     raise UserException(_('Concurrent status change'),
                                         detail=_('Another user changed the status'),
                                         resolution=_('Try again if needed'))
-                if obj.current_status != new_status:
+                if subsystem_obj.current_status != new_status:
                     for step in self.before_status_change(model_context, obj):
                         yield step
-                    obj.change_status(new_status)
+                    subsystem_obj.change_status(new_status)
                     for step in self.after_status_change(model_context, obj):
                         yield step
-                    yield action_steps.UpdateObjects([obj])
+                    yield action_steps.UpdateObjects([subsystem_obj])
             yield action_steps.FlushSession(model_context.session)
 
 class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
@@ -373,20 +374,29 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     such, needs not to query the distinct values used in the database to
     build up it's widget.
     
-    :param attribute: the attribute that holds the status
+    :param entity_with_status: an entity class that inherits from ´WithStatus' and thus holds the status to filter on.
+    :param joins: in case of a related status filter, the joins required to get from the status class back to the target entity.
     """
 
     name = 'status_filter'
+    filter_strategy = list_filter.RelatedFilter
 
-    def decorate_query(self, query, values):
-        if list_filter.All in values:
-            return query
-        if (len(values) == 0) and (self.exclusive==False):
-            return query.filter(self.column==None)
-        query = query.outerjoin(*self.joins)
-        where_clauses = [self.column==v for v in values]
-        query = query.filter(sql.or_(*where_clauses))
-        return query
+    def __init__(self, entity_with_status, joins=[], default=list_filter.All, verbose_name=None, exclusive=True):
+        assert issubclass(entity_with_status, WithStatus)
+        attribute = entity_with_status._status_history.classified_by
+        self.joins = joins
+        super().__init__(attribute, default=default, verbose_name=verbose_name, exclusive=exclusive)
+
+    def get_strategy(self, attribute):
+        history_type = attribute.class_
+        current_date = sql.functions.current_date()
+        return self.filter_strategy(
+            list_filter.ChoicesFilter(attribute),
+            joins=[history_type.status_for] + self.joins,
+            where=sql.and_(
+                history_type.status_from_date <= current_date,
+                history_type.status_for_id == history_type.status_for.prop.entity.class_.id,
+                history_type.status_thru_date >= current_date))
 
     def filter(self, it, value):
         """
@@ -404,15 +414,11 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
                         if history.classified_by in value:
                             yield obj
 
-    def get_entity_id(self, model_context):
-        return model_context.admin.entity.id
-
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
-        admin = model_context.admin
-        self.attributes = admin.get_field_attributes(self.attribute)
-        history_type = self.attributes['target']
-        history_admin = admin.get_related_admin(history_type)
+        attributes = model_context.admin.get_field_attributes(self.attribute.key)
+        history_type = self.attribute.class_
+        history_admin = model_context.admin.get_related_admin(history_type)
         classification_fa = history_admin.get_field_attributes('classified_by')
 
         target = classification_fa.get('target')
@@ -423,13 +429,6 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
 
         state.modes = []
         modes = []
-        current_date = sql.functions.current_date()
-        self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
-                                             history_type.status_for_id == self.get_entity_id(model_context),
-                                             history_type.status_thru_date >= current_date)
-                      )
-        self.column = getattr(history_type, 'classified_by')
-
         for value, name in choices:
             mode = list_filter.FilterMode(
                 value=value,
@@ -450,61 +449,5 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
             modes.append(none_mode)
 
         state.modes = modes
-        state.verbose_name = self.attributes['name']
+        state.verbose_name = attributes['name']
         return state
-
-
-class TypeFilter(list_filter.GroupBoxFilter):
-    """
-    Filter to be used in a table view to enable filtering on the type
-    of an object.  This filter will display all available types, and as
-    such, needs not to query the distinct values used in the database to
-    build up it's widget.
-    
-    :param attribute: the attribute that holds the type
-    """
-
-    def decorate_query(self, query, values):
-        if list_filter.All in values:
-            return query
-        if (len(values) == 0) and (self.exclusive==False):
-            return query.filter(self.column==None)
-        where_clauses = [self.column==v for v in values]
-        query = query.filter(sql.or_(*where_clauses))
-        return query
-
-    def get_state(self, model_context):
-        state = Action.get_state(self, model_context)
-        admin = model_context.admin
-        self.attributes = admin.get_field_attributes(self.attribute)
-        type_type = self.attributes['target']
-
-        choices = [(t, t.code) for t in type_type.query.all()]
-
-        state.modes = []
-        modes = []
-        self.column = getattr(admin.entity, self.attribute)
-
-        for value, name in choices:
-            mode = list_filter.FilterMode(
-                value=value,
-                verbose_name=name,
-                checked=(self.exclusive==False),
-            )
-            modes.append(mode)
-
-        if self.exclusive:
-            all_mode = list_filter.FilterMode(value=list_filter.All,
-                                              verbose_name=ugettext('All'),
-                                              checked=(self.default==list_filter.All))
-            modes.insert(0, all_mode)
-        else:
-            none_mode = list_filter.FilterMode(value=None,
-                                               verbose_name=ugettext('None'),
-                                               checked=True)
-            modes.append(none_mode)
-
-        state.modes = modes
-        state.verbose_name = self.attributes['name']
-        return state
-

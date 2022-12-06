@@ -99,14 +99,14 @@ class ActionRunner( QtCore.QEventLoop ):
         self._return_code = return_code
         return super( ActionRunner, self ).exit( return_code )
     
-    def exec_( self, flags = QtCore.QEventLoop.AllEvents ):
-        """Reimplementation of exec_ to prevent the event loop being started
-        when exit has been called prior to calling exec_.
+    def exec( self, flags = QtCore.QEventLoop.ProcessEventsFlag.AllEvents ):
+        """Reimplementation of exec to prevent the event loop being started
+        when exit has been called prior to calling exec.
         
         This can be the case when running in single threaded mode.
         """
         if self._return_code == None:
-            return super( ActionRunner, self ).exec_( flags )
+            return super( ActionRunner, self ).exec( flags )
         return self._return_code
         
     def _initiate_generator( self, mode ):
@@ -181,7 +181,7 @@ class ActionRunner( QtCore.QEventLoop ):
     def exception( self, exception_info ):
         """Handle an exception raised by the generator"""
         dialog = ExceptionDialog( exception_info )
-        dialog.exec_()
+        dialog.exec()
         self.exit()
         
     @QtCore.qt_slot( object )
@@ -225,6 +225,7 @@ class ActionRunner( QtCore.QEventLoop ):
                     step_type, serialized_step = yielded
                     cls = MetaActionStep.action_steps[step_type]
                     to_send = cls.gui_run(self._gui_context, serialized_step)
+                    to_send = cls.deserialize_result(self._gui_context, to_send)
                 else:
                     to_send = yielded.gui_run(self._gui_context)
                 self._was_canceled( self._gui_context )

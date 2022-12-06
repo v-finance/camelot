@@ -40,7 +40,7 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
     editor = editors.IntegerEditor
-    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
+    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

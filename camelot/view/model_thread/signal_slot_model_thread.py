@@ -35,11 +35,9 @@ import logging
 import sys
 import time
 
-from PyQt5 import sip
-
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 
-from ...core.qt import QtCore
+from ...core.qt import QtCore, is_deleted
 from ...core.threading import synchronized
 from ...view.model_thread import AbstractModelThread, object_thread
 from ...view.controls.exception import register_exception
@@ -168,7 +166,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         Initialize the objects that live in the model thread
         """
         self._task_handler = TaskHandler(self)
-        self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.QueuedConnection)
+        self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.ConnectionType.QueuedConnection)
 
     def run( self ):
         self.logger.debug( 'model thread started' )
@@ -176,7 +174,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         # Some tasks might have been posted before the signals were connected
         # to the task handler, so once force the handling of tasks
         self._task_handler.handle_task()
-        self.exec_()
+        self.exec()
         self.logger.debug('model thread stopped')
 
     @QtCore.qt_slot( bool )
@@ -187,7 +185,7 @@ class SignalSlotModelThread( AbstractModelThread ):
     def post( self, request, response = None, exception = None, args = () ):
         if not self._connected and self._task_handler:
             # creating this connection in the model thread throws QT exceptions
-            self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.QueuedConnection )
+            self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.ConnectionType.QueuedConnection )
             self._connected = True
         # response should be a slot method of a QObject
         name = request.__name__
@@ -199,14 +197,14 @@ class SignalSlotModelThread( AbstractModelThread ):
                                QtCore.QObject )
             # verify if the response has been defined as a slot
             #assert hasattr(response, '__pyqtSignature__')
-            task.finished.connect(response, QtCore.Qt.QueuedConnection)
+            task.finished.connect(response, QtCore.Qt.ConnectionType.QueuedConnection)
         if exception:
-            task.exception.connect( exception, QtCore.Qt.QueuedConnection )
+            task.exception.connect( exception, QtCore.Qt.ConnectionType.QueuedConnection )
         # task.moveToThread(self)
         # only put the task in the queue when it is completely set up
         self._request_queue.append(task)
         #print 'task created --->', id(task)
-        if not sip.isdeleted(self):
+        if not is_deleted(self):
             self.task_available.emit()
 
     @synchronized

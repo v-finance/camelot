@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
-
-import dataclasses
 import datetime
 import json
 import logging
@@ -10,7 +7,6 @@ import os
 import sys
 import unittest
 
-from camelot.admin.action.application import Application
 from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
@@ -29,11 +25,10 @@ from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import FieldAttributesRole, PreviewRole
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model.party import City, Person
+from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
-from camelot.view import action_steps, forms
+from camelot.view import forms
 from camelot.view.action_steps import OpenFormView
-from camelot.view.action_steps.application import MainWindow
 from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates, editors
 from camelot.view.controls.busy_widget import BusyWidget
@@ -44,11 +39,9 @@ from camelot.view.controls.exception import ExceptionDialog, register_exception
 from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.search import SimpleSearchControl
-from camelot.view.controls.tableview import ColumnGroupsWidget, HeaderWidget, RowsWidget, TableView, TableWidget
-from camelot.view.mainwindowproxy import MainWindowProxy
+from camelot.view.controls.tableview import ColumnGroupsWidget, TableWidget
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy, ProxyRegistry
-from camelot.view.workspace import DesktopWorkspace
 from camelot_example.application_admin import MyApplicationAdmin
 from camelot_example.model import Movie
 from camelot_example.view import VisitorsPerDirector
@@ -119,7 +112,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def assert_vertical_size( self, editor ):
         self.assertEqual( editor.sizePolicy().verticalPolicy(),
-                          QtWidgets.QSizePolicy.Fixed )
+                          QtWidgets.QSizePolicy.Policy.Fixed )
 
     def test_DateEditor(self):
         editor = editors.DateEditor()
@@ -265,16 +258,16 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def test_DateTimeEditor(self):
         validator = TimeValidator()
-        self.assertEqual(validator._validate('22', 0), (QtGui.QValidator.Intermediate, '22', 0))
-        self.assertEqual(validator._validate('59', 0), (QtGui.QValidator.Intermediate, '59', 0))
-        self.assertEqual(validator._validate('22:', 0), (QtGui.QValidator.Intermediate,'22:',  0))
-        self.assertEqual(validator._validate(':17', 0), (QtGui.QValidator.Intermediate, ':17', 0))
-        self.assertEqual(validator._validate('22:7', 0), (QtGui.QValidator.Acceptable, '22:7', 0))
-        self.assertEqual(validator._validate('22:17', 0), (QtGui.QValidator.Acceptable, '22:17', 0))
-        self.assertEqual(validator._validate('1:17', 0), (QtGui.QValidator.Acceptable, '1:17', 0))
-        self.assertEqual(validator._validate('22:7:', 0), (QtGui.QValidator.Invalid, '22:7:', 0))
-        self.assertEqual(validator._validate('61', 0), (QtGui.QValidator.Invalid, '61', 0))
-        self.assertEqual(validator._validate('611', 0), (QtGui.QValidator.Invalid, '611', 0))
+        self.assertEqual(validator._validate('22', 0), (QtGui.QValidator.State.Intermediate, '22', 0))
+        self.assertEqual(validator._validate('59', 0), (QtGui.QValidator.State.Intermediate, '59', 0))
+        self.assertEqual(validator._validate('22:', 0), (QtGui.QValidator.State.Intermediate,'22:',  0))
+        self.assertEqual(validator._validate(':17', 0), (QtGui.QValidator.State.Intermediate, ':17', 0))
+        self.assertEqual(validator._validate('22:7', 0), (QtGui.QValidator.State.Acceptable, '22:7', 0))
+        self.assertEqual(validator._validate('22:17', 0), (QtGui.QValidator.State.Acceptable, '22:17', 0))
+        self.assertEqual(validator._validate('1:17', 0), (QtGui.QValidator.State.Acceptable, '1:17', 0))
+        self.assertEqual(validator._validate('22:7:', 0), (QtGui.QValidator.State.Invalid, '22:7:', 0))
+        self.assertEqual(validator._validate('61', 0), (QtGui.QValidator.State.Invalid, '61', 0))
+        self.assertEqual(validator._validate('611', 0), (QtGui.QValidator.State.Invalid, '611', 0))
         editor = editors.DateTimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
@@ -313,7 +306,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value( 5.45 )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
-        up = QtGui.QKeyEvent(QtCore.QEvent.KeyPress, Qt.Key_Up, Qt.NoModifier)
+        up = QtGui.QKeyEvent(QtCore.QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         self.assertEqual(spinbox.minimum(), camelot_minfloat-1)
         self.assertEqual(spinbox.maximum(), camelot_maxfloat)
@@ -325,8 +318,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
-        self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.Acceptable)
-        self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.Acceptable)
+        self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
+        self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
         # verify if the calculator button is turned off
         editor = editors.FloatEditor(
             parent=None, calculator=False, **self.editable_kwargs
@@ -471,7 +464,7 @@ class FormTest(
         widget_mapper.setModel( self.movie_model )
         widget_mapper.setItemDelegate(delegate)
         self.widgets = FormEditors(
-            self.qt_parent, self.movie_admin.get_fields(), self.movie_admin
+            self.qt_parent, self.movie_admin.get_fields(),
         )
         self.person_entity = Person
         self.gui_context = GuiContext()
@@ -567,7 +560,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         )
         # make sure a DisplayRole is available in the item, the standard
         # model otherwise returns the EditRole as a DisplayRole
-        item.setData(item.data(PreviewRole), Qt.DisplayRole)
+        item.setData(item.data(PreviewRole), Qt.ItemDataRole.DisplayRole)
         model.setItem(0, 0, item)
         index = model.index(0, 0, QtCore.QModelIndex())
 
@@ -583,22 +576,22 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         test_case_name = sys._getframe(1).f_code.co_name[5:]
 
         for state_name, state in zip(('selected', 'unselected'),
-                                     (QtWidgets.QStyle.State_Selected, 
-                                      QtWidgets.QStyle.State_None)):
+                                     (QtWidgets.QStyle.StateFlag.State_Selected,
+                                      QtWidgets.QStyle.StateFlag.State_None)):
             tableview.adjustSize()
 
-            if state == QtWidgets.QStyle.State_Selected:
-                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.Select)
+            if state == QtWidgets.QStyle.StateFlag.State_Selected:
+                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.SelectionFlag.Select)
             else:
-                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.Clear)
+                tableview.selectionModel().select(index, QtCore.QItemSelectionModel.SelectionFlag.Clear)
 
             cell_size = tableview.visualRect(index).size()
 
             headers_size = QtCore.QSize(tableview.verticalHeader().width(),
                                         tableview.horizontalHeader().height())
 
-            tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
-            tableview.setVerticalScrollBarPolicy( Qt.ScrollBarAlwaysOff )
+            tableview.setHorizontalScrollBarPolicy( Qt.ScrollBarPolicy.ScrollBarAlwaysOff )
+            tableview.setVerticalScrollBarPolicy( Qt.ScrollBarPolicy.ScrollBarAlwaysOff )
 
             tableview.resize(cell_size + headers_size)
 
@@ -762,7 +755,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         delegate = delegates.ColorDelegate(parent=None, **self.editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.ColorEditor))
-        color = [255, 255, 0]
+        color = '#ffff00'
         self.grab_delegate(delegate, color)
         delegate = delegates.ColorDelegate(parent=None, **self.non_editable_kwargs)
         editor = delegate.createEditor(None, self.option, None)
@@ -831,17 +824,6 @@ class ControlsTest(
     def tearDown(self):
         super().tearDown()
 
-    def test_table_view(self):
-        gui_context = GuiContext()
-        widget = TableView(gui_context, self.admin_route)
-        self.grab_widget(widget)
-
-    def test_rows_widget(self):
-        city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin.get_admin_route())
-        table.set_admin()
-        RowsWidget(table.gui_context)
-
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
 
@@ -849,9 +831,9 @@ class ControlsTest(
             list_display = ['first_name', 'suffix']
 
         admin = SmallColumnsAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route())
-        widget.set_admin()
-        model = widget.get_model()
+        widget = TableWidget()
+        model = CollectionProxy(admin.get_admin_route())
+        widget.setModel(model)
         model.set_value(ProxyRegistry.register(self.proxy))
         list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
@@ -859,10 +841,10 @@ class ControlsTest(
         self.grab_widget( widget )
         model.timeout_slot()
         self.process()
-        widget.table.horizontalHeader()
+        widget.horizontalHeader()
 
-        first_name_width = self._header_data(0, Qt.Horizontal, Qt.SizeHintRole, model).width()
-        suffix_width = self._header_data(1, Qt.Horizontal, Qt.SizeHintRole, model).width()
+        first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
+        suffix_width = self._header_data(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
 
         self.assertTrue(first_name_width > suffix_width)
 
@@ -877,21 +859,20 @@ class ControlsTest(
             # end column width
 
         admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route())
-        widget.set_admin()
-        model = widget.get_model()
+        widget = TableWidget()
+        model = CollectionProxy(admin.get_admin_route())
+        widget.setModel(model)
         model.set_value(ProxyRegistry.register(self.proxy))
         list(model.add_columns(admin.get_columns()))
         model.timeout_slot()
         self.process()
         self.grab_widget(widget)
-        model = widget.get_model()
         model.timeout_slot()
         self.process()
-        widget.table.horizontalHeader()
+        widget.horizontalHeader()
 
-        first_name_width = self._header_data(0, Qt.Horizontal, Qt.SizeHintRole, model).width()
-        suffix_width = self._header_data(1, Qt.Horizontal, Qt.SizeHintRole, model).width()
+        first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
+        suffix_width = self._header_data(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
 
         self.assertEqual(first_name_width, suffix_width)
 
@@ -904,32 +885,15 @@ class ControlsTest(
                              ]
             #end column group
 
-        admin = ColumnWidthAdmin( self.app_admin, Person )
-        widget = TableView(self.gui_context, admin.get_admin_route())
+        widget = TableWidget()
         widget.setMinimumWidth( 800 )
         self.grab_widget( widget )
 
-    def test_section_widget(self):
-        model_context = self.gui_context.create_model_context()
-        # to avoid the default constructor accessing the db
-        step = action_steps.NavigationPanel.__new__(action_steps.NavigationPanel)
-        step.menu = self.app_admin.get_navigation_menu()
-        step.action_states = list()
-        action_steps.NavigationPanel._add_action_states(
-            model_context, step.menu.items, step.action_states
-        )
-        widget = action_steps.NavigationPanel.render(
-            self.gui_context, dataclasses.asdict(step)
-        )
-        self.grab_widget(widget)
-
-    def test_main_window(self):
-        proxy = MainWindowProxy( self.gui_context )
-        self.grab_widget(proxy.parent())
-
     def test_multiple_main_windows(self):
         """Make sure we can still create multiple QMainWindows"""
-
+        # This is not longer possible using the launcher
+        pass
+        '''
         app = QtWidgets.QApplication.instance()
         if app is None:
             app = QtWidgets.QApplication([])
@@ -956,6 +920,7 @@ class ControlsTest(
         num_main_windows2 = count_main_windows()
 
         self.assertEqual( num_main_windows1 + 1, num_main_windows2 )
+        '''
 
     def test_busy_widget(self):
         busy_widget = BusyWidget()
@@ -963,16 +928,9 @@ class ControlsTest(
         self.grab_widget( busy_widget )
 
     def test_search_control(self):
-        filter_action = SearchFilter(self.app_admin)
+        filter_action = SearchFilter()
         search = SimpleSearchControl(filter_action, self.gui_context, None)
         self.grab_widget(search)
-
-    def test_header_widget(self):
-        city_admin = self.app_admin.get_entity_admin(City)
-        table = TableView(self.gui_context, city_admin.get_admin_route())
-        table.set_admin()
-        header = HeaderWidget(gui_context=table.gui_context, parent=None)
-        self.grab_widget(header)
 
     def test_column_groups_widget(self):
         table = VisitorsPerDirector.Admin.list_display
@@ -1000,8 +958,9 @@ class ControlsTest(
         self.grab_widget( widget, 'second_tab' )
 
     def test_desktop_workspace(self):
-        workspace = DesktopWorkspace(self.gui_context.admin_route, None)
-        self.grab_widget(workspace)
+        #workspace = DesktopWorkspace(self.gui_context.admin_route, None)
+        #self.grab_widget(workspace)
+        pass # obsolete?
 
     def test_progress_dialog( self ):
         dialog = ProgressDialog(None)

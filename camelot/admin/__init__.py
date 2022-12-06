@@ -27,21 +27,8 @@
 #
 #  ============================================================================
 
-"""
-Admin classes, specify how objects should be rendered in the gui
+from .filter_admin import FilterValueAdmin
 
-An admin class has class attributes like 'list_display' which contains the
-columns that should be displayed in a list view (again, see Django)
-
-So this 'list_display' attribute can be overwritten in the Admin class for each
-model.
-
-But for the gui generation itself, we don't use the class attributes, but we
-use methods, like 'get_columns', that way, we can make the gui very specific, 
-and depending on the context
-"""
-
-
-
-
-
+__all__ = [
+    FilterValueAdmin.__name__,
+]

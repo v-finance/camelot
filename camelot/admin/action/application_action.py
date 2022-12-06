@@ -28,14 +28,16 @@
 #  ============================================================================
 
 import logging
+import os
 
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui, is_deleted
+
+from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
-from ..admin_route import AdminRoute
 from .base import RenderHint
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
 from camelot.core.exception import CancelRequest
+from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
@@ -100,41 +102,36 @@ class ApplicationActionGuiContext( GuiContext ):
     
     def __init__( self ):
         super( ApplicationActionGuiContext, self ).__init__()
+        self.context_id = None
         self.workspace = None
         self.admin_route = None
         self.action_routes = {}
     
     def get_progress_dialog(self):
-        if self.workspace is not None and not is_deleted(self.workspace):
-            view = self.workspace.active_view()
-            if view is not None:
-                if view.objectName() == 'dashboard':
-                    quick_view = view.quick_view
-                    if not is_deleted(quick_view):
-                        # try to return the C++ QML progress dialog
-                        qml_progress_dialog = quick_view.findChild(QtCore.QObject, 'qml_progress_dialog')
-                        if qml_progress_dialog is not None:
-                            return qml_progress_dialog
-
+        from camelot.view.qml_view import get_qml_root_backend
+        root_backend = get_qml_root_backend()
+        if root_backend is not None and root_backend.isVisible():
+            progress_dialog = root_backend.progressDialog()
+            if progress_dialog is not None:
+                return progress_dialog
 
         # return the regular progress dialog
         return super( ApplicationActionGuiContext, self ).get_progress_dialog()
 
     def get_window(self):
-        if self.workspace is not None and not is_deleted(self.workspace):
-            return self.workspace.window()
+        from camelot.view.qml_view import get_qml_window
+        return get_qml_window()
 
     def create_model_context(self):
-        # the possibility of having no admin class is an aberation, needed
-        # to keep the FieldAction working
-        context = super( ApplicationActionGuiContext, self ).create_model_context()
-        context.admin = AdminRoute.admin_for(self.admin_route) if self.admin_route is not None else None
+        context = super(ApplicationActionGuiContext, self).create_model_context()
+        context.admin = initial_naming_context.resolve(self.admin_route)
         # todo : action routes should be translated to actions here
         context.actions = list(self.action_routes.keys())
         return context
         
     def copy(self, base_class=None):
         new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
+        new_context.context_id = self.context_id
         new_context.workspace = self.workspace
         new_context.admin_route = self.admin_route
         new_context.action_routes = dict(self.action_routes)
@@ -148,19 +145,16 @@ class UpdateActions(Action):
         actions_state = dict()
         for action in model_context.actions:
             actions_state[action] = action.get_state(model_context)
-        yield action_steps.UpdateActionsState(actions_state)
+        yield action_steps.UpdateActionsState(model_context, actions_state)
 
 
-class SelectProfile( Action ):
+class SelectProfileMixin:
     """Select the application profile to use
     
     :param profile_store: an object of type
         :class:`camelot.core.profile.ProfileStore`
-    This action is also useable as an action step, which will return the
-    selected profile.
     """
 
-    name = 'select_profile'
     new_icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     save_icon = Icon('save') # 'tango/16x16/actions/document-save.png'
     load_icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
@@ -173,11 +167,7 @@ class SelectProfile( Action ):
         self.profile_store = profile_store
         self.selected_profile = None
     
-    def gui_run(self, gui_context):
-        super(SelectProfile, self).gui_run(gui_context)
-        return self.selected_profile
-        
-    def model_run( self, model_context, mode ):
+    def select_profile(self):
         from camelot.view import action_steps
         from camelot.view.action_steps.profile import EditProfiles
 
@@ -192,18 +182,18 @@ class SelectProfile( Action ):
                 items = [(None,'')] + [(p,p.name) for p in profiles]
                 font = QtGui.QFont()
                 font.setItalic(True)
-                items.append({Qt.UserRole: new_profile, Qt.FontRole: font,
-                              Qt.DisplayRole: ugettext('new/edit profile'),
-                              Qt.DecorationRole: self.new_icon
+                items.append({Qt.ItemDataRole.UserRole: new_profile, Qt.ItemDataRole.FontRole: font,
+                              Qt.ItemDataRole.DisplayRole: ugettext('new/edit profile'),
+                              Qt.ItemDataRole.DecorationRole: self.new_icon
                               })
                 if len(profiles):
-                    items.append({Qt.UserRole: save_profiles, Qt.FontRole: font,
-                                  Qt.DisplayRole: ugettext('save profiles'),
-                                  Qt.DecorationRole: self.save_icon
+                    items.append({Qt.ItemDataRole.UserRole: save_profiles, Qt.ItemDataRole.FontRole: font,
+                                  Qt.ItemDataRole.DisplayRole: ugettext('save profiles'),
+                                  Qt.ItemDataRole.DecorationRole: self.save_icon
                                   })
-                items.append({Qt.UserRole: load_profiles, Qt.FontRole: font,
-                              Qt.DisplayRole: ugettext('load profiles'),
-                              Qt.DecorationRole: self.load_icon
+                items.append({Qt.ItemDataRole.UserRole: load_profiles, Qt.ItemDataRole.FontRole: font,
+                              Qt.ItemDataRole.DisplayRole: ugettext('load profiles'),
+                              Qt.ItemDataRole.DecorationRole: self.load_icon
                               })
                 select_profile = action_steps.SelectItem( items )
                 last_profile = self.profile_store.get_last_profile()
@@ -240,7 +230,7 @@ class SelectProfile( Action ):
                         except Exception as e:
                             exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
                                                                      text = _('Verify driver, host and port or contact your system administrator'),
-                                                                     standard_buttons = [QtWidgets.QMessageBox.Ok] )
+                                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
                             exception_box.informative_text = str(e)
                             yield exception_box
                             edit_profile_name = profile.name
@@ -304,9 +294,12 @@ class OpenTableView( EntityAction ):
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Open table'))
-        # swith comments here to turn on proof-of-concept qml table view
-        #step = action_steps.OpenQmlTableView(
-        step = action_steps.OpenTableView(
+        # set environment variable to turn on old Qt table view (QML table view is now the default)
+        if os.environ.get('VFINANCE_OLD_TABLE'):
+            Step = action_steps.OpenTableView
+        else:
+            Step = action_steps.OpenQmlTableView
+        step = Step(
             self._entity_admin, self._entity_admin.get_query()
         )
         step.new_tab = (mode == 'new_tab')
@@ -322,7 +315,7 @@ class OpenNewView( EntityAction ):
     """
 
     verbose_name = _('New')
-    shortcut = QtGui.QKeySequence.New
+    shortcut = QtGui.QKeySequence.StandardKey.New
     icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
             
@@ -334,7 +327,7 @@ class OpenNewView( EntityAction ):
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        admin = yield action_steps.SelectSubclass(self._entity_admin)
+        admin = self._entity_admin
         new_object = admin.entity()
         # Give the default fields their value
         admin.add(new_object)
@@ -358,7 +351,8 @@ class ShowAbout(Action):
         yield MessageBox(
             text = about,
             title = ugettext('About'),
-            standard_buttons=[QtWidgets.QMessageBox.Ok],
+            standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok],
+            hide_progress=True
         )
 
 class Backup( Action ):
@@ -396,7 +390,7 @@ class Refresh( Action ):
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Refresh')
     tooltip = _('Refresh')
-    shortcut = QtGui.QKeySequence( Qt.Key_F9 )
+    shortcut = QtGui.QKeySequence( Qt.Key.Key_F9.value )
     icon = Icon('sync') # 'tango/16x16/actions/view-refresh.png'
     
     def model_run( self, model_context, mode ):
@@ -526,7 +520,7 @@ class Exit( Action ):
 
     name = 'exit'
     verbose_name = _('E&xit')
-    shortcut = QtGui.QKeySequence.Quit
+    shortcut = QtGui.QKeySequence.StandardKey.Quit
     icon = Icon('times-circle') # 'tango/16x16/actions/system-shutdown.png'
     tooltip = _('Exit the application')
 
@@ -541,13 +535,13 @@ class SegmentationFault( Action ):
 
     name = 'segfault'
     verbose_name = _('Segmentation Fault')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.CTRL+QtCore.Qt.ALT+QtCore.Qt.Key_0 )
+    shortcut = QtGui.QKeySequence( QtCore.Qt.Modifier.CTRL.value + QtCore.Qt.Modifier.ALT.value + QtCore.Qt.Key.Key_0.value )
     
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        ok = yield action_steps.MessageBox( text= 'Are you sure you want to segfault the application',
-                                            standard_buttons=[QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.Yes])
-        if ok == QtWidgets.QMessageBox.Yes:
+        ok = yield action_steps.MessageBox( text =  'Are you sure you want to segfault the application',
+                                            standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes] )
+        if ok == QtWidgets.QMessageBox.StandardButton.Yes:
             import faulthandler
             faulthandler._read_null()        
 

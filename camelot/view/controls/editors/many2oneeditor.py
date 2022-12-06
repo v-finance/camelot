@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets, variant_to_py
 
 from ...crud_signals import CrudSignalHandler
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -43,25 +43,6 @@ class Many2OneEditor(CustomEditor):
 
     arrow_down_key_pressed = QtCore.qt_signal()
 
-    class CompletionsModel(QtCore.QAbstractListModel):
-
-        def __init__(self, parent):
-            QtCore.QAbstractListModel.__init__(self, parent)
-            self._completions = []
-
-        def setCompletions(self, completions):
-            self._completions = completions
-            self.layoutChanged.emit()
-
-        def data(self, index, role):
-            return py_to_variant(self._completions[index.row()].get(role))
-
-        def rowCount(self, index=None):
-            return len(self._completions)
-
-        def columnCount(self, index=None):
-            return 1
-
     def __init__(self,
                  admin=None,
                  parent=None,
@@ -73,8 +54,8 @@ class Many2OneEditor(CustomEditor):
         side of the relation
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self.admin = admin
         self.new_value = None
@@ -114,11 +95,10 @@ class Many2OneEditor(CustomEditor):
 
         # Search Completer
         self.completer = QtWidgets.QCompleter()
-        completions_model = self.CompletionsModel(self.completer)
-        self.completer.setModel(completions_model)
-        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setModel(QtGui.QStandardItemModel(self.completer))
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.completer.setCompletionMode(
-            QtWidgets.QCompleter.UnfilteredPopupCompletion
+            QtWidgets.QCompleter.CompletionMode.UnfilteredPopupCompletion
         )
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
@@ -156,39 +136,44 @@ class Many2OneEditor(CustomEditor):
 
     def textEdited(self, text):
         self._last_highlighted_entity_getter = None
+        self.completer.setCompletionPrefix(text)
         self.completionPrefixChanged.emit(str(text))
 
-    def display_search_completions(self, prefix, completions):
+    def display_search_completions(self, completions):
         # this might interrupt with the user typing
-        # self.search_input.setText(prefix)
-        self.completer.model().setCompletions(completions)
-        self.completer.setCompletionPrefix(prefix)
+        model = self.completer.model()
+        model.setColumnCount(1)
+        model.setRowCount(len(completions))
+        for row, completion in enumerate(completions):
+            index = model.index(row, 0)
+            for role, data in completion.items():
+                model.setData(index, data, role)
         self.completer.complete()
 
     def completionActivated(self, index):
-        obj = index.data(Qt.EditRole)
+        obj = index.data(Qt.ItemDataRole.UserRole)
         self.set_object(variant_to_py(obj))
 
     def completion_highlighted(self, index ):
-        obj = index.data(Qt.EditRole)
+        obj = index.data(Qt.ItemDataRole.UserRole)
         self._last_highlighted_entity_getter = variant_to_py(obj)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_updated(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_updated(self, objects):
         value = self.get_value()
         for obj in objects:
             if obj is value:
                 self.set_object(obj, False)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_deleted(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_deleted(self, objects):
         value = self.get_value()
         for obj in objects:
             if obj is value:
                 self.set_object(None, False)
 
-    @QtCore.qt_slot(object, tuple)
-    def objects_created(self, sender, objects):
+    @QtCore.qt_slot(tuple)
+    def objects_created(self, objects):
         for obj in objects:
             if obj is self.new_value:
                 self.new_value = None
@@ -205,7 +190,7 @@ class Many2OneEditor(CustomEditor):
             elif self.completer.model().rowCount()==1:
                 # There is only one possible option
                 index = self.completer.model().index(0,0)
-                entity_getter = variant_to_py(index.data(Qt.EditRole))
+                entity_getter = variant_to_py(index.data(Qt.ItemDataRole.EditRole))
                 self.set_object(entity_getter)
         self.search_input.setText(self._entity_representation or u'')
 

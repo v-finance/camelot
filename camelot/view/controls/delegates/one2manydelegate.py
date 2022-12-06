@@ -53,19 +53,20 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super(One2ManyDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
             admin = model_context.field_attributes['admin']
-            item.setData(py_to_variant(admin.get_proxy(model_context.value)), Qt.EditRole)
+            item.setData(py_to_variant(admin.get_proxy(model_context.value)), Qt.ItemDataRole.EditRole)
         return item
 
     def createEditor( self, parent, option, index ):
         logger.debug( 'create a one2many editor' )
-        editor = editors.One2ManyEditor( parent = parent, **self.kwargs )
-        self.setEditorData( editor, index )
-        editor.editingFinished.connect( self.commitAndCloseEditor )
+        editor = editors.One2ManyEditor(parent = parent, **self.kwargs)
+        editor.editingFinished.connect(self.commitAndCloseEditor)
         return editor
 
     def setEditorData( self, editor, index ):
         logger.debug( 'set one2many editor data' )
-        model = variant_to_py( index.data( Qt.EditRole ) )
+        if index.model() is None:
+            return
+        model = variant_to_py( index.data( Qt.ItemDataRole.EditRole ) )
         editor.set_value( model )
         field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         editor.set_field_attributes(**field_attributes)

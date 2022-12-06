@@ -135,8 +135,6 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         super( FormActionGuiContext, self ).__init__()
         self.widget_mapper = None
         self.view = None
-        # temporary admin, so be able to do a cleanup context by context
-        self.admin = None
 
     def get_progress_dialog(self):
         return GuiContext.get_progress_dialog(self)
@@ -148,8 +146,6 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
 
     def create_model_context(self):
         context = super( FormActionGuiContext, self ).create_model_context()
-        # temporary admin, so be able to do a cleanup context by context
-        context.admin = self.admin
         context.proxy = self.widget_mapper.model().get_value()
         current_index = self.widget_mapper.currentIndex()
         if current_index >= 0:
@@ -161,8 +157,6 @@ class FormActionGuiContext( ApplicationActionGuiContext ):
         new_context = super( FormActionGuiContext, self ).copy( base_class )
         new_context.widget_mapper = self.widget_mapper
         new_context.view = self.view
-        # temporary admin, so be able to do a cleanup context by context
-        new_context.admin = self.admin
         return new_context
 
 class ShowHistory( Action ):
@@ -215,7 +209,7 @@ class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.Close
+    shortcut = QtGui.QKeySequence.StandardKey.Close
     icon = Icon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')
     tooltip = _('Close this form')
@@ -257,11 +251,11 @@ class CloseForm( Action ):
             #
             message = action_steps.MessageBox(
                 '\n'.join( messages ),
-                QtWidgets.QMessageBox.Warning,
+                QtWidgets.QMessageBox.Icon.Warning,
                 _('Invalid form'),
-                [QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Discard] )
+                [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Discard] )
             reply = yield message
-            if reply == QtWidgets.QMessageBox.Discard:
+            if reply == QtWidgets.QMessageBox.StandardButton.Discard:
                 if admin.is_persistent( obj ):
                     admin.refresh( obj )
                     yield action_steps.UpdateObjects((subsystem_obj,))

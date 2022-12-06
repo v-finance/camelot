@@ -36,6 +36,7 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
     as its value the ISO code of the language"""
 
     editingFinished = QtCore.qt_signal()
+    actionTriggered = QtCore.qt_signal(list, object)
     language_choices = []
     
     def __init__(self, parent=None, languages=[], field_name='language', **kwargs):
@@ -50,10 +51,10 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
         self.index_by_language = dict()
         languages = [QtCore.QLocale(lang).language() for lang in languages]
         if not self.language_choices:
-            for i in range(QtCore.QLocale.C, QtCore.QLocale.Chewa + 1):
-                if languages and (i not in languages):
-                    continue
+            for i in range(QtCore.QLocale.Language.C.value, QtCore.QLocale.Language.Chewa.value + 1):
                 language = QtCore.QLocale.Language(i)
+                if languages and (language not in languages):
+                    continue
                 language_name = str(QtCore.QLocale.languageToString(language))
                 self.language_choices.append( (language, language_name ) )
             self.language_choices.sort(key=lambda x:x[1])

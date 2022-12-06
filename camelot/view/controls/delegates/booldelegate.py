@@ -47,4 +47,3 @@ class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
                 value_str = '\u2610' # checkbox
             item.setData(value_str, PreviewRole)
         return item
-

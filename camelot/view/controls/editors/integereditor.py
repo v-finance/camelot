@@ -56,23 +56,23 @@ class IntegerEditor(CustomEditor):
         
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
-        action = QtWidgets.QAction(self)
-        action.setShortcut( QtGui.QKeySequence( Qt.Key_F4 ) )
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
+        action = QtGui.QAction(self)
+        action.setShortcut( QtGui.QKeySequence( Qt.Key.Key_F4.value ) )
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         
         spin_box = CustomDoubleSpinBox(option, parent)
         spin_box.setRange(minimum-1, maximum)
         spin_box.setDecimals(0)
-        spin_box.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        spin_box.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         spin_box.addAction(action)
         spin_box.setObjectName('spin_box')
         
         self.calculatorButton = QtWidgets.QToolButton()
         self.calculatorButton.setIcon(self.calculator_icon.getQIcon())
         self.calculatorButton.setAutoRaise(True)
-        self.calculatorButton.setFocusPolicy(Qt.ClickFocus)
+        self.calculatorButton.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.calculatorButton.setFixedHeight(self.get_height())
         self.calculatorButton.clicked.connect(
             lambda:self.popupCalculator(spin_box.value())
@@ -139,18 +139,18 @@ class IntegerEditor(CustomEditor):
             # If so, the calculatorButton and the spinBox's controls should be hidden.
             if self.option and self.option.version != 5:
                 self.calculatorButton.hide()
-                spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+                spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
             else:
                 self.calculatorButton.setVisible(editable and self._calculator)
                 if not editable:
-                    spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+                    spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def popupCalculator(self, value):
         from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
         calculator.setValue(value)
         calculator.calculation_finished_signal.connect( self.calculation_finished )
-        calculator.exec_()
+        calculator.exec()
 
     @QtCore.qt_slot(str)
     def calculation_finished(self, value):

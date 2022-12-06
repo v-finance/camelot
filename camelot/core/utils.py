@@ -29,9 +29,9 @@
 
 """Utility functions"""
 
+import collections
+import enum
 import logging
-
-
 
 from .qt import QtCore, qtranslate
 from sqlalchemy import sql
@@ -154,3 +154,32 @@ class ugettext_lazy(object):
 def format_float(value, precision=3):
     return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
 
+arity = collections.namedtuple('arity', ('minimum', 'maximum'))
+
+class Arity(enum.Enum):
+    """
+    Enum that represents the arity (e.g. number of arguments or operands) of a certain operation or function.
+    To support operations with a varying arity that accept a variable number of arguments, the arity values
+    are composed of a minimum and a maximum arity, with None representing a varyable value.
+    """
+
+    nullary =    arity(0, 0)
+    unary =      arity(1, 1)
+    binary =     arity(2, 2)
+    ternary =    arity(3, 3)
+    quaternary = arity(4, 4)
+    quinary =    arity(5, 5)
+    senary =     arity(6, 6)
+    septenary =  arity(7, 7)
+    octonary =   arity(8, 8)
+    novenary =   arity(9, 9)
+    denary =     arity(10, 10)
+    multiary =   arity(2, None)
+
+    @property
+    def minimum(self):
+        return self._value_.minimum
+
+    @property
+    def maximum(self):
+        return self._value_.maximum

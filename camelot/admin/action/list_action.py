@@ -30,6 +30,7 @@
 import codecs
 import copy
 import datetime
+import enum
 import logging
 import itertools
 
@@ -41,8 +42,9 @@ from .base import Action, Mode, GuiContext, RenderHint
 from .application_action import ( ApplicationActionGuiContext,
                                  ApplicationActionModelContext )
 from camelot.core.exception import UserException
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
+from camelot.view.qml_view import qml_action_step, qml_action_dispatch
 
 import xlsxwriter
 
@@ -183,6 +185,11 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
             return self.item_view.window()
         return super(ListActionGuiContext, self).get_window()
 
+    def get_item_model(self):
+        if self.item_view is not None:
+            return self.item_view.model()
+        return qml_action_dispatch.get_model(self.context_id)
+
     def create_model_context( self ):
         context = super( ListActionGuiContext, self ).create_model_context()
         context.field_attributes = copy.copy( self.field_attributes )
@@ -203,7 +210,7 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                 if current_column is not None:
                     current_field_name = variant_to_py(
                         model.headerData(
-                            current_column, Qt.Horizontal, Qt.UserRole
+                            current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
                         )
                     )
             if self.item_view.selectionModel() is not None:
@@ -213,6 +220,16 @@ class ListActionGuiContext( ApplicationActionGuiContext ):
                     rows_range = ( selection_range.top(), selection_range.bottom() )
                     selected_rows.append( rows_range )
                     selection_count += ( rows_range[1] - rows_range[0] ) + 1
+        else:
+            model = self.get_item_model()
+            if model is not None:
+                collection_count = model.rowCount()
+                proxy = model.get_value()
+            response = qml_action_step(self, 'GetSelection', keep_context_id=True)
+            selection_count = response['selection_count']
+            current_row = response['current_row']
+            for i in range(len(response['selected_rows']) // 2):
+                selected_rows.append((response['selected_rows'][2 * i], response['selected_rows'][2 * i + 1]))
         context.selection_count = selection_count
         context.collection_count = collection_count
         context.selected_rows = selected_rows
@@ -263,11 +280,18 @@ class EditAction( ListContextAction ):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
-    to be non-editable using __facade_args__ = { 'editable': False }.
+    to be non-editable using __entity_args__ = { 'editable': False }.
     """
 
     name = 'edit_action'
     render_hint = RenderHint.TOOL_BUTTON
+
+    class Message(enum.Enum):
+
+        no_single_selection = _('Can only select 1 line')
+        select_2_lines = _('Please select 2 lines')
+        entity_not_rank_based = '{} has no rank column registered'
+        incompatible_rank_dimension = _('The selected lines are not part of the same rank dimension')
 
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
@@ -298,6 +322,7 @@ class CloseList(Action):
     icon = Icon('backspace')
     tooltip = _('Close')
     name = 'close'
+    shortcut = QtGui.QKeySequence.StandardKey.Close
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -323,7 +348,7 @@ list_label = ListLabel()
 class OpenFormView( ListContextAction ):
     """Open a form view for the current row of a list."""
     
-    shortcut = QtGui.QKeySequence.Open
+    shortcut = QtGui.QKeySequence.StandardKey.Open
     icon = Icon('folder') # 'tango/16x16/places/folder.png'
     tooltip = _('Open')
     # verbose name is set to None to avoid displaying it in the vertical
@@ -357,19 +382,18 @@ class DuplicateSelection( EditAction ):
         from camelot.view import action_steps
         super().model_run(model_context, mode)
         admin = model_context.admin
-        new_objects = list()
-        updated_objects = set()
-        for i, obj in enumerate(model_context.get_selection()):
-            yield action_steps.UpdateProgress(i, 
-                                              model_context.selection_count,
-                                              self.verbose_name )
+        if model_context.selection_count > 1:
+            raise UserException(self.Message.no_single_selection.value)
+        for obj in model_context.get_selection():
             new_object = admin.copy(obj)
             model_context.proxy.append(new_object)
-            new_objects.append(new_object)
-            updated_objects.update(set(admin.get_depending_objects(new_object)))
-        yield action_steps.CreateObjects(new_objects)
-        yield action_steps.UpdateObjects(updated_objects)
-        yield action_steps.FlushSession(model_context.session)
+            yield action_steps.CreateObjects([new_object])
+            if not len(admin.get_validator().validate_object(new_object)):
+                updated_objects = set(admin.get_depending_objects(new_object))
+                yield action_steps.UpdateObjects(updated_objects)
+                yield action_steps.FlushSession(model_context.session)
+            else:
+                yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
 
     def get_state(self, model_context):
         assert isinstance(model_context, ListActionModelContext)
@@ -379,28 +403,16 @@ class DuplicateSelection( EditAction ):
         return state
 
 duplicate_selection = DuplicateSelection()
-            
+
+
 class DeleteSelection( EditAction ):
     """Delete the selected rows in a table"""
     
-    shortcut = QtGui.QKeySequence.Delete
+    shortcut = QtGui.QKeySequence.StandardKey.Delete
     name = 'delete_selection'
     icon = Icon('trash') # 'tango/16x16/places/user-trash.png'
     tooltip = _('Delete')
     verbose_name = _('Delete')
-
-    def gui_run( self, gui_context ):
-        #
-        # if there is an open editor on a row that will be deleted, there
-        # might be an assertion failure in QT, or the data of the editor 
-        # might be pushed to the row that replaces the deleted one
-        #
-        gui_context.item_view.close_editor()
-        super( DeleteSelection, self ).gui_run( gui_context )
-        # this refresh call could be avoided if the removal of an object
-        # in the collection through the DeleteObject action step handled this
-        gui_context.item_view.model().refresh()
-        gui_context.item_view.clearSelection()
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
@@ -448,109 +460,137 @@ class DeleteSelection( EditAction ):
 
 delete_selection = DeleteSelection()
 
+class MoveRankUp(EditAction):
+    """
+    Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly higher within the same rank dimension.
+    Note that ranking higher in this context refers to a rank value that is lower in numerical value.
+    """
+
+    icon = Icon('arrow-up')
+    tooltip = _('Move rank up')
+    verbose_name = _('Move rank up')
+    name = 'move_rank_up'
+
+    def get_obj_to_switch(self, obj_rank, objects):
+        """
+        Based on the given selected object's rank, return the suited rank-object tuple candidate to switch with out of the given list of objects within the same rank dimension.
+        For this rank-up action, this is defined as the object with the lowest rank that is ranked higher as the selected object.
+        Note that ranking higher in this context refers to a rank value that is lower in numerical value, and vice versa.
+        :obj_rank: The rank of the selected object.
+        :objects: list of rank-object tuples within the same rank dimension as the selected object.
+        """
+        return max([(rank, obj) for (rank, obj) in objects if rank < obj_rank] or [(None, None)])
+
+    def model_run( self, model_context, mode ):
+        from camelot.view import action_steps
+        super().model_run(model_context, mode)
+        admin = model_context.admin
+        ranked_by = admin.entity.get_ranked_by()
+        assert ranked_by is not None, self.Message.entity_not_rank_based.value.format(admin.entity)
+        rank_prop = ranked_by[0] if isinstance(ranked_by, tuple) else ranked_by
+        if model_context.selection_count != 1:
+            raise UserException(self.Message.no_single_selection.value)
+        for obj in model_context.get_selection():
+            obj_rank = rank_prop.__get__(obj, None)
+            # Compose a list of rank-object tuples of objects within the same rank dimension.
+            compatible_objects = []
+            for other_obj in model_context.get_collection():
+                for rank_col in ranked_by[1:]:
+                    if rank_col.__get__(obj, None) != rank_col.__get__(other_obj, None):
+                        break
+                else:
+                    compatible_objects.append((rank_prop.__get__(other_obj, None), other_obj))
+
+            # Determine the object to switch it and perform the switch if there's a switch candidate found.
+            obj_to_switch_rank, obj_to_switch = self.get_obj_to_switch(obj_rank, compatible_objects)
+            if obj_to_switch is not None:
+                rank_prop.__set__(obj, obj_to_switch_rank)
+                rank_prop.__set__(obj_to_switch, obj_rank)
+                updated_objects = set(list(admin.get_depending_objects(obj)) + list(admin.get_depending_objects(obj_to_switch)))
+                yield action_steps.UpdateObjects(updated_objects)
+                yield action_steps.FlushSession(model_context.session)
+                for updated_obj in updated_objects:
+                    model_context.session.refresh(updated_obj)
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, ListActionModelContext)
+        state = super().get_state(model_context)
+        state.enabled = model_context.selection_count == 1
+        return state
+
+move_rank_up = MoveRankUp()
+
+class MoveRankDown(MoveRankUp):
+    """
+    Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly lower within the same rank dimension.
+    Note that ranking lower in this context refers to a rank value that is higher in numerical value.
+    """
+
+    icon = Icon('arrow-down')
+    tooltip = _('Move rank down')
+    verbose_name = _('Move rank down')
+    name = 'move_rank_down'
+
+    def get_obj_to_switch(self, obj_rank, objects):
+        """
+        For this rank-down action, the object to switch with is defined as the object with the highest rank that is ranked lower as the selected object.
+        Note that ranking lower in this context refers to a rank value that is higher in numerical value, and vice versa.
+        """
+        return min([(rank, obj) for (rank, obj) in objects if rank > obj_rank] or [(None, None)])
+
+move_rank_down = MoveRankDown()
+
 class AbstractToPrevious(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToPreviousPage
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToPreviousPage
     icon = Icon('step-backward') # 'tango/16x16/actions/go-previous.png'
     tooltip = _('Previous')
     verbose_name = _('Previous')
     
-class ToPreviousRow( AbstractToPrevious, ListContextAction ):
-    """Move to the previous row in a table"""
-
-    name = 'to_previous'
-
-    def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        selection = item_view.selectedIndexes()
-        rows = item_view.model().rowCount()
-        if rows <= 0:
-            return
-        if selection:
-            current_row = selection[0].row()
-            previous_row = ( current_row - 1 ) % rows
-        else:
-            previous_row = 0
-        item_view.selectRow( previous_row )
-
-    def get_state( self, model_context ):
-        state = super( ToPreviousRow, self ).get_state( model_context )
-        #if state.enabled:
-        #    state.enabled = ( model_context.current_row > 0 )
-        return state
-
-to_previous_row = ToPreviousRow()
-
 class AbstractToFirst(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToStartOfDocument
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToStartOfDocument
     icon = Icon('fast-backward') # 'tango/16x16/actions/go-first.png'
     tooltip = _('First')
     verbose_name = _('First')
 
-class ToFirstRow( AbstractToFirst, ToPreviousRow ):
+class ToFirstRow( AbstractToFirst, ListContextAction ):
     """Move to the first row in a table"""
 
     name = 'to_first'
 
-    def gui_run( self, gui_context ):
-        gui_context.item_view.selectRow( 0 )
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield action_steps.ToFirstRow()
 
 to_first_row = ToFirstRow()
 
 class AbstractToNext(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToNextPage
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToNextPage
     icon = Icon('step-forward') # 'tango/16x16/actions/go-next.png'
     tooltip = _('Next')
     verbose_name = _('Next')
     
-class ToNextRow( AbstractToNext, ListContextAction ):
-    """Move to the next row in a table"""
-
-    name = 'to_next'
-
-    def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        selection = item_view.selectedIndexes()
-        rows = item_view.model().rowCount()
-        if rows <= 0:
-            return
-        if selection:
-            current_row = selection[0].row()
-            next_row = ( current_row + 1 ) % rows
-        else:
-            next_row = 0
-        item_view.selectRow( next_row )
-
-    def get_state( self, model_context ):
-        state = super( ToNextRow, self ).get_state( model_context )
-        #if state.enabled:
-        #    max_row = model_context.collection_count - 1
-        #    state.enabled = ( model_context.current_row < max_row )
-        return state
-
-to_next_row = ToNextRow()
-
 class AbstractToLast(object):
 
     render_hint = RenderHint.TOOL_BUTTON
-    shortcut = QtGui.QKeySequence.MoveToEndOfDocument
+    shortcut = QtGui.QKeySequence.StandardKey.MoveToEndOfDocument
     icon = Icon('fast-forward') # 'tango/16x16/actions/go-last.png'
     tooltip = _('Last')
     verbose_name = _('Last')
     
-class ToLastRow( AbstractToLast, ToNextRow ):
+class ToLastRow( AbstractToLast, ListContextAction ):
     """Move to the last row in a table"""
 
     name = 'to_last'
 
-    def gui_run( self, gui_context ):
-        item_view = gui_context.item_view
-        item_view.selectRow( item_view.model().rowCount() - 1 )
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield action_steps.ToLastRow()
 
 to_last_row = ToLastRow()
 
@@ -744,40 +784,11 @@ class ExportSpreadsheet( ListContextAction ):
 
 export_spreadsheet = ExportSpreadsheet()
     
-class PrintPreview( ListContextAction ):
-    """Print all rows in a table"""
-
-    render_hint = RenderHint.TOOL_BUTTON
-    icon = Icon('print') # 'tango/16x16/actions/document-print-preview.png'
-    tooltip = _('Print Preview')
-    verbose_name = _('Print Preview')
-    name = 'print'
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        admin = model_context.admin
-        columns = admin.get_columns()
-        
-        table = []
-        to_strings = [admin.get_field_attributes(field)['to_string'] for field in columns]
-        column_range = range( len( columns ) )
-        for obj in model_context.get_collection():
-            table.append( [to_strings[i]( getattr( obj, columns[i] ) ) for i in column_range] )
-        context = {
-          'title': admin.get_verbose_name_plural(),
-          'table': table,
-          'columns': [admin.get_field_attributes(field)['name'] for field in columns],
-        }
-        yield action_steps.PrintJinjaTemplate( template = 'list.html',
-                                               context = context )
-
-print_preview = PrintPreview()
-
 class SelectAll( ListContextAction ):
     """Select all rows in a table"""
     
     verbose_name = _('Select &All')
-    shortcut = QtGui.QKeySequence.SelectAll
+    shortcut = QtGui.QKeySequence.StandardKey.SelectAll
     tooltip = _('Select all rows in the table')
     name = 'select_all'
 
@@ -858,7 +869,7 @@ class ImportFromFile( EditAction ):
             #
             # Ask confirmation
             #
-            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Warning, 
+            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Icon.Warning, 
                                            title = _('Proceed with import'), 
                                            text = _('Importing data cannot be undone,\n'
                                                     'are you sure you want to continue') )
@@ -894,17 +905,8 @@ class ReplaceFieldContents( EditAction ):
     icon = Icon('edit') # 'tango/16x16/actions/edit-find-replace.png'
     message = _('Field is not editable')
     resolution = _('Only select editable rows')
-    shortcut = QtGui.QKeySequence.Replace
+    shortcut = QtGui.QKeySequence.StandardKey.Replace
     name = 'replace'
-
-    def gui_run( self, gui_context ):
-        #
-        # if there is an open editor on a row that will be deleted, there
-        # might be an assertion failure in QT, or the data of the editor 
-        # might be pushed to the changed row
-        #
-        gui_context.item_view.close_editor()
-        super(ReplaceFieldContents, self ).gui_run(gui_context)
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
@@ -928,15 +930,91 @@ class ReplaceFieldContents( EditAction ):
 
 replace_field_contents = ReplaceFieldContents()
 
-class FieldFilter(object):
+class FilterValue(object):
     """
-    Helper class for the `SetFilters` action that allows the user to
-    configure a filter on an individual field.
+    Abstract helper class for the `SetFilters` action to configure the filter values
+    for a certain filter strategy and operator.
+    The dimension of these filter values (remaining operands) depends on the arity of the operator.
+    This class also provides functionality to associate implementations of :class: `camelot.admin.action.list_filter.AbstractFilterStrategy`
+    with implementations of this FilterValue interface; either by defining them as an innner Value class, or directly using the :method register: method.
+    Using the :method for_strategy: the concrete registered FilterValue class for a certain filter strategy class can be retrieved afterwards.
     """
-    
-    def __init__(self, value=None):
-        self.value = value
-    
+    filter_strategy = None
+    _filter_values = {}
+
+    def __init__(self, strategy, operator, value_1=None, value_2=None):
+        assert isinstance(strategy, self.filter_strategy)
+        self.strategy = strategy
+        self.operator = operator
+        self.value_1 = value_1
+        self.value_2 = value_2
+        self._other_values = []
+
+    @property
+    def operator_prefix(self):
+        return str(self.operator.prefix)
+
+    @property
+    def operator_infix(self):
+        if self.operator.infix is not None:
+            return str(self.operator.infix)
+
+    def get_operands(self):
+        operands = (self.value_1, self.value_2, *self._other_values)
+        # Determine appropriate number of operands based on the maximum arity of the operator (-1 because the filtered attribute is an operand as well).
+        # The arity's maximum may be undefined (e.g. for multi-ary operators), in which case the operands should not be sliced.
+        if self.operator.arity.maximum is not None:
+            return operands[0:self.operator.arity.maximum-1]
+        return [op for op in operands if op is not None]
+
+    def set_operands(self, *operands):
+        for i, operand in enumerate(operands[:2], start=1):
+            if i == 1: self.value_1 = operand
+            if i == 2: self.value_2 = operand
+        self._other_values = operands[2:]
+
+    @classmethod
+    def for_strategy(cls, filter_strategy):
+        """
+        Get the default :class:`FilterValue` class for the given specific filter
+        strategy class, return None, if not known.  The FilterValue
+        should either be registered through the :meth:`register` method or be
+        defined as an inner class with name :keyword:`Value` of the filter strategy.
+
+        :param filter_strategy: a subclass of :class: `camelot.admin.action.list_filter.AbstractFilterStrategy`
+        """
+        from camelot.admin.action.list_filter import AbstractFilterStrategy
+        assert issubclass(filter_strategy, AbstractFilterStrategy)
+        try:
+            return cls._filter_values[filter_strategy]
+        except KeyError:
+            for strategy_cls in filter_strategy.__mro__:
+                if issubclass(strategy_cls, AbstractFilterStrategy) and strategy_cls.name == filter_strategy.name:
+                    value_class = cls._filter_values.get(strategy_cls, None)
+                    if value_class is None:
+                        if hasattr(strategy_cls, 'Value'):
+                            value_class = strategy_cls.Value
+                            value_class.filter_strategy = filter_strategy
+                            break
+                    else:
+                        break
+            else:
+                raise Exception('Could not construct a default filter value class')
+            cls._filter_values[filter_strategy] = value_class
+            return value_class
+
+    @classmethod
+    def register(cls, filter_strategy, value_class):
+        """
+        Associate a certain FilterValue class with a filter strategy.
+        This FilterValue will be used as default.
+
+        :param filter_strategy: :class:`camelot.admin.action.list_filter.AbstractFilterStrategy`
+        :param value_class: a subclass of `FilterValue.`
+        """
+        assert value_class.filter_strategy == filter_strategy
+        cls._filter_values[filter_strategy] = value_class
+
 class SetFilters(Action, AbstractModelFilter):
     """
     Apply a set of filters on a list.
@@ -951,60 +1029,64 @@ class SetFilters(Action, AbstractModelFilter):
     icon = Icon('filter')
     name = 'filter'
 
-    def get_field_name_choices(self, model_context):
-        """
-        :return: a list of choices with the fields the user can select to
-           filter upon.
-        """
-        filter_strategies = model_context.admin.get_field_filters()
-        field_choices = [(name, filter_strategy.get_verbose_name()) for name, filter_strategy in filter_strategies.items()]
-        field_choices.sort(key=lambda choice:choice[1])
-        return field_choices
+    def get_filter_strategies(self, model_context, priority_level=None):
+        """:return: a list of field strategies the user can select."""
+        filter_strategies = list(model_context.admin.get_field_filters(priority_level).items())
+        filter_strategies.sort(key=lambda choice:(choice[1].priority_level.value, str(choice[1].get_verbose_name())))
+        return filter_strategies
 
     def model_run( self, model_context, mode ):
-        from camelot.admin.object_admin import ObjectAdmin
         from camelot.view import action_steps
 
+        filter_values = model_context.proxy.get_filter(self) or {}
         if mode == '__clear':
-            new_filter_value = {}
+            new_filter_values = {}
         elif mode is None:
-            new_filter_value = {}
+            new_filter_values = {}
         else:
-            filter_value = model_context.proxy.get_filter(self) or {}
-            filter_field_name = mode
+            from camelot.admin.action.list_filter import Operator, Many2OneFilter, One2ManyFilter
+            operator_name, filter_field_name = mode.split('-')
             filter_strategies = model_context.admin.get_field_filters()
             filter_strategy = filter_strategies.get(filter_field_name)
-            filter_field_attributes = model_context.admin.get_field_attributes(filter_field_name)
-            filter_value_attributes = {
-                'name': filter_field_attributes['name'],
-                'editable': True,
-                'delegate': filter_field_attributes['delegate'],
-            }
-            # in case the original choices are non dynamic list, they
-            # can be reused
-            if isinstance(filter_field_attributes.get('choices'), list):
-                filter_value_attributes['choices'] = filter_field_attributes['choices']
-            if 'precision' in filter_field_attributes:
-                filter_value_attributes['precision'] = filter_field_attributes['precision']
-    
-            class FieldFilterAdmin(ObjectAdmin):
-                verbose_name = _('Filter')
-                list_display = ['value']
-                field_attributes = {
-                    'value': filter_value_attributes
-                }
-    
-            field_filter = FieldFilter(value=None)
-            filter_admin = FieldFilterAdmin(model_context.admin, FieldFilter)
-            change_filter = action_steps.ChangeObject(field_filter, filter_admin)
-            yield change_filter
-            filter_text = filter_strategy.value_to_string(field_filter.value, model_context.admin)
-            new_filter_value = {k:v for k,v in filter_value.items()}
-            new_filter_value[filter_field_name] = filter_text
+            filter_field_strategy = filter_strategy.get_field_strategy()
+            filter_value_cls = FilterValue.for_strategy(type(filter_field_strategy))
+            filter_value_admin = model_context.admin.get_related_admin(filter_value_cls)
+            filter_operator = Operator[operator_name]
+            filter_value = filter_value_cls(filter_field_strategy, filter_operator)
 
-        yield action_steps.SetFilter(self, new_filter_value)
-        new_state = self._get_state(model_context, new_filter_value)
-        yield action_steps.UpdateActionsState({self: new_state})
+            # The filter values should only be updated by the user in case of multi-ary filter operators,
+            # which requires filter values to be entered as the additional operands.
+            # Unary operators can be applied directly, as the filter attribute is the only operand.
+            if filter_operator.arity.minimum > 1:
+                # The Many2OneFilter needs a selection of Entity objects to filter the foreign key relationship with.
+                # So let the user select one, and programmatically set the filter value to the selected entity's id.
+                if isinstance(filter_field_strategy, (Many2OneFilter, One2ManyFilter)):
+                    admin = filter_field_strategy.admin or model_context.admin.get_related_admin(filter_field_strategy.entity)
+                    query = None
+                    if filter_field_strategy.where is not None:
+                        query = admin.get_query()
+                        query = query.filter(filter_field_strategy.where)
+                    objects = yield action_steps.SelectObjects(admin, query)
+                    filter_value.set_operands(*objects)
+                # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
+                else:
+                    # In case there was already an active filter present for the same field and operator,
+                    # set the active operands as the default filter values for the user to manipulate:
+                    if filter_field_name in filter_values:
+                        (existing_operator, *existing_operands) = filter_values[filter_field_name]
+                        if existing_operator == filter_operator:
+                            filter_value.set_operands(*existing_operands)
+                    yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_field_strategy.get_verbose_name()))
+
+            operands = filter_value.get_operands()
+            new_filter_values = {k:v for k,v in filter_values.items()}
+            new_filter_values[filter_field_name] = (filter_field_strategy, filter_value.operator, *operands)
+
+        if filter_values != new_filter_values:
+            model_context.proxy.filter(self, new_filter_values)
+            yield action_steps.RefreshItemView()
+        new_state = self._get_state(model_context, new_filter_values)
+        yield action_steps.UpdateActionsState(model_context, {self: new_state})
 
     def decorate_query(self, query, values):
         # Previously, the query was decorated with the the string-based filter value tuples by applying them to the query using filter_by.
@@ -1012,27 +1094,26 @@ class SetFilters(Action, AbstractModelFilter):
         # This caused filters in some cases being tried to applied to the wrong entity.
         # Therefore we turn the filter values into entity descriptors condition clauses using the query's entity zero, which should always be the correct one.
         clauses = []
-        for name, filter_value in values.items():
-            filter_strategy = self.admin.get_field_filters().get(name)
-            clause = filter_strategy.get_clause(filter_value, self.admin, query.session)
-            if clause is not None:
-                clauses.append(clause)
+        for name, (filter_strategy, operator, *operands) in values.items():
+            filter_clause = filter_strategy.get_clause(query, operator, *operands)
+            if filter_clause is not None:
+                clauses.append(filter_clause)
         return query.filter(*clauses)
-    
+
     def _get_state(self, model_context, filter_value):
         state = super(SetFilters, self).get_state(model_context)
         state.modes = modes = []
         if len(filter_value) is not None:
             state.notification = True
-        for name, verbose_name in self.get_field_name_choices(model_context):
-            if name in filter_value:
-                modes.append(Mode(name, verbose_name, icon=Icon('check-circle')))
-            else:
-                modes.append(Mode(name, verbose_name))
-        modes.extend([
-            Mode('__clear', _('Clear filter'), icon=Icon('minus-circle')),
-        ])
-        self.admin = model_context.admin
+        # Only show clear filter mode if any filters are active
+        if len(filter_value):
+            modes.extend([Mode('__clear', _('Clear filter'), icon=Icon('minus-circle'))])
+        selected_mode_names = [op.name + '-' + field for field, (_, op, *_) in filter_value.items()]
+        for name, filter_strategy in self.get_filter_strategies(model_context):
+            for op in filter_strategy.get_operators():
+                mode_name = op.name + '-' + name
+                icon = Icon('check-circle') if mode_name in selected_mode_names else None
+                modes.append(Mode(mode_name, '{} {}'.format(filter_strategy.get_verbose_name(), op.verbose_name), icon=icon))
         return state
 
     def get_state(self, model_context):
@@ -1041,31 +1122,6 @@ class SetFilters(Action, AbstractModelFilter):
 
 set_filters = SetFilters()
 
-class AddExistingObject( EditAction ):
-    """Add an existing object to a list if it is not yet in the
-    list"""
-    
-    tooltip = _('Add')
-    verbose_name = _('Add')
-    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
-    name = 'add_object'
-    
-    def model_run( self, model_context, mode ):
-        from sqlalchemy.orm import object_session
-        from camelot.view import action_steps
-        super().model_run(model_context, mode)
-        objs_to_add = yield action_steps.SelectObjects(model_context.admin)
-        for obj_to_add in objs_to_add:
-            for obj in model_context.get_collection():
-                if obj_to_add == obj:
-                    return
-            model_context.proxy.append(obj_to_add)
-        yield action_steps.UpdateObjects(objs_to_add)
-        for obj_to_add in objs_to_add:
-            yield action_steps.FlushSession(object_session(obj_to_add))
-            break
-
-add_existing_object = AddExistingObject()
 
 class AddNewObjectMixin(object):
     
@@ -1091,11 +1147,12 @@ class AddNewObjectMixin(object):
             raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin, mode)
+        subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
-        yield action_steps.CreateObjects((new_object,))
+        yield action_steps.CreateObjects((subsystem_object,))
         if not len(admin.get_validator().validate_object(new_object)):
-            session = orm.object_session(new_object)
+            session = orm.object_session(subsystem_object)
             yield action_steps.FlushSession(session)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
@@ -1113,7 +1170,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     object to the session, and flush the object if it is valid.
     """
 
-    shortcut = QtGui.QKeySequence.New
+    shortcut = QtGui.QKeySequence.StandardKey.New
     icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
     tooltip = _('New')
     verbose_name = _('New')
@@ -1128,6 +1185,12 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
 
     def get_proxy(self, model_context, admin):
         return model_context.proxy
+
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        yield from super().model_run(model_context, mode)
+        # Scroll to last row so that the user sees the newly added object in the list.
+        yield action_steps.ToLastRow()
 
 add_new_object = AddNewObject()
 

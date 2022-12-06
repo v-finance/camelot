@@ -76,7 +76,7 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         group.setExclusive(action.exclusive)
         # connect to the signal of the group instead of the individual buttons,
         # otherwise 2 signals will be received for a single switch of buttons
-        group.buttonClicked[int].connect(self.group_button_clicked)
+        group.idClicked.connect(self.group_button_clicked)
         if action.exclusive == True:
             self.button_type = QtWidgets.QRadioButton
         else:
@@ -126,7 +126,7 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         group = self.findChild(QtWidgets.QButtonGroup)
         layout = self.layout()
         button_layout = QtWidgets.QVBoxLayout()
-        self.values = [mode.name for mode in state.modes]
+        self.values = [mode.value for mode in state.modes]
 
         for i, mode in enumerate(state.modes):
             button = self.button_type(str(mode.verbose_name), self)
@@ -146,7 +146,7 @@ class GroupBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         group = self.findChild(QtWidgets.QButtonGroup)
         layout = self.layout()
         button_layout = QtWidgets.QVBoxLayout()
-        self.values = [mode['name'] for mode in state['modes']]
+        self.values = [mode['value'] for mode in state['modes']]
 
         for i, mode in enumerate(state['modes']):
             button = self.button_type(str(mode['verbose_name']), self)
@@ -173,7 +173,7 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         combobox = QtWidgets.QComboBox(self)
         layout.addWidget( combobox )
         self.setLayout(layout)
-        combobox.currentIndexChanged.connect(self.group_button_clicked)
+        combobox.activated.connect(self.group_button_clicked)
 
     def set_state(self, state):
         AbstractFilterWidget.set_state(self, state)
@@ -186,7 +186,7 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
                     current_index = i
                 combobox.insertItem(i,
                                     str(mode.verbose_name),
-                                    py_to_variant(mode.name))
+                                    py_to_variant(mode.value))
             # setting the current index will trigger the run of the action to
             # apply the initial filter
             combobox.setCurrentIndex(current_index)
@@ -196,13 +196,14 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
         self.setTitle(state['verbose_name'])
         combobox = self.findChild(QtWidgets.QComboBox)
         if combobox is not None:
+            combobox.clear()
             current_index = 0
             for i, mode in enumerate(state['modes']):
                 if mode['checked'] == True:
                     current_index = i
                 combobox.insertItem(i,
                                     mode['verbose_name'],
-                                    mode['name'])
+                                    mode['value'])
             # setting the current index will trigger the run of the action to
             # apply the initial filter
             combobox.setCurrentIndex(current_index)
@@ -217,113 +218,3 @@ class ComboBoxFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
     @QtCore.qt_slot(int)
     def group_button_clicked(self, index):
         self.run_action()
-
-class OperatorFilterWidget(QtWidgets.QGroupBox, AbstractFilterWidget):
-    """Widget that allows applying various filter operators on a field
-
-    :param cls: the class on which the filter will be applied
-    :param field_name: the name fo the field on the class on which to filter
-    :param field_attributes: a dictionary of field attributes for this filter
-    :param default_operator: a default operator to be used, on of the attributes
-        of the python module :mod:`operator`, such as `operator.eq`
-    :param default_value_1: a default value for the first editor (in case the
-        default operator in unary or binary
-    :param default_value_2: a default value for the second editor (in case the
-        default operator is binary)
-    :param parent: the parent :obj:`QtWidgets.QWidget`
-    """
-
-    def __init__(self, action, gui_context, default_value_1, default_value_2, parent):
-        QtWidgets.QGroupBox.__init__(self, parent)
-        self.setFlat(True)
-        self.default_value_1 = default_value_1
-        self.default_value_2 = default_value_2
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins( 2, 2, 2, 2 )
-        layout.setSpacing( 2 )
-        self.setLayout(layout)
-        AbstractFilterWidget.init(self, action, gui_context)
-
-    def set_state(self, state):
-        layout = self.layout()
-        self.setTitle(str(state.verbose_name))
-
-        combobox = QtWidgets.QComboBox(self)
-        layout.addWidget(combobox)
-        default_index = 0
-        for i, mode in enumerate(state.modes):
-            combobox.insertItem(i,
-                                str(mode.verbose_name),
-                                py_to_variant(mode))
-            if mode.checked == True:
-                default_index = i
-        combobox.setCurrentIndex( default_index )
-        combobox.currentIndexChanged.connect( self.combobox_changed )
-        delegate = state.field_attributes['delegate'](** state.field_attributes)
-        option = QtWidgets.QStyleOptionViewItem()
-        option.version = 5
-        self._editor = delegate.createEditor( self, option, None )
-        self._editor2 = delegate.createEditor( self, option, None )
-        # explicitely set a value, otherways the current value remains
-        # ValueLoading
-        self._editor.set_value(self.default_value_1)
-        self._editor2.set_value(self.default_value_2)
-        self._editor.editingFinished.connect(self.run_action)
-        self._editor2.editingFinished.connect(self.run_action)
-        layout.addWidget(self._editor)
-        layout.addWidget(self._editor2)
-        layout.addStretch()
-        self._editor.setEnabled(False)
-        self._editor2.setEnabled(False)
-        self._editor.hide()
-        self._editor2.hide()
-        self._index = default_index
-        self.update_editors()
-
-    def set_state_v2(self, state):
-        raise NotImplementedError()
-
-    def update_editors(self):
-        """Show or hide the editors according to the operator
-        arity"""
-        if self._index >= 2:
-            mode = self.get_mode()
-            arity = self.action.get_arity(mode.name)
-            self._editor.setEnabled(True)
-            if arity > 0:
-                self._editor.setEnabled(True)
-                self._editor.show()
-            else:
-                self._editor.setEnabled(False)
-                self._editor.hide()
-            if arity > 1:
-                self._editor2.setEnabled(True)
-                self._editor2.show()
-            else:
-                self._editor2.setEnabled(False)
-                self._editor2.hide()
-        else:
-            self._editor.setEnabled(False)
-            self._editor.hide()
-            self._editor2.setEnabled(False)
-            self._editor2.hide()
-
-    @QtCore.qt_slot(int)
-    def combobox_changed(self, index):
-        """Whenever the combobox changes, show or hide the
-        appropriate editors and emit the filter_changed signal """
-        self._index = index
-        self.update_editors()
-        self.run_action()
-
-    def get_mode(self):
-        combobox = self.findChild(QtWidgets.QComboBox)
-        index = combobox.currentIndex()
-        mode = variant_to_py(combobox.itemData(index))
-        return mode
-
-    def get_value(self):
-        mode = self.get_mode()
-        return (mode.name, self._editor.get_value(), self._editor2.get_value())
-
-

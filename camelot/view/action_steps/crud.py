@@ -1,14 +1,23 @@
+import json
 import logging
+import typing
 
 logger = logging.getLogger(__name__)
-    
+
+from camelot.core.naming import CompositeName
+from camelot.core.utils import ugettext_lazy
+from dataclasses import dataclass
+
 from ...admin.action.base import ActionStep
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, variant_to_py, is_deleted
-from ...core.item_model import FieldAttributesRole, CompletionPrefixRole, CompletionsRole
+from ...core.serializable import DataclassSerializable
+from ...core.item_model import FieldAttributesRole, CompletionsRole
 
 class UpdateMixin(object):
     
     def update_item_model(self, item_model):
+        if is_deleted(item_model):
+            return
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return
@@ -28,17 +37,20 @@ class UpdateMixin(object):
         
         logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))    
 
+@dataclass
+class RowCount(ActionStep, DataclassSerializable):
 
-class RowCount(ActionStep):
-    
     blocking = False
-    
-    def __init__(self, rows):
-        self.rows = rows   
-    
-    def gui_run(self, item_model):
-        if self.rows is not None:
-            item_model._refresh_content(self.rows)    
+
+    rows: typing.Optional[int] = None
+
+    @classmethod
+    def gui_run(self, item_model, serialized_step):
+        if is_deleted(item_model):
+            return
+        step = json.loads(serialized_step)
+        if step["rows"] is not None:
+            item_model._refresh_content(step["rows"])
 
 class SetColumns(ActionStep):
     
@@ -48,6 +60,8 @@ class SetColumns(ActionStep):
         self.static_field_attributes = static_field_attributes
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         item_model.beginResetModel()
         item_model.settings.beginGroup( 'column_width' )
         item_model.settings.beginGroup( '0' )
@@ -71,13 +85,13 @@ class SetColumns(ActionStep):
             #
             fa_copy = fa.copy()
             fa_copy.setdefault('editable', True)
-            set_header_data(py_to_variant(field_name), Qt.UserRole)
-            set_header_data(py_to_variant(verbose_name), Qt.DisplayRole)
+            set_header_data(py_to_variant(field_name), Qt.ItemDataRole.UserRole)
+            set_header_data(py_to_variant(verbose_name), Qt.ItemDataRole.DisplayRole)
             set_header_data(fa_copy, FieldAttributesRole)
             if fa.get( 'nullable', True ) == False:
-                set_header_data(item_model._header_font_required, Qt.FontRole)
+                set_header_data(item_model._header_font_required, Qt.ItemDataRole.FontRole)
             else:
-                set_header_data(item_model._header_font, Qt.FontRole)
+                set_header_data(item_model._header_font, Qt.ItemDataRole.FontRole)
 
             settings_width = int( variant_to_py( item_model.settings.value( field_name, 0 ) ) )
             if settings_width > 0:
@@ -85,34 +99,66 @@ class SetColumns(ActionStep):
             else:
                 width = fa['column_width'] * char_width
             header_item.setData( py_to_variant( QtCore.QSize( width, item_model._horizontal_header_height ) ),
-                                 Qt.SizeHintRole )
+                                 Qt.ItemDataRole.SizeHintRole )
             item_model.setHorizontalHeaderItem( i, header_item )
         item_model.settings.endGroup()
         item_model.settings.endGroup()
         item_model.endResetModel()    
  
+@dataclass
+class CompletionValue(DataclassSerializable):
+    """
+    Represent one of the autocompletion values.
 
-class Completion(ActionStep):
+    .. attribute:: value
+
+        A :class:`camelot.core.naming.CompositeName` that resolves to a bound completion value.
+
+    .. attribute:: verbose_name
+
+        The verbose representation of the value as it will appear to the user.
+
+    .. attribute:: tooltip
+
+        The tooltip as displayed to the user, this should be of type :class:`camelot.core.utils.ugettext_lazy`.
+
+    """
+
+    value: CompositeName
+    verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    tooltip: typing.Union[str, ugettext_lazy, None] = None
+
+@dataclass
+class Completion(ActionStep, DataclassSerializable):
     
     blocking = False
-    
-    def __init__(self, row, column, prefix, completion):
-        self.row = row
-        self.column = column
-        self.prefix = prefix
-        self.completions = completion        
-        
-    def gui_run(self, item_model):
+
+    row: int
+    column: int
+    prefix: str
+    completions: typing.List[CompletionValue]
+
+    @classmethod
+    def gui_run(self, item_model, serialized_step):
+        if is_deleted(item_model):
+            return
         root_item = item_model.invisibleRootItem()
         if is_deleted(root_item):
             return
-        logger.debug('begin gui update {0} completions'.format(len(self.completions)))
-        child = root_item.child(self.row, self.column)
+        step = json.loads(serialized_step)
+        logger.debug('begin gui update {0} completions'.format(len(step['completions'])))
+        child = root_item.child(step['row'], step['column'])
         if child is not None:
-            child.setData(self.prefix, CompletionPrefixRole)
-            child.setData(self.completions, CompletionsRole)
-        logger.debug('end gui update rows {0.row}, column {0.column}'.format(self))
-
+            # calling setData twice triggers dataChanged twice, resulting in
+            # the editors state being updated twice
+            #child.setData(self.prefix, CompletionPrefixRole)
+            completions = [{
+                # Use user role for object to avoid display role / edit role confusion
+                Qt.ItemDataRole.UserRole: completion['value'],
+                Qt.ItemDataRole.DisplayRole: completion['verbose_name'],
+                Qt.ItemDataRole.ToolTipRole: completion['tooltip']} for completion in step['completions']]
+            child.setData(completions, CompletionsRole)
+        logger.debug('end gui update rows {0}, column {1}'.format(step['row'], step['column']))
 
 class Created(ActionStep, UpdateMixin):
     
@@ -122,6 +168,8 @@ class Created(ActionStep, UpdateMixin):
         self.changed_ranges = changed_ranges
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         # appending new items to the model will increase the rowcount, so
         # there is no need to set the rowcount explicitly
         self.update_item_model(item_model) 
@@ -136,34 +184,7 @@ class Update(ActionStep, UpdateMixin):
         
     def gui_run(self, item_model):
         self.update_item_model(item_model)     
-        
-        
-class Deleted(RowCount, UpdateMixin):
-    
-    def __init__(self, rows, changed_ranges):
-        super(Deleted, self).__init__(rows)
-        self.changed_ranges = changed_ranges
-        
-    def gui_run(self, item_model):
-        self.update_item_model(item_model)
 
-
-class SetData(Update): 
-    
-    def __init__(self, changed_ranges, created_objects, updated_objects, deleted_objects):
-        super(SetData, self).__init__(changed_ranges)
-        self.created_objects = created_objects
-        self.updated_objects = updated_objects
-        self.deleted_objects = deleted_objects
-        
-    def gui_run(self, item_model):
-        super(SetData, self).gui_run(item_model)
-        signal_handler = item_model._crud_signal_handler
-        signal_handler.send_objects_created(item_model, self.created_objects)
-        signal_handler.send_objects_updated(item_model, self.updated_objects)
-        signal_handler.send_objects_deleted(item_model, self.deleted_objects)  
-        
-        
 class ChangeSelection(ActionStep):
     
     def __init__(self, action_routes, action_states):
@@ -171,5 +192,8 @@ class ChangeSelection(ActionStep):
         self.action_states = action_states
         
     def gui_run(self, item_model):
+        if is_deleted(item_model):
+            return
         for i, action_route in enumerate(self.action_routes):
             item_model.action_state_changed_signal.emit(action_route, self.action_states[i])    
+            item_model.action_state_changed_cpp_signal.emit('/'.join(action_route), self.action_states[i]._to_bytes())

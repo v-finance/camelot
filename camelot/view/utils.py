@@ -36,13 +36,9 @@ import decimal
 import re
 import string
 import logging
-import operator
 
 from ..core.qt import QtCore
-from camelot.core.sql import like_op
-from sqlalchemy.sql.operators import between_op
 from camelot.core.utils import ugettext
-from camelot.core.utils import ugettext_lazy as _
 
 logger = logging.getLogger('camelot.view.utils')
 
@@ -66,7 +62,7 @@ def local_date_format():
     global _local_date_format
     if not _local_date_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', str(locale.dateFormat(locale.ShortFormat)))
+        format_sequence = re.split('y*', str(locale.dateFormat(locale.FormatType.ShortFormat)))
         # make sure a year always has 4 numbers
         format_sequence.insert(-1, 'yyyy')
         _local_date_format = str(u''.join(format_sequence))
@@ -78,7 +74,7 @@ def local_datetime_format():
     if not _local_datetime_format:
         locale = QtCore.QLocale()
         # make sure a year always has 4 numbers
-        _local_datetime_format = re.sub('y+', 'yyyy', str(locale.dateTimeFormat(locale.ShortFormat)))
+        _local_datetime_format = re.sub('y+', 'yyyy', str(locale.dateTimeFormat(locale.FormatType.ShortFormat)))
     return _local_datetime_format
 
 def local_time_format():
@@ -86,7 +82,7 @@ def local_time_format():
     global _local_time_format
     if not _local_time_format:
         locale = QtCore.QLocale()
-        _local_time_format = str(locale.timeFormat(locale.ShortFormat) )
+        _local_time_format = str(locale.timeFormat(locale.FormatType.ShortFormat) )
     return _local_time_format
 
 def default_language(*args):
@@ -228,17 +224,6 @@ def to_string( value ):
 
 def enumeration_to_string(value):
     return ugettext(str(value or u'').replace('_', ' ').capitalize())
-
-operator_names = {
-    operator.eq : _( u'=' ),
-    operator.ne : _( u'!=' ),
-    operator.lt : _( u'<' ),
-    operator.le : _( u'<=' ),
-    operator.gt : _( u'>' ),
-    operator.ge : _( u'>=' ),
-    like_op : _( u'like' ),
-    between_op: _( u'between' ),
-}
 
 def text_from_richtext( unstripped_text ):
     """function that returns a list of lines with escaped data, to be used in 

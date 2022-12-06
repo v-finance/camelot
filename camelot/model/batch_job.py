@@ -228,24 +228,24 @@ class BatchJob( Entity, type_and_status.WithStatus, type_and_status.StatusMixin 
             elif self.current_status in (None, 'running'):
                 self.change_status('success')
         return True
-        
-    class Admin(EntityAdmin):
-        verbose_name = _('Batch job')
-        list_display = ['host', 'type', 'current_status']
-        list_filter = [
-            type_and_status.StatusFilter('status'),
-            list_filter.ComboBoxFilter('host')
-        ]
-        form_state = 'right'
-        form_display = forms.TabForm( [ ( _('Job'), list_display + ['message'] ),
-                                        ( _('History'), ['status'] ) ] )
-        form_actions = [ type_and_status.ChangeStatus( 'canceled',
-                                                       _('Cancel') ) ]
 
-        def get_query(self, *args, **kwargs):
-            query = EntityAdmin.get_query(self, *args, **kwargs)
-            query = query.order_by(self.entity.id.desc())
-            query = query.options(orm.subqueryload('status'))
-            return query
+class BatchJobAdmin(EntityAdmin):
+    verbose_name = _('Batch job')
+    list_display = ['host', 'type', 'current_status']
+    list_filter = [
+        type_and_status.StatusFilter(BatchJob),
+        list_filter.ComboBoxFilter(BatchJob.host)
+    ]
+    form_state = 'right'
+    form_display = forms.TabForm( [ ( _('Job'), list_display + ['message'] ),
+                                    ( _('History'), ['status'] ) ] )
+    form_actions = [ type_and_status.ChangeStatus( 'canceled',
+                                                   _('Cancel') ) ]
 
+    def get_query(self, *args, **kwargs):
+        query = EntityAdmin.get_query(self, *args, **kwargs)
+        query = query.order_by(self.entity.id.desc())
+        query = query.options(orm.subqueryload('status'))
+        return query
 
+BatchJob.Admin = BatchJobAdmin

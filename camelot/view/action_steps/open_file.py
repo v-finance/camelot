@@ -26,18 +26,14 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import json
-
 from dataclasses import dataclass
 
-from ...core.qt import QtCore, QtGui
-  
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
-
-from io import BytesIO
+from camelot.view.qml_view import qml_action_step
 
 from ...core.serializable import DataclassSerializable
+
 
 @dataclass
 class OpenFile( ActionStep, DataclassSerializable ):
@@ -81,14 +77,8 @@ class OpenFile( ActionStep, DataclassSerializable ):
 
     @classmethod
     def gui_run( cls, gui_context, serialized_step ):
-        step = json.loads(serialized_step)
-        # support for windows shares
-        if not step["path"].startswith(r'\\'):
-            url = QtCore.QUrl.fromLocalFile( step["path"] )
-        else:
-            url = QtCore.QUrl( step["path"], QtCore.QUrl.TolerantMode )
-        return QtGui.QDesktopServices.openUrl( url )
-    
+        qml_action_step(gui_context, 'OpenFile', serialized_step)
+
 class OpenStream( OpenFile ):
     """Write a stream to a temporary file and open that file with the 
     preferred application of the user.
@@ -122,35 +112,6 @@ class OpenString( OpenFile ):
         output_stream.write( string )
         output_stream.close()
         super( OpenString, self ).__init__( file_name )
-        
-class OpenJinjaTemplate( OpenStream ):
-    """Render a jinja template into a temporary file and open that
-    file with the prefered application of the user.
-    
-    :param environment: a :class:`jinja2.Environment` object to be used
-        to load templates from.
-        
-    :param template: the name of the template as it can be fetched from
-        the Jinja environment.
-    
-    :param suffix: the suffix of the temporary file to create, this will
-        determine the application used to open the file.
-        
-    :param context: a dictionary with objects to be used when rendering
-        the template
-    """
-    
-    def __init__( self,
-                  template, 
-                  context={},
-                  environment = environment,
-                  suffix='.txt' ):
-        template = environment.get_template( template )
-        template_stream = template.stream( context )
-        output_stream = BytesIO()
-        template_stream.dump( output_stream, encoding='utf-8' )
-        output_stream.seek( 0 )
-        super( OpenJinjaTemplate, self).__init__( output_stream, suffix=suffix )
 
 class WordJinjaTemplate( OpenFile ):
     """Render a jinja template into a temporary file and open that

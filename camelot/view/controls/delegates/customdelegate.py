@@ -32,13 +32,15 @@ import json
 import logging
 import dataclasses
 
+from camelot.core.naming import initial_naming_context
+
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
 from ....core.serializable import json_encoder
 from ....core.item_model import (
-    ProxyDict, FieldAttributesRole, ActionRoutesRole, ActionStatesRole
+    ActionRoutesRole, ActionStatesRole,
+    ChoicesRole, FieldAttributesRole, ProxyDict
 )
-from ....admin.action.field_action import FieldAction
 from ..action_widget import ActionToolbutton
 
 LOGGER = logging.getLogger(__name__)
@@ -111,8 +113,8 @@ def DocumentationMetaclass(name, bases, dct):
 
     return type(name, bases, dct)
 
-color_groups = {True: QtGui.QPalette.Inactive,
-                False: QtGui.QPalette.Disabled}
+color_groups = {True: QtGui.QPalette.ColorGroup.Inactive,
+                False: QtGui.QPalette.ColorGroup.Disabled}
 
 class CustomDelegate(QtWidgets.QItemDelegate):
     """Base class for implementing custom delegates.
@@ -124,7 +126,7 @@ class CustomDelegate(QtWidgets.QItemDelegate):
     """
 
     editor = None
-    horizontal_align = Qt.AlignLeft | Qt.AlignVCenter
+    horizontal_align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
     def __init__(self, parent=None, editable=True, **kwargs):
         """:param parent: the parent object for the delegate
@@ -153,11 +155,8 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         routes = model_context.field_attributes.get('action_routes', [])
         states = []
         for action in model_context.field_attributes.get('actions', []):
-            if isinstance(action, FieldAction):
-                state = action.get_state(model_context)
-                states.append(dataclasses.asdict(state))
-            else:
-                states.append(None)
+            state = action.get_state(model_context)
+            states.append(dataclasses.asdict(state))
         #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
         if len(routes) != len(states):
             LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
@@ -168,17 +167,29 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         serialized_action_routes = json_encoder.encode(routes)
         serialized_action_states = json_encoder.encode(states)
         item = QtGui.QStandardItem()
-        item.setData(py_to_variant(model_context.value), Qt.EditRole)
+        item.setData(py_to_variant(model_context.value), Qt.ItemDataRole.EditRole)
+        # NOTE: one of the goals is to serialize the field attributes, which currently
+        # still comprises a large variety of elements, some of which should still be made serializable,
+        # while others may only be used at the model side and should not be included in the serialization.
+        # That exact set of elements that should be included is still a TODO, as many editors still rely
+        # on the field attributes being passes as kwargs as part of their initialization.
+        # As a transition phase, custom ItemData roles are introduced to store those elements
+        # that are already made serializable, as to gradually get towards the final goal.
+        # Eventually, when the final set of serializable field attributes is known, those roles
+        # may be combined again somehow, but this is still TBD.
         item.setData(serialized_action_routes, ActionRoutesRole)
         item.setData(serialized_action_states, ActionStatesRole)
-        item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
+        item.setData(py_to_variant(cls.horizontal_align), Qt.ItemDataRole.TextAlignmentRole)
         item.setData(py_to_variant(ProxyDict(model_context.field_attributes)),
                      FieldAttributesRole)
         item.setData(py_to_variant(model_context.field_attributes.get('tooltip')),
-                     Qt.ToolTipRole)
+                     Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
-                     Qt.BackgroundRole)
-
+                     Qt.ItemDataRole.BackgroundRole)
+        choices = model_context.field_attributes.get('choices')
+        if choices is not None:
+            choices = [(initial_naming_context._bind_object(obj), verbose_name) for obj, verbose_name in choices]
+        item.setData(py_to_variant(choices), ChoicesRole)
         return item
 
     def createEditor(self, parent, option, index):
@@ -209,16 +220,16 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         # * Closing the editor results in the calculator not working
         # * not closing the editor results in the virtualaddresseditor not
         #   getting closed always
-        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.NoHint )
+        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint )
 
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
-        value = variant_to_py(index.model().data(index, Qt.EditRole))
+        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
         field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         # ok i think i'm onto something, dynamically set tooltip doesn't change
-        # Qt model's data for Qt.ToolTipRole
-        # but i wonder if we should make the detour by Qt.ToolTipRole or just
+        # Qt model's data for Qt.ItemDataRole.ToolTipRole
+        # but i wonder if we should make the detour by Qt.ItemDataRole.ToolTipRole or just
         # get our tooltip from field_attributes
         # (Nick G.): Avoid 'None' being set as tooltip.
         if field_attributes.get('tooltip'):
@@ -230,7 +241,6 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         #
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
-
         # update actions
         self.update_field_action_states(editor, index)
 
@@ -239,9 +249,12 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         action_routes = json.loads(index.model().data(index, ActionRoutesRole))
         if len(action_routes) == 0:
             return
-        for action_widget in editor.findChildren(ActionToolbutton):
+        for action_widget in editor.findChildren(QtWidgets.QToolButton):
+            action_route = action_widget.property('action_route')
+            if not action_route:
+                continue
             try:
-                action_index = action_routes.index(list(action_widget.action_route))
+                action_index = action_routes.index(list(action_route))
             except ValueError:
                 LOGGER.error('action route not found {}, available routes'.format(
                     action_widget.action_route
@@ -251,7 +264,9 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                 continue
             state = action_states[action_index]
             if state is not None:
-                action_widget.set_state_v2(state)
+                ActionToolbutton.set_toolbutton_state(
+                    action_widget, state, editor.action_menu_triggered
+                )
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))

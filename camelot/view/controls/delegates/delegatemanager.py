@@ -32,7 +32,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 
 from ....core.item_model import FieldAttributesRole
-from ....core.qt import QtWidgets, Qt, variant_to_py, is_deleted
+from ....core.qt import QtCore, QtWidgets, Qt, variant_to_py, is_deleted
 from .plaintextdelegate import PlainTextDelegate
 
 
@@ -40,6 +40,8 @@ class DelegateManager(QtWidgets.QItemDelegate):
     """Manages custom delegates, should not be used by the application
   developer
   """
+
+    actionTriggered = QtCore.qt_signal(list, object, QtWidgets.QWidget)
 
     def __init__(self, parent=None):
         QtWidgets.QItemDelegate.__init__(self, parent)
@@ -51,7 +53,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
         delegate = self.findChild(QtWidgets.QAbstractItemDelegate, str(column))
         if delegate is None:
             field_attributes = index.model().headerData(
-                column, Qt.Horizontal, FieldAttributesRole
+                column, Qt.Orientation.Horizontal, FieldAttributesRole
             )
             delegate = field_attributes['delegate'](parent=self, **field_attributes)
             self.insert_column_delegate(column, delegate)
@@ -71,11 +73,16 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 
+    @QtCore.qt_slot(list, object)
+    def editorActionTriggered(self, route, mode):
+        self.actionTriggered.emit(route, mode, self.sender())
+
     def createEditor(self, parent, option, index):
         """Use a custom delegate createEditor method if it exists"""
         try:
             delegate = self.get_column_delegate(index)
             editor = delegate.createEditor(parent, option, index)
+            editor.actionTriggered.connect(self.editorActionTriggered)
         except Exception as e:
             logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
             return QtWidgets.QWidget( parent = parent )
@@ -92,7 +99,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
                 delegate.setEditorData(editor, index)
             except Exception as e:
                 logger.error('Programming Error : could not set editor data for editor at column %s'%(index.column()), exc_info=e)
-                logger.error('value that could not be set : %s'%str(variant_to_py(index.model().data(index, Qt.EditRole))))
+                logger.error('value that could not be set : %s'%str(variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))))
                 logger.error('editor that failed %s %s'%(type(editor).__name__, editor.objectName()))
 
     def setModelData(self, editor, model, index):

@@ -35,6 +35,7 @@ class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
 
     editingFinished = QtCore.qt_signal()
+    actionTriggered = QtCore.qt_signal(list, object)
     
     def __init__(self,
                  parent=None,
@@ -52,16 +53,16 @@ class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     def set_value(self, value):
         value = AbstractCustomEditor.set_value(self, value)
         if value:
-            self.setCheckState(Qt.Checked)
+            self.setCheckState(Qt.CheckState.Checked)
         else:
-            self.setCheckState(Qt.Unchecked)
+            self.setCheckState(Qt.CheckState.Unchecked)
 
     def get_value(self):
         value_loading = AbstractCustomEditor.get_value(self)
         if value_loading is not None:
             return value_loading
         state = self.checkState()
-        if state==Qt.Unchecked:
+        if state==Qt.CheckState.Unchecked:
             return False
         return True
 

@@ -90,7 +90,7 @@ def setup_all( create_tables=False, *args, **kwargs ):
     """
     if create_tables:
         metadata.create_all( *args, **kwargs )
-        
+
 Entity = declarative_base( cls = EntityBase, 
                            metadata = metadata,
                            metaclass = EntityMeta,

@@ -27,14 +27,10 @@
 #
 #  ============================================================================
 
-#from ...core.qt import Qt, QtGui, QtCore, QtWidgets, QtQuick, variant_to_py, is_deleted
 from ...core.qt import QtGui, QtCore, QtWidgets, QtQuick, QtQml, variant_to_py
 
 from ...admin.icon import Icon
 from ...admin.action import Mode, State
-#from ...admin.action.form_action import FormActionGuiContext
-#from ...admin.action.list_action import ListActionGuiContext
-#from camelot.view.model_thread import post
 from camelot.view.art import from_admin_icon
 
 class AbstractActionWidget( object ):
@@ -64,8 +60,12 @@ class AbstractActionWidget( object ):
         self.setVisible(state.visible)
 
     def set_state_v2(self, state):
-        self.setEnabled(state['enabled'])
-        self.setVisible(state['visible'])
+        self.set_widget_state(self, state)
+
+    @classmethod
+    def set_widget_state(cls, widget, state):
+        widget.setEnabled(state['enabled'])
+        widget.setVisible(state['visible'])
 
     # REMOVE THIS...
     """
@@ -78,7 +78,7 @@ class AbstractActionWidget( object ):
                   args = (self.gui_context.create_model_context(),) )
 
     def header_data_changed(self, orientation, first, last):
-        if orientation==Qt.Horizontal:
+        if orientation==Qt.Orientation.Horizontal:
             return
         if isinstance(self.gui_context, FormActionGuiContext):
             # the model might emit a dataChanged signal, while the widget mapper
@@ -113,9 +113,16 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode in state.modes:
-                mode_action = mode.render(menu)
-                mode_action.triggered.connect(self.action_triggered)
-                menu.addAction(mode_action)
+                if mode.modes:
+                    mode_menu = mode.render(menu)
+                    for submode in mode.modes:
+                        submode_action = submode.render(mode_menu)
+                        submode_action.triggered.connect(self.action_triggered)
+                        mode_menu.addAction(submode_action)
+                else:
+                    mode_action = mode.render(menu)
+                    mode_action.triggered.connect(self.action_triggered)
+                    menu.addAction(mode_action)
 
     def set_menu_v2(self, state, parent):
         """This method creates a menu for an object with as its menu items
@@ -124,24 +131,45 @@ class AbstractActionWidget( object ):
         :param state: a `camelot.admin.action.State` object
         :param parent: a parent for the menu
         """
+        self._set_menu(self, state, parent, self.action_triggered)
+
+    @classmethod
+    def _set_menu(cls, widget, state, parent, slot):
+        """
+        slot can be None for use in unittests where the action wont be
+        triggered
+        """
         if state['modes']:
-            # self is not always a QWidget, so QMenu is created without
+            # widget is not always a QWidget, so QMenu is created without
             # parent
-            menu = self.menu()
+            menu = widget.menu()
             if menu is None:
                 menu = QtWidgets.QMenu(parent=parent)
                 # setMenu does not transfer ownership
-                self.setMenu(menu)
+                widget.setMenu(menu)
             menu.clear()
             for mode_data in state['modes']:
-                if mode_data['icon'] is not None:
-                    icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color'])
+                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color']) if mode_data['icon'] is not None else None
+                if mode_data['modes']:
+                    submodes = []
+                    for submode_data in mode_data['modes']:
+                        submode_icon = Icon(submode_data['icon']['name'], submode_data['icon']['pixmap_size'], submode_data['icon']['color']) if submode_data['icon'] is not None else None
+                        submodes.append(Mode(submode_data['value'], submode_data['verbose_name'], submode_icon))
+                    mode = Mode(mode_data['value'], mode_data['verbose_name'], submode_icon, submodes)
+                    mode_menu = mode.render(menu)
+                    for submode in mode.modes:
+                        submode_action = submode.render(mode_menu)
+                        if slot is not None:
+                            submode_action.triggered.connect(slot)
+                        submode_action.setProperty('action_route', widget.property('action_route'))
+                        mode_menu.addAction(submode_action)
                 else:
-                    icon = None
-                mode = Mode(mode_data['name'], mode_data['verbose_name'], icon)
-                mode_action = mode.render(menu)
-                mode_action.triggered.connect(self.action_triggered)
-                menu.addAction(mode_action)
+                    mode = Mode(mode_data['value'], mode_data['verbose_name'], icon)
+                    mode_action = mode.render(menu)
+                    if slot is not None:
+                        mode_action.triggered.connect(slot)
+                    mode_action.setProperty('action_route', widget.property('action_route'))
+                    menu.addAction(mode_action)
 
     # not named triggered to avoid confusion with standard Qt slot
     def action_triggered_by(self, sender):
@@ -151,20 +179,20 @@ class AbstractActionWidget( object ):
         action_triggered_by
         """
         mode = None
-        if isinstance(sender, QtWidgets.QAction):
+        if isinstance(sender, QtGui.QAction):
             mode = str(variant_to_py(sender.data()))
         elif isinstance(sender, QtQuick.QQuickItem):
-            data = sender.data()
+            data = sender.mode()
             if isinstance(data, QtQml.QJSValue):
                 data = data.toVariant()
             mode = variant_to_py(data)
         self.run_action( mode )
 
 
-class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
+class ActionAction( QtGui.QAction, AbstractActionWidget ):
 
     def __init__( self, action, gui_context, parent ):
-        QtWidgets.QAction.__init__( self, parent )
+        QtGui.QAction.__init__( self, parent )
         AbstractActionWidget.init( self, action, gui_context )
         if action.shortcut != None:
             self.setShortcut( action.shortcut )
@@ -289,24 +317,31 @@ class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
             self.setToolTip( '' )
         self.set_menu(state, self)
         if state.modes:
-            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+            self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
     def set_state_v2( self, state ):
-        AbstractActionWidget.set_state_v2(self, state)
+        self.set_menu_v2(state, self)
+        self.set_toolbutton_state(self, state, self.action_triggered)
+
+    @classmethod
+    def set_toolbutton_state(cls, toolbutton, state, slot):
+        # warning, this method does not set the menu, so does not work for
+        # modes.
+        cls.set_widget_state(toolbutton, state)
+        cls._set_menu(toolbutton, state, toolbutton, slot)
         if state['verbose_name'] != None:
-            self.setText( str( state['verbose_name'] ) )
+            toolbutton.setText( str( state['verbose_name'] ) )
         if state['icon'] != None:
             icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
-            self.setIcon( from_admin_icon(icon).getQIcon() )
+            toolbutton.setIcon( from_admin_icon(icon).getQIcon() )
         else:
-            self.setIcon( QtGui.QIcon() )
+            toolbutton.setIcon( QtGui.QIcon() )
         if state['tooltip'] != None:
-            self.setToolTip( str( state['tooltip'] ) )
+            toolbutton.setToolTip( str( state['tooltip'] ) )
         else:
-            self.setToolTip( '' )
-        self.set_menu_v2(state, self)
+            toolbutton.setToolTip( '' )
         if state['modes']:
-            self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+            toolbutton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
 
 
     @QtCore.qt_slot()

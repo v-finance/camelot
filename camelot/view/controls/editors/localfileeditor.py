@@ -52,8 +52,8 @@ class LocalFileEditor( CustomEditor ):
                  file_filter = 'All files (*)',
                  **kwargs):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self._directory = directory
         self._save_as = save_as
@@ -68,7 +68,7 @@ class LocalFileEditor( CustomEditor ):
         layout.setContentsMargins(0, 0, 0, 0)
 
         browse_button = QtWidgets.QToolButton( self )
-        browse_button.setFocusPolicy( Qt.ClickFocus )
+        browse_button.setFocusPolicy( Qt.FocusPolicy.ClickFocus )
         browse_button.setIcon( self.browse_icon.getQIcon() )
         browse_button.setToolTip( _('Browse') )
         browse_button.setAutoRaise( True )
