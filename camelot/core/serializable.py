@@ -69,6 +69,11 @@ class DataclassEncoder(json.JSONEncoder):
             return obj.toVariant()
         if isinstance(obj, QtGui.QColor):
             return obj.name()
+         # FIXME: Remove this when all classes are serializable.
+         #        Currently needed to serialize some fields
+         #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
+        if isinstance(obj, DataclassSerializable):
+            return obj.asdict(obj)
         return json.JSONEncoder.default(self, obj)
 
 
