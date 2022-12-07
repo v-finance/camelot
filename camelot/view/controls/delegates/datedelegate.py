@@ -42,7 +42,6 @@ class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for date values"""
     
     nullable: bool = True
-    validator: Any = None #DateValidator() # FIXME
 
     horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
     
