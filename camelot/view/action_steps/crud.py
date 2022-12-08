@@ -22,7 +22,7 @@ from ..controls import delegates
 
 
 non_serializable_roles = (
-    FieldAttributesRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole
+    FieldAttributesRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
 )
 
 serializable_field_attributes = (
