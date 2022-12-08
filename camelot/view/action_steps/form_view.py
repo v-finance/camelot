@@ -46,6 +46,7 @@ from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
 from .item_view import AbstractCrudView
+#from ..qml_view import qml_action_step
 
 
 @dataclass
@@ -134,6 +135,8 @@ class OpenFormView(AbstractCrudView):
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
+        # Use new QML forms:
+        #qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
         step = json.loads(serialized_step)
         formview = cls.render(gui_context_name, step)
         if formview is not None:
