@@ -287,11 +287,7 @@ class AddNewObject(AddNewObjectMixin, EditFieldAction):
     def get_proxy(self, model_context, admin):
         return model_context.value
 
-    def get_admin(self, model_context, mode):
-        """
-        Return the admin used for creating and handling the new entity instance with.
-        By default, the given model_context's admin is used.
-        """
+    def get_default_admin(self, model_context, mode=None):
         return model_context.field_attributes.get('admin')
 
     def get_state(self, model_context):
