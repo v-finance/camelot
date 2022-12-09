@@ -755,7 +755,7 @@ and used as a custom action.
     def is_editable(self):
         """Return True if the Entity is editable.
 
-        An entity is consdered editable if there is no __entity_args__ { 'editable': False }
+        An entity is considered editable if there is no __entity_args__ { 'editable': False }
         """
         editable = self.entity._get_entity_arg('editable')
         if editable is None:
