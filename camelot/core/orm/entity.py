@@ -330,7 +330,7 @@ class EntityMeta( DeclarativeMeta ):
             if isinstance(polymorphic_on_col.type, Enumeration):
                 return polymorphic_on_col.type.enum
 
-    def get_cls_by_discriminator(cls, discriminator_value):
+    def get_cls_by_discriminator(cls, primary_discriminator, *secondary_discriminators):
         """
         Retrieve the corresponding class for the given discriminator value if one is registered on this class or its base.
         This can be the class that is specifically registered for the given discriminator value, or a possible registered default class otherwise.
@@ -338,29 +338,27 @@ class EntityMeta( DeclarativeMeta ):
         Additionally, in case of a polymorphic base class, passing one of the polymorphic identities will also retrieve
         the entity corresponding to the identity based on the polymorphic map.
 
-        :param discriminator_value: can be one of either following values:
+        :param primary_discriminator: can be one of either following values:
           * None: will lookup a possible registered default class
-          * a member of a sqlalchemy.util.OrderedProperties instance, in case of a singular primary discriminator.
+          * a member of a sqlalchemy.util.OrderedProperties instance.
             If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
             __type_groups__, that get auto-set in case the set types are grouped.
-          * a tuple containing multi-level discriminator values, with a primary discriminator value of the type above,
-            and secondary Entity class discriminator values.
-        :return: the class that is registered for the given discriminator value, which inherits from the class where the discriminator is registered on, or the class itself if not.
-                 In case the discriminator value is:
+        :param secondary_discriminators: optional secondary Entity class or instance discriminator values.
+        :return: the class that is registered for the given discriminator values, which inherits from the class where the discriminators are registered on, or the class itself if not.
+                 In case the primary discriminator value is:
                    * None; the registered default class will be returned, if present.
                    * a member of the allowed __type_groups__; a possible registered class for the type group will be returned, or the registered default class otherwise.
                    * a member of the allowed __types__; a possible registered class for the type will be returned,
                      otherwise a possible registered class for the group of the type, if applicable, and otherwise the registered default class.
-                   * a tuple combining a primary discriminator of one of the previous types, and secondary Entity discriminators.
+                 In the latter two cases, the secondary discriminators may discriminate between multi-level discriminated registered classes.
                  Examples:
                   | BaseClass.get_cls_by_discriminator(allowed_types.certain_type.name) == CertainTypeClass
                   | BaseClass.get_cls_by_discriminator(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
                   | BaseClass.get_cls_by_discriminator(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
-                  | BaseClass.get_cls_by_discriminator((allowed_types.certain_type.name, Organization)) == CertainTypeClassWithOrganization
-                  | BaseClass.get_cls_by_discriminator((allowed_types.certain_type.name, Person)) == CertainTypeClassWithPerson
+                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_type.name, Organization) == CertainTypeClassWithOrganization
+                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_type.name, Person) == CertainTypeClassWithPerson
         :raises : an AttributeException when the given argument is not a valid type
         """
-        (primary_discriminator, *secondary_discriminators) = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
         if 'polymorphic_on' in cls.__mapper_args__ and primary_discriminator in cls.__mapper__.polymorphic_map:
             return cls.__mapper__.polymorphic_map[primary_discriminator].entity
         if cls.__types__ is not None:
@@ -418,13 +416,12 @@ class EntityMeta( DeclarativeMeta ):
         if discriminator is not None:
             return tuple([discriminator_prop.__get__(entity_instance, None) for discriminator_prop in discriminator])
 
-    def set_discriminator_value(cls, entity_instance, discriminator_value):
+    def set_discriminator_value(cls, entity_instance, primary_discriminator_value, *secondary_discriminator_values):
         """Set the given entity instance's discriminator with the provided discriminator value."""
         assert isinstance(entity_instance, cls)
         discriminator = cls.get_cls_discriminator()
         if discriminator is not None:
             (primary_discriminator, *secondary_discriminators) = discriminator
-            (primary_discriminator_value, *secondary_discriminator_values) = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
             if primary_discriminator_value is not None:
                 assert primary_discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
                 primary_discriminator.__set__(entity_instance, primary_discriminator_value)

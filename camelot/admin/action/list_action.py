@@ -938,7 +938,7 @@ set_filters = SetFilters()
 
 class AddNewObjectMixin(object):
     
-    def create_object(self, model_context, admin, discriminator_value=None, session=None):
+    def create_object(self, model_context, admin, mode=None, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
@@ -963,10 +963,13 @@ class AddNewObjectMixin(object):
             raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin, mode)
-        # Resolve admin again after the new object has been created, as it may
-        # have gotten secondary discriminators set.
-        # So only at this point we can be certain of the discriminatory value.
-        admin = self.get_admin(model_context, admin.get_discriminator_value(new_object))
+        discriminator_value = admin.get_discriminator_value(new_object)
+        if discriminator_value is not None:
+            # Resolve admin again after the new object has been created, as it may
+            # have gotten secondary discriminators set.
+            # So only at this point we can be certain of the discriminatory value.
+            (primary_discriminator_value, *secondary_discriminator_values) = discriminator_value
+            admin = self.get_admin(model_context, mode=primary_discriminator_value, secondary_discriminators=secondary_discriminator_values)
         subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
@@ -999,6 +1002,20 @@ class AddNewObjectMixin(object):
                 return polymorphic_types.get_modes()
         return self.modes
 
+    def get_default_admin(self, model_context, mode=None):
+        raise NotImplementedError
+
+    def get_admin(self, model_context, mode=None, secondary_discriminators=tuple()):
+        """
+        Return the admin used for creating and handling the new entity instance with.
+        """
+        admin = self.get_default_admin(model_context, mode)
+        if (admin is not None) and (mode is not None):
+            facade_cls = admin.entity.get_cls_by_discriminator(mode, *secondary_discriminators)
+            if facade_cls is not None:
+                return admin.get_related_admin(facade_cls)
+        return admin
+
 class AddNewObject( AddNewObjectMixin, EditAction ):
     """Add a new object to a collection. Depending on the
     'create_inline' field attribute, a new form is opened or not.
@@ -1013,17 +1030,8 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     verbose_name = _('New')
     name = 'new_object'
 
-    def get_admin(self, model_context, mode=None):
-        """
-        Return the admin used for creating and handling the new entity instance with.
-        By default, the given model_context's admin is used.
-        """
-        admin = model_context.admin
-        if (admin is not None) and (mode is not None):
-            facade_cls = admin.entity.get_cls_by_discriminator(mode)
-            if facade_cls is not None:
-                return admin.get_related_admin(facade_cls)
-        return admin
+    def get_default_admin(self, model_context, mode=None):
+        return model_context.admin
 
     def get_proxy(self, model_context, admin):
         return model_context.proxy

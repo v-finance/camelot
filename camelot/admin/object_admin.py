@@ -1129,7 +1129,7 @@ be specified using the verbose_name attribute.
         """return the given object's discriminator value."""
         pass
 
-    def set_discriminator_value(self, obj, discriminator_value):
+    def set_discriminator_value(self, obj, primary_discriminator_value, *secondary_discriminator_values):
         """Set the given discriminator value on the provided obj."""
         pass
 

@@ -755,7 +755,7 @@ and used as a custom action.
     def is_editable(self):
         """Return True if the Entity is editable.
 
-        An entity is consdered editable if there is no __entity_args__ { 'editable': False }
+        An entity is considered editable if there is no __entity_args__ { 'editable': False }
         """
         editable = self.entity._get_entity_arg('editable')
         if editable is None:
@@ -786,5 +786,5 @@ and used as a custom action.
     def get_discriminator_value(self, obj):
         return self.entity.get_discriminator_value(obj)
 
-    def set_discriminator_value(self, obj, discriminator_value):
-        self.entity.set_discriminator_value(obj, discriminator_value)
+    def set_discriminator_value(self, obj, primary_discriminator_value, *secondary_discriminator_values):
+        self.entity.set_discriminator_value(obj, primary_discriminator_value, *secondary_discriminator_values)
