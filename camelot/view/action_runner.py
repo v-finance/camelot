@@ -303,7 +303,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                             # this step is blocking, interrupt the loop
                             return
                     elif result.blocking:
-                        LOGGER.debug( 'non serializable blocking step !' )
+                        LOGGER.debug( 'non serializable blocking step : {}'.format(result) )
                         raise Exception('This should not happen')
                     else:
                         LOGGER.debug( 'non blocking step, use signal slot' )
