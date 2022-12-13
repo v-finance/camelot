@@ -247,6 +247,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         except NameNotFoundException:
             LOGGER.error('Could not create model context, no binding for name: {}'.format(message['model_context']))
             self.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
+            return
         try:
             generator = action.model_run(model_context, message.get('mode'))
         except Exception as exception:
