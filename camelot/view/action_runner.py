@@ -44,7 +44,7 @@ from camelot.admin.action import ActionStep
 from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.core.singleton import QSingleton
-from camelot.view.model_thread import post
+from camelot.view.model_thread import post, get_model_thread
 
 LOGGER = logging.getLogger('camelot.view.action_runner')
 REQUEST_LOGGER = logging.getLogger('camelot.view.action_runner.request')
@@ -315,7 +315,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                 # Cancel requests can arrive asynchronously through non 
                 # blocking ActionSteps such as UpdateProgress
                 #
-                if run.cancel == True:
+                if self.has_cancel_request():
                     LOGGER.debug( 'asynchronous cancel, raise request' )
                     result = run.generator.throw(CancelRequest())
                 else:
@@ -421,5 +421,15 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             args = (run_name, 'send', to_send,)
         )
 
+    @QtCore.qt_slot()
+    def _cancel_request(self):
+        pass
+
+    def has_cancel_request(self):
+        mt = get_model_thread()
+        for task in mt._request_queue:
+            if task._request == self._cancel_request:
+                return True
+        return False
 
 action_runner = ActionRunner()
