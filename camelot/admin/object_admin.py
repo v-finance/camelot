@@ -954,7 +954,7 @@ be specified using the verbose_name attribute.
 
     def get_form_display(self):
         from camelot.view.forms import Form, structure_to_form
-        if self.form_display is not None:
+        if self.form_display:
             return structure_to_form(self.form_display)
         return Form(self.get_columns())
 

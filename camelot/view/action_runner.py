@@ -281,7 +281,10 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         :param *args: the arguments to use when calling the generator method.
         """
         from camelot.view.action_steps import MessageBox, PopProgressLevel
-        run = initial_naming_context.resolve(run_name)
+        try:
+            run = initial_naming_context.resolve(run_name)
+        except NameNotFoundException:
+            LOGGER.error('Run name not found : {}'.format(run_name))
         gui_run_name = run.gui_run_name
         try:
             if method == 'continue':
@@ -304,7 +307,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                             # this step is blocking, interrupt the loop
                             return
                     elif result.blocking:
-                        LOGGER.debug( 'non serializable blocking step !' )
+                        LOGGER.debug( 'non serializable blocking step : {}'.format(result) )
                         raise Exception('This should not happen')
                     else:
                         LOGGER.debug( 'non blocking step, use signal slot' )
