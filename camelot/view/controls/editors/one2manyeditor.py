@@ -32,7 +32,8 @@ import logging
 
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.action.base import GuiContext
-from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
+from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py, is_deleted
+from ....core.item_model import ActionModeRole
 from ... import gui_naming_context
 from ..view import ViewWithActionsMixin
 from ..tableview import TableWidget
@@ -189,12 +190,25 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         if table is not None:
             return table.model()
 
+    @QtCore.qt_slot(list, object)
+    def editorActionTriggered(self, route, mode):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        if table is not None:
+            model = table.model()
+            if model is None:
+                return
+            if is_deleted(model):
+                return
+            index = table.currentIndex()
+            model.setData(index, json.dumps([route, mode]), ActionModeRole)
+
     @QtCore.qt_slot(object)
     def set_columns(self, columns):
         from ..delegates.delegatemanager import DelegateManager
         table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             delegate = DelegateManager(parent=self)
+            delegate.actionTriggered.connect(self.editorActionTriggered)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
@@ -229,6 +243,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
+        # make sure ChangeSelection action is executed before list action
+        table.model().timeout_slot()
         self._run_list_context_action(self, None)
 
     @QtCore.qt_slot()
