@@ -285,6 +285,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             run = initial_naming_context.resolve(run_name)
         except NameNotFoundException:
             LOGGER.error('Run name not found : {}'.format(run_name))
+            return
         gui_run_name = run.gui_run_name
         try:
             if method == 'continue':
