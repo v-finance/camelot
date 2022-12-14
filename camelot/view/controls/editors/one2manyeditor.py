@@ -195,6 +195,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             delegate = DelegateManager(parent=self)
+            delegate.actionTriggered.connect(self.actionTriggered)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
@@ -229,6 +230,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
+        # make sure ChangeSelection action is executed before list action
+        table.model().timeout_slot()
         self._run_list_context_action(self, None)
 
     @QtCore.qt_slot()
