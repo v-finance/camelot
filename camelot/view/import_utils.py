@@ -175,7 +175,7 @@ class ColumnMappingAdmin(ObjectAdmin):
     verbose_name_plural = _('Select fields')
     toolbar_actions = [ShowNext(), ShowPrevious(), MatchNames()]
 
-    list_action = None
+    # list_action = None
     list_display = ['column_name', 'field', 'value']
     field_attributes = {'column_name': {'name':_('Column'),},}
     
