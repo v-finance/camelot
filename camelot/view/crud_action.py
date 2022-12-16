@@ -66,6 +66,7 @@ class UpdateMixin(object):
         changed_ranges = []
         logger.debug('add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
+        is_object_valid = True
         if (admin.is_readable( obj ) and (data==True) and (obj is not None)):
             row_data = {column:data for column, data in zip(columns, strip_data_from_object(obj, column_names))}
             dynamic_field_attributes ={column:fa for column, fa in zip(columns, admin.get_dynamic_field_attributes(obj, column_names))}
@@ -76,6 +77,7 @@ class UpdateMixin(object):
         else:
             row_data = {column:None for column in columns}
             dynamic_field_attributes = {column:{'editable':False} for column in columns}
+            is_object_valid = False
         # keep track of the columns that changed, to limit the
         # number of editors/cells that need to be updated
         changed_columns = set()
@@ -85,7 +87,7 @@ class UpdateMixin(object):
             items = []
             locale = model_context.locale
             for column in changed_columns:
-                if action_state is not None:
+                if is_object_valid:
                     # copy to make sure the original dict can be reused in
                     # subsequent calls
                     field_attributes = dict(static_field_attributes[column])
@@ -112,7 +114,7 @@ class UpdateMixin(object):
                 verbose_identifier = u''
             valid = False
             message = None
-            if action_state is not None:
+            if is_object_valid:
                 for message in model_context.validator.validate_object(obj):
                     break
                 else:
