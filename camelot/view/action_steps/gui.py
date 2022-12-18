@@ -148,8 +148,9 @@ class SelectItem(ActionStep, DataclassSerializable):
         return dialog.get_value()
 
     @classmethod
-    def deserialize_result(cls, gui_context_name, serialized_result):
-        return tuple(serialized_result)
+    def deserialize_result(cls, gui_context_name, result):
+        if result is not None:
+            return tuple(result)
 
 @dataclass
 class CloseView(ActionStep, DataclassSerializable):
