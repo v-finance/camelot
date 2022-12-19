@@ -26,7 +26,7 @@ non_serializable_roles = (
 )
 
 serializable_field_attributes = (
-    'editable', 'tooltip'
+    'editable', 'tooltip', 'validator'
 )
 
 def filter_attributes(attributes, keys):
