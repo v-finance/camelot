@@ -133,12 +133,12 @@ class InitiateAction(AbstractRequest):
     def execute(cls, request_data, response_handler, cancel_handler):
         from .action_steps import PushProgressLevel, MessageBox
         LOGGER.debug('Iniate run of action {}'.format(request_data['action_name']))
-        action = initial_naming_context.resolve(tuple(request_data['action_name']))
         gui_run_name = tuple(request_data['gui_run_name'])
         try:
+            action = initial_naming_context.resolve(tuple(request_data['action_name']))
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))
-        except NameNotFoundException:
-            LOGGER.error('Could not create model context, no binding for name: {}'.format(request_data['model_context']))
+        except NameNotFoundException as e:
+            LOGGER.error('Could resolve initate action, no binding for name: {}'.format(e.name))
             response_handler.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
             return
         try:
