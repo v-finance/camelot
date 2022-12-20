@@ -180,3 +180,38 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
         return size_hint
 
+    def get_validator(self, validator_type, validator_state):
+        from vfinance.view import validators
+        if validator_type is None:
+            return None
+        if validator_type == validators.BankingNumberValidator.__name__:
+            return validators.BankingNumberValidator()
+        if validator_type == validators.NationalNumberValidator.__name__:
+            if validator_state is None:
+                return None
+            return validators.NationalNumberValidator(validator_state)
+        if validator_type == validators.VATNumberValidator.__name__:
+            return validators.VATNumberValidator()
+        if validator_type == validators.CompanyNumberValidator.__name__:
+            return validators.CompanyNumberValidator()
+        if validator_type == validators.TelephoneNumberValidator.__name__:
+            return validators.TelephoneNumberValidator()
+        if validator_type == validators.IDCardNumberValidator.__name__:
+            if validator_state is None:
+                return None
+            return validators.IDCardNumberValidator(validator_state)
+        if validator_type == validators.CodeValidator.__name__:
+            return validators.CodeValidator()
+        if validator_type == validators.EmailValidator.__name__:
+            return validators.EmailValidator()
+        if validator_type == validators.NumericValidator.__name__:
+            return validators.NumericValidator()
+        if validator_type == validators.DomainNameValidator.__name__:
+            return validators.DomainNameValidator()
+        if validator_type == validators.NACECodeValidator.__name__:
+            return validators.NACECodeValidator()
+        if validator_type == QtGui.QRegularExpressionValidator.__name__:
+            if validator_state is None:
+                return None
+            return QtGui.QRegularExpressionValidator(QtCore.QRegularExpression(validator_state))
+        raise NotImplementedError

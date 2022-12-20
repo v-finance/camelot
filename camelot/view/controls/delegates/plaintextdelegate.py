@@ -52,6 +52,7 @@ class PlainTextDelegate(CustomDelegate):
     echo_mode: Optional[int] = None
     column_width: Optional[int] = None
     action_routes: List[Route] = field(default_factory=list)
+    validator_type: Optional[str] = None
 
     def __post_init__(self, parent):
         super().__post_init__(parent)

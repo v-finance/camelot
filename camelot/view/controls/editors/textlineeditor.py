@@ -43,8 +43,10 @@ class TextLineEditor(CustomEditor):
                  echo_mode=None,
                  column_width=None,
                  action_routes=[],
+                 validator_type=None,
                  field_name='text_line'):
         CustomEditor.__init__(self, parent, column_width=column_width)
+        self.validator_type = validator_type
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
                            QtWidgets.QSizePolicy.Policy.Fixed)
         layout = QtWidgets.QHBoxLayout()
@@ -100,7 +102,7 @@ class TextLineEditor(CustomEditor):
     def set_field_attributes(self, **kwargs):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
-        validator = kwargs.get('validator')
+        validator_state = kwargs.get('validator_state')
         completer = kwargs.get('completer')
         if text_input is not None:
             editable = kwargs.get('editable', False)
@@ -112,6 +114,7 @@ class TextLineEditor(CustomEditor):
                                          kwargs.get('background_color'))
             if completer:
                 text_input.setCompleter(completer)
+            validator = self.get_validator(self.validator_type, validator_state)
             text_input.setValidator(validator)
 
 
