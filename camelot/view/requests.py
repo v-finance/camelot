@@ -52,6 +52,19 @@ class AbstractRequest(NamedDataclassSerializable):
         response_handler.action_stopped_signal.emit(run_name, gui_run_name, e)
 
     @classmethod
+    def _send_stop_message(cls, run_name, gui_run_name, response_handler, e):
+        from camelot.view.action_steps import MessageBox
+        response_handler.serializable_action_step_signal.emit(
+            run_name, gui_run_name, MessageBox.__name__, False,
+            MessageBox.from_exception(
+                LOGGER,
+                'Unhandled exception caught : {}'.format(type(e).__name__),
+                e
+            )._to_bytes()
+        )
+        cls._stop_action(run_name, gui_run_name, response_handler, e)
+
+    @classmethod
     def _iterate_until_blocking(cls, request_data, response_handler, cancel_handler):
         """Helper calling for generator methods.  The decorated method iterates
         the generator until the generator yields an :class:`ActionStep` object that
@@ -61,7 +74,6 @@ class AbstractRequest(NamedDataclassSerializable):
         :param generator_method: the method of the generator to be called
         :param *args: the arguments to use when calling the generator method.
         """
-        from camelot.view.action_steps import MessageBox
         try:
             run_name = tuple(request_data['run_name'])
             run = initial_naming_context.resolve(run_name)
@@ -108,15 +120,9 @@ class AbstractRequest(NamedDataclassSerializable):
             LOGGER.debug( 'iterator raised stop, pass it' )
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except Exception as e:
-            response_handler.serializable_action_step_signal.emit(
-                ('constant', 'null'), gui_run_name, MessageBox.__name__, False,
-                MessageBox.from_exception(
-                    LOGGER,
-                    'Exception caught',
-                    e
-                )._to_bytes()
+            cls._send_stop_message(
+                ('constant', 'null'), gui_run_name, response_handler, e
             )
-            cls._stop_action(run_name, gui_run_name, response_handler, e)
 
 @dataclass
 class InitiateAction(AbstractRequest):
@@ -131,7 +137,7 @@ class InitiateAction(AbstractRequest):
 
     @classmethod
     def execute(cls, request_data, response_handler, cancel_handler):
-        from .action_steps import PushProgressLevel, MessageBox
+        from .action_steps import PushProgressLevel
         LOGGER.debug('Iniate run of action {}'.format(request_data['action_name']))
         gui_run_name = tuple(request_data['gui_run_name'])
         try:
@@ -144,15 +150,9 @@ class InitiateAction(AbstractRequest):
         try:
             generator = action.model_run(model_context, request_data.get('mode'))
         except Exception as exception:
-            response_handler.serializable_action_step_signal.emit(
-                ('constant', 'null'), gui_run_name, MessageBox.__name__, False,
-                MessageBox.from_exception(
-                    LOGGER,
-                    'Exception caught in {}'.format(type(action).__name__),
-                    exception
-                )._to_bytes()
+            cls._send_stop_message(
+                ('constant', 'null'), gui_run_name, response_handler, exception
             )
-            response_handler.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
         if generator is None:
             response_handler.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
         run = ModelRun(gui_run_name, generator)

@@ -1,7 +1,6 @@
 import json
 import logging
 import multiprocessing
-import os
 
 from ..core.serializable import NamedDataclassSerializable
 
@@ -15,12 +14,8 @@ class StopProcess(object):
 class ModelProcess(multiprocessing.Process):
 
     def __init__(self):
-        super(ModelProcess, self).__init__()
+        super().__init__()
         self._request_queue = multiprocessing.JoinableQueue()
-
-    def start(self):
-        LOGGER.info("Starting model process")
-        super(ModelProcess, self).start()
 
     def run(self):
         LOGGER = logging.getLogger("model_process")
@@ -48,12 +43,6 @@ class ModelProcess(multiprocessing.Process):
 
     def post(self, request):
         self._request_queue.put(request._to_bytes())
-
-    def _validate_parent(self):
-        if not self.is_alive():
-            raise Exception('Model is not alive and cannot communicate')
-        if self.parent_pid != os.getpid():
-            raise Exception('Only the gui can communicate with the model')
 
     def stop(self):
         """
