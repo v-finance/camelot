@@ -33,10 +33,26 @@ class AbstractRequest(NamedDataclassSerializable):
 
     @classmethod
     def execute(cls, request_data, response_handler, cancel_handler):
-        raise NotImplementedError
+        cls._iterate_until_blocking(
+            request_data, response_handler, cancel_handler
+        )
 
     @classmethod
-    def _iterate_until_blocking(cls, run_name, method, args, response_handler, cancel_handler):
+    def _next(cls, run, request_data):
+        return None
+
+    @classmethod
+    def _stop_action(cls, run_name, gui_run_name, response_handler, e):
+        from camelot.view.action_steps import PopProgressLevel
+        response_handler.serializable_action_step_signal.emit(
+            run_name, gui_run_name, PopProgressLevel.__name__, False,
+            PopProgressLevel()._to_bytes()
+        )
+        initial_naming_context.unbind(run_name)
+        response_handler.action_stopped_signal.emit(run_name, gui_run_name, e)
+
+    @classmethod
+    def _iterate_until_blocking(cls, request_data, response_handler, cancel_handler):
         """Helper calling for generator methods.  The decorated method iterates
         the generator until the generator yields an :class:`ActionStep` object that
         is blocking.  If a non blocking :class:`ActionStep` object is yielded, then
@@ -45,23 +61,16 @@ class AbstractRequest(NamedDataclassSerializable):
         :param generator_method: the method of the generator to be called
         :param *args: the arguments to use when calling the generator method.
         """
-        from camelot.view.action_steps import MessageBox, PopProgressLevel
+        from camelot.view.action_steps import MessageBox
         try:
+            run_name = tuple(request_data['run_name'])
             run = initial_naming_context.resolve(run_name)
         except NameNotFoundException:
             LOGGER.error('Run name not found : {}'.format(run_name))
             return
         gui_run_name = run.gui_run_name
         try:
-            if method == 'continue':
-                result = None
-            elif method == 'send':
-                response = run.last_step.deserialize_result(None, args)
-                result = run.generator.send(response)
-            elif method == 'throw':
-                result = run.generator.throw(args)
-            else:
-                raise Exception('Unhandled method')
+            result = cls._next(run, request_data)
             while True:
                 if isinstance(result, ActionStep):
                     run.last_step = result
@@ -94,19 +103,10 @@ class AbstractRequest(NamedDataclassSerializable):
                     result = next(run.generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
-            response_handler.serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__, False,
-                PopProgressLevel()._to_bytes()
-            )
-            response_handler.action_stopped_signal.emit(run_name, gui_run_name, e)
+            cls._stop_action(run_name, gui_run_name, response_handler, e)
         except StopIteration as e:
             LOGGER.debug( 'iterator raised stop, pass it' )
-            response_handler.serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__, False,
-                PopProgressLevel()._to_bytes()
-            )
-            initial_naming_context.unbind(run_name)
-            response_handler.action_stopped_signal.emit(run_name, gui_run_name, e)
+            cls._stop_action(run_name, gui_run_name, response_handler, e)
         except Exception as e:
             response_handler.serializable_action_step_signal.emit(
                 ('constant', 'null'), gui_run_name, MessageBox.__name__, False,
@@ -116,13 +116,7 @@ class AbstractRequest(NamedDataclassSerializable):
                     e
                 )._to_bytes()
             )
-            LOGGER.debug( 'iterator raised stop, pass it' )
-            response_handler.serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__, False,
-                PopProgressLevel()._to_bytes()
-            )
-            initial_naming_context.unbind(run_name)
-            response_handler.action_stopped_signal.emit(run_name, gui_run_name, e)
+            cls._stop_action(run_name, gui_run_name, response_handler, e)
 
 @dataclass
 class InitiateAction(AbstractRequest):
@@ -167,9 +161,10 @@ class InitiateAction(AbstractRequest):
             run_name, gui_run_name, PushProgressLevel.__name__, False,
             PushProgressLevel('Please wait')._to_bytes()
         )
+        request_data["run_name"] = run_name
         LOGGER.debug('Action {} runs in generator {}'.format(request_data['action_name'], run_name))
         cls._iterate_until_blocking(
-            run_name, 'continue', None, response_handler, cancel_handler
+            request_data, response_handler, cancel_handler
         )
 
 @dataclass
@@ -183,11 +178,11 @@ class SendActionResponse(AbstractRequest):
     response: Serializable
 
     @classmethod
-    def execute(cls, request_data, response_handler, cancel_handler):
-        cls._iterate_until_blocking(
-            tuple(request_data['run_name']), 'send', request_data['response'],
-            response_handler, cancel_handler
+    def _next(cls, run, request_data):
+        response = run.last_step.deserialize_result(
+            None, request_data['response']
         )
+        return run.generator.send(response)
 
 @dataclass
 class ThrowActionException(AbstractRequest):
@@ -200,11 +195,9 @@ class ThrowActionException(AbstractRequest):
     exception: Serializable
 
     @classmethod
-    def execute(cls, request_data, response_handler, cancel_handler):
-        cls._iterate_until_blocking(
-            tuple(request_data['run_name']), 'throw', request_data['exception'],
-            response_handler, cancel_handler
-        )
+    def _next(cls, run, request_data):
+        return run.generator.throw(request_data['exception'])
+
 
 @dataclass
 class CancelAction(AbstractRequest):
