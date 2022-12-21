@@ -284,6 +284,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         maximum = variant_to_py(index.data(MaximumRole))
         focus_policy = variant_to_py(index.data(FocusPolicyRole))
         tooltip = variant_to_py(index.data(Qt.ItemDataRole.ToolTipRole))
+        editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
         # ok i think i'm onto something, dynamically set tooltip doesn't change
         # Qt model's data for Qt.ItemDataRole.ToolTipRole
         # but i wonder if we should make the detour by Qt.ItemDataRole.ToolTipRole or just
@@ -305,6 +306,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         editor.set_focus_policy(focus_policy)
         editor.set_tooltip(tooltip)
         editor.set_validator_state(validator_state)
+        editor.set_editable(editable)
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
         # update actions

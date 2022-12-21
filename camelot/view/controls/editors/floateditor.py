@@ -181,12 +181,8 @@ class FloatEditor(CustomEditor):
 
     def set_field_attributes(self, **kwargs):
         super(FloatEditor, self).set_field_attributes(**kwargs)
-        editable = kwargs.get('editable', False)
-        self.calculatorButton.setVisible(editable and self._calculator)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setReadOnly(not editable)
-        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
-        spinBox.setGroupSeparatorShown(True)
+        spinBox.setGroupSeparatorShown(True) # FIXME: move this to constructor?
 
     def set_suffix(self, suffix):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
@@ -228,6 +224,12 @@ class FloatEditor(CustomEditor):
     def set_tooltip(self, tooltip):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         spinBox.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        self.calculatorButton.setVisible(editable and self._calculator)
+        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        spinBox.setReadOnly(not editable)
+        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

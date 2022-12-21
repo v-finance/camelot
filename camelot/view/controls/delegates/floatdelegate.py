@@ -73,6 +73,11 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
                      PrefixRole)
         item.setData(py_to_variant(model_context.field_attributes.get('single_step')),
                      SingleStepRole)
+        editable = model_context.field_attributes.get('editable', False)
+        if editable:
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        else:
+            item.setFlags(item.flags() ^ Qt.ItemFlag.ItemIsEditable)
         precision = model_context.field_attributes.get('precision', 2)
         item.setData(py_to_variant(precision), PrecisionRole)
         item.setData(py_to_variant(minimum), MinimumRole)
