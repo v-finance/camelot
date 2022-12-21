@@ -43,7 +43,7 @@ from ....core.item_model import (
     ChoicesRole, FieldAttributesRole, ProxyDict,
     ValidatorStateRole, SuffixRole, PrefixRole,
     SingleStepRole, PrecisionRole, MinimumRole, MaximumRole,
-    FocusPolicyRole
+    FocusPolicyRole, VisibleRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
@@ -202,6 +202,8 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                      Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.ItemDataRole.BackgroundRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('visible', True)),
+                     VisibleRole)
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
             choices = [CompletionValue(
@@ -285,6 +287,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         focus_policy = variant_to_py(index.data(FocusPolicyRole))
         tooltip = variant_to_py(index.data(Qt.ItemDataRole.ToolTipRole))
         editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
+        visible = bool(variant_to_py(index.data(VisibleRole)))
         # ok i think i'm onto something, dynamically set tooltip doesn't change
         # Qt model's data for Qt.ItemDataRole.ToolTipRole
         # but i wonder if we should make the detour by Qt.ItemDataRole.ToolTipRole or just
@@ -307,6 +310,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         editor.set_tooltip(tooltip)
         editor.set_validator_state(validator_state)
         editor.set_editable(editable)
+        editor.set_visible(visible)
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
         # update actions

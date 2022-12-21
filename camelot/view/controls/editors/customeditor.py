@@ -110,7 +110,6 @@ class AbstractCustomEditor(object):
     def set_field_attributes(self, **kwargs):
         self.set_background_color(kwargs.get('background_color', None))
         self.field_attributes = kwargs
-        self.setVisible(kwargs.get('visible', True))
         if self.field_label is not None:
             self.field_label.set_field_attributes(**kwargs)
 
@@ -121,7 +120,7 @@ class AbstractCustomEditor(object):
         pass
 
     def set_visible(self, visible):
-        pass
+        self.setVisible(visible)
 
     def set_focus_policy(self, focus_policy):
         pass
