@@ -69,6 +69,7 @@ class PlainTextDelegate(CustomDelegate):
         if completer is not None:
             completer.moveToThread(QtWidgets.QApplication.instance().thread())
         item = super(PlainTextDelegate, cls).get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
         item.setData(py_to_variant(model_context.field_attributes.get('validator_state')),
                      ValidatorStateRole)
         item.setData(py_to_variant(model_context.field_attributes.get('completer')),

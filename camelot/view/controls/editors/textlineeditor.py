@@ -99,15 +99,6 @@ class TextLineEditor(CustomEditor):
 
     value = QtCore.qt_property(str, get_value, set_value)
 
-    def set_field_attributes(self, **kwargs):
-        super(TextLineEditor, self).set_field_attributes(**kwargs)
-        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
-        if text_input is not None:
-            editable = kwargs.get('editable', False)
-            value = text_input.text()
-            text_input.setReadOnly(not editable)
-            text_input.setText(value)
-
     def set_validator_state(self, validator_state):
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
@@ -131,3 +122,10 @@ class TextLineEditor(CustomEditor):
             text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
             if text_input is not None:
                 text_input.setCompleter(completer)
+
+    def set_editable(self, editable):
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+        if text_input is not None:
+            value = text_input.text()
+            text_input.setReadOnly(not editable)
+            text_input.setText(value)
