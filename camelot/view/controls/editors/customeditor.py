@@ -108,7 +108,6 @@ class AbstractCustomEditor(object):
         return self.field_attributes
 
     def set_field_attributes(self, **kwargs):
-        self.set_background_color(kwargs.get('background_color', None))
         self.field_attributes = kwargs
         if self.field_label is not None:
             self.field_label.set_field_attributes(**kwargs)
