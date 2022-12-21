@@ -188,7 +188,6 @@ class FloatEditor(CustomEditor):
         if focus_policy is not None:
             spinBox.setFocusPolicy(focus_policy)
         spinBox.setToolTip(str(kwargs.get('tooltip') or ''))
-        spinBox.setSingleStep(kwargs.get('single_step', 1.0))
         spinBox.setReadOnly(not editable)
         spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
         precision = kwargs.get('precision')
@@ -210,6 +209,11 @@ class FloatEditor(CustomEditor):
     def set_prefix(self, prefix):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         spinBox.setPrefix(str(prefix or ''))
+
+    def set_single_step(self, single_step):
+        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        single_step = single_step if single_step is not None else 1.0
+        spinBox.setSingleStep(single_step)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
