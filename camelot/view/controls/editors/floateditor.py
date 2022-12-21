@@ -190,9 +190,6 @@ class FloatEditor(CustomEditor):
         spinBox.setToolTip(str(kwargs.get('tooltip') or ''))
         spinBox.setReadOnly(not editable)
         spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
-        minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
-        if None not in (minimum, maximum):
-            spinBox.setRange(minimum-1, maximum)
         spinBox.setGroupSeparatorShown(True)
 
     def set_suffix(self, suffix):
@@ -216,6 +213,16 @@ class FloatEditor(CustomEditor):
             precision = 2
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
+
+    def set_minimum(self, minimum):
+        if minimum is not None:
+            spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+            spinBox.setMinimum(minimum-1)
+
+    def set_maximum(self, maximum):
+        if maximum is not None:
+            spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+            spinBox.setMaximum(maximum)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

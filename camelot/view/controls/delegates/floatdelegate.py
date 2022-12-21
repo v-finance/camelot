@@ -33,7 +33,7 @@ from typing import List, ClassVar, Any
 from ....admin.admin_route import Route
 from ....core.item_model import (
     PreviewRole, SuffixRole, PrefixRole, SingleStepRole,
-    PrecisionRole
+    PrecisionRole, MinimumRole, MaximumRole
 )
 from ....core.qt import py_to_variant, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
@@ -73,6 +73,8 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
                      SingleStepRole)
         precision = model_context.field_attributes.get('precision', 2)
         item.setData(py_to_variant(precision), PrecisionRole)
+        item.setData(py_to_variant(minimum), MinimumRole)
+        item.setData(py_to_variant(maximum), MaximumRole)
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
         if precision is None:
