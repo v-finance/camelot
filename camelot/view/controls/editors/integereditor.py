@@ -94,7 +94,6 @@ class IntegerEditor(CustomEditor):
         if spin_box is not None:
             set_background_color_palette(spin_box.lineEdit(), kwargs.get('background_color', None))
             spin_box.setToolTip(str(kwargs.get('tooltip') or ''))
-            spin_box.setPrefix(str(kwargs.get('prefix', '')))
             spin_box.setSingleStep(kwargs.get('single_step', 1))
             minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
             if None not in (minimum, maximum):
@@ -104,6 +103,11 @@ class IntegerEditor(CustomEditor):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             spin_box.setSuffix(str(suffix or ''))
+
+    def set_prefix(self, prefix):
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            spin_box.setPrefix(str(prefix or ''))
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
