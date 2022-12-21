@@ -48,6 +48,7 @@ class VirtualAddressDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super(VirtualAddressDelegate, cls).get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             virtual_address = model_context.value[0]
             if virtual_address is not None:
