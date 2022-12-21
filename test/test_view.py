@@ -377,7 +377,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertIn('maximum', field_attributes)
 
         editor = editors.IntegerEditor()
-        editor.set_field_attributes(**field_attributes)
+        editor.set_minimum(field_attributes['minimum'])
+        editor.set_maximum(field_attributes['maximum'])
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0 )
@@ -394,7 +395,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), None )
         # turn off the calculator
         editor = editors.IntegerEditor(calculator=False)
-        editor.set_field_attributes(editable=True, **field_attributes)
+        editor.set_editable(True)
+        editor.set_minimum(field_attributes['minimum'])
+        editor.set_maximum(field_attributes['maximum'])
         editor.set_value( 3 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
