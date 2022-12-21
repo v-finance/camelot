@@ -190,13 +190,6 @@ class FloatEditor(CustomEditor):
         spinBox.setToolTip(str(kwargs.get('tooltip') or ''))
         spinBox.setReadOnly(not editable)
         spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
-        precision = kwargs.get('precision')
-        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
-        # as that only handles the precision key not being present, not it being explicitly set to None.
-        if precision is None:
-            precision = 2
-        if spinBox.decimals() != precision:
-            spinBox.setDecimals( precision )
         minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
         if None not in (minimum, maximum):
             spinBox.setRange(minimum-1, maximum)
@@ -214,6 +207,15 @@ class FloatEditor(CustomEditor):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         single_step = single_step if single_step is not None else 1.0
         spinBox.setSingleStep(single_step)
+
+    def set_precision(self, precision):
+        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
+        # as that only handles the precision key not being present, not it being explicitly set to None.
+        if precision is None:
+            precision = 2
+        if spinBox.decimals() != precision:
+            spinBox.setDecimals( precision )
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

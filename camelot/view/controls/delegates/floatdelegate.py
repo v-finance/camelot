@@ -31,7 +31,10 @@ from dataclasses import dataclass, field
 from typing import List, ClassVar, Any
 
 from ....admin.admin_route import Route
-from ....core.item_model import PreviewRole, SuffixRole, PrefixRole, SingleStepRole
+from ....core.item_model import (
+    PreviewRole, SuffixRole, PrefixRole, SingleStepRole,
+    PrecisionRole
+)
 from ....core.qt import py_to_variant, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
@@ -55,9 +58,11 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
+        minimum = minimum if minimum is not None else constants.camelot_minfloat
+        maximum = maximum if maximum is not None else constants.camelot_maxfloat
         model_context.field_attributes.update({
-            'minimum': minimum if minimum is not None else constants.camelot_minfloat,
-            'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
+            'minimum': minimum,
+            'maximum': maximum
         })
         item = super(FloatDelegate, cls).get_standard_item(locale, model_context)
         item.setData(py_to_variant(model_context.field_attributes.get('suffix')),
@@ -67,6 +72,7 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item.setData(py_to_variant(model_context.field_attributes.get('single_step')),
                      SingleStepRole)
         precision = model_context.field_attributes.get('precision', 2)
+        item.setData(py_to_variant(precision), PrecisionRole)
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
         if precision is None:
@@ -74,7 +80,6 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if model_context.value is not None:
             value_str = str(
                 locale.toString(float(model_context.value), 'f', precision)
-
             )
             if model_context.field_attributes.get('suffix') is not None:
                 value_str = value_str + ' ' + model_context.field_attributes.get('suffix')
