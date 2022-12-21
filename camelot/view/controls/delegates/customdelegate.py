@@ -200,8 +200,6 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                      Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.ItemDataRole.BackgroundRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('validator_state')),
-                     ValidatorStateRole)
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
             choices = [CompletionValue(
