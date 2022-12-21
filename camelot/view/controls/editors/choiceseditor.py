@@ -178,15 +178,14 @@ class ChoicesEditor(CustomEditor):
             self.append_choices(model, choices)
         self.set_value(current_value, current_display_role)
 
-    def set_field_attributes(self, **fa):
-        super(ChoicesEditor, self).set_field_attributes(**fa)
-        combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
-        combobox.setEnabled(fa.get('editable', True))
-
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         combobox.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
+        combobox.setEnabled(editable)
 
     def get_choices(self):
         """This method is only useful for unittest purpose, as it does not
