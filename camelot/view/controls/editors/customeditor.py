@@ -116,7 +116,7 @@ class AbstractCustomEditor(object):
         pass
 
     def set_tooltip(self, tooltip):
-        pass
+        self.setToolTip(str(tooltip or ''))
 
     def set_visible(self, visible):
         self.setVisible(visible)

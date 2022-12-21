@@ -289,13 +289,6 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
         visible = bool(variant_to_py(index.data(VisibleRole)))
         background_color = variant_to_py(index.data(Qt.ItemDataRole.BackgroundRole))
-        # ok i think i'm onto something, dynamically set tooltip doesn't change
-        # Qt model's data for Qt.ItemDataRole.ToolTipRole
-        # but i wonder if we should make the detour by Qt.ItemDataRole.ToolTipRole or just
-        # get our tooltip from field_attributes
-        # (Nick G.): Avoid 'None' being set as tooltip.
-        if field_attributes.get('tooltip'):
-            editor.setToolTip( str( field_attributes.get('tooltip', '') ) ) # FIXME: this can be removed?
         #
         # first set the field attributes, as these may change the 'state' of the
         # editor to properly display and hold the value, eg 'precision' of a 

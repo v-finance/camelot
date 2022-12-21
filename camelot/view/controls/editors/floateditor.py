@@ -222,6 +222,7 @@ class FloatEditor(CustomEditor):
             spinBox.setFocusPolicy(focus_policy)
 
     def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         spinBox.setToolTip(str(tooltip or ''))
 
