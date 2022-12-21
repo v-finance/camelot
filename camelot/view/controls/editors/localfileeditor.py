@@ -120,7 +120,6 @@ class LocalFileEditor( CustomEditor ):
 
     def set_field_attributes( self, **kwargs):
         super(LocalFileEditor, self).set_field_attributes(**kwargs)
-        self.setEnabled(kwargs.get('editable', False))
         self._directory=kwargs.get('directory',False)
 
     def set_tooltip(self, tooltip):
@@ -132,3 +131,6 @@ class LocalFileEditor( CustomEditor ):
         super().set_background_color(background_color)
         if self.filename:
             set_background_color_palette(self.filename, background_color)
+
+    def set_editable(self, editable):
+        self.setEnabled(editable)
