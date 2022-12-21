@@ -158,6 +158,14 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         raise NotImplementedError
 
     @classmethod
+    def set_item_editability(cls, model_context, item, default):
+        editable = model_context.field_attributes.get('editable', default)
+        if editable:
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        else:
+            item.setFlags(item.flags() ^ Qt.ItemFlag.ItemIsEditable)
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         """
         This method is used by the proxy to convert the value of a field
@@ -204,6 +212,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                      Qt.ItemDataRole.BackgroundRole)
         item.setData(py_to_variant(model_context.field_attributes.get('visible', True)),
                      VisibleRole)
+        # FIXME: move choices to delegates that actually use it?
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
             choices = [CompletionValue(

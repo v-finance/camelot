@@ -60,8 +60,7 @@ class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
             return False
         return True
 
-    def set_field_attributes( self, editable = True, **kwargs ):
-        AbstractCustomEditor.set_field_attributes( self, **kwargs )
+    def set_editable(self, editable):
         self.setDisabled( not editable )
         
     @QtCore.qt_slot( bool )
