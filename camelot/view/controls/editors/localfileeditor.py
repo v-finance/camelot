@@ -124,6 +124,7 @@ class LocalFileEditor( CustomEditor ):
         self._directory=kwargs.get('directory',False)
         if self.filename:
             set_background_color_palette(self.filename, kwargs.get('background_color', None))
-            self.filename.setToolTip(str(kwargs.get('tooltip') or ''))
 
-
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        self.filename.setToolTip(str(tooltip or ''))
