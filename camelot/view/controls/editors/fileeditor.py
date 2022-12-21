@@ -89,13 +89,16 @@ class FileEditor(CustomEditor):
     def set_field_attributes(self, **kwargs):
         super(FileEditor, self).set_field_attributes(**kwargs)
         self.set_enabled(kwargs.get('editable', False))
-        if self.filename:
-            set_background_color_palette( self.filename, kwargs.get('background_color', None))
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)
         if self.filename:
             self.filename.setToolTip(str(tooltip or ''))
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        if self.filename:
+            set_background_color_palette( self.filename, kwargs.get('background_color', None))
 
     def set_enabled(self, editable=True):
         self.filename.setEnabled(editable)
