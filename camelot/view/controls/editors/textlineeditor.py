@@ -108,7 +108,6 @@ class TextLineEditor(CustomEditor):
             value = text_input.text()
             text_input.setReadOnly(not editable)
             text_input.setText(value)
-            text_input.setToolTip(str(kwargs.get('tooltip') or ''))
             set_background_color_palette(text_input,
                                          kwargs.get('background_color'))
             if completer:
@@ -119,3 +118,9 @@ class TextLineEditor(CustomEditor):
         if text_input is not None:
             validator = self.get_validator(self.validator_type, validator_state)
             text_input.setValidator(validator)
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+        if text_input is not None:
+            text_input.setToolTip(str(tooltip or ''))
