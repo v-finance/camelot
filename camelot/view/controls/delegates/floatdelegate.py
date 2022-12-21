@@ -33,7 +33,7 @@ from typing import List, ClassVar, Any
 from ....admin.admin_route import Route
 from ....core.item_model import (
     PreviewRole, SuffixRole, PrefixRole, SingleStepRole,
-    PrecisionRole, MinimumRole, MaximumRole
+    PrecisionRole, MinimumRole, MaximumRole, FocusPolicyRole
 )
 from ....core.qt import py_to_variant, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
@@ -65,6 +65,8 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             'maximum': maximum
         })
         item = super(FloatDelegate, cls).get_standard_item(locale, model_context)
+        item.setData(py_to_variant(model_context.field_attributes.get('focus_policy')),
+                     FocusPolicyRole)
         item.setData(py_to_variant(model_context.field_attributes.get('suffix')),
                      SuffixRole)
         item.setData(py_to_variant(model_context.field_attributes.get('prefix')),

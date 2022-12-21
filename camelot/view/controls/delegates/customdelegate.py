@@ -42,7 +42,8 @@ from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
     ChoicesRole, FieldAttributesRole, ProxyDict,
     ValidatorStateRole, SuffixRole, PrefixRole,
-    SingleStepRole, PrecisionRole, MinimumRole, MaximumRole
+    SingleStepRole, PrecisionRole, MinimumRole, MaximumRole,
+    FocusPolicyRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
@@ -281,6 +282,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         precision = variant_to_py(index.data(PrecisionRole))
         minimum = variant_to_py(index.data(MinimumRole))
         maximum = variant_to_py(index.data(MaximumRole))
+        focus_policy = variant_to_py(index.data(FocusPolicyRole))
         # ok i think i'm onto something, dynamically set tooltip doesn't change
         # Qt model's data for Qt.ItemDataRole.ToolTipRole
         # but i wonder if we should make the detour by Qt.ItemDataRole.ToolTipRole or just
@@ -299,6 +301,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         editor.set_precision(precision)
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
+        editor.set_focus_policy(focus_policy)
         editor.set_validator_state(validator_state)
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)

@@ -184,9 +184,6 @@ class FloatEditor(CustomEditor):
         editable = kwargs.get('editable', False)
         self.calculatorButton.setVisible(editable and self._calculator)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        focus_policy = kwargs.get('focus_policy')
-        if focus_policy is not None:
-            spinBox.setFocusPolicy(focus_policy)
         spinBox.setToolTip(str(kwargs.get('tooltip') or ''))
         spinBox.setReadOnly(not editable)
         spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
@@ -223,6 +220,11 @@ class FloatEditor(CustomEditor):
         if maximum is not None:
             spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
             spinBox.setMaximum(maximum)
+
+    def set_focus_policy(self, focus_policy):
+        if focus_policy is not None:
+            spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+            spinBox.setFocusPolicy(focus_policy)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
