@@ -87,12 +87,6 @@ class IntegerEditor(CustomEditor):
         self.option = option
         self.decimal = decimal
 
-    def set_field_attributes(self, **kwargs):
-        super(IntegerEditor, self).set_field_attributes(**kwargs)
-        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
-        if spin_box is not None:
-            set_background_color_palette(spin_box.lineEdit(), kwargs.get('background_color', None))
-
     def set_suffix(self, suffix):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
@@ -129,6 +123,12 @@ class IntegerEditor(CustomEditor):
 
     def set_editable(self, editable):
         self.set_enabled(editable)
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            set_background_color_palette(spin_box.lineEdit(), background_color)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
