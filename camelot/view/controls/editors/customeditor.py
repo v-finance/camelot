@@ -114,6 +114,42 @@ class AbstractCustomEditor(object):
         if self.field_label is not None:
             self.field_label.set_field_attributes(**kwargs)
 
+    def set_editable(self, editable):
+        pass
+
+    def set_tooltip(self, tooltip):
+        pass
+
+    def set_visible(self, visible):
+        pass
+
+    def set_focus_policy(self, focus_policy):
+        pass
+
+    def set_prefix(self, prefix):
+        pass
+
+    def set_suffix(self, suffix):
+        pass
+
+    def set_single_step(self, single_step):
+        pass
+
+    def set_precision(self, precision):
+        pass
+
+    def set_minimum(self, minimum):
+        pass
+
+    def set_maximum(self, maximum):
+        pass
+
+    def set_directory(self, directory):
+        pass
+
+    def set_completer(self, completer):
+        pass
+
     def set_validator_state(self, validator_state):
         pass
 
