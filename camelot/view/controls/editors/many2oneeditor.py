@@ -120,10 +120,6 @@ class Many2OneEditor(CustomEditor):
         if timer is not None:
             timer.stop()
         self.textEdited(self.search_input.text())
-        
-    def set_field_attributes(self, **kwargs):
-        super(Many2OneEditor, self).set_field_attributes(**kwargs)        
-        self.search_input.setEnabled(kwargs.get('editable', False))
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)
@@ -132,6 +128,9 @@ class Many2OneEditor(CustomEditor):
     def set_background_color(self, background_color):
         super().set_background_color(background_color)
         set_background_color_palette(self.search_input, background_color)
+
+    def set_editable(self, editable):
+        self.search_input.setEnabled(editable)
 
     def on_arrow_down_key_pressed(self):
         self.arrow_down_key_pressed.emit()
