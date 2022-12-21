@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from typing import List, ClassVar, Any
 
 from ....admin.admin_route import Route
-from ....core.item_model import PreviewRole, SuffixRole
+from ....core.item_model import PreviewRole, SuffixRole, PrefixRole
 from ....core.qt import py_to_variant, Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
@@ -62,6 +62,8 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super(FloatDelegate, cls).get_standard_item(locale, model_context)
         item.setData(py_to_variant(model_context.field_attributes.get('suffix')),
                      SuffixRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('prefix')),
+                     PrefixRole)
         precision = model_context.field_attributes.get('precision', 2)
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
