@@ -114,6 +114,9 @@ class AbstractCustomEditor(object):
         if self.field_label is not None:
             self.field_label.set_field_attributes(**kwargs)
 
+    def set_validator_state(self, validator_state):
+        pass
+
     def set_background_color(self, background_color):
         set_background_color_palette(self, background_color)
 

@@ -40,7 +40,8 @@ from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
 from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
-    ChoicesRole, FieldAttributesRole, ProxyDict
+    ChoicesRole, FieldAttributesRole, ProxyDict,
+    ValidatorStateRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
@@ -199,6 +200,8 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                      Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
                      Qt.ItemDataRole.BackgroundRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('validator_state')),
+                     ValidatorStateRole)
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
             choices = [CompletionValue(
@@ -272,6 +275,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
             return
         value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
         field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
+        validator_state = variant_to_py(index.data(ValidatorStateRole))
         # ok i think i'm onto something, dynamically set tooltip doesn't change
         # Qt model's data for Qt.ItemDataRole.ToolTipRole
         # but i wonder if we should make the detour by Qt.ItemDataRole.ToolTipRole or just
@@ -285,6 +289,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         # float might be changed
         #
         editor.set_field_attributes(**field_attributes)
+        editor.set_validator_state(validator_state)
         editor.set_value(value)
         # update actions
         self.update_field_action_states(editor, index)

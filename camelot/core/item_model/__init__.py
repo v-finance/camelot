@@ -55,6 +55,7 @@ ActionStatesRole = Qt.ItemDataRole.UserRole + 10
 ActionModeRole = Qt.ItemDataRole.UserRole + 11
 ChoicesRole = Qt.ItemDataRole.UserRole + 12
 ColumnAttributesRole = Qt.ItemDataRole.UserRole + 13
+ValidatorStateRole = Qt.ItemDataRole.UserRole + 14
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent

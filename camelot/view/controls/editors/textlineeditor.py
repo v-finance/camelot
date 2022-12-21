@@ -102,7 +102,6 @@ class TextLineEditor(CustomEditor):
     def set_field_attributes(self, **kwargs):
         super(TextLineEditor, self).set_field_attributes(**kwargs)
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
-        validator_state = kwargs.get('validator_state')
         completer = kwargs.get('completer')
         if text_input is not None:
             editable = kwargs.get('editable', False)
@@ -114,7 +113,9 @@ class TextLineEditor(CustomEditor):
                                          kwargs.get('background_color'))
             if completer:
                 text_input.setCompleter(completer)
+
+    def set_validator_state(self, validator_state):
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+        if text_input is not None:
             validator = self.get_validator(self.validator_type, validator_state)
             text_input.setValidator(validator)
-
-
