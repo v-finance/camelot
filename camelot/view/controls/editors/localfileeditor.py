@@ -118,10 +118,6 @@ class LocalFileEditor( CustomEditor ):
 
     value = QtCore.qt_property( str, get_value, set_value )
 
-    def set_field_attributes( self, **kwargs):
-        super(LocalFileEditor, self).set_field_attributes(**kwargs)
-        self._directory=kwargs.get('directory',False)
-
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)
         if self.filename:
@@ -134,3 +130,6 @@ class LocalFileEditor( CustomEditor ):
 
     def set_editable(self, editable):
         self.setEnabled(editable)
+
+    def set_directory(self, directory):
+        self._directory = directory

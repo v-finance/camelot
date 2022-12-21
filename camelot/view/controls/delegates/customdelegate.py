@@ -43,7 +43,7 @@ from ....core.item_model import (
     ChoicesRole, FieldAttributesRole, ProxyDict,
     ValidatorStateRole, SuffixRole, PrefixRole,
     SingleStepRole, PrecisionRole, MinimumRole, MaximumRole,
-    FocusPolicyRole, VisibleRole
+    FocusPolicyRole, VisibleRole, DirectoryRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
@@ -298,6 +298,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
         visible = bool(variant_to_py(index.data(VisibleRole)))
         background_color = variant_to_py(index.data(Qt.ItemDataRole.BackgroundRole))
+        directory = bool(variant_to_py(index.data(DirectoryRole)))
         #
         # first set the field attributes, as these may change the 'state' of the
         # editor to properly display and hold the value, eg 'precision' of a 
@@ -315,6 +316,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         editor.set_editable(editable)
         editor.set_visible(visible)
         editor.set_background_color(background_color)
+        editor.set_directory(directory)
         editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
         # update actions
