@@ -89,7 +89,6 @@ class IntegerEditor(CustomEditor):
 
     def set_field_attributes(self, **kwargs):
         super(IntegerEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             set_background_color_palette(spin_box.lineEdit(), kwargs.get('background_color', None))
@@ -127,6 +126,9 @@ class IntegerEditor(CustomEditor):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             spin_box.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        self.set_enabled(editable)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
