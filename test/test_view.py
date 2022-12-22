@@ -129,7 +129,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value( ValueLoading )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor = editors.TextLineEditor(parent=None, length=10)
-        editor.set_field_attributes( editable=False )
+        editor.set_editable( False )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
         self.assertEqual( editor.get_value(), u'za coś tam' )
@@ -144,22 +144,26 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, u'za coś tam' )
 
     def grab_default_states( self, editor ):
-        editor.set_field_attributes( editable = True, background_color=ColorScheme.green )
+        editor.set_editable( True )
+        editor.set_background_color( ColorScheme.green )
         self.grab_widget( editor, 'editable_background_color')
 
-        editor.set_field_attributes( editable = False, tooltip = 'tooltip' )
+        editor.set_editable( False )
+        editor.set_tooltip( 'tooltip' )
         self.grab_widget( editor, 'disabled_tooltip')
 
-        editor.set_field_attributes( editable = False, background_color=ColorScheme.green )
+        editor.set_editable( False )
+        editor.set_background_color( ColorScheme.green )
         self.grab_widget( editor, 'disabled_background_color' )
 
-        editor.set_field_attributes( editable = True )
+        editor.set_editable( True )
         self.grab_widget( editor, 'editable' )
 
-        editor.set_field_attributes( editable = False )
+        editor.set_editable( False )
         self.grab_widget( editor, 'disabled' )
 
-        editor.set_field_attributes( editable = True, tooltip = 'tooltip')
+        editor.set_editable( True )
+        editor.set_tooltip( 'tooltip' )
         self.grab_widget( editor, 'editable_tooltip')
 
     def test_LocalFileEditor( self ):
@@ -190,9 +194,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), False )
         # changing the editable state should preserve the value
         editor.set_value( True )
-        editor.set_field_attributes( editable = False )
+        editor.set_editable( False )
         self.assertEqual( editor.get_value(), True )
-        editor.set_field_attributes( editable = True )
+        editor.set_editable( True )
         self.assertEqual( editor.get_value(), True )
         self.assert_valid_editor( editor, True )
 
