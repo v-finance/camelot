@@ -60,7 +60,8 @@ class UpdateMixin(object):
                 edit = item.data(Qt.ItemDataRole.EditRole)
                 if isinstance(edit, tuple):
                     cell_data[Qt.ItemDataRole.EditRole] = edit
-                # serialize field attributes
+                # serialize flags
+                cell_data['flags'] = item.flags()
                 cells.append(cell_data)
         return {
             "header_items": header_items,
