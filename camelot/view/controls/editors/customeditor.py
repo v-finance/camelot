@@ -83,13 +83,15 @@ class AbstractCustomEditor(object):
     def __init__(self):
         self.setProperty('value_loading', True)
         self.field_attributes = {}
+        self.nullable = True
         self.field_label = None
 
     def set_label(self, label):
         self.field_label = label
-        # set label might be called after a set_field_attributes, so
+        # set label might be called after a set_visible/set_nullable, so
         # immediately update the attributes of the label
-        self.field_label.set_field_attributes(**self.field_attributes)
+        self.field_label.set_visible(self.isVisible())
+        self.field_label.set_nullable(self.nullable)
 
     def set_value(self, value):
         if value is ValueLoading:
@@ -109,17 +111,22 @@ class AbstractCustomEditor(object):
 
     def set_field_attributes(self, **kwargs):
         self.field_attributes = kwargs
-        if self.field_label is not None:
-            self.field_label.set_field_attributes(**kwargs)
 
     def set_editable(self, editable):
         pass
+
+    def set_nullable(self, nullable):
+        self.nullable = nullable
+        if self.field_label is not None:
+            self.field_label.set_nullable(nullable)
 
     def set_tooltip(self, tooltip):
         self.setToolTip(str(tooltip or ''))
 
     def set_visible(self, visible):
         self.setVisible(visible)
+        if self.field_label is not None:
+            self.field_label.set_visible(visible)
 
     def set_focus_policy(self, focus_policy):
         pass

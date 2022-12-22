@@ -66,6 +66,7 @@ MinimumRole = Qt.ItemDataRole.UserRole + 21
 MaximumRole = Qt.ItemDataRole.UserRole + 22
 DirectoryRole = Qt.ItemDataRole.UserRole + 23
 CompleterRole = Qt.ItemDataRole.UserRole + 24
+NullableRole = Qt.ItemDataRole.UserRole + 25
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent

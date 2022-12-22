@@ -43,7 +43,8 @@ from ....core.item_model import (
     ChoicesRole, FieldAttributesRole, ProxyDict,
     ValidatorStateRole, SuffixRole, PrefixRole,
     SingleStepRole, PrecisionRole, MinimumRole, MaximumRole,
-    FocusPolicyRole, VisibleRole, DirectoryRole, CompleterRole
+    FocusPolicyRole, VisibleRole, DirectoryRole, CompleterRole,
+    NullableRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
@@ -212,6 +213,8 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                      Qt.ItemDataRole.BackgroundRole)
         item.setData(py_to_variant(model_context.field_attributes.get('visible', True)),
                      VisibleRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('nullable', True)),
+                     NullableRole)
         # FIXME: move choices to delegates that actually use it?
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
@@ -296,6 +299,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         focus_policy = variant_to_py(index.data(FocusPolicyRole))
         tooltip = variant_to_py(index.data(Qt.ItemDataRole.ToolTipRole))
         editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
+        nullable = bool(variant_to_py(index.data(NullableRole)))
         visible = bool(variant_to_py(index.data(VisibleRole)))
         background_color = variant_to_py(index.data(Qt.ItemDataRole.BackgroundRole))
         directory = bool(variant_to_py(index.data(DirectoryRole)))
@@ -315,6 +319,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         editor.set_tooltip(tooltip)
         editor.set_validator_state(validator_state)
         editor.set_editable(editable)
+        editor.set_nullable(nullable)
         editor.set_visible(visible)
         editor.set_background_color(background_color)
         editor.set_directory(directory)
