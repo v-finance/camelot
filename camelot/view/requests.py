@@ -210,5 +210,5 @@ class CancelAction(AbstractRequest):
     run_name: CompositeName
 
     @classmethod
-    def execute(cls, request_data, response_handler, cancel_handler):
-        pass
+    def _next(cls, run, request_data):
+        return run.generator.throw(CancelRequest())

@@ -41,7 +41,9 @@ from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.core.singleton import QSingleton
 from camelot.view.model_thread import post
-from .requests import InitiateAction, SendActionResponse, ThrowActionException
+from .requests import (
+    InitiateAction, SendActionResponse, ThrowActionException, CancelAction
+)
 
 LOGGER = logging.getLogger('camelot.view.action_runner')
 
@@ -223,7 +225,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             return gui_run.handle_action_step(action_step)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            self._throw(run_name, CancelRequest())
+            self._cancel(run_name)
 
     @QtCore.qt_slot(tuple, tuple, str, bool, bytes)
     def serializable_action_step(self, run_name, gui_run_name, step_type, blocking, serialized_step):
@@ -235,13 +237,13 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                 self._send(run_name, to_send)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            self._throw(run_name, CancelRequest())
+            self._cancel(run_name)
         except Exception as exc:
             LOGGER.error('gui exception while executing action', exc_info=exc)
             # In case of an exception in the GUI thread, propagate an
             # exception to make sure the generator ends.  Don't propagate
             # the very same exception, because no references from the GUI
-            # should be past to the model.
+            # should be passed to the model.
             self._throw(run_name, GuiException())
 
     @QtCore.qt_slot(tuple, tuple, object)
@@ -278,6 +280,9 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
 
     def _send(self, run_name, to_send):
         post(SendActionResponse(run_name=run_name, response=to_send))
+
+    def _cancel(self, run_name):
+        post(CancelAction(run_name=run_name))
 
 
 action_runner = ActionRunner()
