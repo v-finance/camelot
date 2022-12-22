@@ -87,19 +87,48 @@ class IntegerEditor(CustomEditor):
         self.option = option
         self.decimal = decimal
 
-    def set_field_attributes(self, **kwargs):
-        super(IntegerEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
+    def set_suffix(self, suffix):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
-            set_background_color_palette(spin_box.lineEdit(), kwargs.get('background_color', None))
-            spin_box.setToolTip(str(kwargs.get('tooltip') or ''))
-            spin_box.setPrefix(str(kwargs.get('prefix', '')))
-            spin_box.setSuffix(str(kwargs.get('suffix', '')))
-            spin_box.setSingleStep(kwargs.get('single_step', 1))
-            minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
-            if None not in (minimum, maximum):
-                spin_box.setRange(minimum-1, maximum)
+            spin_box.setSuffix(str(suffix or ''))
+
+    def set_prefix(self, prefix):
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            spin_box.setPrefix(str(prefix or ''))
+
+    def set_single_step(self, single_step):
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            single_step = single_step if single_step is not None else 1
+            spin_box.setSingleStep(single_step)
+
+    def set_minimum(self, minimum):
+        if minimum is not None:
+            spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+            if spin_box is not None:
+                spin_box.setMinimum(minimum-1)
+
+    def set_maximum(self, maximum):
+        if maximum is not None:
+            spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+            if spin_box is not None:
+                spin_box.setMaximum(maximum)
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            spin_box.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        self.set_enabled(editable)
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            set_background_color_palette(spin_box.lineEdit(), background_color)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

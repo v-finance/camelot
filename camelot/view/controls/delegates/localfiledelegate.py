@@ -32,8 +32,8 @@ from dataclasses import dataclass
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
 
-from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant
+from ....core.item_model import PreviewRole, DirectoryRole
+from ....core.qt import Qt, py_to_variant, variant_to_py
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
 
@@ -55,9 +55,20 @@ class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(LocalFileDelegate, cls).get_standard_item(
-            locale, model_context
-        )
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        item.setData(py_to_variant(model_context.field_attributes.get('directory', False)),
+                     DirectoryRole)
         if model_context.value is not None:
             item.setData(py_to_variant(str(model_context.value)), PreviewRole)
         return item
+
+    def setEditorData(self, editor, index):
+        if index.model() is None:
+            return
+        self.set_default_editor_data(editor, index)
+        directory = bool(variant_to_py(index.data(DirectoryRole)))
+        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
+        editor.set_directory(directory)
+        editor.set_value(value)
+        self.update_field_action_states(editor, index)

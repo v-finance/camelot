@@ -34,8 +34,7 @@ import itertools
 from ....admin.admin_route import Route, RouteWithRenderHint
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
-from ....core.item_model import FieldAttributesRole
-from ....core.qt import variant_to_py, Qt
+from ....core.qt import Qt
 from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -95,8 +94,7 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             return
         value = index.data(Qt.ItemDataRole.EditRole)
         editor.set_value(value)
-        field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
-        editor.set_field_attributes(**field_attributes)
+        self.set_default_editor_data(editor, index)
         # update field actions
         self.update_field_action_states(editor, index)
 

@@ -42,6 +42,8 @@ class LanguageDelegate( PlainTextDelegate ):
     def get_editor_class(cls):
         return LanguageEditor
 
-
-
-
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        return item

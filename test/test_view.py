@@ -20,7 +20,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.core.constants import camelot_maxfloat, camelot_minfloat
 from camelot.core.exception import UserException
 from camelot.core.files.storage import Storage, StoredFile
-from camelot.core.item_model import FieldAttributesRole, PreviewRole
+from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
 from camelot.model.party import Person
@@ -129,7 +129,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_value( ValueLoading )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor = editors.TextLineEditor(parent=None, length=10)
-        editor.set_field_attributes( editable=False )
+        editor.set_editable( False )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
         self.assertEqual( editor.get_value(), u'za coś tam' )
@@ -144,22 +144,26 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_valid_editor( editor, u'za coś tam' )
 
     def grab_default_states( self, editor ):
-        editor.set_field_attributes( editable = True, background_color=ColorScheme.green )
+        editor.set_editable( True )
+        editor.set_background_color( ColorScheme.green )
         self.grab_widget( editor, 'editable_background_color')
 
-        editor.set_field_attributes( editable = False, tooltip = 'tooltip' )
+        editor.set_editable( False )
+        editor.set_tooltip( 'tooltip' )
         self.grab_widget( editor, 'disabled_tooltip')
 
-        editor.set_field_attributes( editable = False, background_color=ColorScheme.green )
+        editor.set_editable( False )
+        editor.set_background_color( ColorScheme.green )
         self.grab_widget( editor, 'disabled_background_color' )
 
-        editor.set_field_attributes( editable = True )
+        editor.set_editable( True )
         self.grab_widget( editor, 'editable' )
 
-        editor.set_field_attributes( editable = False )
+        editor.set_editable( False )
         self.grab_widget( editor, 'disabled' )
 
-        editor.set_field_attributes( editable = True, tooltip = 'tooltip')
+        editor.set_editable( True )
+        editor.set_tooltip( 'tooltip' )
         self.grab_widget( editor, 'editable_tooltip')
 
     def test_LocalFileEditor( self ):
@@ -190,9 +194,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), False )
         # changing the editable state should preserve the value
         editor.set_value( True )
-        editor.set_field_attributes( editable = False )
+        editor.set_editable( False )
         self.assertEqual( editor.get_value(), True )
-        editor.set_field_attributes( editable = True )
+        editor.set_editable( True )
         self.assertEqual( editor.get_value(), True )
         self.assert_valid_editor( editor, True )
 
@@ -308,10 +312,14 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = 3
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
-        field_attributes = item.data(FieldAttributesRole)
+        minimum = item.data(MinimumRole)
+        maximum = item.data(MaximumRole)
         
         editor = editors.FloatEditor(parent=None)
-        editor.set_field_attributes(prefix='prefix', editable=True, **field_attributes)
+        editor.set_prefix('prefix')
+        editor.set_editable(True)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
@@ -320,7 +328,10 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 3.14 )
         editor = editors.FloatEditor(parent=None, option=self.option)
-        editor.set_field_attributes(suffix=' suffix', editable=True, **field_attributes)
+        editor.set_suffix(' suffix')
+        editor.set_editable(True)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -337,7 +348,11 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(editor.get_value(), 0.0)
         # pretend the user has entered something
         editor = editors.FloatEditor(parent=None)
-        editor.set_field_attributes(prefix='prefix ', suffix=' suffix', editable=True, **field_attributes)
+        editor.set_prefix('prefix ')
+        editor.set_suffix(' suffix')
+        editor.set_editable(True)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
@@ -345,7 +360,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
         # verify if the calculator button is turned off
         editor = editors.FloatEditor(parent=None, calculator=False)
-        editor.set_field_attributes( editable=True, **field_attributes )
+        editor.set_editable(True)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
@@ -360,12 +377,14 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = 3
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
-        field_attributes = item.data(FieldAttributesRole)
-        self.assertIn('minimum', field_attributes)
-        self.assertIn('maximum', field_attributes)
+        minimum = item.data(MinimumRole)
+        maximum = item.data(MaximumRole)
+        self.assertIsNotNone(minimum)
+        self.assertIsNotNone(maximum)
 
         editor = editors.IntegerEditor()
-        editor.set_field_attributes(**field_attributes)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0 )
@@ -382,7 +401,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), None )
         # turn off the calculator
         editor = editors.IntegerEditor(calculator=False)
-        editor.set_field_attributes(editable=True, **field_attributes)
+        editor.set_editable(True)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         editor.set_value( 3 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )

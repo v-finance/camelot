@@ -118,12 +118,18 @@ class LocalFileEditor( CustomEditor ):
 
     value = QtCore.qt_property( str, get_value, set_value )
 
-    def set_field_attributes( self, **kwargs):
-        super(LocalFileEditor, self).set_field_attributes(**kwargs)
-        self.setEnabled(kwargs.get('editable', False))
-        self._directory=kwargs.get('directory',False)
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
         if self.filename:
-            set_background_color_palette(self.filename, kwargs.get('background_color', None))
-            self.filename.setToolTip(str(kwargs.get('tooltip') or ''))
+            self.filename.setToolTip(str(tooltip or ''))
 
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        if self.filename:
+            set_background_color_palette(self.filename, background_color)
 
+    def set_editable(self, editable):
+        self.setEnabled(editable)
+
+    def set_directory(self, directory):
+        self._directory = directory

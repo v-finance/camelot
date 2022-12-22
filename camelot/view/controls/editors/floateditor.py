@@ -148,9 +148,9 @@ class FloatEditor(CustomEditor):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         spinBox = CustomDoubleSpinBox(option, parent)
         spinBox.setObjectName('spinbox')
-        
         spinBox.setDecimals(2)
         spinBox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
+        spinBox.setGroupSeparatorShown(True)
 
         spinBox.addAction(action)
         self.calculatorButton = QtWidgets.QToolButton()
@@ -179,31 +179,53 @@ class FloatEditor(CustomEditor):
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
 
-    def set_field_attributes(self, **kwargs):
-        super(FloatEditor, self).set_field_attributes(**kwargs)
-        editable = kwargs.get('editable', False)
-        self.calculatorButton.setVisible(editable and self._calculator)
+    def set_suffix(self, suffix):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        focus_policy = kwargs.get('focus_policy')
-        if focus_policy is not None:
-            spinBox.setFocusPolicy(focus_policy)
-        spinBox.setToolTip(str(kwargs.get('tooltip') or ''))
-        spinBox.setPrefix(str(kwargs.get('prefix', '')))
-        spinBox.setSuffix(str(kwargs.get('suffix', '')))
-        spinBox.setSingleStep(kwargs.get('single_step', 1.0))
-        spinBox.setReadOnly(not editable)
-        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
-        precision = kwargs.get('precision')
+        spinBox.setSuffix(str(suffix or ''))
+
+    def set_prefix(self, prefix):
+        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        spinBox.setPrefix(str(prefix or ''))
+
+    def set_single_step(self, single_step):
+        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        single_step = single_step if single_step is not None else 1.0
+        spinBox.setSingleStep(single_step)
+
+    def set_precision(self, precision):
+        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
         if precision is None:
             precision = 2
         if spinBox.decimals() != precision:
             spinBox.setDecimals( precision )
-        minimum, maximum = kwargs.get('minimum'), kwargs.get('maximum')
-        if None not in (minimum, maximum):
-            spinBox.setRange(minimum-1, maximum)
-        spinBox.setGroupSeparatorShown(True)
+
+    def set_minimum(self, minimum):
+        if minimum is not None:
+            spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+            spinBox.setMinimum(minimum-1)
+
+    def set_maximum(self, maximum):
+        if maximum is not None:
+            spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+            spinBox.setMaximum(maximum)
+
+    def set_focus_policy(self, focus_policy):
+        if focus_policy is not None:
+            spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+            spinBox.setFocusPolicy(focus_policy)
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        spinBox.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        self.calculatorButton.setVisible(editable and self._calculator)
+        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
+        spinBox.setReadOnly(not editable)
+        spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)

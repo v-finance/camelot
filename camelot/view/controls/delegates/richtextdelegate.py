@@ -53,6 +53,7 @@ class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super(RichTextDelegate, cls).get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             value_str = u' '.join(text_from_richtext(model_context.value))[:256]
             item.setData(py_to_variant(str(value_str)), PreviewRole)

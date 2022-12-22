@@ -17,8 +17,8 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.model_context import ObjectsModelContext
 from camelot.core.item_model import (
     ActionRoutesRole, ActionStatesRole, CompletionPrefixRole,
-    CompletionsRole, FieldAttributesRole, ObjectRole, ValidMessageRole, ValidRole,
-    VerboseIdentifierRole
+    CompletionsRole, ObjectRole, ValidMessageRole, ValidRole,
+    VerboseIdentifierRole, FocusPolicyRole, PrefixRole
 )
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
@@ -168,10 +168,12 @@ class ItemModelTests(object):
 
     def test_invalid_item(self):
         self.assertEqual(variant_to_py(invalid_item.data(Qt.ItemDataRole.EditRole)), None)
-        self.assertEqual(variant_to_py(invalid_item.data(FieldAttributesRole)), {'editable': False, 'focus_policy': Qt.FocusPolicy.NoFocus})
+        self.assertEqual(bool(invalid_item.flags() & Qt.ItemFlag.ItemIsEditable), False)
+        self.assertEqual(variant_to_py(invalid_item.data(FocusPolicyRole)), Qt.FocusPolicy.NoFocus)
         invalid_clone = invalid_item.clone()
         self.assertEqual(variant_to_py(invalid_clone.data(Qt.ItemDataRole.EditRole)), None)
-        self.assertEqual(variant_to_py(invalid_clone.data(FieldAttributesRole)), {'editable': False, 'focus_policy': Qt.FocusPolicy.NoFocus})
+        self.assertEqual(bool(invalid_clone.flags() & Qt.ItemFlag.ItemIsEditable), False)
+        self.assertEqual(variant_to_py(invalid_clone.data(FocusPolicyRole)), Qt.FocusPolicy.NoFocus)
 
 class SetupProxy(Action):
 
@@ -237,10 +239,10 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.DisplayRole), None)
         self.assertEqual(self._data(1, 0, self.item_model, role=ObjectRole), None)
-        self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole).get('editable'), False)
+        self.assertEqual(bool(self._flags(1, 0, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
         # why would there be a need to get static fa before the timout has passed ?
         #self.assertEqual(self._data(1, 0, role=FieldAttributesRole)['static'], 'static')
-        self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole).get('prefix'), None)
+        self.assertEqual(self._data(1, 0, self.item_model, role=PrefixRole), None)
         self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole), "[]")
         self._data(1, 2, self.item_model)
         self._data(1, 3, self.item_model)
@@ -251,9 +253,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         # the prefix is prepended to the display role
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.DisplayRole), 'pre 1')
         self.assertEqual(self._data(1, 0, self.item_model, role=ObjectRole), id(self.collection[1]))
-        self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['editable'], True)
-        self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['static'], 'static')
-        self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['prefix'], 'pre')
+        self.assertEqual(bool(self._flags(1, 0, self.item_model) & Qt.ItemFlag.ItemIsEditable), True)
+        #self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['static'], 'static')
+        self.assertEqual(self._data(1, 0, self.item_model, role=PrefixRole), 'pre')
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.ToolTipRole), 'Hint')
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.BackgroundRole), 'red')
         self.assertEqual(len(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))), 2)
@@ -268,8 +270,10 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         
         self.assertEqual(self._data(-1, -1, self.item_model, role=ObjectRole, validate_index=False), None)
         self.assertEqual(self._data(100, 100, self.item_model, role=ObjectRole, validate_index=False), None)
-        self.assertEqual(self._data(-1, -1, self.item_model, role=FieldAttributesRole, validate_index=False), {'editable': False, 'focus_policy': Qt.FocusPolicy.NoFocus})
-        self.assertEqual(self._data(100, 100, self.item_model, role=FieldAttributesRole, validate_index=False), {'editable': False, 'focus_policy': Qt.FocusPolicy.NoFocus})
+        self.assertEqual(bool(self._flags(-1, -1, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
+        self.assertEqual(bool(self._flags(100, 100, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
+        self.assertEqual(self._data(-1, -1, self.item_model, role=FocusPolicyRole, validate_index=False), Qt.FocusPolicy.NoFocus)
+        self.assertEqual(self._data(100, 100, self.item_model, role=FocusPolicyRole, validate_index=False), Qt.FocusPolicy.NoFocus)
 
     def test_first_columns(self):
         # when data is loaded for column 0, it remains loading for column 1

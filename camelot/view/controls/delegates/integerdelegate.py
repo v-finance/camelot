@@ -30,8 +30,11 @@
 from dataclasses import dataclass
 from typing import ClassVar, Any
 
-from ....core.qt import py_to_variant, Qt
-from ....core.item_model import PreviewRole
+from ....core.qt import py_to_variant, Qt, variant_to_py
+from ....core.item_model import (
+    PreviewRole, PrefixRole, SuffixRole, SingleStepRole,
+    MinimumRole, MaximumRole
+)
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.core import constants
 from camelot.view.controls import editors
@@ -54,11 +57,22 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
+        minimum = minimum if minimum is not None else constants.camelot_minfloat
+        maximum = maximum if maximum is not None else constants.camelot_maxfloat
         model_context.field_attributes.update({
-            'minimum': minimum if minimum is not None else constants.camelot_minfloat,
-            'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
+            'minimum': minimum,
+            'maximum': maximum
         })
         item = super(IntegerDelegate, cls).get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        item.setData(py_to_variant(model_context.field_attributes.get('suffix')),
+                     SuffixRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('prefix')),
+                     PrefixRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('single_step')),
+                     SingleStepRole)
+        item.setData(py_to_variant(minimum), MinimumRole)
+        item.setData(py_to_variant(maximum), MaximumRole)
         if model_context.value is not None:
             value_str = locale.toString(long_int(model_context.value))
             if model_context.field_attributes.get('suffix') is not None:
@@ -68,6 +82,21 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             item.setData(py_to_variant(value_str), PreviewRole)
         return item
 
-
-
+    def setEditorData(self, editor, index):
+        if index.model() is None:
+            return
+        self.set_default_editor_data(editor, index)
+        suffix = variant_to_py(index.data(SuffixRole))
+        prefix = variant_to_py(index.data(PrefixRole))
+        single_step = variant_to_py(index.data(SingleStepRole))
+        minimum = variant_to_py(index.data(MinimumRole))
+        maximum = variant_to_py(index.data(MaximumRole))
+        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
+        editor.set_suffix(suffix)
+        editor.set_prefix(prefix)
+        editor.set_single_step(single_step)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
+        editor.set_value(value)
+        self.update_field_action_states(editor, index)
 

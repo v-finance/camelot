@@ -29,7 +29,7 @@
 
 
 
-from ....core.qt import QtCore, QtWidgets
+from ....core.qt import QtCore, QtGui, QtWidgets
 
 from .customeditor import (CustomEditor, set_background_color_palette)
 from ..decorated_line_edit import DecoratedLineEdit
@@ -43,6 +43,7 @@ class TextLineEditor(CustomEditor):
                  echo_mode=None,
                  column_width=None,
                  action_routes=[],
+                 validator_type=None,
                  field_name='text_line'):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
@@ -55,6 +56,10 @@ class TextLineEditor(CustomEditor):
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
         text_input.setEchoMode(echo_mode or QtWidgets.QLineEdit.EchoMode.Normal)
+        validator = self.get_validator(validator_type, self)
+        if validator is not None:
+            validator.setObjectName('validator')
+            text_input.setValidator(validator)
         layout.addWidget(text_input)
         if length:
             text_input.setMaxLength(length)
@@ -97,21 +102,34 @@ class TextLineEditor(CustomEditor):
 
     value = QtCore.qt_property(str, get_value, set_value)
 
-    def set_field_attributes(self, **kwargs):
-        super(TextLineEditor, self).set_field_attributes(**kwargs)
+    def set_validator_state(self, validator_state):
+        validator = self.findChild(QtGui.QValidator, 'validator')
+        if validator is not None:
+            text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+            if text_input is not None:
+                validator.set_state(validator_state)
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
-        validator = kwargs.get('validator')
-        completer = kwargs.get('completer')
         if text_input is not None:
-            editable = kwargs.get('editable', False)
+            text_input.setToolTip(str(tooltip or ''))
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+        if text_input is not None:
+            set_background_color_palette(text_input, background_color)
+
+    def set_completer(self, completer):
+        if completer:
+            text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+            if text_input is not None:
+                text_input.setCompleter(completer)
+
+    def set_editable(self, editable):
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+        if text_input is not None:
             value = text_input.text()
             text_input.setReadOnly(not editable)
             text_input.setText(value)
-            text_input.setToolTip(str(kwargs.get('tooltip') or ''))
-            set_background_color_palette(text_input,
-                                         kwargs.get('background_color'))
-            if completer:
-                text_input.setCompleter(completer)
-            text_input.setValidator(validator)
-
-

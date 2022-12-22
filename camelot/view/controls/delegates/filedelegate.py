@@ -51,6 +51,7 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super(FileDelegate, cls).get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             item.setData(py_to_variant(model_context.value.verbose_name), PreviewRole)
         else:

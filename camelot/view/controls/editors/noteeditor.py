@@ -69,9 +69,6 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
         self.setVisible( value != None )
         if value:
             self.setText( str( value ) )
-    
-    def set_field_attributes(self, **kwargs):
-        kwargs['background_color'] = kwargs.get('background_color') or color
-        super(NoteEditor, self).set_field_attributes(**kwargs)
 
-
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color or color)

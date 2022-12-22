@@ -82,14 +82,15 @@ class AbstractCustomEditor(object):
 
     def __init__(self):
         self.setProperty('value_loading', True)
-        self.field_attributes = {}
+        self.nullable = True
         self.field_label = None
 
     def set_label(self, label):
         self.field_label = label
-        # set label might be called after a set_field_attributes, so
+        # set label might be called after a set_visible/set_nullable, so
         # immediately update the attributes of the label
-        self.field_label.set_field_attributes(**self.field_attributes)
+        self.field_label.set_visible(self.isVisible())
+        self.field_label.set_nullable(self.nullable)
 
     def set_value(self, value):
         if value is ValueLoading:
@@ -104,15 +105,51 @@ class AbstractCustomEditor(object):
             return ValueLoading
         return None
 
-    def get_field_attributes(self):
-        return self.field_attributes
+    def set_editable(self, editable):
+        pass
 
-    def set_field_attributes(self, **kwargs):
-        self.set_background_color(kwargs.get('background_color', None))
-        self.field_attributes = kwargs
-        self.setVisible(kwargs.get('visible', True))
+    def set_nullable(self, nullable):
+        self.nullable = nullable
         if self.field_label is not None:
-            self.field_label.set_field_attributes(**kwargs)
+            self.field_label.set_nullable(nullable)
+
+    def set_tooltip(self, tooltip):
+        self.setToolTip(str(tooltip or ''))
+
+    def set_visible(self, visible):
+        self.setVisible(visible)
+        if self.field_label is not None:
+            self.field_label.set_visible(visible)
+
+    def set_focus_policy(self, focus_policy):
+        pass
+
+    def set_prefix(self, prefix):
+        pass
+
+    def set_suffix(self, suffix):
+        pass
+
+    def set_single_step(self, single_step):
+        pass
+
+    def set_precision(self, precision):
+        pass
+
+    def set_minimum(self, minimum):
+        pass
+
+    def set_maximum(self, maximum):
+        pass
+
+    def set_directory(self, directory):
+        pass
+
+    def set_completer(self, completer):
+        pass
+
+    def set_validator_state(self, validator_state):
+        pass
 
     def set_background_color(self, background_color):
         set_background_color_palette(self, background_color)
@@ -180,3 +217,34 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
         return size_hint
 
+    def get_validator(self, validator_type, parent=None):
+        from vfinance.view import validators
+        if validator_type is None:
+            return None
+        # validators without state
+        if validator_type == validators.BankingNumberValidator.__name__:
+            return validators.banking_number_validator
+        if validator_type == validators.VATNumberValidator.__name__:
+            return validators.vat_number_validator
+        if validator_type == validators.CompanyNumberValidator.__name__:
+            return validators.company_number_validator
+        if validator_type == validators.TelephoneNumberValidator.__name__:
+            return validators.telephone_number_validator
+        if validator_type == validators.EmailValidator.__name__:
+            return validators.email_validator
+        if validator_type == validators.NumericValidator.__name__:
+            return validators.numeric_validator
+        if validator_type == validators.DomainNameValidator.__name__:
+            return validators.domain_name_validator
+        if validator_type == validators.NACECodeValidator.__name__:
+            return validators.nace_code_validator
+        # validators with state
+        if validator_type == validators.NationalNumberValidator.__name__:
+            return validators.NationalNumberValidator(parent)
+        if validator_type == validators.IDCardNumberValidator.__name__:
+            return validators.IDCardNumberValidator(parent)
+        if validator_type == validators.CodeValidator.__name__:
+            return validators.CodeValidator(parent)
+        if validator_type == validators.RegularExpressionValidator.__name__:
+            return validators.RegularExpressionValidator(parent)
+        raise NotImplementedError

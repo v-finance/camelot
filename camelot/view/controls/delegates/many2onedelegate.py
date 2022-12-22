@@ -67,6 +67,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super(Many2OneDelegate, cls).get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
         value_name = initial_naming_context._bind_object(model_context.value)
         # eventually, all values should be names, so this should happen in the
         # custom delegate class
@@ -95,7 +96,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if completions is not None:
             editor.display_search_completions(completions)
             return
-        super(Many2OneDelegate, self).setEditorData(editor, index)
+        super().setEditorData(editor, index)
         verbose_name = variant_to_py(index.model().data(index, PreviewRole))
         editor.set_verbose_name(verbose_name)
         editor.index = index
