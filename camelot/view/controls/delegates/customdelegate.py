@@ -41,10 +41,7 @@ from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
     ChoicesRole, FieldAttributesRole, ProxyDict,
-    ValidatorStateRole, SuffixRole, PrefixRole,
-    SingleStepRole, PrecisionRole, MinimumRole, MaximumRole,
-    FocusPolicyRole, VisibleRole, DirectoryRole, CompleterRole,
-    NullableRole
+    VisibleRole, NullableRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors

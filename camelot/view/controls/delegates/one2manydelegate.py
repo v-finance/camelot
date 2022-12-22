@@ -34,8 +34,7 @@ import itertools
 from ....admin.admin_route import Route, RouteWithRenderHint
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
-from ....core.item_model import FieldAttributesRole
-from ....core.qt import variant_to_py, Qt
+from ....core.qt import Qt
 from camelot.view.controls import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 

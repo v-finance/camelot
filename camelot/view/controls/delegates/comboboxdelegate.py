@@ -35,7 +35,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
-from ....core.item_model import PreviewRole, FieldAttributesRole, ChoicesRole, NullableRole, VisibleRole
+from ....core.item_model import PreviewRole, ChoicesRole
 from ....core.naming import initial_naming_context
 from ....core.qt import Qt, variant_to_py, py_to_variant
 from camelot.view.controls import editors
