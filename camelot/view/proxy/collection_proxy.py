@@ -60,7 +60,7 @@ from ...core.item_model import (
     ObjectRole, PreviewRole,
     CompletionPrefixRole, ActionRoutesRole,
     ActionStatesRole, ProxyDict, CompletionsRole,
-    ActionModeRole,
+    ActionModeRole, FocusPolicyRole
 )
 from ..crud_action import (
     changeselection_name, created_name, completion_name, deleted_name,
@@ -92,6 +92,7 @@ invalid_item.setData(invalid_data, CompletionsRole)
 invalid_item.setData('[]', ActionRoutesRole)
 invalid_item.setData('[]', ActionStatesRole)
 invalid_item.setData(invalid_data, ActionModeRole)
+invalid_item.setData(Qt.FocusPolicy.NoFocus, FocusPolicyRole)
 
 initial_delay = 50
 maximum_delay = 1000

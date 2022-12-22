@@ -20,7 +20,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.core.constants import camelot_maxfloat, camelot_minfloat
 from camelot.core.exception import UserException
 from camelot.core.files.storage import Storage, StoredFile
-from camelot.core.item_model import FieldAttributesRole, PreviewRole
+from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
 from camelot.model.party import Person
@@ -312,13 +312,14 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = 3
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
-        field_attributes = item.data(FieldAttributesRole)
+        minimum = item.data(MinimumRole)
+        maximum = item.data(MaximumRole)
         
         editor = editors.FloatEditor(parent=None)
         editor.set_prefix('prefix')
         editor.set_editable(True)
-        editor.set_minimum(field_attributes['minimum'])
-        editor.set_maximum(field_attributes['maximum'])
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
@@ -329,8 +330,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor = editors.FloatEditor(parent=None, option=self.option)
         editor.set_suffix(' suffix')
         editor.set_editable(True)
-        editor.set_minimum(field_attributes['minimum'])
-        editor.set_maximum(field_attributes['maximum'])
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
@@ -350,8 +351,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_prefix('prefix ')
         editor.set_suffix(' suffix')
         editor.set_editable(True)
-        editor.set_minimum(field_attributes['minimum'])
-        editor.set_maximum(field_attributes['maximum'])
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
@@ -360,8 +361,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         # verify if the calculator button is turned off
         editor = editors.FloatEditor(parent=None, calculator=False)
         editor.set_editable(True)
-        editor.set_minimum(field_attributes['minimum'])
-        editor.set_maximum(field_attributes['maximum'])
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         editor.set_value( 3.14 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
@@ -376,13 +377,14 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = 3
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
-        field_attributes = item.data(FieldAttributesRole)
-        self.assertIn('minimum', field_attributes)
-        self.assertIn('maximum', field_attributes)
+        minimum = item.data(MinimumRole)
+        maximum = item.data(MaximumRole)
+        self.assertIsNotNone(minimum)
+        self.assertIsNotNone(maximum)
 
         editor = editors.IntegerEditor()
-        editor.set_minimum(field_attributes['minimum'])
-        editor.set_maximum(field_attributes['maximum'])
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( 0 )
@@ -400,8 +402,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         # turn off the calculator
         editor = editors.IntegerEditor(calculator=False)
         editor.set_editable(True)
-        editor.set_minimum(field_attributes['minimum'])
-        editor.set_maximum(field_attributes['maximum'])
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
         editor.set_value( 3 )
         self.grab_widget( editor, 'no_calculator' )
         self.assertTrue( editor.calculatorButton.isHidden() )
