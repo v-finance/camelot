@@ -40,7 +40,7 @@ from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
 from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
-    ChoicesRole, ProxyDict, VisibleRole, NullableRole
+    ChoicesRole, VisibleRole, NullableRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
