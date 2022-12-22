@@ -78,12 +78,13 @@ class MonthsEditor(CustomEditor):
     @QtCore.qt_slot()
     def _spinbox_editing_finished(self):
         self.editingFinished.emit()
-        
-    def set_field_attributes(self, **kwargs):
-        super(MonthsEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
-        self.set_background_color(kwargs.get('background_color', None))
-        self.years_spinbox.setToolTip(str(kwargs.get('tooltip') or ''))
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        self.years_spinbox.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        self.set_enabled(editable)
 
     def set_enabled(self, editable=True):
         self.years_spinbox.setReadOnly(not editable)

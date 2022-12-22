@@ -77,7 +77,7 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'precision',
                                                 'directory',
                                                 'visible',
-                                                'validator',
+                                                'validator_state',
                                                 'completer',
                                                 'minimum',
                                                 'maximum'])

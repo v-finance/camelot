@@ -51,14 +51,3 @@ class LabelEditor(QtWidgets.QLabel, AbstractCustomEditor):
         value = AbstractCustomEditor.set_value(self, value)
         if value:
             self.setText(value)
-            
-    def set_field_attributes(self, **kwargs):
-        super(LabelEditor, self).set_field_attributes(**kwargs)
-        self.setToolTip(str(kwargs.get('tooltip') or ''))
-
-
-
-
-
-
-

@@ -56,11 +56,11 @@ class FieldLabel(QtWidgets.QLabel):
             FieldLabel.bold_font = QtWidgets.QApplication.font()
             FieldLabel.bold_font.setBold(True)
             FieldLabel.font_width = QtGui.QFontMetrics(FieldLabel.font).size( Qt.TextFlag.TextSingleLine, 'A' ).width()
-    
-    def set_field_attributes(self, **kwargs):
-        # required fields font is bold
-        nullable = kwargs.get('nullable', True)
-        self.setVisible(kwargs.get('visible', True))
+
+    def set_visible(self, visible):
+        self.setVisible(visible)
+
+    def set_nullable(self, nullable):
         if not nullable:
             self.setFont(self.bold_font)
         else:

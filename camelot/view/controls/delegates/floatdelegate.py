@@ -31,8 +31,11 @@ from dataclasses import dataclass, field
 from typing import List, ClassVar, Any
 
 from ....admin.admin_route import Route
-from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant, Qt
+from ....core.item_model import (
+    PreviewRole, SuffixRole, PrefixRole, SingleStepRole,
+    PrecisionRole, MinimumRole, MaximumRole, FocusPolicyRole
+)
+from ....core.qt import Qt, py_to_variant, variant_to_py
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core import constants
@@ -55,12 +58,26 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
+        minimum = minimum if minimum is not None else constants.camelot_minfloat
+        maximum = maximum if maximum is not None else constants.camelot_maxfloat
         model_context.field_attributes.update({
-            'minimum': minimum if minimum is not None else constants.camelot_minfloat,
-            'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
+            'minimum': minimum,
+            'maximum': maximum
         })
         item = super(FloatDelegate, cls).get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        item.setData(py_to_variant(model_context.field_attributes.get('focus_policy')),
+                     FocusPolicyRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('suffix')),
+                     SuffixRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('prefix')),
+                     PrefixRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('single_step')),
+                     SingleStepRole)
         precision = model_context.field_attributes.get('precision', 2)
+        item.setData(py_to_variant(precision), PrecisionRole)
+        item.setData(py_to_variant(minimum), MinimumRole)
+        item.setData(py_to_variant(maximum), MaximumRole)
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
         if precision is None:
@@ -68,7 +85,6 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if model_context.value is not None:
             value_str = str(
                 locale.toString(float(model_context.value), 'f', precision)
-
             )
             if model_context.field_attributes.get('suffix') is not None:
                 value_str = value_str + ' ' + model_context.field_attributes.get('suffix')
@@ -79,6 +95,26 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             item.setData(py_to_variant(str()), PreviewRole)
         return item
 
-
+    def setEditorData(self, editor, index):
+        if index.model() is None:
+            return
+        self.set_default_editor_data(editor, index)
+        suffix = variant_to_py(index.data(SuffixRole))
+        prefix = variant_to_py(index.data(PrefixRole))
+        single_step = variant_to_py(index.data(SingleStepRole))
+        precision = variant_to_py(index.data(PrecisionRole))
+        minimum = variant_to_py(index.data(MinimumRole))
+        maximum = variant_to_py(index.data(MaximumRole))
+        focus_policy = variant_to_py(index.data(FocusPolicyRole))
+        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
+        editor.set_suffix(suffix)
+        editor.set_prefix(prefix)
+        editor.set_single_step(single_step)
+        editor.set_precision(precision)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
+        editor.set_focus_policy(focus_policy)
+        editor.set_value(value)
+        self.update_field_action_states(editor, index)
 
 

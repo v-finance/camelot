@@ -14,7 +14,7 @@ from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    FieldAttributesRole, CompletionsRole, PreviewRole, ChoicesRole, ObjectRole, ColumnAttributesRole
+    CompletionsRole, PreviewRole, ChoicesRole, ObjectRole, ColumnAttributesRole
 )
 from .. import gui_naming_context
 from ..controls import delegates
@@ -22,11 +22,7 @@ from ..controls import delegates
 
 
 non_serializable_roles = (
-    FieldAttributesRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
-)
-
-serializable_field_attributes = (
-    'editable', 'tooltip'
+    Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
 )
 
 def filter_attributes(attributes, keys):
@@ -64,9 +60,8 @@ class UpdateMixin(object):
                 edit = item.data(Qt.ItemDataRole.EditRole)
                 if isinstance(edit, tuple):
                     cell_data[Qt.ItemDataRole.EditRole] = edit
-                # serialize field attributes
-                field_attributes = item.data(FieldAttributesRole)
-                cell_data[FieldAttributesRole] = filter_attributes(field_attributes, serializable_field_attributes)
+                # serialize flags
+                cell_data['flags'] = item.flags()
                 cells.append(cell_data)
         return {
             "header_items": header_items,
@@ -156,7 +151,7 @@ class SetColumns(ActionStep):
                 attrs = filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
                                                     'action_routes', 'list_actions', 'list_action'])
             elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
-                attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes'])
+                attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type'])
             elif issubclass(fa['delegate'], delegates.TextEditDelegate):
                 attrs = filter_attributes(fa, ['length', 'editable'])
             elif issubclass(fa['delegate'], delegates.VirtualAddressDelegate):
@@ -201,11 +196,8 @@ class SetColumns(ActionStep):
             #
             # Set the header data
             #
-            fa_copy = fa.copy()
-            fa_copy.setdefault('editable', True)
             set_header_data(py_to_variant(field_name), Qt.ItemDataRole.UserRole)
             set_header_data(py_to_variant(verbose_name), Qt.ItemDataRole.DisplayRole)
-            set_header_data(fa_copy, FieldAttributesRole)
             set_header_data([fa['delegate'].__name__, self.column_attributes[i]], ColumnAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.ItemDataRole.FontRole)

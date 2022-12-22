@@ -179,9 +179,6 @@ class DbImageEditor(CustomEditor):
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setImage( image )
 
-    def set_field_attributes(self, **kwargs):
-        super(DbImageEditor, self).set_field_attributes(**kwargs)
-
     def clear_image(self):
         dummy_image = FontIcon('image') # 'tango/32x32/mimetypes/image-x-generic.png'
         self.set_pixmap(dummy_image.getQPixmap())
