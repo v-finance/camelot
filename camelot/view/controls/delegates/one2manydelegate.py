@@ -95,8 +95,7 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             return
         value = index.data(Qt.ItemDataRole.EditRole)
         editor.set_value(value)
-        field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
-        editor.set_field_attributes(**field_attributes)
+        self.set_default_editor_data(editor, index)
         # update field actions
         self.update_field_action_states(editor, index)
 

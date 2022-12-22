@@ -284,11 +284,21 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         #   getting closed always
         #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint )
 
+    def set_default_editor_data(self, editor, index):
+        nullable = bool(variant_to_py(index.data(NullableRole)))
+        visible = bool(variant_to_py(index.data(VisibleRole)))
+        tooltip = variant_to_py(index.data(Qt.ItemDataRole.ToolTipRole))
+        background_color = variant_to_py(index.data(Qt.ItemDataRole.BackgroundRole))
+        editor.set_nullable(nullable)
+        editor.set_visible(visible)
+        editor.set_tooltip(tooltip)
+        editor.set_background_color(background_color)
+
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
+        self.set_default_editor_data(editor, index)
         value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
-        field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
         validator_state = variant_to_py(index.data(ValidatorStateRole))
         suffix = variant_to_py(index.data(SuffixRole))
         prefix = variant_to_py(index.data(PrefixRole))
@@ -297,11 +307,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         minimum = variant_to_py(index.data(MinimumRole))
         maximum = variant_to_py(index.data(MaximumRole))
         focus_policy = variant_to_py(index.data(FocusPolicyRole))
-        tooltip = variant_to_py(index.data(Qt.ItemDataRole.ToolTipRole))
         editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
-        nullable = bool(variant_to_py(index.data(NullableRole)))
-        visible = bool(variant_to_py(index.data(VisibleRole)))
-        background_color = variant_to_py(index.data(Qt.ItemDataRole.BackgroundRole))
         directory = bool(variant_to_py(index.data(DirectoryRole)))
         completer = variant_to_py(index.data(CompleterRole))
         #
@@ -316,15 +322,10 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
         editor.set_focus_policy(focus_policy)
-        editor.set_tooltip(tooltip)
         editor.set_validator_state(validator_state)
         editor.set_editable(editable)
-        editor.set_nullable(nullable)
-        editor.set_visible(visible)
-        editor.set_background_color(background_color)
         editor.set_directory(directory)
         editor.set_completer(completer)
-        editor.set_field_attributes(**field_attributes)
         editor.set_value(value)
         # update actions
         self.update_field_action_states(editor, index)

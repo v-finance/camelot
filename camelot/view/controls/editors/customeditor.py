@@ -82,7 +82,6 @@ class AbstractCustomEditor(object):
 
     def __init__(self):
         self.setProperty('value_loading', True)
-        self.field_attributes = {}
         self.nullable = True
         self.field_label = None
 
@@ -105,12 +104,6 @@ class AbstractCustomEditor(object):
         if variant_to_py(self.property('value_loading')):
             return ValueLoading
         return None
-
-    def get_field_attributes(self):
-        return self.field_attributes
-
-    def set_field_attributes(self, **kwargs):
-        self.field_attributes = kwargs
 
     def set_editable(self, editable):
         pass
