@@ -148,9 +148,9 @@ class FloatEditor(CustomEditor):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         spinBox = CustomDoubleSpinBox(option, parent)
         spinBox.setObjectName('spinbox')
-        
         spinBox.setDecimals(2)
         spinBox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
+        spinBox.setGroupSeparatorShown(True)
 
         spinBox.addAction(action)
         self.calculatorButton = QtWidgets.QToolButton()
@@ -178,11 +178,6 @@ class FloatEditor(CustomEditor):
         self.add_actions(action_routes, layout)
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
-
-    def set_field_attributes(self, **kwargs):
-        super(FloatEditor, self).set_field_attributes(**kwargs)
-        spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-        spinBox.setGroupSeparatorShown(True) # FIXME: move this to constructor?
 
     def set_suffix(self, suffix):
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
