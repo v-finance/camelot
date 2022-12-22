@@ -57,7 +57,7 @@ from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
-    ObjectRole, FieldAttributesRole, PreviewRole, 
+    ObjectRole, PreviewRole,
     CompletionPrefixRole, ActionRoutesRole,
     ActionStatesRole, ProxyDict, CompletionsRole,
     ActionModeRole,
@@ -88,7 +88,6 @@ invalid_item.setFlags(Qt.ItemFlag.NoItemFlags)
 invalid_item.setData(invalid_data, Qt.ItemDataRole.EditRole)
 invalid_item.setData(invalid_data, PreviewRole)
 invalid_item.setData(invalid_data, ObjectRole)
-invalid_item.setData(invalid_field_attributes_data, FieldAttributesRole)
 invalid_item.setData(invalid_data, CompletionsRole)
 invalid_item.setData('[]', ActionRoutesRole)
 invalid_item.setData('[]', ActionStatesRole)
@@ -591,9 +590,8 @@ class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
         if role == Qt.ItemDataRole.EditRole:
             column = index.column()
             # if the field is not editable, don't waste any time and get out of here
-            field_attributes = variant_to_py(self.headerData(column, Qt.Orientation.Horizontal, FieldAttributesRole))
-            if field_attributes.get('editable', True) != True:
-                self.logger.debug('set data called on not editable field : {}'.format(field_attributes))
+            if not (index.flags() | Qt.ItemFlag.ItemIsEditable):
+                self.logger.debug('set data called on not editable field')
                 return False
             row = index.row()
             obj_id = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))

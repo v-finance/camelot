@@ -47,7 +47,6 @@ PreviewRole = Qt.ItemDataRole.UserRole + 2
 VerboseIdentifierRole = Qt.ItemDataRole.UserRole + 3
 ValidRole = Qt.ItemDataRole.UserRole + 4
 ValidMessageRole = Qt.ItemDataRole.UserRole + 5
-FieldAttributesRole = Qt.ItemDataRole.UserRole + 6
 CompletionPrefixRole = Qt.ItemDataRole.UserRole + 7
 CompletionsRole = Qt.ItemDataRole.UserRole + 8
 ActionRoutesRole = Qt.ItemDataRole.UserRole + 9

@@ -40,8 +40,7 @@ from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
 from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
-    ChoicesRole, FieldAttributesRole, ProxyDict,
-    VisibleRole, NullableRole
+    ChoicesRole, ProxyDict, VisibleRole, NullableRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
@@ -202,8 +201,6 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         item.setData(serialized_action_routes, ActionRoutesRole)
         item.setData(serialized_action_states, ActionStatesRole)
         item.setData(py_to_variant(cls.horizontal_align), Qt.ItemDataRole.TextAlignmentRole)
-        item.setData(py_to_variant(ProxyDict(model_context.field_attributes)),
-                     FieldAttributesRole)
         item.setData(py_to_variant(model_context.field_attributes.get('tooltip')),
                      Qt.ItemDataRole.ToolTipRole)
         item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
