@@ -285,10 +285,12 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint )
 
     def set_default_editor_data(self, editor, index):
+        editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
         nullable = bool(variant_to_py(index.data(NullableRole)))
         visible = bool(variant_to_py(index.data(VisibleRole)))
         tooltip = variant_to_py(index.data(Qt.ItemDataRole.ToolTipRole))
         background_color = variant_to_py(index.data(Qt.ItemDataRole.BackgroundRole))
+        editor.set_editable(editable)
         editor.set_nullable(nullable)
         editor.set_visible(visible)
         editor.set_tooltip(tooltip)
@@ -298,34 +300,12 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         if index.model() is None:
             return
         self.set_default_editor_data(editor, index)
-        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
-        validator_state = variant_to_py(index.data(ValidatorStateRole))
-        suffix = variant_to_py(index.data(SuffixRole))
-        prefix = variant_to_py(index.data(PrefixRole))
-        single_step = variant_to_py(index.data(SingleStepRole))
-        precision = variant_to_py(index.data(PrecisionRole))
-        minimum = variant_to_py(index.data(MinimumRole))
-        maximum = variant_to_py(index.data(MaximumRole))
-        focus_policy = variant_to_py(index.data(FocusPolicyRole))
-        editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
-        directory = bool(variant_to_py(index.data(DirectoryRole)))
-        completer = variant_to_py(index.data(CompleterRole))
         #
         # first set the field attributes, as these may change the 'state' of the
         # editor to properly display and hold the value, eg 'precision' of a 
         # float might be changed
         #
-        editor.set_suffix(suffix)
-        editor.set_prefix(prefix)
-        editor.set_single_step(single_step)
-        editor.set_precision(precision)
-        editor.set_minimum(minimum)
-        editor.set_maximum(maximum)
-        editor.set_focus_policy(focus_policy)
-        editor.set_validator_state(validator_state)
-        editor.set_editable(editable)
-        editor.set_directory(directory)
-        editor.set_completer(completer)
+        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
         editor.set_value(value)
         # update actions
         self.update_field_action_states(editor, index)

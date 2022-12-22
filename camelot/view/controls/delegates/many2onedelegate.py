@@ -96,7 +96,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if completions is not None:
             editor.display_search_completions(completions)
             return
-        super(Many2OneDelegate, self).setEditorData(editor, index)
+        super().setEditorData(editor, index)
         verbose_name = variant_to_py(index.model().data(index, PreviewRole))
         editor.set_verbose_name(verbose_name)
         editor.index = index
