@@ -29,7 +29,7 @@
 
 
 
-from ....core.qt import QtCore, QtWidgets
+from ....core.qt import QtCore, QtGui, QtWidgets
 
 from .customeditor import (CustomEditor, set_background_color_palette)
 from ..decorated_line_edit import DecoratedLineEdit
@@ -46,7 +46,6 @@ class TextLineEditor(CustomEditor):
                  validator_type=None,
                  field_name='text_line'):
         CustomEditor.__init__(self, parent, column_width=column_width)
-        self.validator_type = validator_type
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
                            QtWidgets.QSizePolicy.Policy.Fixed)
         layout = QtWidgets.QHBoxLayout()
@@ -57,6 +56,10 @@ class TextLineEditor(CustomEditor):
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
         text_input.setEchoMode(echo_mode or QtWidgets.QLineEdit.EchoMode.Normal)
+        validator = self.get_validator(validator_type, self)
+        if validator is not None:
+            validator.setObjectName('validator')
+            text_input.setValidator(validator)
         layout.addWidget(text_input)
         if length:
             text_input.setMaxLength(length)
@@ -100,10 +103,11 @@ class TextLineEditor(CustomEditor):
     value = QtCore.qt_property(str, get_value, set_value)
 
     def set_validator_state(self, validator_state):
-        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
-        if text_input is not None:
-            validator = self.get_validator(self.validator_type, validator_state)
-            text_input.setValidator(validator)
+        validator = self.findChild(QtGui.QValidator, 'validator')
+        if validator is not None:
+            text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+            if text_input is not None:
+                validator.set_state(validator_state)
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)

@@ -217,38 +217,34 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
         return size_hint
 
-    def get_validator(self, validator_type, validator_state):
+    def get_validator(self, validator_type, parent=None):
         from vfinance.view import validators
         if validator_type is None:
             return None
+        # validators without state
         if validator_type == validators.BankingNumberValidator.__name__:
-            return validators.BankingNumberValidator()
-        if validator_type == validators.NationalNumberValidator.__name__:
-            if validator_state is None:
-                return None
-            return validators.NationalNumberValidator(validator_state)
+            return validators.banking_number_validator
         if validator_type == validators.VATNumberValidator.__name__:
-            return validators.VATNumberValidator()
+            return validators.vat_number_validator
         if validator_type == validators.CompanyNumberValidator.__name__:
-            return validators.CompanyNumberValidator()
+            return validators.company_number_validator
         if validator_type == validators.TelephoneNumberValidator.__name__:
-            return validators.TelephoneNumberValidator()
-        if validator_type == validators.IDCardNumberValidator.__name__:
-            if validator_state is None:
-                return None
-            return validators.IDCardNumberValidator(validator_state)
-        if validator_type == validators.CodeValidator.__name__:
-            return validators.CodeValidator()
+            return validators.telephone_number_validator
         if validator_type == validators.EmailValidator.__name__:
-            return validators.EmailValidator()
+            return validators.email_validator
         if validator_type == validators.NumericValidator.__name__:
-            return validators.NumericValidator()
+            return validators.numeric_validator
         if validator_type == validators.DomainNameValidator.__name__:
-            return validators.DomainNameValidator()
+            return validators.domain_name_validator
         if validator_type == validators.NACECodeValidator.__name__:
-            return validators.NACECodeValidator()
-        if validator_type == QtGui.QRegularExpressionValidator.__name__:
-            if validator_state is None:
-                return None
-            return QtGui.QRegularExpressionValidator(QtCore.QRegularExpression(validator_state))
+            return validators.nace_code_validator
+        # validators with state
+        if validator_type == validators.NationalNumberValidator.__name__:
+            return validators.NationalNumberValidator(parent)
+        if validator_type == validators.IDCardNumberValidator.__name__:
+            return validators.IDCardNumberValidator(parent)
+        if validator_type == validators.CodeValidator.__name__:
+            return validators.CodeValidator(parent)
+        if validator_type == validators.RegularExpressionValidator.__name__:
+            return validators.RegularExpressionValidator(parent)
         raise NotImplementedError
