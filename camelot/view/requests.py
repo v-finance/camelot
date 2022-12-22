@@ -48,7 +48,8 @@ class AbstractRequest(NamedDataclassSerializable):
             run_name, gui_run_name, PopProgressLevel.__name__, False,
             PopProgressLevel()._to_bytes()
         )
-        initial_naming_context.unbind(run_name)
+        if run_name != ('constant', 'null'):
+            initial_naming_context.unbind(run_name)
         response_handler.action_stopped_signal.emit(run_name, gui_run_name, e)
 
     @classmethod

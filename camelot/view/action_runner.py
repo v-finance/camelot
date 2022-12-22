@@ -153,7 +153,7 @@ class GuiRun(object):
             )
         else:
             result = cls.gui_run(self.gui_context_name, serialized_step)
-        return cls.deserialize_result(self.gui_context_name, result)
+        return result
 
 class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     """Helper class for handling the signals and slots when an action
