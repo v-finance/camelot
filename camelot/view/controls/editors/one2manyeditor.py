@@ -163,14 +163,6 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             # toolbar was created
             self.update_list_action_states()
 
-    def set_field_attributes(self, **kwargs):
-        # FIXME: this can be removed AFAIK
-        # self.field_attributes already set in super()
-        # self.update_list_action_states() also called from set_value
-        super(One2ManyEditor, self).set_field_attributes(**kwargs)
-        self.field_attributes = kwargs
-        self.update_list_action_states()
-
     def update_list_action_states(self):
         table = self.item_view
         selection_model = table.selectionModel()
