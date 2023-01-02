@@ -30,6 +30,7 @@
 
 
 from ....core.qt import QtCore, QtGui, QtWidgets
+from camelot.view.completer import AbstractCompleter
 
 from .customeditor import (CustomEditor, set_background_color_palette)
 from ..decorated_line_edit import DecoratedLineEdit
@@ -61,7 +62,7 @@ class TextLineEditor(CustomEditor):
         if validator is not None:
             validator.setObjectName('validator')
             text_input.setValidator(validator)
-        completer = self.get_completer(completer_type, self)
+        completer = AbstractCompleter.get_completer(completer_type, self)
         if completer is not None:
             completer.setObjectName('completer')
             text_input.setCompleter(completer)

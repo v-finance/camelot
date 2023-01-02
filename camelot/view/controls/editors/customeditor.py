@@ -248,13 +248,3 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         if validator_type == validators.RegularExpressionValidator.__name__:
             return validators.RegularExpressionValidator(parent)
         raise NotImplementedError
-
-    def get_completer(self, completer_type, parent=None):
-        from vfinance.connector.crab import street_completer
-        if completer_type is None:
-            return None
-        if completer_type == street_completer.StreetCompleter.__name__:
-            return street_completer.StreetCompleter(parent)
-        if completer_type == street_completer.PartyStreetCompleter.__name__:
-            return street_completer.PartyStreetCompleter(parent)
-        raise NotImplementedError
