@@ -37,6 +37,28 @@ from camelot.core.qt import QtGui, variant_api
 
 from .utils import date_from_string, ParsingError
 
+class AbstractValidator:
+    """
+    Validators must be default constructable.
+    Validators can have a state which is set by set_state.
+    """
+
+    validators = dict()
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.validators[cls.__name__] = cls
+
+    @classmethod
+    def get_validator(cls, validator_type, parent=None):
+        if validator_type is None:
+            return None
+        return cls.validators[validator_type](parent)
+
+    def set_state(self, state):
+        pass
+
+
 class DateValidator(QtGui.QValidator):
 
     def validate(self, input_, pos):

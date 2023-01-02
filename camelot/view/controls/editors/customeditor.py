@@ -216,35 +216,3 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         if self.size_hint_width is not None:
             size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
         return size_hint
-
-    def get_validator(self, validator_type, parent=None):
-        from vfinance.view import validators
-        if validator_type is None:
-            return None
-        # validators without state
-        if validator_type == validators.BankingNumberValidator.__name__:
-            return validators.banking_number_validator
-        if validator_type == validators.VATNumberValidator.__name__:
-            return validators.vat_number_validator
-        if validator_type == validators.CompanyNumberValidator.__name__:
-            return validators.company_number_validator
-        if validator_type == validators.TelephoneNumberValidator.__name__:
-            return validators.telephone_number_validator
-        if validator_type == validators.EmailValidator.__name__:
-            return validators.email_validator
-        if validator_type == validators.NumericValidator.__name__:
-            return validators.numeric_validator
-        if validator_type == validators.DomainNameValidator.__name__:
-            return validators.domain_name_validator
-        if validator_type == validators.NACECodeValidator.__name__:
-            return validators.nace_code_validator
-        # validators with state
-        if validator_type == validators.NationalNumberValidator.__name__:
-            return validators.NationalNumberValidator(parent)
-        if validator_type == validators.IDCardNumberValidator.__name__:
-            return validators.IDCardNumberValidator(parent)
-        if validator_type == validators.CodeValidator.__name__:
-            return validators.CodeValidator(parent)
-        if validator_type == validators.RegularExpressionValidator.__name__:
-            return validators.RegularExpressionValidator(parent)
-        raise NotImplementedError

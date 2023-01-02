@@ -30,6 +30,7 @@
 
 
 from ....core.qt import QtCore, QtGui, QtWidgets
+from camelot.view.validator import AbstractValidator
 from camelot.view.completer import AbstractCompleter
 
 from .customeditor import (CustomEditor, set_background_color_palette)
@@ -58,7 +59,7 @@ class TextLineEditor(CustomEditor):
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
         text_input.setEchoMode(echo_mode or QtWidgets.QLineEdit.EchoMode.Normal)
-        validator = self.get_validator(validator_type, self)
+        validator = AbstractValidator.get_validator(validator_type, self)
         if validator is not None:
             validator.setObjectName('validator')
             text_input.setValidator(validator)
