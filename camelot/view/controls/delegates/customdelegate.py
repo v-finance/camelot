@@ -248,7 +248,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         elif issubclass(editor_cls, editors.MonthsEditor):
             editor = editor_cls(parent, self.minimum, self.maximum)
         elif issubclass(editor_cls, editors.TextLineEditor):
-            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type)
+            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type, self.completer_type)
         elif issubclass(editor_cls, editors.TextEditEditor):
             editor = editor_cls(parent, self.length, self.editable)
         elif issubclass(editor_cls, editors.VirtualAddressEditor):

@@ -44,6 +44,7 @@ class TextLineEditor(CustomEditor):
                  column_width=None,
                  action_routes=[],
                  validator_type=None,
+                 completer_type=None,
                  field_name='text_line'):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
@@ -60,6 +61,10 @@ class TextLineEditor(CustomEditor):
         if validator is not None:
             validator.setObjectName('validator')
             text_input.setValidator(validator)
+        completer = self.get_completer(completer_type, self)
+        if completer is not None:
+            completer.setObjectName('completer')
+            text_input.setCompleter(completer)
         layout.addWidget(text_input)
         if length:
             text_input.setMaxLength(length)
@@ -105,9 +110,7 @@ class TextLineEditor(CustomEditor):
     def set_validator_state(self, validator_state):
         validator = self.findChild(QtGui.QValidator, 'validator')
         if validator is not None:
-            text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
-            if text_input is not None:
-                validator.set_state(validator_state)
+            validator.set_state(validator_state)
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)
@@ -121,11 +124,10 @@ class TextLineEditor(CustomEditor):
         if text_input is not None:
             set_background_color_palette(text_input, background_color)
 
-    def set_completer(self, completer):
-        if completer:
-            text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
-            if text_input is not None:
-                text_input.setCompleter(completer)
+    def set_completer_state(self, completer_state):
+        completer = self.findChild(QtWidgets.QCompleter, 'completer')
+        if completer is not None:
+            completer.set_state(completer_state)
 
     def set_editable(self, editable):
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')

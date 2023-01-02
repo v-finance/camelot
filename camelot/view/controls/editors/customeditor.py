@@ -145,7 +145,7 @@ class AbstractCustomEditor(object):
     def set_directory(self, directory):
         pass
 
-    def set_completer(self, completer):
+    def set_completer_state(self, completer_state):
         pass
 
     def set_validator_state(self, validator_state):
@@ -247,4 +247,14 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
             return validators.CodeValidator(parent)
         if validator_type == validators.RegularExpressionValidator.__name__:
             return validators.RegularExpressionValidator(parent)
+        raise NotImplementedError
+
+    def get_completer(self, completer_type, parent=None):
+        from vfinance.connector.crab import street_completer
+        if completer_type is None:
+            return None
+        if completer_type == street_completer.StreetCompleter.__name__:
+            return street_completer.StreetCompleter(parent)
+        if completer_type == street_completer.PartyStreetCompleter.__name__:
+            return street_completer.PartyStreetCompleter(parent)
         raise NotImplementedError

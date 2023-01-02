@@ -35,7 +35,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
 
 from ....admin.admin_route import Route
-from ....core.item_model import PreviewRole, ValidatorStateRole, CompleterRole
+from ....core.item_model import PreviewRole, ValidatorStateRole, CompleterStateRole
 from ....core.qt import Qt, py_to_variant, variant_to_py
 from .customdelegate import CustomDelegate
 from camelot.core.qt import QtWidgets
@@ -53,6 +53,7 @@ class PlainTextDelegate(CustomDelegate):
     column_width: Optional[int] = None
     action_routes: List[Route] = field(default_factory=list)
     validator_type: Optional[str] = None
+    completer_type: Optional[str] = None
 
     def __post_init__(self, parent):
         super().__post_init__(parent)
@@ -65,15 +66,12 @@ class PlainTextDelegate(CustomDelegate):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        completer = model_context.field_attributes.get('completer')
-        if completer is not None:
-            completer.moveToThread(QtWidgets.QApplication.instance().thread())
         item = super(PlainTextDelegate, cls).get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         item.setData(py_to_variant(model_context.field_attributes.get('validator_state')),
                      ValidatorStateRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('completer')),
-                     CompleterRole)
+        item.setData(py_to_variant(model_context.field_attributes.get('completer_state')),
+                     CompleterStateRole)
         if model_context.value is not None:
             item.setData(py_to_variant(str(model_context.value)), PreviewRole)
         return item
@@ -82,10 +80,10 @@ class PlainTextDelegate(CustomDelegate):
         if index.model() is None:
             return
         self.set_default_editor_data(editor, index)
-        completer = variant_to_py(index.data(CompleterRole))
+        completer_state = variant_to_py(index.data(CompleterStateRole))
         validator_state = variant_to_py(index.data(ValidatorStateRole))
         value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
-        editor.set_completer(completer)
+        editor.set_completer_state(completer_state)
         editor.set_validator_state(validator_state)
         editor.set_value(value)
         self.update_field_action_states(editor, index)
