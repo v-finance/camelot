@@ -59,10 +59,6 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
         minimum = minimum if minimum is not None else constants.camelot_minfloat
         maximum = maximum if maximum is not None else constants.camelot_maxfloat
-        model_context.field_attributes.update({
-            'minimum': minimum,
-            'maximum': maximum
-        })
         item = super(IntegerDelegate, cls).get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         item.setData(py_to_variant(model_context.field_attributes.get('suffix')),
