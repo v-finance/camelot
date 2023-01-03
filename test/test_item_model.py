@@ -23,7 +23,7 @@ from camelot.core.item_model import (
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
-from camelot.core.qt import Qt, QtCore, is_deleted, delete, py_to_variant, variant_to_py
+from camelot.core.qt import Qt, QtCore, is_deleted, delete
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.core.cache import ValueCache
@@ -138,17 +138,17 @@ class ItemModelCaseMixin(object):
         index = item_model.index(row, column)
         if validate_index and not index.isValid():
             raise Exception('Index ({0},{1}) is not valid with {2} rows, {3} columns'.format(index.row(), index.column(), item_model.rowCount(), item_model.columnCount()))
-        return variant_to_py(item_model.data( index, role))
+        return item_model.data( index, role)
     
     def _set_data(self, row, column, value, item_model, role=Qt.ItemDataRole.EditRole, validate_index=True):
         """Set data to the QAbstractItemModel"""
         index = item_model.index( row, column )
         if validate_index and not index.isValid():
             raise Exception('Index ({0},{1}) is not valid with {2} rows, {3} columns'.format(index.row(), index.column(), item_model.rowCount(), item_model.columnCount()))
-        return item_model.setData( index, py_to_variant(value), role )
+        return item_model.setData( index, value, role )
 
     def _header_data(self, section, orientation, role, item_model):
-        return variant_to_py(item_model.headerData(section, orientation, role))
+        return item_model.headerData(section, orientation, role)
 
     def _flags(self, row, column, item_model):
         index = item_model.index( row, column )
@@ -167,13 +167,13 @@ class ItemModelTests(object):
     """
 
     def test_invalid_item(self):
-        self.assertEqual(variant_to_py(invalid_item.data(Qt.ItemDataRole.EditRole)), None)
+        self.assertEqual(invalid_item.data(Qt.ItemDataRole.EditRole), None)
         self.assertEqual(bool(invalid_item.flags() & Qt.ItemFlag.ItemIsEditable), False)
-        self.assertEqual(variant_to_py(invalid_item.data(FocusPolicyRole)), Qt.FocusPolicy.NoFocus)
+        self.assertEqual(invalid_item.data(FocusPolicyRole), Qt.FocusPolicy.NoFocus)
         invalid_clone = invalid_item.clone()
-        self.assertEqual(variant_to_py(invalid_clone.data(Qt.ItemDataRole.EditRole)), None)
+        self.assertEqual(invalid_clone.data(Qt.ItemDataRole.EditRole), None)
         self.assertEqual(bool(invalid_clone.flags() & Qt.ItemFlag.ItemIsEditable), False)
-        self.assertEqual(variant_to_py(invalid_clone.data(FocusPolicyRole)), Qt.FocusPolicy.NoFocus)
+        self.assertEqual(invalid_clone.data(FocusPolicyRole), Qt.FocusPolicy.NoFocus)
 
 class SetupProxy(Action):
 
@@ -396,7 +396,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.item_model.timeout_slot()
         self.item_model.setHeaderData(1, Qt.Orientation.Horizontal, QtCore.QSize(140,10),
                                  Qt.ItemDataRole.SizeHintRole)
-        size_hint = variant_to_py(self.item_model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole))
+        size_hint = self.item_model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
         self.assertEqual(size_hint.width(), 140)
         
     def test_modify_list_while_editing( self ):

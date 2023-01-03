@@ -47,7 +47,7 @@ from typing import Optional
 import copy
 
 
-from .qt import QtCore, QtWidgets, variant_to_py, py_to_variant
+from .qt import QtCore, QtWidgets
 
 from camelot.core.conf import settings
 from camelot.core.dataclasses import dataclass
@@ -284,14 +284,14 @@ class ProfileStore(object):
         size = qsettings.beginReadArray('database_profiles')
         if size == 0:
             return profiles
-        empty = py_to_variant(b'')
+        empty = b''
         for index in range(size):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
-            encrypted = int(variant_to_py(qsettings.value('encrypted', py_to_variant(1))))
+            encrypted = int(qsettings.value('encrypted', 1))
             for key in state.keys():
-                value = variant_to_py(qsettings.value(key, empty))
+                value = qsettings.value(key, empty)
                 if (key != 'profilename') and (encrypted==1):
                     value = self._decode(value or b'')
                 else:
@@ -326,7 +326,7 @@ class ProfileStore(object):
         qsettings.beginWriteArray('database_profiles', len(profiles))
         for index, profile in enumerate(profiles):
             qsettings.setArrayIndex(index)
-            qsettings.setValue('encrypted', py_to_variant(1))
+            qsettings.setValue('encrypted', 1)
             for key, value in profile.__getstate__().items():
                 if key != 'profilename':
                     value = self._encode(value)
@@ -354,8 +354,7 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = variant_to_py(self._qsettings().value('last_used_database_profile',
-                                                      u''))
+        name = self._qsettings().value('last_used_database_profile', u'')
         for profile in profiles:
             if profile.name == name:
                 return profile

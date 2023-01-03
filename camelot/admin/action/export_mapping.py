@@ -2,7 +2,6 @@ import dataclasses
 
 from .base import Action
 from ..icon import CompletionValue
-from ...core.qt import variant_to_py, py_to_variant
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 from camelot.admin.dataclass_admin import DataclassAdmin
@@ -35,13 +34,12 @@ class SaveExportMapping( Action ):
         number_of_mappings = self.settings.beginReadArray('mappings')
         for i in range(number_of_mappings):
             self.settings.setArrayIndex(i)
-            name = variant_to_py(self.settings.value('name', py_to_variant(b'')))
+            name = self.settings.value('name', b'')
             number_of_columns = self.settings.beginReadArray('columns')
             columns = list()
             for j in range(number_of_columns):
                 self.settings.setArrayIndex(j)
-                field = variant_to_py(self.settings.value('field',
-                                                          py_to_variant(b'')))
+                field = self.settings.value('field', b'')
                 columns.append(field)
             self.settings.endArray()
             mappings[name] = columns

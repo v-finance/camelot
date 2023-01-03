@@ -35,7 +35,7 @@ import typing
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
 from ...admin.action import RenderHint
-from ...core.qt import QtCore, QtWidgets, Qt,is_deleted, variant_to_py
+from ...core.qt import QtCore, QtWidgets, Qt, is_deleted
 from ...core.serializable import NamedDataclassSerializable
 
 from ...core.item_model import ActionModeRole
@@ -315,9 +315,9 @@ class FormView(AbstractView, GuiContext):
 
     @QtCore.qt_slot( int )
     def update_title(self, current_index ):
-        verbose_identifier = variant_to_py(self.model.headerData(
+        verbose_identifier = self.model.headerData(
             current_index, Qt.Orientation.Vertical, VerboseIdentifierRole
-        ))
+        )
         if verbose_identifier is not None:
             self.change_title(u'%s'%verbose_identifier)
         else:

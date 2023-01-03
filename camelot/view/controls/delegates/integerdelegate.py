@@ -30,7 +30,7 @@
 from dataclasses import dataclass
 from typing import ClassVar, Any
 
-from ....core.qt import py_to_variant, Qt, variant_to_py
+from ....core.qt import Qt
 from ....core.item_model import (
     PreviewRole, PrefixRole, SuffixRole, SingleStepRole,
     MinimumRole, MaximumRole
@@ -59,39 +59,32 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
         minimum = minimum if minimum is not None else constants.camelot_minfloat
         maximum = maximum if maximum is not None else constants.camelot_maxfloat
-        model_context.field_attributes.update({
-            'minimum': minimum,
-            'maximum': maximum
-        })
         item = super(IntegerDelegate, cls).get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
-        item.setData(py_to_variant(model_context.field_attributes.get('suffix')),
-                     SuffixRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('prefix')),
-                     PrefixRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('single_step')),
-                     SingleStepRole)
-        item.setData(py_to_variant(minimum), MinimumRole)
-        item.setData(py_to_variant(maximum), MaximumRole)
+        item.setData(model_context.field_attributes.get('suffix'), SuffixRole)
+        item.setData(model_context.field_attributes.get('prefix'), PrefixRole)
+        item.setData(model_context.field_attributes.get('single_step'), SingleStepRole)
+        item.setData(minimum, MinimumRole)
+        item.setData(maximum, MaximumRole)
         if model_context.value is not None:
             value_str = locale.toString(long_int(model_context.value))
             if model_context.field_attributes.get('suffix') is not None:
                 value_str = value_str + ' ' + str(model_context.field_attributes.get('suffix'))
             if model_context.field_attributes.get('prefix') is not None:
                 value_str = str(model_context.field_attributes.get('prefix')) + ' ' + value_str
-            item.setData(py_to_variant(value_str), PreviewRole)
+            item.setData(value_str, PreviewRole)
         return item
 
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
         self.set_default_editor_data(editor, index)
-        suffix = variant_to_py(index.data(SuffixRole))
-        prefix = variant_to_py(index.data(PrefixRole))
-        single_step = variant_to_py(index.data(SingleStepRole))
-        minimum = variant_to_py(index.data(MinimumRole))
-        maximum = variant_to_py(index.data(MaximumRole))
-        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
+        suffix = index.data(SuffixRole)
+        prefix = index.data(PrefixRole)
+        single_step = index.data(SingleStepRole)
+        minimum = index.data(MinimumRole)
+        maximum = index.data(MaximumRole)
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
         editor.set_suffix(suffix)
         editor.set_prefix(prefix)
         editor.set_single_step(single_step)

@@ -37,7 +37,7 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 from ....core.item_model import PreviewRole, ChoicesRole
 from ....core.naming import initial_naming_context
-from ....core.qt import Qt, variant_to_py, py_to_variant
+from ....core.qt import Qt
 from camelot.view.controls import editors
 from ....admin.icon import CompletionValue
 from ....admin.admin_route import Route
@@ -63,7 +63,7 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         value_name = initial_naming_context._bind_object(model_context.value)
         # eventually, all values should be names, so this should happen in the
         # custom delegate class
-        item.setData(py_to_variant(value_name), Qt.ItemDataRole.EditRole)
+        item.setData(value_name, Qt.ItemDataRole.EditRole)
         cls.set_item_editability(model_context, item, True)
         choices = model_context.field_attributes.get('choices', [])
 
@@ -81,30 +81,30 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
         for key, verbose in choices:
             if key == model_context.value:
-                item.setData(py_to_variant(str(verbose)), PreviewRole)
+                item.setData(str(verbose), PreviewRole)
                 break
         else:
             if model_context.value is None:
-                item.setData(py_to_variant(str()), PreviewRole)
+                item.setData(str(), PreviewRole)
             else:
                 # the model has a value that is not in the list of choices,
                 # still try to display it
-                item.setData(py_to_variant(str(model_context.value)), PreviewRole)
+                item.setData(str(model_context.value), PreviewRole)
                 choicesData.append(CompletionValue(
                     value=initial_naming_context._bind_object(model_context.value),
                     verbose_name=str(model_context.value),
                     background = ColorScheme.VALIDATION_ERROR.name(),
                     virtual = True
                     )._to_dict())
-        item.setData(py_to_variant(choicesData), ChoicesRole)
+        item.setData(choicesData, ChoicesRole)
         return item
 
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
         self.set_default_editor_data(editor, index)
-        choices = variant_to_py(index.data(ChoicesRole))
-        value = variant_to_py(index.data(Qt.ItemDataRole.EditRole))
+        choices = index.data(ChoicesRole)
+        value = index.data(Qt.ItemDataRole.EditRole)
         editor.set_choices(choices)
         editor.set_value(value)
         # update actions

@@ -32,7 +32,7 @@ import logging
 
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.action.base import GuiContext
-from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py, is_deleted
+from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
 from ....core.item_model import ActionModeRole
 from ... import gui_naming_context
 from ..view import ViewWithActionsMixin
@@ -211,9 +211,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
                 # this code should be useless, since at this point, the
                 # column count is still 0 ??
                 for i in range(model.columnCount()):
-                    txtwidth = variant_to_py(
-                        model.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
-                    ).width()
+                    txtwidth = model.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole).width()
                     table.setColumnWidth(i, txtwidth)
 
     def set_value(self, value):

@@ -31,7 +31,7 @@ import datetime
 
 
 
-from ....core.qt import QtCore, QtWidgets, Qt, py_to_variant
+from ....core.qt import QtCore, QtWidgets, Qt
 
 from .customeditor import CustomEditor, set_background_color_palette
 
@@ -114,7 +114,7 @@ class DateEditor(CustomEditor):
             line_edit.setFocus()
 
     def line_edit_finished(self):
-        self.setProperty( 'value', py_to_variant( self.get_value() ) )
+        self.setProperty( 'value', self.get_value() )
         self.valueChanged.emit()
         self.editingFinished.emit()
 
@@ -127,7 +127,7 @@ class DateEditor(CustomEditor):
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
-        self.setProperty( 'value', py_to_variant( value ) )
+        self.setProperty( 'value', value )
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             if value:

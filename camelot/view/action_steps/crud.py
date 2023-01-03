@@ -11,7 +11,7 @@ from ...admin.admin_route import Route
 from ...admin.action.base import ActionStep, State
 from ...admin.icon import CompletionValue
 from ...core.naming import NameNotFoundException
-from ...core.qt import Qt, QtGui, QtCore, py_to_variant, is_deleted
+from ...core.qt import Qt, QtGui, QtCore, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
     CompletionsRole, PreviewRole, ChoicesRole, ObjectRole, ColumnAttributesRole
@@ -151,7 +151,7 @@ class SetColumns(ActionStep):
                 attrs = filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
                                                     'action_routes', 'list_actions', 'list_action'])
             elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
-                attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type'])
+                attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type', 'completer_type'])
             elif issubclass(fa['delegate'], delegates.TextEditDelegate):
                 attrs = filter_attributes(fa, ['length', 'editable'])
             elif issubclass(fa['delegate'], delegates.VirtualAddressDelegate):
@@ -196,8 +196,8 @@ class SetColumns(ActionStep):
             #
             # Set the header data
             #
-            set_header_data(py_to_variant(field_name), Qt.ItemDataRole.UserRole)
-            set_header_data(py_to_variant(verbose_name), Qt.ItemDataRole.DisplayRole)
+            set_header_data(field_name, Qt.ItemDataRole.UserRole)
+            set_header_data(verbose_name, Qt.ItemDataRole.DisplayRole)
             set_header_data([fa['delegate'].__name__, self.column_attributes[i]], ColumnAttributesRole)
             if fa.get( 'nullable', True ) == False:
                 set_header_data(item_model._header_font_required, Qt.ItemDataRole.FontRole)
@@ -211,7 +211,7 @@ class SetColumns(ActionStep):
                 width = settings_width
             else:
                 width = fa['column_width'] * char_width
-            header_item.setData( py_to_variant( QtCore.QSize( width, item_model._horizontal_header_height ) ),
+            header_item.setData( QtCore.QSize( width, item_model._horizontal_header_height ),
                                  Qt.ItemDataRole.SizeHintRole )
             item_model.setHorizontalHeaderItem( i, header_item )
         item_model.settings.endGroup()

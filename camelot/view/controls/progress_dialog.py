@@ -37,7 +37,7 @@ from camelot.view.art import FontIcon
 
 
 
-from ...core.qt import QtModel, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
+from ...core.qt import QtModel, QtCore, QtWidgets, Qt, is_deleted
 
 LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
 
@@ -171,7 +171,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             model.insertRow(model.rowCount())
             index = model.index(model.rowCount()-1, 0)
             model.setData(index,
-                          py_to_variant(text),
+                          text,
                           Qt.ItemDataRole.DisplayRole)
             details.scrollTo(index, QtWidgets.QListView.ScrollHint.PositionAtBottom)
 

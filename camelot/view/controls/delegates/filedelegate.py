@@ -31,7 +31,6 @@ from dataclasses import dataclass, field
 from typing import List
 
 from ....admin.admin_route import Route
-from ....core.qt import py_to_variant
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
@@ -53,9 +52,9 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super(FileDelegate, cls).get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
-            item.setData(py_to_variant(model_context.value.verbose_name), PreviewRole)
+            item.setData(model_context.value.verbose_name, PreviewRole)
         else:
-            item.setData(py_to_variant(str()), PreviewRole)
+            item.setData(str(), PreviewRole)
         return item
 
 

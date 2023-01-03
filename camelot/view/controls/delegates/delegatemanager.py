@@ -32,7 +32,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.delegatemanager')
 
 from ....core.serializable import NamedDataclassSerializable
 from ....core.item_model import ColumnAttributesRole
-from ....core.qt import QtCore, QtWidgets, Qt, variant_to_py, is_deleted
+from ....core.qt import QtCore, QtWidgets, Qt, is_deleted
 from .plaintextdelegate import PlainTextDelegate
 
 class DelegateManager(QtWidgets.QItemDelegate):
@@ -99,7 +99,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
                 delegate.setEditorData(editor, index)
             except Exception as e:
                 logger.error('Programming Error : could not set editor data for editor at column %s'%(index.column()), exc_info=e)
-                logger.error('value that could not be set : %s'%str(variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))))
+                logger.error('value that could not be set : %s'%str(index.model().data(index, Qt.ItemDataRole.EditRole)))
                 logger.error('editor that failed %s %s'%(type(editor).__name__, editor.objectName()))
 
     def setModelData(self, editor, model, index):
