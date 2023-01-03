@@ -38,7 +38,6 @@ from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole, ValidatorStateRole, CompleterStateRole
 from ....core.qt import Qt, py_to_variant, variant_to_py
 from .customdelegate import CustomDelegate
-from camelot.core.qt import QtWidgets
 
 from camelot.view.controls import editors
 
