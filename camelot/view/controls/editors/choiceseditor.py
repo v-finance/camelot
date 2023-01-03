@@ -31,7 +31,7 @@ import logging
 
 from ....core.naming import initial_naming_context
 from ....core.qt import (
-    QtGui, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
+    QtGui, QtCore, QtWidgets, Qt, is_deleted
 )
 from ....admin.icon import CompletionValue
 from ...art import ColorScheme, FontIcon
@@ -72,7 +72,7 @@ class ChoicesEditor(CustomEditor):
 
     @QtCore.qt_slot(int)
     def _activated(self, _index):
-        self.setProperty( 'value', py_to_variant( self.get_value() ) )
+        self.setProperty( 'value', self.get_value() )
         self.valueChanged.emit()
         self.editingFinished.emit()
 
@@ -216,7 +216,7 @@ class ChoicesEditor(CustomEditor):
             representation of the value is used.
         """
         value = list(value if value is not None else none_name)
-        self.setProperty( 'value', py_to_variant(value) )
+        self.setProperty( 'value', value )
         self.valueChanged.emit()
         combobox = self.findChild(QtWidgets.QComboBox, 'combobox')
         row = self.row_with_value(combobox.model(), value, display_role)

@@ -35,8 +35,7 @@ import dataclasses
 from camelot.core.naming import initial_naming_context
 
 from ....admin.icon import CompletionValue
-from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
-                         py_to_variant)
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
@@ -188,7 +187,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         serialized_action_routes = json_encoder.encode(routes)
         serialized_action_states = json_encoder.encode(states)
         item = QtGui.QStandardItem()
-        item.setData(py_to_variant(model_context.value), Qt.ItemDataRole.EditRole)
+        item.setData(model_context.value, Qt.ItemDataRole.EditRole)
         # NOTE: one of the goals is to serialize the field attributes, which currently
         # still comprises a large variety of elements, some of which should still be made serializable,
         # while others may only be used at the model side and should not be included in the serialization.
@@ -200,15 +199,11 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         # may be combined again somehow, but this is still TBD.
         item.setData(serialized_action_routes, ActionRoutesRole)
         item.setData(serialized_action_states, ActionStatesRole)
-        item.setData(py_to_variant(cls.horizontal_align), Qt.ItemDataRole.TextAlignmentRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('tooltip')),
-                     Qt.ItemDataRole.ToolTipRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('background_color')),
-                     Qt.ItemDataRole.BackgroundRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('visible', True)),
-                     VisibleRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('nullable', True)),
-                     NullableRole)
+        item.setData(cls.horizontal_align, Qt.ItemDataRole.TextAlignmentRole)
+        item.setData(model_context.field_attributes.get('tooltip'), Qt.ItemDataRole.ToolTipRole)
+        item.setData(model_context.field_attributes.get('background_color'), Qt.ItemDataRole.BackgroundRole)
+        item.setData(model_context.field_attributes.get('visible', True), VisibleRole)
+        item.setData(model_context.field_attributes.get('nullable', True), NullableRole)
         # FIXME: move choices to delegates that actually use it?
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
@@ -216,7 +211,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                 value=initial_naming_context._bind_object(obj),
                 verbose_name=verbose_name
                 )._to_dict() for obj, verbose_name in choices]
-        item.setData(py_to_variant(choices), ChoicesRole)
+        item.setData(choices, ChoicesRole)
         return item
 
     def createEditor(self, parent, option, index):
@@ -325,4 +320,4 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                 ))
 
     def setModelData(self, editor, model, index):
-        model.setData(index, py_to_variant(editor.get_value()))
+        model.setData(index, editor.get_value())

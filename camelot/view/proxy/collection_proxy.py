@@ -55,7 +55,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ...admin.action.base import GuiContext
 from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
-                        py_to_variant, variant_to_py)
+                        variant_to_py)
 from ...core.item_model import (
     ObjectRole, PreviewRole,
     CompletionPrefixRole, ActionRoutesRole,
@@ -76,13 +76,13 @@ from camelot.view.art import from_admin_icon
 from camelot.view.action_runner import action_runner
 
 
-invalid_data = py_to_variant()
+invalid_data = None
 # todo : investigate if the invalid field attributes ought to be
 #        the same as the default field attributes in the object admin
-invalid_field_attributes_data = py_to_variant(ProxyDict(
+invalid_field_attributes_data = ProxyDict(
     editable=False,
     focus_policy=Qt.FocusPolicy.NoFocus,
-))
+)
 invalid_item = QtGui.QStandardItem()
 invalid_item.setFlags(Qt.ItemFlag.NoItemFlags)
 invalid_item.setData(invalid_data, Qt.ItemDataRole.EditRole)
@@ -497,7 +497,7 @@ class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
                 # sizehint role is requested, for every row, so we have to
                 # return a fixed value
                 #
-                return py_to_variant(self.vertical_header_size)
+                return self.vertical_header_size
             item = self.verticalHeaderItem(section)
             if item is None:
                 if section not in self._rows_under_request:
@@ -507,7 +507,7 @@ class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
             if role == Qt.ItemDataRole.DecorationRole:
                 icon = variant_to_py(item.data(role))
                 if icon is not None:
-                    return py_to_variant(from_admin_icon(icon).getQPixmap())
+                    return from_admin_icon(icon).getQPixmap()
             else:
                 return item.data(role)
 

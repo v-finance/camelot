@@ -35,7 +35,7 @@ from ....core.item_model import (
     PreviewRole, SuffixRole, PrefixRole, SingleStepRole,
     PrecisionRole, MinimumRole, MaximumRole, FocusPolicyRole
 )
-from ....core.qt import Qt, py_to_variant
+from ....core.qt import Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core import constants
@@ -62,18 +62,14 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         maximum = maximum if maximum is not None else constants.camelot_maxfloat
         item = super(FloatDelegate, cls).get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
-        item.setData(py_to_variant(model_context.field_attributes.get('focus_policy')),
-                     FocusPolicyRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('suffix')),
-                     SuffixRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('prefix')),
-                     PrefixRole)
-        item.setData(py_to_variant(model_context.field_attributes.get('single_step')),
-                     SingleStepRole)
+        item.setData(model_context.field_attributes.get('focus_policy'), FocusPolicyRole)
+        item.setData(model_context.field_attributes.get('suffix'), SuffixRole)
+        item.setData(model_context.field_attributes.get('prefix'), PrefixRole)
+        item.setData(model_context.field_attributes.get('single_step'), SingleStepRole)
         precision = model_context.field_attributes.get('precision', 2)
-        item.setData(py_to_variant(precision), PrecisionRole)
-        item.setData(py_to_variant(minimum), MinimumRole)
-        item.setData(py_to_variant(maximum), MaximumRole)
+        item.setData(precision, PrecisionRole)
+        item.setData(minimum, MinimumRole)
+        item.setData(maximum, MaximumRole)
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
         if precision is None:
@@ -86,9 +82,9 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
                 value_str = value_str + ' ' + model_context.field_attributes.get('suffix')
             if model_context.field_attributes.get('prefix') is not None:
                 value_str = model_context.field_attributes.get('prefix') + ' ' + value_str
-            item.setData(py_to_variant(value_str), PreviewRole)
+            item.setData(value_str, PreviewRole)
         else:
-            item.setData(py_to_variant(str()), PreviewRole)
+            item.setData(str(), PreviewRole)
         return item
 
     def setEditorData(self, editor, index):

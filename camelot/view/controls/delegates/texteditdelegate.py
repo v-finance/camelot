@@ -30,7 +30,6 @@
 from dataclasses import dataclass
 
 from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
@@ -49,7 +48,7 @@ class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     def get_standard_item(cls, locale, model_context):
         item = super(TextEditDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
-            item.setData(py_to_variant(str(model_context.value)), PreviewRole)
+            item.setData(str(model_context.value), PreviewRole)
         return item
 
 

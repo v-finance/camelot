@@ -9,7 +9,7 @@ from ..core.cache import ValueCache
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
 from ..core.exception import log_programming_error
 from ..core.naming import initial_naming_context, NameNotFoundException
-from ..core.qt import Qt, QtGui, py_to_variant
+from ..core.qt import Qt, QtGui
 
 crud_action_context = initial_naming_context.bind_new_context(
     'crud_action', immutable=True
@@ -120,19 +120,19 @@ class UpdateMixin(object):
                 else:
                     valid = True
             header_item = QtGui.QStandardItem()
-            header_item.setData(py_to_variant(id(obj)), ObjectRole)
-            header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
-            header_item.setData(py_to_variant(valid), ValidRole)
-            header_item.setData(py_to_variant(message), ValidMessageRole)
+            header_item.setData(id(obj), ObjectRole)
+            header_item.setData(verbose_identifier, VerboseIdentifierRole)
+            header_item.setData(valid, ValidRole)
+            header_item.setData(message, ValidMessageRole)
             if action_state is not None:
-                header_item.setData(py_to_variant(action_state.tooltip), Qt.ItemDataRole.ToolTipRole)
-                header_item.setData(py_to_variant(str(action_state.verbose_name)), Qt.ItemDataRole.DisplayRole)
+                header_item.setData(action_state.tooltip, Qt.ItemDataRole.ToolTipRole)
+                header_item.setData(str(action_state.verbose_name), Qt.ItemDataRole.DisplayRole)
                 # The decoration role contains the icon as a QPixmap which is used in the old table view.
-                header_item.setData(py_to_variant(action_state.icon), Qt.ItemDataRole.DecorationRole)
+                header_item.setData(action_state.icon, Qt.ItemDataRole.DecorationRole)
                 if action_state.icon is not None:
                     # The whatsThis role contains the icon name which is used in the QML table view.
                     # (note: user roles can't be used in a QML VerticalHeaderView)
-                    header_item.setData(py_to_variant(action_state.icon.name), Qt.ItemDataRole.WhatsThisRole)
+                    header_item.setData(action_state.icon.name, Qt.ItemDataRole.WhatsThisRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
@@ -338,9 +338,9 @@ class Deleted(RowCount, UpdateMixin):
             # make sure all views know the validity of the row has changed
             #
             header_item = QtGui.QStandardItem()
-            header_item.setData(py_to_variant(None), ObjectRole)
-            header_item.setData(py_to_variant(u''), VerboseIdentifierRole)
-            header_item.setData(py_to_variant(True), ValidRole)
+            header_item.setData(None, ObjectRole)
+            header_item.setData(u'', VerboseIdentifierRole)
+            header_item.setData(True, ValidRole)
             changed_ranges.append((row, header_item, tuple()))
         #
         # if the object that is going to be deleted is in the proxy, the

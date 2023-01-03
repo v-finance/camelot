@@ -30,7 +30,6 @@
 from dataclasses import dataclass
 
 from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
@@ -56,7 +55,7 @@ class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             value_str = u' '.join(text_from_richtext(model_context.value))[:256]
-            item.setData(py_to_variant(str(value_str)), PreviewRole)
+            item.setData(str(value_str), PreviewRole)
         return item
 
 

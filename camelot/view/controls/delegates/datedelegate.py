@@ -31,7 +31,7 @@ from dataclasses import dataclass
 from typing import ClassVar, Any
 
 from ....core.item_model import PreviewRole
-from ....core.qt import Qt, QtCore, py_to_variant
+from ....core.qt import Qt, QtCore
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
@@ -60,9 +60,9 @@ class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             value_str = str(locale.toString(model_context.value, QtCore.QLocale.FormatType.ShortFormat))
-            item.setData(py_to_variant(value_str), PreviewRole)
+            item.setData(value_str, PreviewRole)
         else:
-            item.setData(py_to_variant(str()), PreviewRole)
+            item.setData(str(), PreviewRole)
         return item
 
 

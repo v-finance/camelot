@@ -33,7 +33,7 @@ import logging
 
 from ....admin.admin_route import Route
 from ....core.naming import initial_naming_context
-from ....core.qt import Qt, QtCore, py_to_variant
+from ....core.qt import Qt, QtCore
 from ....core.item_model import (
     PreviewRole, CompletionPrefixRole, CompletionsRole
 )
@@ -71,11 +71,11 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         value_name = initial_naming_context._bind_object(model_context.value)
         # eventually, all values should be names, so this should happen in the
         # custom delegate class
-        item.setData(py_to_variant(value_name), Qt.ItemDataRole.EditRole)
+        item.setData(value_name, Qt.ItemDataRole.EditRole)
         if model_context.value is not None:
             admin = model_context.field_attributes['admin']
             verbose_name = admin.get_verbose_object_name(model_context.value)
-            item.setData(py_to_variant(verbose_name), PreviewRole)
+            item.setData(verbose_name, PreviewRole)
         return item
 
     def createEditor(self, parent, option, index):

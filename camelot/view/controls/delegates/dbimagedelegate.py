@@ -3,7 +3,6 @@ import logging
 logger = logging.getLogger('camelot.view.controls.delegates.dbimagedelegate')
 
 from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate
 from camelot.core.qt import QtGui, QtCore, Qt
 
@@ -29,5 +28,5 @@ class DbImageDelegate(CustomDelegate):
             byte_array = QtCore.QByteArray.fromBase64( model_context.value.encode() )
             image.loadFromData( byte_array )
             thumbnail = image.scaled(100,100, Qt.AspectRatioMode.KeepAspectRatio)
-            item.setData(py_to_variant(thumbnail), PreviewRole)
+            item.setData(thumbnail, PreviewRole)
         return item  
