@@ -54,8 +54,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from ...admin.action.base import GuiContext
 from ...core.naming import initial_naming_context
-from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
-                        variant_to_py)
+from ...core.qt import Qt, QtCore, QtGui, QtWidgets, is_deleted
 from ...core.item_model import (
     ObjectRole, PreviewRole,
     CompletionPrefixRole, ActionRoutesRole,
@@ -505,7 +504,7 @@ class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
                     self._start_timer()
                 return invalid_data
             if role == Qt.ItemDataRole.DecorationRole:
-                icon = variant_to_py(item.data(role))
+                icon = item.data(role)
                 if icon is not None:
                     return from_admin_icon(icon).getQPixmap()
             else:
@@ -595,7 +594,7 @@ class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
                 self.logger.debug('set data called on not editable field')
                 return False
             row = index.row()
-            obj_id = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
+            obj_id = self.headerData(row, Qt.Orientation.Vertical, ObjectRole)
             if obj_id is None:
                 logger.debug('set data called on row without object')
                 return False
@@ -614,7 +613,7 @@ class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
         elif role == ActionModeRole:
             value = json.loads(value)
             row = index.row()
-            obj_id = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
+            obj_id = self.headerData(row, Qt.Orientation.Vertical, ObjectRole)
             self._append_request(
                 runfieldaction_name, {
                     'row': row,
@@ -682,10 +681,8 @@ class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
 
         current_field_name = None
         if current_column is not None:
-            current_field_name = variant_to_py(
-                self.headerData(
-                    current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
-                )
+            current_field_name = self.headerData(
+                current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
             )
         assert len(row_ranges) % 2 == 0
         selected_rows = []
