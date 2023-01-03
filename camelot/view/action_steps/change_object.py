@@ -52,7 +52,7 @@ from ..controls.view import ViewWithActionsMixin
 from ..workspace import apply_form_state
 from ...admin.action import RenderHint
 from ...admin.admin_route import AdminRoute, RouteWithRenderHint
-from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
+from ...core.qt import QtCore, QtWidgets, Qt
 
 
 class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext):
@@ -162,7 +162,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
     def header_data_changed(self, orientation, first, last):
         if orientation == Qt.Orientation.Vertical:
             model = self.sender()
-            valid = variant_to_py(model.headerData(0, orientation, ValidRole))
+            valid = model.headerData(0, orientation, ValidRole)
             self._change_complete(model, valid or False)
 
     def _change_complete(self, model, complete):
@@ -175,7 +175,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
             if complete:
                 note.set_value(None)
             else:
-                note.set_value(variant_to_py(model.headerData(0, Qt.Orientation.Vertical, ValidMessageRole)))
+                note.set_value(model.headerData(0, Qt.Orientation.Vertical, ValidMessageRole))
         if cancel_button is not None:
             ok_button.setDefault( not complete )
 
@@ -235,7 +235,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         if orientation == Qt.Orientation.Vertical:
             model = self.sender()
             for row in range(first, last+1):
-                valid = variant_to_py(model.headerData(row, orientation, ValidRole))
+                valid = model.headerData(row, orientation, ValidRole)
                 if (valid==True) and (row in self.invalid_rows):
                     self.invalid_rows.remove(row)
                     self.update_complete(model)
@@ -257,7 +257,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                 row = min(self.invalid_rows)
                 note.set_value(u'{0}<br/>{1}'.format(
                     ugettext(u'Please correct row {0} before proceeding.').format(row+1),
-                    variant_to_py(model.headerData(row, Qt.Orientation.Vertical, ValidMessageRole))
+                    model.headerData(row, Qt.Orientation.Vertical, ValidMessageRole)
                 ))
 
 @dataclass
