@@ -47,7 +47,7 @@ from typing import Optional
 import copy
 
 
-from .qt import QtCore, QtWidgets, variant_to_py
+from .qt import QtCore, QtWidgets
 
 from camelot.core.conf import settings
 from camelot.core.dataclasses import dataclass
@@ -289,9 +289,9 @@ class ProfileStore(object):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
-            encrypted = int(variant_to_py(qsettings.value('encrypted', 1)))
+            encrypted = int(qsettings.value('encrypted', 1))
             for key in state.keys():
-                value = variant_to_py(qsettings.value(key, empty))
+                value = qsettings.value(key, empty)
                 if (key != 'profilename') and (encrypted==1):
                     value = self._decode(value or b'')
                 else:
@@ -354,8 +354,7 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = variant_to_py(self._qsettings().value('last_used_database_profile',
-                                                      u''))
+        name = self._qsettings().value('last_used_database_profile', u'')
         for profile in profiles:
             if profile.name == name:
                 return profile
