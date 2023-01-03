@@ -22,7 +22,7 @@ from camelot.core.exception import UserException
 from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole
 from camelot.core.naming import initial_naming_context
-from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string, variant_to_py
+from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import forms
@@ -698,7 +698,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = today
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(self.locale, field_action_model_context)
-        self.assertTrue(variant_to_py(item.data(PreviewRole)))
+        self.assertTrue(item.data(PreviewRole))
 
     def test_datetimedelegate(self):
         delegate = delegates.DateTimeDelegate(editable=True)
@@ -769,7 +769,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = '2'
         field_action_model_context.field_attributes = {'choices':CHOICES}
         item = delegate.get_standard_item(self.locale, field_action_model_context)
-        self.assertEqual(variant_to_py(item.data(PreviewRole)), 'B')
+        self.assertEqual(item.data(PreviewRole), 'B')
 
     def test_virtualaddressdelegate(self):
         delegate = delegates.VirtualAddressDelegate()

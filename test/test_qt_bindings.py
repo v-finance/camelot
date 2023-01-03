@@ -5,7 +5,7 @@ import gc
 import random
 import unittest
 
-from camelot.core.qt import QtCore, QtWidgets, variant_to_py
+from camelot.core.qt import QtCore, QtWidgets
 
 
 #
@@ -65,7 +65,7 @@ class ModelViewRegister(QtCore.QObject):
         
     @QtCore.pyqtSlot(QtCore.QObject)
     def _registered_object_destroyed(self, qobject):
-        key = variant_to_py( qobject.property('registered_key') )
+        key = qobject.property('registered_key')
         del self.model_by_view[key]
 
 class TableViewCases(unittest.TestCase):
