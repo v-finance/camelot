@@ -36,7 +36,7 @@ from camelot.core.naming import initial_naming_context
 
 from ....admin.icon import CompletionValue
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
-                         py_to_variant, variant_to_py)
+                         py_to_variant)
 from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
@@ -280,10 +280,10 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
 
     def set_default_editor_data(self, editor, index):
         editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
-        nullable = bool(variant_to_py(index.data(NullableRole)))
-        visible = bool(variant_to_py(index.data(VisibleRole)))
-        tooltip = variant_to_py(index.data(Qt.ItemDataRole.ToolTipRole))
-        background_color = variant_to_py(index.data(Qt.ItemDataRole.BackgroundRole))
+        nullable = bool(index.data(NullableRole))
+        visible = bool(index.data(VisibleRole))
+        tooltip = index.data(Qt.ItemDataRole.ToolTipRole)
+        background_color = index.data(Qt.ItemDataRole.BackgroundRole)
         editor.set_editable(editable)
         editor.set_nullable(nullable)
         editor.set_visible(visible)
@@ -299,7 +299,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         # editor to properly display and hold the value, eg 'precision' of a 
         # float might be changed
         #
-        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
         editor.set_value(value)
         # update actions
         self.update_field_action_states(editor, index)

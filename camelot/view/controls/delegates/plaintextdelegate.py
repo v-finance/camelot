@@ -36,7 +36,7 @@ logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
 from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole, ValidatorStateRole, CompleterStateRole
-from ....core.qt import Qt, py_to_variant, variant_to_py
+from ....core.qt import Qt, py_to_variant
 from .customdelegate import CustomDelegate
 
 from camelot.view.controls import editors
@@ -79,9 +79,9 @@ class PlainTextDelegate(CustomDelegate):
         if index.model() is None:
             return
         self.set_default_editor_data(editor, index)
-        completer_state = variant_to_py(index.data(CompleterStateRole))
-        validator_state = variant_to_py(index.data(ValidatorStateRole))
-        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
+        completer_state = index.data(CompleterStateRole)
+        validator_state = index.data(ValidatorStateRole)
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
         editor.set_completer_state(completer_state)
         editor.set_validator_state(validator_state)
         editor.set_value(value)

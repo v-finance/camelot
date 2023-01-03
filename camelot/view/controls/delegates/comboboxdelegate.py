@@ -37,7 +37,7 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 from ....core.item_model import PreviewRole, ChoicesRole
 from ....core.naming import initial_naming_context
-from ....core.qt import Qt, variant_to_py, py_to_variant
+from ....core.qt import Qt, py_to_variant
 from camelot.view.controls import editors
 from ....admin.icon import CompletionValue
 from ....admin.admin_route import Route
@@ -103,8 +103,8 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if index.model() is None:
             return
         self.set_default_editor_data(editor, index)
-        choices = variant_to_py(index.data(ChoicesRole))
-        value = variant_to_py(index.data(Qt.ItemDataRole.EditRole))
+        choices = index.data(ChoicesRole)
+        value = index.data(Qt.ItemDataRole.EditRole)
         editor.set_choices(choices)
         editor.set_value(value)
         # update actions

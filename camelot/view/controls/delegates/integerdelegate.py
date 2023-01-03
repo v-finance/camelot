@@ -30,7 +30,7 @@
 from dataclasses import dataclass
 from typing import ClassVar, Any
 
-from ....core.qt import py_to_variant, Qt, variant_to_py
+from ....core.qt import py_to_variant, Qt
 from ....core.item_model import (
     PreviewRole, PrefixRole, SuffixRole, SingleStepRole,
     MinimumRole, MaximumRole
@@ -82,12 +82,12 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if index.model() is None:
             return
         self.set_default_editor_data(editor, index)
-        suffix = variant_to_py(index.data(SuffixRole))
-        prefix = variant_to_py(index.data(PrefixRole))
-        single_step = variant_to_py(index.data(SingleStepRole))
-        minimum = variant_to_py(index.data(MinimumRole))
-        maximum = variant_to_py(index.data(MaximumRole))
-        value = variant_to_py(index.model().data(index, Qt.ItemDataRole.EditRole))
+        suffix = index.data(SuffixRole)
+        prefix = index.data(PrefixRole)
+        single_step = index.data(SingleStepRole)
+        minimum = index.data(MinimumRole)
+        maximum = index.data(MaximumRole)
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
         editor.set_suffix(suffix)
         editor.set_prefix(prefix)
         editor.set_single_step(single_step)

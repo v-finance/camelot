@@ -32,7 +32,7 @@
 import logging
 
 from camelot.view.model_thread import object_thread
-from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt
 
 
 logger = logging.getLogger('camelot.view.controls.tableview')
@@ -108,9 +108,9 @@ class TableWidget(QtWidgets.QTableView):
                 # don't save the width of a hidden section, since this will
                 # result in setting the width to 0
                 continue
-            old_size = variant_to_py(self.model().headerData(logical_index,
-                                                             Qt.Orientation.Horizontal,
-                                                             Qt.ItemDataRole.SizeHintRole))
+            old_size = self.model().headerData(logical_index,
+                                               Qt.Orientation.Horizontal,
+                                               Qt.ItemDataRole.SizeHintRole)
             # when the size is different from the one from the model, the
             # user changed it
             if (old_size is not None) and (old_size.width() != new_width):
@@ -201,9 +201,9 @@ class TableWidget(QtWidgets.QTableView):
         """
         model = self.model()
         for i in range(model.columnCount()):
-            size_hint = variant_to_py(model.headerData(i,
-                                                       Qt.Orientation.Horizontal,
-                                                       Qt.ItemDataRole.SizeHintRole))
+            size_hint = model.headerData(i,
+                                         Qt.Orientation.Horizontal,
+                                         Qt.ItemDataRole.SizeHintRole)
             if size_hint is not None:
                 self.setColumnWidth(i, size_hint.width())
         # dont save these changes, since they are the defaults
@@ -217,12 +217,12 @@ class TableWidget(QtWidgets.QTableView):
         # if there is an editor in the current cell, change the column and
         # row width to the size hint of the editor
         if editor is not None:
-            column_size_hint = variant_to_py(header_data(current.column(),
-                                                         Qt.Orientation.Horizontal,
-                                                         Qt.ItemDataRole.SizeHintRole))
-            row_size_hint = variant_to_py(header_data(current.row(),
-                                                      Qt.Orientation.Vertical,
-                                                      Qt.ItemDataRole.SizeHintRole))
+            column_size_hint = header_data(current.column(),
+                                           Qt.Orientation.Horizontal,
+                                           Qt.ItemDataRole.SizeHintRole)
+            row_size_hint = header_data(current.row(),
+                                        Qt.Orientation.Vertical,
+                                        Qt.ItemDataRole.SizeHintRole)
             editor_size_hint = editor.sizeHint()
             self.setRowHeight(current.row(), max(row_size_hint.height(),
                                                  editor_size_hint.height()))
@@ -231,15 +231,15 @@ class TableWidget(QtWidgets.QTableView):
                                     editor_size_hint.width()))
         if current.row() != previous.row():
             if previous.row() >= 0:
-                row_size_hint = variant_to_py(header_data(previous.row(),
-                                                          Qt.Orientation.Vertical,
-                                                          Qt.ItemDataRole.SizeHintRole))
+                row_size_hint = header_data(previous.row(),
+                                            Qt.Orientation.Vertical,
+                                            Qt.ItemDataRole.SizeHintRole)
                 self.setRowHeight(previous.row(), row_size_hint.height())
         if current.column() != previous.column():
             if previous.column() >= 0:
-                column_size_hint = variant_to_py(header_data(previous.column(),
-                                                             Qt.Orientation.Horizontal,
-                                                             Qt.ItemDataRole.SizeHintRole))
+                column_size_hint = header_data(previous.column(),
+                                               Qt.Orientation.Horizontal,
+                                               Qt.ItemDataRole.SizeHintRole)
                 self.setColumnWidth(previous.column(),
                                     column_size_hint.width())
         # whenever we change the size, sectionsResized is called, but these

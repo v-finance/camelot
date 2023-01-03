@@ -33,7 +33,7 @@ import logging
 
 from ....admin.admin_route import Route
 from ....core.naming import initial_naming_context
-from ....core.qt import Qt, QtCore, py_to_variant, variant_to_py
+from ....core.qt import Qt, QtCore, py_to_variant
 from ....core.item_model import (
     PreviewRole, CompletionPrefixRole, CompletionsRole
 )
@@ -91,13 +91,13 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             return
         # either an update signal is received because there are search
         # completions, or because the value of the editor needs to change
-        #prefix = variant_to_py(index.model().data(index, CompletionPrefixRole))
-        completions = variant_to_py(index.model().data(index, CompletionsRole))
+        #prefix = index.model().data(index, CompletionPrefixRole)
+        completions = index.model().data(index, CompletionsRole)
         if completions is not None:
             editor.display_search_completions(completions)
             return
         super().setEditorData(editor, index)
-        verbose_name = variant_to_py(index.model().data(index, PreviewRole))
+        verbose_name = index.model().data(index, PreviewRole)
         editor.set_verbose_name(verbose_name)
         editor.index = index
 

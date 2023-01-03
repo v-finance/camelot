@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py, Qt
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 
 from camelot.view.proxy import ValueLoading
 
@@ -101,7 +101,7 @@ class AbstractCustomEditor(object):
             return value
 
     def get_value(self):
-        if variant_to_py(self.property('value_loading')):
+        if self.property('value_loading'):
             return ValueLoading
         return None
 
