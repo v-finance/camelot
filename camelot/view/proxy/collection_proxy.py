@@ -58,8 +58,9 @@ from ...core.qt import Qt, QtCore, QtGui, QtWidgets, is_deleted
 from ...core.item_model import (
     ObjectRole, PreviewRole,
     CompletionPrefixRole, ActionRoutesRole,
-    ActionStatesRole, ProxyDict, CompletionsRole,
-    ActionModeRole, FocusPolicyRole
+    ActionStatesRole, CompletionsRole,
+    ActionModeRole, FocusPolicyRole,
+    VisibleRole, NullableRole
 )
 from ..crud_action import (
     changeselection_name, created_name, completion_name, deleted_name,
@@ -76,12 +77,6 @@ from camelot.view.action_runner import action_runner
 
 
 invalid_data = None
-# todo : investigate if the invalid field attributes ought to be
-#        the same as the default field attributes in the object admin
-invalid_field_attributes_data = ProxyDict(
-    editable=False,
-    focus_policy=Qt.FocusPolicy.NoFocus,
-)
 invalid_item = QtGui.QStandardItem()
 invalid_item.setFlags(Qt.ItemFlag.NoItemFlags)
 invalid_item.setData(invalid_data, Qt.ItemDataRole.EditRole)
@@ -92,6 +87,8 @@ invalid_item.setData('[]', ActionRoutesRole)
 invalid_item.setData('[]', ActionStatesRole)
 invalid_item.setData(invalid_data, ActionModeRole)
 invalid_item.setData(Qt.FocusPolicy.NoFocus, FocusPolicyRole)
+invalid_item.setData(True, VisibleRole)
+invalid_item.setData(True, NullableRole)
 
 initial_delay = 50
 maximum_delay = 1000
