@@ -29,7 +29,8 @@
 
 from .application import (
     MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
-    MainMenu, UpdateActionsState, SetThemeColors, Authenticate
+    MainMenu, UpdateActionsState, SetThemeColors, Authenticate, StartProfiler,
+    StopProfiler,
 )
 from .change_object import ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
@@ -93,6 +94,8 @@ __all__ = [
     SelectObjects.__name__,
     SetColumns.__name__,
     Sort.__name__,
+    StartProfiler.__name__,
+    StopProfiler.__name__,
     ToFirstForm.__name__,
     ToFirstRow.__name__,
     ToLastForm.__name__,
