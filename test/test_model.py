@@ -20,7 +20,6 @@ from camelot.test.action import MockModelContext
 from camelot.view.import_utils import XlsReader
 from camelot.view import action_steps
 from camelot_example.fixtures import load_movie_fixtures
-from camelot_example.view import setup_views
 
 app_admin = ApplicationAdmin()
 
@@ -33,7 +32,6 @@ class LoadSampleData(Action):
 
     def model_run(self, model_context, mode):
         session = Session()
-        setup_views()
         metadata.bind = model_engine
         metadata.create_all(model_engine)
         session.expunge_all()
@@ -82,7 +80,6 @@ class ExampleModelMixinCase(object):
 
     @classmethod
     def setup_sample_model(cls):
-        setup_views()
         metadata.bind = model_engine
         metadata.create_all(model_engine)
         cls.session = Session()

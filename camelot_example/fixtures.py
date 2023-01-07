@@ -33,7 +33,7 @@ def load_movie_fixtures():
 
     from camelot.model.fixture import Fixture
     from camelot.model.party import Person
-    from camelot_example.model import Movie, VisitorReport, Tag
+    from camelot_example.model import Movie, Tag
     from camelot.core.files.storage import Storage
     from camelot.core.resources import resource_filename
 
@@ -243,24 +243,6 @@ def load_movie_fixtures():
         ]
     ]
 
-    visits = {
-        u'The Shining': [
-            (u'Washington D.C.', 10000, datetime.date(1980, 5, 23)),
-            (u'Buesnos Aires', 4000,datetime.date(1980, 6, 12)),
-            (u'California', 13000,datetime.date(1980, 5, 23)),
-        ],
-        u'The Dark Knight': [
-            (u'New York', 20000, datetime.date(2008, 7, 18)),
-            (u'London', 15000, datetime.date(2008, 7, 20)),
-            (u'Tokyo', 3000, datetime.date(2008, 7, 24)),
-        ],
-        u'Avatar': [
-            (u'Shangai', 6000, datetime.date(2010, 1, 5)),
-            (u'Atlanta', 3000, datetime.date(2009, 12, 18)),
-            (u'Boston', 5000, datetime.date(2009, 12, 18)),
-        ],
-    }
-
     Fixture.insert_or_update_fixture(
         Tag, fixture_key = 'drama', values = {'name': 'Drama',}
     )
@@ -292,16 +274,3 @@ def load_movie_fixtures():
                     'cover':stored_image,
                 },
             )
-        rep = visits.get(title, None)
-        if rep:
-            for city, visitors, date in rep:
-                Fixture.insert_or_update_fixture(
-                    VisitorReport,
-                    fixture_key = '%s_%s' % (title, city),
-                    values = {
-                        'movie': movie,
-                        'date': date,
-                        'visitors': visitors,
-                    }
-                )
-

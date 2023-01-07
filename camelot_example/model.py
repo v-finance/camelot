@@ -34,7 +34,7 @@ import datetime
 from camelot.core.orm import Entity
 from camelot.admin.entity_admin import EntityAdmin
 
-from sqlalchemy import sql, orm
+from sqlalchemy import orm
 from sqlalchemy.schema import Column, ForeignKey, Table
 import sqlalchemy.types
 # end basic imports
@@ -126,14 +126,6 @@ class Movie( Entity ):
     #
     script = Column( camelot.types.File( upload_to = 'script' ) )
     description = Column( camelot.types.RichText )
-
-# begin column_property
-
-    @classmethod
-    def __declare_last__(cls):  # gets called when all mappers have been set
-        cls.total_visitors = orm.column_property(sql.select([sql.func.sum(VisitorReport.visitors)], VisitorReport.movie_id == cls.id))
-    
-# end column_property
 
     #
     # Each Entity subclass can have a subclass of EntityAdmin as
@@ -241,24 +233,3 @@ class Tag(Entity):
 t = Table('tags_movies__movies_tags', metadata, Column('movies_id', sqlalchemy.types.Integer(), ForeignKey(Movie.id), primary_key=True),
           Column('tags_id', sqlalchemy.types.Integer(), ForeignKey(Tag.id), primary_key=True))
 Tag.movies = orm.relationship(Movie, backref='tags', secondary=t, foreign_keys=[t.c.movies_id, t.c.tags_id])
-
-# begin visitor report definition
-class VisitorReport(Entity):
-    
-    __tablename__ = 'visitor_report'
-    
-    date = Column( sqlalchemy.types.Date, 
-                   nullable = False, 
-                   default = datetime.date.today )
-    visitors = Column( sqlalchemy.types.Integer, 
-                       nullable = False, 
-                       default = 0 )
-    movie_id = Column(sqlalchemy.types.Integer(), ForeignKey(Movie.id), nullable=False)
-    movie = orm.relationship(Movie, backref=orm.backref('visitor_reports', cascade='delete'))
-# end visitor report definition
-
-    class Admin(EntityAdmin):
-        verbose_name = _('Visitor Report')
-        list_display = ['movie', 'date', 'visitors']
-        field_attributes = {'visitors':{'minimum':0}}
-
