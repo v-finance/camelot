@@ -52,7 +52,6 @@ def load_movie_fixtures():
                 u'Scatman Crothers',
                 u'Barry Nelson'
             ],
-            [u'Horror',u'Mystery',u'Thriller'],
             u'thriller',
             4,
             u'shining.png',
@@ -73,7 +72,6 @@ def load_movie_fixtures():
                 u'Clive Owen',
                 u'Brian Cox'
             ],
-            [u'Action',u'Adventure'],
             u'action',
             4,
             u'bourne.png',
@@ -93,7 +91,6 @@ def load_movie_fixtures():
                 u'Jeffrey',
                 u'Wright'
             ],
-            [u'Action',u'Adventure'],
             u'action',
             5,
             u'casino.png',
@@ -113,7 +110,6 @@ def load_movie_fixtures():
                 u'Jim Varney',
                 u'Wallace Shawn'
             ],
-            [u'Animation',u'Adventure'],
             u'animation',
             4,
             u'toystory.png',
@@ -132,7 +128,6 @@ def load_movie_fixtures():
                 u'Fiona Shaw',
                 u'Richard Griffiths'
             ],
-            [u'Family',u'Adventure'],
             u'family',
             3,
             u'potter.png',
@@ -152,7 +147,6 @@ def load_movie_fixtures():
                 u'Scarlett Johansson',
                 u'Mickey Rourke'
             ],
-            [u'Action',u'Adventure',u'Sci-fi'],
             u'sci-fi',
             3,
             u'ironman.png',
@@ -173,7 +167,6 @@ def load_movie_fixtures():
                 u'Jonathan Taylor Thomas',
                 u'Nathan Lane'
             ],
-            [u'Animation',u'Adventure'],
             u'animation',
             5,
             u'lionking.png',
@@ -193,7 +186,6 @@ def load_movie_fixtures():
                 u'Michelle Rodriguez',
                 u'Sigourney Weaver'
             ],
-            [u'Action',u'Adventure',u'Sci-fi'],
             u'sci-fi',
             5,
             u'avatar.png',
@@ -213,7 +205,6 @@ def load_movie_fixtures():
                 u'Keira Knightley',
                 u'Jack Davenport'
             ],
-            [u'Action',u'Adventure'],
             u'action',
             5,
             u'pirates.png',
@@ -233,7 +224,6 @@ def load_movie_fixtures():
                 u'Michael Caine',
                 u'Maggie Gyllenhaal'
             ],
-            [u'Action',u'Drama'],
             u'action',
             5,
             u'darkknight.png',
@@ -247,7 +237,7 @@ def load_movie_fixtures():
         Tag, fixture_key = 'drama', values = {'name': 'Drama',}
     )
 
-    for title, short_description, releasedate, (director_first_name, director_last_name), cast, tags, genre, rating, cover, description in movies:
+    for title, short_description, releasedate, (director_first_name, director_last_name), cast, genre, rating, cover, description in movies:
         director = Fixture.insert_or_update_fixture(
             Person,
             fixture_key = u'%s_%s'%(director_first_name, director_last_name),
