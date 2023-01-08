@@ -7,7 +7,7 @@ from camelot.view.requests import (
     CancelAction, InitiateAction, SendActionResponse, ThrowActionException
 )
 
-cancel_action = CancelAction(run_name=[])
+cancel_action = CancelAction(run_name=['d'])
 initiate_action = InitiateAction(
     gui_run_name=['a'], action_name=['b'], model_context=['c'], mode=None,
 )

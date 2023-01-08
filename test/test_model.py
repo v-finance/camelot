@@ -37,7 +37,7 @@ class LoadSampleData(Action):
         session.expunge_all()
         update_last_login()
         if mode in (None, True):
-            load_movie_fixtures()
+            load_movie_fixtures(session)
             yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
                 session.query(Person).count(), id(session)
             ))
