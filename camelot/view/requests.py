@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import logging
+import sys
 import typing
 
 from ..core.exception import CancelRequest
@@ -212,3 +213,8 @@ class CancelAction(AbstractRequest):
     @classmethod
     def _next(cls, run, request_data):
         return run.generator.throw(CancelRequest())
+
+@dataclass
+class StopProcess(AbstractRequest):
+    """Sentinel task to end all tasks to be executed by a process"""
+    pass

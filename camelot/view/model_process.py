@@ -3,12 +3,11 @@ import logging
 import multiprocessing
 
 from ..core.serializable import NamedDataclassSerializable
+from .requests import StopProcess
 
 LOGGER = logging.getLogger(__name__)
 
-class StopProcess(object):
-    """Sentinel task to and all tasks to be executed by a process"""
-    pass
+stop_request = StopProcess()
 
 
 class ModelProcess(multiprocessing.Process):
@@ -22,15 +21,13 @@ class ModelProcess(multiprocessing.Process):
         while True:
             request = self._request_queue.get()
             try:
-                if isinstance(request, StopProcess):
-                    LOGGER.info("Request to stop process, terminating")
+                request_type_name, request_data = json.loads(request)
+                request_type = NamedDataclassSerializable.get_cls_by_name(
+                    request_type_name
+                )
+                if request_type == StopProcess:
                     break
-                else:
-                    request_type_name, request_data = json.loads(request)
-                    request_type = NamedDataclassSerializable.get_cls_by_name(
-                        request_type_name
-                    )
-                    request_type.execute(request_data, None, self)
+                request_type.execute(request_data, None, self)
             except Exception as e:
                 LOGGER.error('Unhandled exception in model process', exc_info=e)
                 import traceback
@@ -48,5 +45,5 @@ class ModelProcess(multiprocessing.Process):
         """
         Request the worker to finish its ongoing tasks and stop
         """
-        self._request_queue.put(StopProcess())
+        self.post(stop_request)
         self.join()
