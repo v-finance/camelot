@@ -46,7 +46,9 @@ from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
 from .item_view import AbstractCrudView
+from  ..qml_view import get_qml_root_backend
 #from ..qml_view import qml_action_step
+from camelot.core.serializable import json_encoder
 
 
 @dataclass
@@ -119,9 +121,16 @@ class OpenFormView(AbstractCrudView):
 
     @classmethod
     def render(self, gui_context_name, step):
-        model = CollectionProxy(tuple(step['admin_route']))
-        list(model.add_columns((fn for fn, fa in step['fields'].items())))
+        # Setup C++ CrudItemModel
+        message = {
+            'gui_context_name': gui_context_name,
+            'columns': [ fa for fn, fa in step['fields'].items() ]
+        }
+        serialized_message = json_encoder.encode(message).encode()
+        model = get_qml_root_backend().createModel(serialized_message)
         model.set_value(step['model_context_name'])
+        list(model.add_columns((fn for fn, fa in step['fields'].items())))
+
         form = FormView(
             title=step['title'], admin_route=step['admin_route'],
             close_route=tuple(step['close_route']), model=model,

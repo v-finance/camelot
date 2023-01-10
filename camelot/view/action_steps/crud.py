@@ -14,15 +14,14 @@ from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    CompletionsRole, PreviewRole, ChoicesRole, ObjectRole, ColumnAttributesRole
+    CompletionsRole, PreviewRole, ObjectRole, ColumnAttributesRole, EndRoles
 )
 from .. import gui_naming_context
 from ..controls import delegates
-#from ..validator import DateValidator
 
 
 non_serializable_roles = (
-    Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
+    Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
 )
 
 def filter_attributes(attributes, keys):
@@ -49,17 +48,13 @@ class UpdateMixin(object):
                     "row": row,
                     "column": column,
                 }
-                for role in range(Qt.ItemDataRole.DisplayRole, ChoicesRole+1):
+                for role in range(Qt.ItemDataRole.DisplayRole, EndRoles):
                     if role in non_serializable_roles:
                         continue
                     role_data = item.data(role)
                     if role_data is not None:
                         cell_data[role] = role_data
                 cell_data[Qt.ItemDataRole.DisplayRole] = item.data(PreviewRole)
-                # serialize EditRole if it is a tuple/name
-                edit = item.data(Qt.ItemDataRole.EditRole)
-                if isinstance(edit, tuple):
-                    cell_data[Qt.ItemDataRole.EditRole] = edit
                 # serialize flags
                 cell_data['flags'] = item.flags()
                 cells.append(cell_data)

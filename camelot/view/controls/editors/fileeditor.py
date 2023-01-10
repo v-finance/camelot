@@ -78,7 +78,7 @@ class FileEditor(CustomEditor):
         value = CustomEditor.set_value(self, value)
         self.value = value
         if value is not None:
-            self.filename.setText(value.verbose_name)
+            self.filename.setText(value)
         else:
             self.filename.setText('')
         return value

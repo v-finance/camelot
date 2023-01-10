@@ -32,6 +32,7 @@ import logging
 
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.action.base import GuiContext
+from ....admin.admin_route import RouteWithRenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
 from ....core.item_model import ActionModeRole
 from ... import gui_naming_context
@@ -85,7 +86,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             self.trigger_list_action
         )
         self.action_routes = dict()
-        model = CollectionProxy(admin_route)
+        model = CollectionProxy(tuple(admin_route))
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
         model.setParent(self)
         table.setModel(model)
@@ -148,6 +149,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
     def set_right_toolbar_actions(self, action_routes, toolbar):
         if action_routes is not None:
             for route_with_render_hint in action_routes:
+                if not isinstance(route_with_render_hint, RouteWithRenderHint):
+                    route_with_render_hint = RouteWithRenderHint.from_dict(route_with_render_hint)
                 action_route = route_with_render_hint.route
                 self.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(
@@ -223,7 +226,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             # even if the collection 'is' the same object as the current
             # one, still need to set it, since the content of the collection
             # might have changed.
-            model.set_value(value)
+            if value is not None:
+                model.set_value(tuple(value))
             self.update_list_action_states()
 
     def get_value(self):

@@ -3,10 +3,14 @@ import copy
 import dataclasses
 import io
 import json
+import datetime
 
 from camelot.core.qt import QtCore, QtGui
+from camelot.core.naming import initial_naming_context
+from camelot.core.files.storage import StoredFile
 from .utils import ugettext_lazy
 from enum import Enum
+from decimal import Decimal
 
 
 class Serializable(object):
@@ -69,6 +73,10 @@ class DataclassEncoder(json.JSONEncoder):
             return obj.toVariant()
         if isinstance(obj, QtGui.QColor):
             return obj.name()
+        if isinstance(obj, (Decimal, datetime.date, datetime.datetime)):
+            return initial_naming_context._bind_object(obj)
+        if isinstance(obj, StoredFile):
+            return obj.verbose_name # FIXME: not sure if this is enough...
          # FIXME: Remove this when all classes are serializable.
          #        Currently needed to serialize some fields
          #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().

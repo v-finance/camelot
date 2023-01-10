@@ -214,7 +214,7 @@ class FloatEditor(CustomEditor):
     def set_focus_policy(self, focus_policy):
         if focus_policy is not None:
             spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
-            spinBox.setFocusPolicy(focus_policy)
+            spinBox.setFocusPolicy(Qt.FocusPolicy(focus_policy))
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)
