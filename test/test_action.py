@@ -457,7 +457,7 @@ class ListActionsCase(
         for step in open_form_view_action.model_run(model_context, None):
             form = step.render(self.gui_context, step._to_dict())
             form_value = form.model.get_value()
-        self.assertTrue(isinstance(form_value, (tuple,)))
+        self.assertTrue(isinstance(form_value, list))
 
     @staticmethod
     def track_crud_steps(action, model_context):

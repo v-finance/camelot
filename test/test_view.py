@@ -23,6 +23,7 @@ from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string
+from camelot.core.serializable import json_encoder
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import forms
@@ -36,6 +37,7 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
+from camelot.view.qml_view import get_qml_root_backend
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot_example.application_admin import MyApplicationAdmin
@@ -114,10 +116,10 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
-        editor.set_value( datetime.date(1980, 12, 31) )
+        editor.set_value( QtCore.QDate(datetime.date(1980, 12, 31)) )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
-        self.assert_valid_editor( editor, datetime.date(1980, 12, 31) )
+        self.assert_valid_editor( editor, QtCore.QDate(datetime.date(1980, 12, 31)) )
 
     def test_TextLineEditor(self):
         editor = editors.TextLineEditor(parent=None, length=10)
@@ -279,7 +281,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
         self.grab_default_states( editor )
-        self.assert_valid_editor( editor, StoredFile( storage, 'test.txt') )
+        self.assert_valid_editor( editor, StoredFile( storage, 'test.txt').verbose_name )
 
     def test_DateTimeEditor(self):
         validator = TimeValidator()
@@ -296,10 +298,10 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor = editors.DateTimeEditor(parent=None, editable=True)
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), ValueLoading )
-        editor.set_value( datetime.datetime(2009, 7, 19, 21, 5, 10, 0) )
+        editor.set_value( QtCore.QDateTime(datetime.datetime(2009, 7, 19, 21, 5, 10, 0)) )
         self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
         self.grab_default_states( editor )
-        self.assert_valid_editor( editor, datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
+        self.assert_valid_editor( editor, QtCore.QDateTime(datetime.datetime(2009, 7, 19, 21, 5, 0 )) )
         editor.set_value(None)
         self.assertEqual(editor.get_value(), None)
 
@@ -495,10 +497,18 @@ class FormTest(
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin(Person)
         self.admin_route = self.person_admin.get_admin_route()
-        self.person_model = CollectionProxy(self.admin_route)
+        fields = dict((f, {
+            'hide_title':fa.get('hide_title', False),
+            'verbose_name':str(fa['name']),
+        }) for f, fa in self.person_admin.get_fields())
+        message = {
+            'columns': [ fa for fn, fa in fields.items() ]
+        }
+        serialized_message = json_encoder.encode(message).encode()
+        self.person_model = get_qml_root_backend().createModel(serialized_message)
         self.person_model.set_value(self.model_context_name)
         list(self.person_model.add_columns(
-            [fn for fn,fa in self.person_admin.get_fields()]
+            [fn for fn,fa in fields.items()]
         ))
         self._load_data(self.person_model)
         self.qt_parent = QtCore.QObject()

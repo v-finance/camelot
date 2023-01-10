@@ -123,7 +123,6 @@ class OpenFormView(AbstractCrudView):
     def render(self, gui_context_name, step):
         # Setup C++ CrudItemModel
         message = {
-            'gui_context_name': gui_context_name,
             'columns': [ fa for fn, fa in step['fields'].items() ]
         }
         serialized_message = json_encoder.encode(message).encode()

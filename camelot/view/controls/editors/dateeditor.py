@@ -144,7 +144,7 @@ class DateEditor(CustomEditor):
         if line_edit is not None:
             try:
                 date = date_from_string( str( line_edit.text() ) )
-                value = QtCore.QDate(date)
+                value = QtCore.QDate(date) if date is not None else None
             except ParsingError:
                 value = None
         return CustomEditor.get_value(self) or value

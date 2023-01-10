@@ -129,9 +129,9 @@ class DateTimeEditor(CustomEditor):
             value = datetime.datetime(hour=time_value.hour(),
                                       minute=time_value.minute(),
                                       second=time_value.second(),
-                                      year=date_value.year,
-                                      month=date_value.month,
-                                      day=date_value.day)
+                                      year=date_value.year(),
+                                      month=date_value.month(),
+                                      day=date_value.day())
         else:
             value = None
         return CustomEditor.get_value(self) or value
@@ -139,8 +139,9 @@ class DateTimeEditor(CustomEditor):
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         if value:
+            assert isinstance(value, QtCore.QDateTime)
             self.dateedit.set_value(value.date())
-            self.timeedit.lineEdit().setText('%02i:%02i'%(value.hour, value.minute))
+            self.timeedit.lineEdit().setText('%02i:%02i'%(value.time().hour(), value.time().minute()))
         else:
             self.dateedit.set_value(None)
             self.timeedit.lineEdit().setText('')
