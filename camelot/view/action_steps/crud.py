@@ -14,7 +14,8 @@ from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    CompletionsRole, PreviewRole, ObjectRole, ColumnAttributesRole, EndRoles
+    CompletionsRole, PreviewRole, ObjectRole, ColumnAttributesRole, EndRoles,
+    VerboseIdentifierRole, ValidRole, ValidMessageRole
 )
 from .. import gui_naming_context
 from ..controls import delegates
@@ -41,7 +42,11 @@ class UpdateMixin(object):
                 "row": row,
                 "tool_tip": header_item.data(Qt.ItemDataRole.ToolTipRole),
                 "icon_name": header_item.data(Qt.ItemDataRole.WhatsThisRole),
-                "object": header_item.data(ObjectRole)
+                "object": header_item.data(ObjectRole),
+                "verbose_identifier": header_item.data(VerboseIdentifierRole),
+                "valid": header_item.data(ValidRole),
+                "message": header_item.data(ValidMessageRole)
+                # FIXME: more roles? see camelot/view/crud_action.py:127
             })
             for column, item in items:
                 cell_data = {

@@ -38,12 +38,14 @@ from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
+from camelot.core.serializable import json_encoder
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.qml_view import get_qml_root_backend
 
 from .form_view import OpenFormView
 from .item_view import UpdateTableView
@@ -84,7 +86,11 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        model = CollectionProxy(admin_route)
+        message = {
+            'columns': [ fa for fn, fa in fields.items() ]
+        }
+        serialized_message = json_encoder.encode(message).encode()
+        model = get_qml_root_backend().createModel(serialized_message)
         self.action_routes = dict()
 
         layout = QtWidgets.QHBoxLayout()
