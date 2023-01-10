@@ -4,6 +4,7 @@ import dataclasses
 import io
 import json
 import datetime
+import base64
 
 from camelot.core.qt import QtCore, QtGui
 from camelot.core.naming import initial_naming_context
@@ -77,6 +78,12 @@ class DataclassEncoder(json.JSONEncoder):
             return initial_naming_context._bind_object(obj)
         if isinstance(obj, StoredFile):
             return obj.verbose_name # FIXME: not sure if this is enough...
+        if isinstance(obj, QtGui.QImage):
+            byte_array = QtCore.QByteArray()
+            buffer = QtCore.QBuffer(byte_array)
+            buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
+            obj.save(buffer, "PNG");
+            return base64.b64encode(byte_array).decode()
          # FIXME: Remove this when all classes are serializable.
          #        Currently needed to serialize some fields
          #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
