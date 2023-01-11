@@ -44,6 +44,8 @@ logger = logging.getLogger( 'camelot.view.controls.delegates.one2manydelegate' )
 transient = initial_naming_context.resolve_context('transient')
 transient_counter = itertools.count()
 
+one2many_contexts = []
+
 @dataclass
 class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for many 2 one relations
@@ -77,7 +79,8 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             )
             # dirty hack to keep model context and its name bound as long as
             # the item lives
-            item.setData(one2many_model_context, Qt.ItemDataRole.AccessibleDescriptionRole)
+            #item.setData(one2many_model_context, Qt.ItemDataRole.AccessibleDescriptionRole)
+            one2many_contexts.append(one2many_model_context) # FIXME!!
         return item
 
     def createEditor( self, parent, option, index ):
