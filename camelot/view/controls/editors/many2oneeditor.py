@@ -148,7 +148,7 @@ class Many2OneEditor(CustomEditor):
         for row, completion in enumerate(completions):
             index = model.index(row, 0)
             for role, data in completion.items():
-                model.setData(index, data, role)
+                model.setData(index, data, int(role))
         self.completer.complete()
 
     def completionActivated(self, index):
