@@ -30,13 +30,13 @@
 import json
 import logging
 
-from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.action.base import GuiContext
 from ....admin.admin_route import RouteWithRenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
 from ....core.item_model import ActionModeRole
 from ... import gui_naming_context
 from ..view import ViewWithActionsMixin
+from camelot.view.qml_view import get_qml_root_backend
 from ..tableview import TableWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
@@ -86,9 +86,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             self.trigger_list_action
         )
         self.action_routes = dict()
-        model = CollectionProxy(tuple(admin_route))
+        model = get_qml_root_backend().createModel(admin_route, columns)
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
-        model.setParent(self)
         table.setModel(model)
         self.admin_route = admin_route
         layout.addWidget(table)
