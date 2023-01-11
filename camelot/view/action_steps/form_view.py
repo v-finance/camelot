@@ -37,7 +37,6 @@ import json
 
 from ..controls.formview import FormView
 from ..forms import AbstractForm
-from ..proxy.collection_proxy import CollectionProxy
 from ..workspace import show_top_level
 from ...admin.action.base import ActionStep, RenderHint
 from ...admin.admin_route import AdminRoute
