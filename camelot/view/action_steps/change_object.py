@@ -38,7 +38,6 @@ from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
-from camelot.core.serializable import json_encoder
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
@@ -85,11 +84,8 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        message = {
-            'columns': [ fa for fn, fa in fields.items() ]
-        }
-        serialized_message = json_encoder.encode(message).encode()
-        model = get_qml_root_backend().createModel(serialized_message)
+        columns = [fn for fn, _fa in fields.items()]
+        model = get_qml_root_backend().createModel(admin_route, columns)
         self.action_routes = dict()
 
         layout = QtWidgets.QHBoxLayout()
@@ -128,7 +124,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         # set the value last, so the validity can be updated
         model.set_value(proxy_route)
         self.model_context_name = proxy_route
-        list(model.add_columns((fn for fn, _fa in fields.items())))
+        list(model.add_columns(columns))
         self.gui_context_name = gui_naming_context.bind(
             ('transient', str(id(self))), self
         )

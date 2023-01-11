@@ -23,7 +23,6 @@ from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string
-from camelot.core.serializable import json_encoder
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import forms
@@ -497,19 +496,10 @@ class FormTest(
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin(Person)
         self.admin_route = self.person_admin.get_admin_route()
-        fields = dict((f, {
-            'hide_title':fa.get('hide_title', False),
-            'verbose_name':str(fa['name']),
-        }) for f, fa in self.person_admin.get_fields())
-        message = {
-            'columns': [ fa for fn, fa in fields.items() ]
-        }
-        serialized_message = json_encoder.encode(message).encode()
-        self.person_model = get_qml_root_backend().createModel(serialized_message)
+        columns = [ fn for fn, fa in self.person_admin.get_fields() ]
+        self.person_model = get_qml_root_backend().createModel(self.admin_route, columns)
         self.person_model.set_value(self.model_context_name)
-        list(self.person_model.add_columns(
-            [fn for fn,fa in fields.items()]
-        ))
+        list(self.person_model.add_columns(columns))
         self._load_data(self.person_model)
         self.qt_parent = QtCore.QObject()
         delegate = DelegateManager(self.qt_parent)
