@@ -47,10 +47,10 @@ from camelot_example.model import Movie, Tag
 from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
-from . import app_admin, test_core, test_view
+from . import app_admin, test_core, test_view, unit_test_context
 from .test_item_model import QueryQStandardItemModelMixinCase, SetupQueryProxy
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession, DirtySession
+from .test_model import ExampleModelMixinCase, load_sample_data_name, SetupSession, dirty_session_action_name
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -151,6 +151,32 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
             self.assertTrue( dialog.isHidden() )
         self.assertFalse( dialog.isHidden() )
 
+# begin select item
+class SendDocumentAction( Action ):
+
+    def model_run( self, model_context, mode ):
+        methods = [
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By E-mail'),
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By Fax'),
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By postal mail')
+        ]
+        method = yield SelectItem(
+            methods,
+            value=initial_naming_context._bind_object('email')
+        )
+        # handle sending of the document
+        LOGGER.info('selected {}'.format(method))
+
+# end select item
+
+send_document_action_name = unit_test_context.bind(('send_document_action',), SendDocumentAction())
+
 class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, SerializableMixinCase):
     """Test the various steps that can be executed during an
     action.
@@ -162,7 +188,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.gui_run(LoadSampleData(), mode=True)
+        cls.gui_run(load_sample_data_name, mode=True)
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
@@ -188,33 +214,11 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         action_steps.SelectFile('Image Files (*.png *.jpg);;All Files (*)')
 
     def test_select_item( self ):
-
-        # begin select item
-        class SendDocumentAction( Action ):
-
-            def model_run( self, model_context, mode ):
-                methods = [
-                    CompletionValue(
-                        initial_naming_context._bind_object('email'),
-                        'By E-mail'),
-                    CompletionValue(
-                        initial_naming_context._bind_object('email'),
-                        'By Fax'),
-                    CompletionValue(
-                        initial_naming_context._bind_object('email'),
-                        'By postal mail')
-                ]
-                method = yield SelectItem(
-                    methods,
-                    value=initial_naming_context._bind_object('email')
-                )
-                # handle sending of the document
-                LOGGER.info('selected {}'.format(method))
-
-        # end select item
-
-        action = SendDocumentAction()
-        step = self.gui_run(action, self.gui_context, model_context_name=self.model_context_name)[-2]
+        step = self.gui_run(
+            send_document_action_name,
+            self.gui_context,
+            model_context_name=self.model_context_name
+        )[-2]
         self.assertEqual(step[0], SelectItem.__name__)
         dialog = SelectItem.render(step[1])
         self.grab_widget(dialog)
@@ -650,8 +654,14 @@ class FormActionsCase(
         list(self.gui_run(close_form_action, self.gui_context_name, None))
 
 
+backup_action_name = unit_test_context.bind(('backup',), application_action.Backup())
+restore_action_name = unit_test_context.bind(('restore',), application_action.Restore())
+change_logging_action_name = unit_test_context.bind(('change_logging',), ChangeLogging())
+segmentation_fault_action_name = unit_test_context.bind(('segmentation_fault',), application_action.SegmentationFault())
+refresh_action_name = unit_test_context.bind(('refresh',), application_action.Refresh())
+        
 class ApplicationActionsCase(
-    RunningThreadCase, GrabMixinCase, ExampleModelMixinCase
+    RunningProcessCase, GrabMixinCase, ExampleModelMixinCase
     ):
     """Test application actions.
     """
@@ -662,7 +672,7 @@ class ApplicationActionsCase(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
+        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
@@ -671,12 +681,11 @@ class ApplicationActionsCase(
         self.gui_context = ('cpp_gui_context', 'root_backend')
 
     def test_refresh(self):
-        self.gui_run(DirtySession(), ('constant', 'null'), mode=True)
-        refresh_action = application_action.Refresh()
+        self.gui_run(dirty_session_action_name, ('constant', 'null'), mode=True)
         #
         # refresh the session through the action
         #
-        generator = self.gui_run(refresh_action, self.gui_context, None)
+        generator = self.gui_run(refresh_action_name, self.gui_context, None)
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'UpdateObjects':
                 updates = step[1]['updated']
@@ -695,17 +704,15 @@ class ApplicationActionsCase(
         self.assertTrue(profile_selected)
 
     def test_backup_and_restore( self ):
-        backup_action = application_action.Backup()
         replies = {action_steps.SaveFile: 'unittest-backup.db'}
-        generator = self.gui_run(backup_action, self.gui_context, None, replies)
+        generator = self.gui_run(backup_action_name, self.gui_context, None, replies)
         file_saved = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SaveFile':
                 file_saved = True
         self.assertTrue(file_saved)
-        restore_action = application_action.Restore()
         replies = {action_steps.SelectFile: ['unittest-backup.db']}
-        generator = self.gui_run(restore_action, self.gui_context, None, replies)
+        generator = self.gui_run(restore_action_name, self.gui_context, None, replies)
         file_selected = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SelectFile':
@@ -719,8 +726,7 @@ class ApplicationActionsCase(
                 step.get_object().level = logging.INFO
 
     def test_segmentation_fault( self ):
-        segmentation_fault = application_action.SegmentationFault()
-        list(self.gui_run(segmentation_fault, self.gui_context, None))
+        list(self.gui_run(segmentation_fault_action_name, self.gui_context, None))
 
 
 class FieldActionCase(TestMetaData, ExampleModelMixinCase):

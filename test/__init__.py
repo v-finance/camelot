@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 faulthandler.enable()
-# import here because mac osx causes crashes with imports later on
+from camelot.core.naming import initial_naming_context
 from camelot.core.qt import QtCore
 from camelot.core.qt import QtGui
 from camelot.core.qt import QtWidgets
@@ -28,6 +28,10 @@ getattr(QtWidgets, 'QWidget')
 getattr(QtNetwork, 'QNetworkAccessManager')
 
 app_admin = ApplicationAdmin()
+
+unit_test_context = initial_naming_context.bind_new_context(
+    'unit_test', immutable=True
+)
 
 class TestSettings( object ):
 

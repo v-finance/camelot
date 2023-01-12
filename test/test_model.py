@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 from sqlalchemy import create_engine, orm, schema, types
 
+from . import unit_test_context
 from .test_orm import TestMetaData
 from camelot.admin.action import Action
 from camelot.admin.application_admin import ApplicationAdmin
@@ -42,6 +43,7 @@ class LoadSampleData(Action):
                 session.query(Person).count(), id(session)
             ))
 
+load_sample_data_name = unit_test_context.bind(('load_sample_data',), LoadSampleData())
 
 class SetupSession(Action):
 
@@ -75,6 +77,8 @@ class DirtySession(Action):
             person_table.delete().where( person_table.c.party_id == p6.id )
         )
         yield action_steps.UpdateProgress(detail='Session dirty')
+
+dirty_session_action_name = unit_test_context.bind(('dirty_session',), DirtySession())
 
 class ExampleModelMixinCase(object):
 
