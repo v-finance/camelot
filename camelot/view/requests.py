@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import logging
-import sys
 import typing
 
 from ..core.exception import CancelRequest
@@ -44,26 +43,30 @@ class AbstractRequest(NamedDataclassSerializable):
 
     @classmethod
     def _stop_action(cls, run_name, gui_run_name, response_handler, e):
-        from camelot.view.action_steps import PopProgressLevel
-        response_handler.serializable_action_step_signal.emit(
-            run_name, gui_run_name, PopProgressLevel.__name__, False,
-            PopProgressLevel()._to_bytes()
-        )
+        from .action_steps import PopProgressLevel
+        from .responses import ActionStopped, ActionStepped
+        response_handler.send_response(ActionStepped(
+            run_name=run_name, gui_run_name=gui_run_name, blocking=False,
+            step=(PopProgressLevel.__name__, PopProgressLevel())
+        ))
         if run_name != ('constant', 'null'):
             initial_naming_context.unbind(run_name)
-        response_handler.action_stopped_signal.emit(run_name, gui_run_name, e)
+        response_handler.send_response(ActionStopped(
+            run_name=run_name, gui_run_name=gui_run_name, exception=str(e)
+        ))
 
     @classmethod
     def _send_stop_message(cls, run_name, gui_run_name, response_handler, e):
-        from camelot.view.action_steps import MessageBox
-        response_handler.serializable_action_step_signal.emit(
-            run_name, gui_run_name, MessageBox.__name__, False,
-            MessageBox.from_exception(
+        from .responses import ActionStepped
+        from .action_steps import MessageBox
+        response_handler.send_response(ActionStepped(
+            run_name=run_name, gui_run_name=gui_run_name, blocking=False,
+            step=(MessageBox.__name__, MessageBox.from_exception(
                 LOGGER,
                 'Unhandled exception caught : {}'.format(type(e).__name__),
                 e
-            )._to_bytes()
-        )
+            ))
+        ))
         cls._stop_action(run_name, gui_run_name, response_handler, e)
 
     @classmethod
@@ -76,6 +79,7 @@ class AbstractRequest(NamedDataclassSerializable):
         :param generator_method: the method of the generator to be called
         :param *args: the arguments to use when calling the generator method.
         """
+        from .responses import ActionStepped
         try:
             run_name = tuple(request_data['run_name'])
             run = initial_naming_context.resolve(run_name)
@@ -90,10 +94,11 @@ class AbstractRequest(NamedDataclassSerializable):
                     run.last_step = result
                     if isinstance(result, (DataclassSerializable,)):
                         LOGGER.debug('serializable step, use signal slot')
-                        response_handler.serializable_action_step_signal.emit(
-                            run_name, gui_run_name, type(result).__name__,
-                            result.blocking, result._to_bytes()
-                        )
+                        response_handler.send_response(ActionStepped(
+                            run_name=run_name, gui_run_name=gui_run_name,
+                            step=(type(result).__name__, result),
+                            blocking=result.blocking,
+                        ))
                         if result.blocking:
                             # this step is blocking, interrupt the loop
                             return
@@ -140,6 +145,7 @@ class InitiateAction(AbstractRequest):
     @classmethod
     def execute(cls, request_data, response_handler, cancel_handler):
         from .action_steps import PushProgressLevel
+        from .responses import ActionStopped, ActionStepped
         LOGGER.debug('Iniate run of action {}'.format(request_data['action_name']))
         gui_run_name = tuple(request_data['gui_run_name'])
         try:
@@ -147,22 +153,24 @@ class InitiateAction(AbstractRequest):
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))
         except NameNotFoundException as e:
             LOGGER.error('Could resolve initate action, no binding for name: {}'.format(e.name))
-            response_handler.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
+            response_handler.send_response(ActionStopped(
+                run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=None
+            ))
             return
         try:
             generator = action.model_run(model_context, request_data.get('mode'))
         except Exception as exception:
-            cls._send_stop_message(
-                ('constant', 'null'), gui_run_name, response_handler, exception
-            )
+            response_handler.send_response(ActionStopped(
+                run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=str(exception)
+            ))
         if generator is None:
             response_handler.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
         run = ModelRun(gui_run_name, generator)
         run_name = model_run_names.bind(str(id(run)), run)
-        response_handler.serializable_action_step_signal.emit(
-            run_name, gui_run_name, PushProgressLevel.__name__, False,
-            PushProgressLevel('Please wait')._to_bytes()
-        )
+        response_handler.send_response(ActionStepped(
+            run_name=run_name, gui_run_name=gui_run_name, blocking=False,
+            step=(PushProgressLevel.__name__, PushProgressLevel('Please wait'))
+        ))
         request_data["run_name"] = run_name
         LOGGER.debug('Action {} runs in generator {}'.format(request_data['action_name'], run_name))
         cls._iterate_until_blocking(

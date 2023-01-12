@@ -27,7 +27,7 @@ from camelot.core.qt import QtGui, QtWidgets, Qt, delete
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
-from camelot.test import GrabMixinCase, RunningThreadCase
+from camelot.test import GrabMixinCase, RunningThreadCase, RunningProcessCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils, utils, gui_naming_context
 from camelot.view.action_runner import hide_progress_dialog
@@ -70,8 +70,20 @@ class SerializableMixinCase(object):
         deserialized_object.read_object(stream)
         return deserialized_object
 
+class CustomAction(Action):
+    name = 'custom_test_action'
+    verbose_name = 'Custom Action'
+    shortcut = QtGui.QKeySequence.StandardKey.New
+    modes = [
+        Mode('mode_1', _('First mode')),
+        Mode('mode_2', _('Second mode')),
+    ]
 
-class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
+
+custom_action_name = initial_naming_context.bind((CustomAction.name,), CustomAction())
+
+
+class ActionBaseCase(RunningProcessCase, SerializableMixinCase):
 
     model_context_name = ('constant', 'null')
 
@@ -87,23 +99,10 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
         ActionStep()
 
     def test_action(self):
-
-        class CustomAction( Action ):
-            verbose_name = 'Custom Action'
-            shortcut = QtGui.QKeySequence.StandardKey.New
-            modes = [
-                Mode('mode_1', _('First mode')),
-                Mode('mode_2', _('Second mode')),
-            ]
-
-        action = CustomAction()
-        self.gui_run(action, self.gui_context_name, 'mode_1')
-        state = self.get_state(action, self.gui_context_name)
-        self.assertTrue(state.verbose_name)
-        # serialize the state of an action
-        deserialized_state = self._write_read(state)
-        self.assertEqual(deserialized_state.verbose_name, state.verbose_name)
-        self.assertEqual(len(deserialized_state.modes), len(state.modes))
+        self.gui_run(custom_action_name, self.gui_context_name, 'mode_1')
+        state = self.get_state(custom_action_name, self.gui_context_name)
+        self.assertTrue(state['verbose_name'])
+        self.assertTrue(len(state['modes']))
 
 
 class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):

@@ -104,6 +104,15 @@ class GrabMixinCase(object):
 # make sure the name is reserved, so we can unbind it without exception
 test_action_name = initial_naming_context.bind(('test_action',), object())
 
+class GetActionState(Action):
+
+    def model_run(self, model_context, mode):
+        action = initial_naming_context.resolve(tuple(mode))
+        yield action_steps.UpdateProgress(
+            'Got state', detail=action.get_state(model_context),
+        )
+
+get_action_state_name = initial_naming_context.bind(('get_action_state',), GetActionState())
 
 class ActionMixinCase(object):
     """
@@ -112,30 +121,23 @@ class ActionMixinCase(object):
 
     # specify a model context name in each test case
     model_context_name = None
-    state_register = None
 
     @classmethod
-    def get_state(cls, action, gui_context):
+    def get_state(cls, action_name, gui_context):
         """
         Get the state of an action in the model thread and return
         the result.
         """
-
-        cls.state_register = None
-
-        class GetActionState(Action):
-
-            def model_run(self, model_context, name):
-                model_context = initial_naming_context.resolve(cls.model_context_name)
-                cls.state_register = action.get_state(model_context)
-                yield action_steps.UpdateProgress('Got state')
-
-        cls.gui_run(GetActionState())
-        return cls.state_register
+        for step_type, step_data in cls.gui_run(
+            get_action_state_name, mode=action_name,
+            model_context_name=cls.model_context_name
+        ):
+            if step_type == action_steps.UpdateProgress.__name__:
+                return step_data['detail']
 
     @classmethod
     def gui_run(cls,
-                action,
+                action_name,
                 gui_context_name=('constant', 'null'),
                 mode=None,
                 replies={},
@@ -144,9 +146,6 @@ class ActionMixinCase(object):
         Simulates the gui_run of an action, but instead of blocking,
         yields progress each time a message is received from the model.
         """
-        initial_naming_context.validate_composite_name(gui_context_name)
-        initial_naming_context.unbind(test_action_name)
-        action_name = initial_naming_context.bind(('test_action',), action)
 
         class GuiRunRecorder(GuiRun):
             """
