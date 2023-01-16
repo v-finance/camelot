@@ -86,7 +86,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             self.trigger_list_action
         )
         self.action_routes = dict()
-        model = get_qml_root_backend().createModel(admin_route, columns)
+        model = get_qml_root_backend().createModel(admin_route, columns, table)
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
         table.setModel(model)
         self.admin_route = admin_route

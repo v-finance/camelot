@@ -35,7 +35,7 @@ import time
 import typing
 
 from ..core.naming import (
-    initial_naming_context, CompositeName, NameNotFoundException
+    initial_naming_context, CompositeName, NamingException, NameNotFoundException
 )
 from ..core.serializable import DataclassSerializable, json_encoder
 from ..core.qt import QtCore, QtGui, is_deleted
@@ -244,7 +244,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         gui_run_name = tuple(message['gui_run_name'])
         try:
             model_context = initial_naming_context.resolve(tuple(message['model_context']))
-        except NameNotFoundException:
+        except (NamingException, NameNotFoundException):
             LOGGER.error('Could not create model context, no binding for name: {}'.format(message['model_context']))
             self.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
             return

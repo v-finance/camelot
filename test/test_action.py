@@ -630,7 +630,8 @@ class FormActionsCase(
         person_admin = app_admin.get_related_admin(Person)
         self.admin_route = person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, person_admin.get_name())
-        self.form_view = FormView(
+        self.form_view = FormView()
+        self.form_view.setup(
             'Test form', self.admin_route, tuple(), self.item_model,
             Form([])._to_dict(), {}, 0
         )

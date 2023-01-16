@@ -261,10 +261,12 @@ class FormView(AbstractView, GuiContext):
 
     form_widget = FormWidget
 
-    def __init__(
+    def __init__(self, parent = None):
+        AbstractView.__init__(self, parent)
+
+    def setup(
         self, title, admin_route, close_route, model, form_display,
         fields, index, parent = None):
-        AbstractView.__init__( self, parent )
 
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 1 )

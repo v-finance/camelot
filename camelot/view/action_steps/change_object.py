@@ -84,16 +84,18 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        columns = [fn for fn, _fa in fields.items()]
-        model = get_qml_root_backend().createModel(admin_route, columns)
-        self.action_routes = dict()
-
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(
-            admin_route=admin_route, model=model, form_display=form_display,
+            admin_route=admin_route, model=None, form_display=form_display,
             fields=fields, parent=self
         )
+
+        columns = [fn for fn, _fa in fields.items()]
+        model = get_qml_root_backend().createModel(admin_route, columns, form_widget)
+        self.action_routes = dict()
+        form_widget.set_model(model)
+
         note_layout = QtWidgets.QVBoxLayout()
         note = editors.NoteEditor( parent=self )
         note.set_value(None)
