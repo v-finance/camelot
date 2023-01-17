@@ -92,24 +92,14 @@ class AbstractRequest(NamedDataclassSerializable):
             while True:
                 if isinstance(result, ActionStep):
                     run.last_step = result
-                    if isinstance(result, (DataclassSerializable,)):
-                        LOGGER.debug('serializable step, use signal slot')
-                        response_handler.send_response(ActionStepped(
-                            run_name=run_name, gui_run_name=gui_run_name,
-                            step=(type(result).__name__, result),
-                            blocking=result.blocking,
-                        ))
-                        if result.blocking:
-                            # this step is blocking, interrupt the loop
-                            return
-                    elif result.blocking:
-                        LOGGER.debug( 'non serializable blocking step : {}'.format(result) )
-                        raise Exception('This should not happen')
-                    else:
-                        LOGGER.debug( 'non blocking step, use signal slot' )
-                        response_handler.non_blocking_action_step_signal.emit(
-                            run_name, gui_run_name, result
-                        )
+                    response_handler.send_response(ActionStepped(
+                        run_name=run_name, gui_run_name=gui_run_name,
+                        step=(type(result).__name__, result),
+                        blocking=result.blocking,
+                    ))
+                    if result.blocking:
+                        # this step is blocking, interrupt the loop
+                        return
                 #
                 # Cancel requests can arrive asynchronously through non 
                 # blocking ActionSteps such as UpdateProgress

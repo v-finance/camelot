@@ -167,6 +167,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     
     non_blocking_action_step_signal = QtCore.qt_signal(tuple, tuple, object)
     response = QtCore.qt_signal(bytes)
+    busy = QtCore.qt_signal(bool)
 
     def __init__(self):
         super().__init__()
@@ -225,7 +226,10 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             post(CancelAction(run_name=run_name))
 
     def send_response(self, response):
-        self.response.emit(response._to_bytes())
+        if isinstance(response, (ActionStepped,)) and not isinstance(response.step, (DataclassSerializable,)):
+            self.non_blocking_action_step_signal.emit(response.run_name, response.gui_run_name, response.step)
+        else:
+            self.response.emit(response._to_bytes())
 
     @QtCore.qt_slot(bytes)
     def _handle_response(self, serialized_response):
