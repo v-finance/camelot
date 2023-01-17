@@ -6,9 +6,7 @@ from ..core.exception import CancelRequest
 from ..core.naming import (
     CompositeName, NameNotFoundException, initial_naming_context
 )
-from ..core.serializable import (
-    DataclassSerializable, NamedDataclassSerializable, Serializable
-)
+from ..core.serializable import NamedDataclassSerializable, Serializable
 from ..admin.action import ActionStep
 
 LOGGER = logging.getLogger('camelot.view.requests')

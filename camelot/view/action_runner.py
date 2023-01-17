@@ -34,7 +34,7 @@ import time
 import typing
 
 from ..core.naming import CompositeName
-from ..core.serializable import json_encoder
+from ..core.serializable import json_encoder, DataclassSerializable
 from ..core.qt import QtCore, QtGui, is_deleted
 from . import gui_naming_context
 from camelot.admin.action.base import MetaActionStep
@@ -42,7 +42,7 @@ from camelot.core.exception import CancelRequest
 from camelot.core.singleton import QSingleton
 from camelot.view.model_thread import post
 from .requests import InitiateAction, CancelAction
-from .responses import AbstractResponse
+from .responses import AbstractResponse, ActionStepped
 
 LOGGER = logging.getLogger('camelot.view.action_runner')
 
@@ -226,8 +226,8 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             post(CancelAction(run_name=run_name))
 
     def send_response(self, response):
-        if isinstance(response, (ActionStepped,)) and not isinstance(response.step, (DataclassSerializable,)):
-            self.non_blocking_action_step_signal.emit(response.run_name, response.gui_run_name, response.step)
+        if isinstance(response, (ActionStepped,)) and not isinstance(response.step[1], (DataclassSerializable,)):
+            self.non_blocking_action_step_signal.emit(response.run_name, response.gui_run_name, response.step[1])
         else:
             self.response.emit(response._to_bytes())
 

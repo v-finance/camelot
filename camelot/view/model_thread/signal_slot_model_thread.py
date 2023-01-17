@@ -33,7 +33,6 @@ Created on Sep 9, 2009
 '''
 import json
 import logging
-import time
 
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
 REQUEST_LOGGER = logging.getLogger('request')

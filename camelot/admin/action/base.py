@@ -37,7 +37,7 @@ from typing import Any
 
 from ...admin.icon import Icon
 from ...core.qt import QtWidgets, QtGui, transferto
-from ...core.serializable import DataclassSerializable, Serializable
+from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ...view.art import from_admin_icon
 

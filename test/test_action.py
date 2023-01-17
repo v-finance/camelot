@@ -593,7 +593,7 @@ class ListActionsCase(
     def test_group_box_filter(self):
         state = self.get_state(group_box_filter_name, self.gui_context)
         self.assertTrue(len(state['modes']))
-        self.gui_run(group_box_filter_name, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
+        self.gui_run(group_box_filter_name, self.gui_context, state['modes'][0]['value'], model_context_name=self.model_context_name)
 
     def test_combo_box_filter(self):
         state = self.get_state(combo_box_filter_name, self.gui_context)
