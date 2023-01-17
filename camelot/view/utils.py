@@ -277,6 +277,10 @@ def resize_widget_to_screen( widget_or_window, fraction = 0.75 ):
         available_geometry.height() * fraction
     )
 
+def get_settings_group(admin_route):
+    assert len(admin_route) >= 2
+    return [admin_route[-2][:255]]
+
 def get_settings(group):
     """A :class:`QtCore.QSettings` object in which Camelot related settings
     can be stored.  This object is intended for Camelot internal use.  If an

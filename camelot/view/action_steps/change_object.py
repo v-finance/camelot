@@ -44,6 +44,7 @@ from camelot.view.controls import editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.qml_view import get_qml_root_backend
+from camelot.view.utils import get_settings_group
 
 from .form_view import OpenFormView
 from .item_view import UpdateTableView
@@ -92,7 +93,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         )
 
         columns = [fn for fn, _fa in fields.items()]
-        model = get_qml_root_backend().createModel(admin_route, columns, form_widget)
+        model = get_qml_root_backend().createModel(get_settings_group(admin_route), columns, form_widget)
         self.action_routes = dict()
         form_widget.set_model(model)
 

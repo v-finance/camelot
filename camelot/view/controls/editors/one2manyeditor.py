@@ -37,6 +37,7 @@ from ....core.item_model import ActionModeRole
 from ... import gui_naming_context
 from ..view import ViewWithActionsMixin
 from camelot.view.qml_view import get_qml_root_backend
+from camelot.view.utils import get_settings_group
 from ..tableview import TableWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
@@ -86,7 +87,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             self.trigger_list_action
         )
         self.action_routes = dict()
-        model = get_qml_root_backend().createModel(admin_route, columns, table)
+        model = get_qml_root_backend().createModel(get_settings_group(admin_route), columns, table)
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
         table.setModel(model)
         self.admin_route = admin_route

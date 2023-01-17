@@ -38,6 +38,7 @@ from camelot.view.controls.tableview import TableWidget
 from camelot.view.qml_view import get_qml_root_backend
 from camelot.view.proxy import ValueLoading
 from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.utils import get_settings_group
 from camelot_example.application_admin import MyApplicationAdmin
 
 logger = logging.getLogger('view.unittests')
@@ -475,7 +476,7 @@ class FormTest(
         self.admin_route = self.person_admin.get_admin_route()
         columns = [ fn for fn, fa in self.person_admin.get_fields() ]
         self.qt_parent = QtCore.QObject()
-        self.person_model = get_qml_root_backend().createModel(self.admin_route, columns, self.qt_parent)
+        self.person_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), columns, self.qt_parent)
         self.person_model.set_value(self.model_context_name)
         list(self.person_model.add_columns(columns))
         self._load_data(self.person_model)

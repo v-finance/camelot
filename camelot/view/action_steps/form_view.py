@@ -44,6 +44,7 @@ from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
+from ...view.utils import get_settings_group
 from .item_view import AbstractCrudView
 from  ..qml_view import get_qml_root_backend
 #from ..qml_view import qml_action_step
@@ -121,7 +122,7 @@ class OpenFormView(AbstractCrudView):
     def render(self, gui_context_name, step):
         form = FormView()
         columns = [ fn for fn, fa in step['fields'].items() ]
-        model = get_qml_root_backend().createModel(step['admin_route'], columns, form)
+        model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), columns, form)
         model.set_value(step['model_context_name'])
         list(model.add_columns((fn for fn, fa in step['fields'].items())))
 
