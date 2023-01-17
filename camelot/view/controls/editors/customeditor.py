@@ -42,8 +42,6 @@ def set_background_color_palette(widget, background_color):
     # in all states on all platforms (Mac, Linux, Win XP, Win Vista, Win 7)
     #
     if background_color not in (None, ValueLoading):
-        if isinstance(background_color, str):
-            background_color = QtGui.QColor(background_color)
         palette = QtGui.QPalette(widget.palette())
         for x in [QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorGroup.Inactive,
                   QtGui.QPalette.ColorGroup.Disabled]:
