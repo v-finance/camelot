@@ -188,6 +188,9 @@ class SetupProxy(Action):
         initial_naming_context.rebind(self.model_context_name, model_context)
         yield action_steps.UpdateProgress(detail='Proxy setup')
 
+setup_proxy = unit_test_context.bind(('setup_proxy',), SetupProxy())
+
+
 class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
     pass
 
@@ -196,7 +199,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     @classmethod
     def setUpClass(cls):
         super(ItemModelThreadCase, cls).setUpClass()
-        cls.gui_run(LoadSampleData(), mode=True)
+        cls.gui_run(load_sample_data_name, mode=True)
 
     def setUp( self ):
         super(ItemModelThreadCase, self).setUp()
