@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 
 from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession
 from .test_proxy import A, B
-from . import app_admin
+from . import app_admin, unit_test_context
 
 from camelot.admin.action import Action
 from camelot.admin.action.field_action import ClearObject, SelectObject
@@ -608,8 +608,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
 
 class SetupQueryProxy(Action):
 
-    def __init__(self, model_context_name, admin_cls=Person.Admin):
-        self.model_context_name = model_context_name
+    def __init__(self, admin_cls):
         self.admin_cls = admin_cls
 
     def model_run(self, model_context, mode):
@@ -617,14 +616,12 @@ class SetupQueryProxy(Action):
         admin = self.admin_cls(app_admin, Person)
         proxy = QueryModelProxy(session.query(Person))
         model_context = ObjectsModelContext(admin, proxy, None)
-        initial_naming_context.rebind(self.model_context_name, model_context)
+        initial_naming_context.rebind(tuple(mode), model_context)
         yield action_steps.UpdateProgress(detail='Proxy setup')
 
+setup_query_proxy_name = unit_test_context.bind(('setup_query_proxy',), SetupQueryProxy(admin_cls=Person.Admin))
 
 class ApplyFilter(Action):
-
-    def __init__(self, model_context_name):
-        self.model_context_name = model_context_name
 
     def model_run(self, model_context, mode):
 
@@ -633,18 +630,15 @@ class ApplyFilter(Action):
             def decorate_query(self, query, values):
                 return query.filter_by(id=values)
 
-        model_context = initial_naming_context.resolve(self.model_context_name)
         model_context.proxy.filter(SingleItemFilter(Person.id), 1)
         yield action_steps.UpdateProgress(detail='Filter applied')
 
+apply_filter_name = unit_test_context.bind(('apply_filter',), ApplyFilter())
 
 class InsertObject(Action):
 
-    def __init__(self, model_context_name):
-        self.model_context_name = model_context_name
 
     def model_run(self, model_context, persons_name):
-        model_context = initial_naming_context.resolve(self.model_context_name)
         person = Person()
         initial_naming_context.bind(tuple(persons_name), [person])
         count = len(model_context.proxy)
@@ -652,6 +646,7 @@ class InsertObject(Action):
         assert model_context.proxy.index(person)==count
         yield action_steps.UpdateProgress(detail='person inserted')
 
+insert_object_name = unit_test_context.bind(('insert_object',), InsertObject())
 
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """

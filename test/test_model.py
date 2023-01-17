@@ -52,6 +52,7 @@ class SetupSession(Action):
         session.close()
         yield action_steps.UpdateProgress(detail='Session closed')
 
+setup_session_name = unit_test_context.bind(('setup_session',), LoadSampleData())
 
 class DirtySession(Action):
     

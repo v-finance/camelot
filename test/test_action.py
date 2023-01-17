@@ -48,9 +48,9 @@ from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
 from . import app_admin, test_core, test_view, unit_test_context
-from .test_item_model import QueryQStandardItemModelMixinCase, SetupQueryProxy
+from .test_item_model import QueryQStandardItemModelMixinCase, setup_query_proxy_name
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import ExampleModelMixinCase, load_sample_data_name, SetupSession, dirty_session_action_name
+from .test_model import ExampleModelMixinCase, LoadSampleData, load_sample_data_name, setup_session_name, dirty_session_action_name
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -248,6 +248,13 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         dialog.show()
         self.grab_widget(dialog)
 
+group_box_filter_name = unit_test_context.bind(('group_box',), list_filter.GroupBoxFilter(Person.last_name, exclusive=True))
+combo_box_filter_name = unit_test_context.bind(('combo_box',), list_filter.ComboBoxFilter(Person.last_name))
+to_first_row_name = unit_test_context.bind(('to_first_row',), list_action.ToFirstRow())
+to_last_row_name = unit_test_context.bind(('to_last_row',), list_action.ToLastRow())
+export_spreadsheet_name = unit_test_context.bind(('export_spreadsheet',), list_action.ExportSpreadsheet())
+import_from_file_name = unit_test_context.bind(('import_from_file',), list_action.ImportFromFile())
+set_filters_name = unit_test_context.bind(('set_filters',), list_action.SetFilters())
 
 class ListActionsCase(
     RunningThreadCase,
@@ -261,19 +268,14 @@ class ListActionsCase(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.gui_run(LoadSampleData(), mode=True)
-        cls.group_box_filter = list_filter.GroupBoxFilter(Person.last_name, exclusive=True)
-        cls.combo_box_filter = list_filter.ComboBoxFilter(Person.last_name)
+        cls.gui_run(load_sample_data_name, mode=True)
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
-        self.gui_run(SetupSession(), mode=True)
-        self.gui_run(SetupQueryProxy(self.model_context_name))
+        self.gui_run(setup_session_name, mode=True)
+        self.gui_run(setup_query_proxy_name, mode=self.model_context_name)
         self.admin = app_admin.get_related_admin(Person)
         self.admin_route = self.admin.get_admin_route()
-        self.combo_box_filter_route = self.admin._register_action_route(
-            self.admin_route, self.combo_box_filter
-        )
         self.setup_item_model(self.admin_route, self.admin.get_name())
         self.movie_admin = app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
@@ -303,24 +305,19 @@ class ListActionsCase(
 
     def test_change_row_actions( self ):
         # FIXME: this unit test does not work with the new ToFirstRow/ToNextRow action steps...
-        return
-
-        to_first = list_action.ToFirstRow()
-        to_last = list_action.ToLastRow()
-
         # the state does not change when the current row changes,
         # to make the actions usable in the main window toolbar
-        list(self.gui_run(to_last.gui_run, self.gui_context, None, model_context_name=self.model_context_name))
+        list(self.gui_run(to_first_row_name, self.gui_context, None, model_context_name=self.model_context_name))
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
-        list(self.gui_run(to_first.gui_run, self.gui_context, None, model_context_name=self.model_context_name))
+        list(self.gui_run(to_last_row_name, self.gui_context, None, model_context_name=self.model_context_name))
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
 
     def test_export_spreadsheet( self ):
-        action = list_action.ExportSpreadsheet()
-        for step in self.gui_run(action, self.gui_context, None, model_context_name=self.model_context_name):
-            if isinstance(step, tuple) and step[0] == 'OpenFile':
+        for step in self.gui_run(export_spreadsheet_name, self.gui_context, None, model_context_name=self.model_context_name):
+            print(step)
+            if step[0] == 'OpenFile':
                 filename = step[1]["path"]
         self.assertTrue(filename)
         # see if the generated file can be parsed
@@ -414,11 +411,10 @@ class ListActionsCase(
         self.assertEqual(utils.bool_from_string(row[6]), False)
 
     def test_import_from_file(self, filename='import_example.csv'):
-        action = list_action.ImportFromFile()
         replies = {
             action_steps.SelectFile: [os.path.join(self.example_folder, filename)]
         }
-        steps = self.gui_run(action, self.gui_context, None, replies, model_context_name=self.model_context_name)
+        steps = self.gui_run(import_from_file_name, self.gui_context, None, replies, model_context_name=self.model_context_name)
         for step in steps:
             if isinstance(step, action_steps.ChangeObject):
                 dialog = step.render(self.gui_context)
@@ -588,30 +584,35 @@ class ListActionsCase(
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        self.gui_run(SetFilters, self.gui_context, set_filters_step[1], model_context_name=self.model_context_name)
+        self.gui_run(set_filters_name, self.gui_context, set_filters_step[1], model_context_name=self.model_context_name)
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
                 #steps.send(('first_name', 'test'))
 
     def test_group_box_filter(self):
-        state = self.get_state(self.group_box_filter, self.gui_context)
-        self.assertTrue(len(state.modes))
-        self.gui_run(self.group_box_filter, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
+        state = self.get_state(group_box_filter_name, self.gui_context)
+        self.assertTrue(len(state['modes']))
+        self.gui_run(group_box_filter_name, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
 
     def test_combo_box_filter(self):
-        state = self.get_state(self.combo_box_filter, self.gui_context)
-        self.assertTrue(len(state.modes))
+        state = self.get_state(combo_box_filter_name, self.gui_context)
+        self.assertTrue(len(state['modes']))
         widget = self.view.render_action(
-            self.combo_box_filter.render_hint, self.combo_box_filter_route,
+            list_filter.ComboBoxFilter.render_hint, combo_box_filter_name,
             self.view, None
         )
-        AbstractActionWidget.set_combobox_state(widget, state._to_dict())
+        AbstractActionWidget.set_combobox_state(widget, state)
         self.assertTrue(widget.count())
-        self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
+        self.gui_run(combo_box_filter_name, self.gui_context, state['modes'][0]['value'], model_context_name=self.model_context_name)
         self.grab_widget(widget)
 
 
+close_form_name = unit_test_context.bind(('close_form',), form_action.CloseForm())
+to_previous_form_name = unit_test_context.bind(('to_previous_form',), form_action.ToPreviousForm())
+to_next_form_name = unit_test_context.bind(('to_next_form',), form_action.ToNextForm())
+to_first_form_name = unit_test_context.bind(('to_first_form',), form_action.ToFirstForm())
+to_last_form_name = unit_test_context.bind(('to_last_form',), form_action.ToLastForm())
 
 class FormActionsCase(
     RunningThreadCase,
@@ -625,11 +626,11 @@ class FormActionsCase(
     @classmethod
     def setUpClass(cls):
         super(FormActionsCase, cls).setUpClass()
-        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
+        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
-        self.gui_run(SetupQueryProxy(self.model_context_name))
+        self.gui_run(setup_query_proxy_name)
         person_admin = app_admin.get_related_admin(Person)
         self.admin_route = person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, person_admin.get_name())
@@ -640,18 +641,13 @@ class FormActionsCase(
         self.gui_context_name = self.form_view.gui_context_name
 
     def test_previous_next( self ):
-        previous_action = form_action.ToPreviousForm()
-        list(self.gui_run(previous_action, self.gui_context_name, None))
-        next_action = form_action.ToNextForm()
-        list(self.gui_run(next_action, self.gui_context_name, None))
-        first_action = form_action.ToFirstForm()
-        list(self.gui_run(first_action, self.gui_context_name, None))
-        last_action = form_action.ToLastForm()
-        list(self.gui_run(last_action, self.gui_context_name, None))
+        list(self.gui_run(to_previous_form_name, self.gui_context_name, None))
+        list(self.gui_run(to_next_form_name, self.gui_context_name, None))
+        list(self.gui_run(to_first_form_name, self.gui_context_name, None))
+        list(self.gui_run(to_last_form_name, self.gui_context_name, None))
 
     def test_close_form( self ):
-        close_form_action = form_action.CloseForm()
-        list(self.gui_run(close_form_action, self.gui_context_name, None))
+        list(self.gui_run(close_form_name, self.gui_context_name, None))
 
 
 backup_action_name = unit_test_context.bind(('backup',), application_action.Backup())
