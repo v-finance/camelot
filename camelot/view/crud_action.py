@@ -398,9 +398,11 @@ class RowData(Update):
         rows = mode["rows"]
         columns = mode["columns"]
         offset, limit = self.offset_and_limit_rows_to_get(rows)
+        changed_ranges = []
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
-            yield action_steps.Update(self.add_data(model_context, row, columns, obj, True))
+            changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
+        yield action_steps.Update(changed_ranges)
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)

@@ -3,9 +3,9 @@ import logging
 import multiprocessing
 
 from ..core.qt import QtCore
-from ..core.serializable import NamedDataclassSerializable
+from ..core.serializable import NamedDataclassSerializable, DataclassSerializable
 from .requests import StopProcess
-from .responses import AbstractResponse
+from .responses import AbstractResponse, ActionStepped, Busy
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,6 +21,8 @@ class PipeResponseHandler(object):
         self._response_connection = response_connection
 
     def send_response(self, response):
+        if isinstance(response, (ActionStepped,)) and not isinstance(response.step[1], (DataclassSerializable,)):
+            response.step = (response.step[0], response.step[1]._to_dict())        
         self._response_connection.send_bytes(response._to_bytes())
 
     def has_cancel_request(self):
@@ -47,7 +49,9 @@ class ModelProcess(multiprocessing.Process):
         LOGGER = logging.getLogger("model_process")
         response_handler = PipeResponseHandler(self._response_sender)
         while True:
+            response_handler.send_response(Busy(False))
             request = self._request_queue.get()
+            response_handler.send_response(Busy(True))
             try:
                 request_type_name, request_data = json.loads(request)
                 request_type = NamedDataclassSerializable.get_cls_by_name(

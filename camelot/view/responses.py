@@ -18,9 +18,6 @@ class AbstractResponse(NamedDataclassSerializable):
     Serialiazable Responses the model can send to the UI
     """
 
-    run_name: CompositeName
-    gui_run_name: CompositeName
-
     @classmethod
     def _was_canceled(self, gui_context_name):
         """raise a :class:`camelot.core.exception.CancelRequest` if the
@@ -54,10 +51,21 @@ class AbstractResponse(NamedDataclassSerializable):
     def handle_response(cls, response_data, post_method):
         pass
 
+@dataclass
+class Busy(AbstractResponse):
+
+    busy: bool
+
+    @classmethod
+    def handle_response(cls, response_data, post_method):
+        from .action_runner import action_runner
+        action_runner.busy.emit(response_data['busy'])
 
 @dataclass
 class ActionStepped(AbstractResponse):
 
+    run_name: CompositeName
+    gui_run_name: CompositeName
     blocking: bool
     step: NamedDataclassSerializable
     
@@ -68,7 +76,7 @@ class ActionStepped(AbstractResponse):
         step_type, step = response_data['step']
         gui_run = gui_naming_context.resolve(gui_run_name)
         try:
-            serialized_step = json.dumps(step)
+            serialized_step = json.dumps(step).encode()
             cls._was_canceled(gui_run.gui_context_name)
             to_send = gui_run.handle_serialized_action_step(step_type, serialized_step)
             if response_data['blocking']==True:
@@ -90,6 +98,8 @@ class ActionStepped(AbstractResponse):
 @dataclass
 class ActionStopped(AbstractResponse):
 
+    run_name: CompositeName
+    gui_run_name: CompositeName
     exception: typing.Any
 
     @classmethod

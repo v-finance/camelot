@@ -53,20 +53,13 @@ class TaskHandler(QtCore.QObject):
     that are in the queue.
     """
 
-    task_handler_busy_signal = QtCore.qt_signal(bool)
-
     def __init__(self, queue):
         """:param queue: the queue from which to pop a task when handle_task
         is called"""
         QtCore.QObject.__init__(self)
         self._mutex = QtCore.QMutex()
         self._queue = queue
-        self._busy = False
         logger.debug("TaskHandler created.")
-
-    def busy(self):
-        """:return True/False: indicating if this task handler is busy"""
-        return self._busy
 
     def has_cancel_request(self):
         for request in self._queue._request_queue:
@@ -77,8 +70,6 @@ class TaskHandler(QtCore.QObject):
     @QtCore.qt_slot()
     def handle_task(self):
         """Handle all tasks that are in the queue"""
-        self._busy = True
-        self.task_handler_busy_signal.emit( True )
         request = self._queue.pop()
         while request:
             try:
@@ -93,8 +84,6 @@ class TaskHandler(QtCore.QObject):
             except:
                 logger.fatal('Unhandled something in model thread')
             request = self._queue.pop()
-        self.task_handler_busy_signal.emit( False )
-        self._busy = False
 
 class SignalSlotModelThread( AbstractModelThread ):
     """A model thread implementation that uses signals and slots
@@ -118,7 +107,6 @@ class SignalSlotModelThread( AbstractModelThread ):
         Initialize the objects that live in the model thread
         """
         self._task_handler = TaskHandler(self)
-        self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.ConnectionType.QueuedConnection)
 
     def run( self ):
         self.logger.debug( 'model thread started' )
@@ -128,10 +116,6 @@ class SignalSlotModelThread( AbstractModelThread ):
         self._task_handler.handle_task()
         self.exec()
         self.logger.debug('model thread stopped')
-
-    @QtCore.qt_slot( bool )
-    def _thread_busy(self, busy_state):
-        self.thread_busy_signal.emit( busy_state )
 
     @synchronized
     def post(self, request):
@@ -157,11 +141,3 @@ class SignalSlotModelThread( AbstractModelThread ):
         if len(self._request_queue):
             task = self._request_queue.pop(0)
             return task
-
-    @synchronized
-    def busy( self ):
-        """Return True or False indicating wether either the model or the
-        gui thread is doing something"""
-        while not self._task_handler:
-            time.sleep(0.1)
-        return len(self._request_queue) or self._task_handler.busy()
