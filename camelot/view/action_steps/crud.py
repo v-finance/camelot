@@ -46,7 +46,8 @@ class UpdateMixin(object):
                 "object": header_item.data(ObjectRole),
                 "verbose_identifier": header_item.data(VerboseIdentifierRole),
                 "valid": header_item.data(ValidRole),
-                "message": header_item.data(ValidMessageRole)
+                "message": header_item.data(ValidMessageRole),
+                "decoration": header_item.data(Qt.ItemDataRole.DecorationRole)
                 # FIXME: more roles? see camelot/view/crud_action.py:127
             })
             for column, item in items:
