@@ -92,8 +92,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
             fields=fields, parent=self
         )
 
-        columns = [fn for fn, _fa in fields.items()]
-        model = get_qml_root_backend().createModel(get_settings_group(admin_route), columns, form_widget)
+        model = get_qml_root_backend().createModel(get_settings_group(admin_route), form_widget)
         self.action_routes = dict()
         form_widget.set_model(model)
 
@@ -127,7 +126,8 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         # set the value last, so the validity can be updated
         model.set_value(proxy_route)
         self.model_context_name = proxy_route
-        list(model.add_columns(columns))
+        columns = [fn for fn, _fa in fields.items()]
+        model.add_columns(columns)
         self.gui_context_name = gui_naming_context.bind(
             ('transient', str(id(self))), self
         )
