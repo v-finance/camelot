@@ -31,7 +31,6 @@ from dataclasses import dataclass
 
 from .customdelegate import DocumentationMetaclass
 from .datedelegate import DateDelegate
-from camelot.view.controls import editors
 
 
 @dataclass

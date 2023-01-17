@@ -31,7 +31,6 @@ from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates, editors
 from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.delegates import DelegateManager
-from camelot.view.controls.editors.datetimeeditor import TimeValidator
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
@@ -281,28 +280,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), ValueLoading )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, StoredFile( storage, 'test.txt').verbose_name )
-
-    def test_DateTimeEditor(self):
-        validator = TimeValidator()
-        self.assertEqual(validator._validate('22', 0), (QtGui.QValidator.State.Intermediate, '22', 0))
-        self.assertEqual(validator._validate('59', 0), (QtGui.QValidator.State.Intermediate, '59', 0))
-        self.assertEqual(validator._validate('22:', 0), (QtGui.QValidator.State.Intermediate,'22:',  0))
-        self.assertEqual(validator._validate(':17', 0), (QtGui.QValidator.State.Intermediate, ':17', 0))
-        self.assertEqual(validator._validate('22:7', 0), (QtGui.QValidator.State.Acceptable, '22:7', 0))
-        self.assertEqual(validator._validate('22:17', 0), (QtGui.QValidator.State.Acceptable, '22:17', 0))
-        self.assertEqual(validator._validate('1:17', 0), (QtGui.QValidator.State.Acceptable, '1:17', 0))
-        self.assertEqual(validator._validate('22:7:', 0), (QtGui.QValidator.State.Invalid, '22:7:', 0))
-        self.assertEqual(validator._validate('61', 0), (QtGui.QValidator.State.Invalid, '61', 0))
-        self.assertEqual(validator._validate('611', 0), (QtGui.QValidator.State.Invalid, '611', 0))
-        editor = editors.DateTimeEditor(parent=None, editable=True)
-        self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
-        editor.set_value( QtCore.QDateTime(datetime.datetime(2009, 7, 19, 21, 5, 10, 0)) )
-        self.assertEqual( editor.get_value(), datetime.datetime(2009, 7, 19, 21, 5, 0 ) )
-        self.grab_default_states( editor )
-        self.assert_valid_editor( editor, QtCore.QDateTime(datetime.datetime(2009, 7, 19, 21, 5, 0 )) )
-        editor.set_value(None)
-        self.assertEqual(editor.get_value(), None)
 
     def test_FloatEditor(self):
         # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
@@ -699,17 +676,6 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(self.locale, field_action_model_context)
         self.assertTrue(item.data(PreviewRole))
-
-    def test_datetimedelegate(self):
-        delegate = delegates.DateTimeDelegate(editable=True)
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, editors.DateTimeEditor))
-        DateTime = datetime.datetime.now()
-        self.grab_delegate(delegate, DateTime)
-        delegate = delegates.DateTimeDelegate(editable=False)
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, editors.DateTimeEditor))
-        self.grab_delegate(delegate, DateTime, 'disabled')
 
     def test_localfileDelegate(self):
         delegate = delegates.LocalFileDelegate()
