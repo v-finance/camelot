@@ -265,7 +265,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['tooltip'], ClearObject.tooltip)
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['icon']['name'], ClearObject.icon.name)
         self.assertTrue(isinstance(self._data(1, 2, self.item_model), tuple))
-        self.assertEqual(self._data(1, 2, self.item_model)[0], 'transient')
+        self.assertEqual(self._data(1, 2, self.item_model)[0], 'model_context')
         self.assertEqual(self._data(1, 3, self.item_model), self.collection[1].created)
         
         self.assertEqual(self._data(-1, -1, self.item_model, role=ObjectRole, validate_index=False), None)
