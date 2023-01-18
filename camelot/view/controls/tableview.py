@@ -192,6 +192,7 @@ class TableWidget(QtWidgets.QTableView):
         selection_model = self.selectionModel()
         selection_model.currentChanged.connect(self._current_changed)
         model.modelReset.connect(self.update_headers)
+        model.updateHeaders.connect(self.update_headers)
         self.update_headers()
 
     @QtCore.qt_slot()

@@ -171,6 +171,7 @@ class SetColumns(ActionStep):
                 'field_name': fa['field_name'],
                 'width': fa['column_width'],
                 'delegate': [fa['delegate'].__name__, self.column_attributes[i]],
+                'nullable': fa.get('nullable', True)
             })
         return {
             'columns': columns,
