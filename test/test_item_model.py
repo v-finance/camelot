@@ -715,6 +715,22 @@ class SetupQueryProxy(Action):
 
 setup_query_proxy_name = unit_test_context.bind(('setup_query_proxy',), SetupQueryProxy(admin_cls=Person.Admin))
 
+class EqualColumnAdmin(Person.Admin):
+    list_display = ['first_name', 'suffix']
+    # begin column width
+    field_attributes = {
+        'first_name':{'column_width':8},
+        'suffix':{'column_width':8},
+    }
+    # end column width
+
+setup_query_proxy_equal_columns_name = unit_test_context.bind(('setup_query_proxy_equal_columns',), SetupQueryProxy(admin_cls=EqualColumnAdmin))
+
+class SmallColumnsAdmin( Person.Admin ):
+    list_display = ['first_name', 'suffix']
+
+setup_query_proxy_small_columns_name = unit_test_context.bind(('setup_query_proxy_small_columns',), SetupQueryProxy(admin_cls=SmallColumnsAdmin))
+
 class ApplyFilter(Action):
 
     def model_run(self, model_context, mode):
