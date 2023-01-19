@@ -149,20 +149,21 @@ def load_movie_fixtures(session):
     Tag(name='Drama', _session=session)
 
     for title, short_description, releasedate, (director_first_name, director_last_name), genre, rating, description in movies:
-        director = Person(
-            first_name=director_first_name,
-            last_name=director_last_name,
-            _session=session,
-        )
-        Movie(
-            title=title,
-            director=director,
-            short_description=short_description,
-            releasedate=releasedate,
-            rating=rating,
-            genre=genre,
-            description=description,
-            _session=session, 
-        )
-            
+        if session.query(Person).filter(Person.last_name==director_last_name).count() == 0:
+            director = Person(
+                first_name=director_first_name,
+                last_name=director_last_name,
+                _session=session,
+            )
+        if session.query(Movie).filter(Movie.title==title).count() == 0:
+            Movie(
+                title=title,
+                director=director,
+                short_description=short_description,
+                releasedate=releasedate,
+                rating=rating,
+                genre=genre,
+                description=description,
+                _session=session, 
+            )
     session.flush()

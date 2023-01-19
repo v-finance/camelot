@@ -141,7 +141,8 @@ class ActionMixinCase(object):
                 gui_context_name=('constant', 'null'),
                 mode=None,
                 replies={},
-                model_context_name=('constant', 'null')):
+                model_context_name=('constant', 'null'),
+                handle_action_steps=False):
         """
         Simulates the gui_run of an action, but instead of blocking,
         yields progress each time a message is received from the model.
@@ -158,6 +159,8 @@ class ActionMixinCase(object):
                 return replies.get(type(action_step))
         
             def handle_serialized_action_step(self, step_type, serialized_step):
+                if handle_action_steps == True:
+                    super().handle_serialized_action_step(step_type, serialized_step)
                 self.steps.append((step_type, json.loads(serialized_step)))
                 cls = MetaActionStep.action_steps[step_type]
                 return replies.get(cls)
