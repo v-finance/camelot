@@ -10,7 +10,6 @@ from typing import List, Tuple
 from ...admin.admin_route import Route
 from ...admin.action.base import ActionStep, State
 from ...admin.icon import CompletionValue
-from camelot.core.orm import Entity
 from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
@@ -60,9 +59,6 @@ class UpdateMixin(object):
                         continue
                     role_data = item.data(role)
                     if role_data is not None:
-                        if role == Qt.ItemDataRole.EditRole and isinstance(role_data, Entity):
-                            logger.info('Could not serialize entity: {}'.format(role_data))
-                            continue
                         cell_data[role] = role_data
                 cell_data[Qt.ItemDataRole.DisplayRole] = item.data(PreviewRole)
                 # serialize flags
