@@ -22,7 +22,7 @@ class PipeResponseHandler(object):
 
     def send_response(self, response):
         if isinstance(response, (ActionStepped,)) and not isinstance(response.step[1], (DataclassSerializable,)):
-            response.step = (response.step[0], response.step[1]._to_dict())        
+            response.step = (response.step[0], response.step[1]._to_dict())
         self._response_connection.send_bytes(response._to_bytes())
 
     def has_cancel_request(self):

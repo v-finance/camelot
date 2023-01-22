@@ -226,6 +226,7 @@ class InstallTranslator(ActionStep, DataclassSerializable):
     :param language: The two-letter, ISO 639 language code (e.g. 'nl').
     """
 
+    blocking = False
     language: str
 
 

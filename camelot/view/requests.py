@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 import logging
 import typing
 
@@ -28,6 +29,14 @@ class AbstractRequest(NamedDataclassSerializable):
     """
     Serialiazable Requests the UI can send to the model
     """
+
+    @classmethod
+    def handle_request(cls, request, response_handler, cancel_handler):
+        request_type_name, request_data = json.loads(request)
+        request_type = NamedDataclassSerializable.get_cls_by_name(
+            request_type_name
+        )
+        request_type.execute(request_data, response_handler, cancel_handler)
 
     @classmethod
     def execute(cls, request_data, response_handler, cancel_handler):
