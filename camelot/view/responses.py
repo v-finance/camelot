@@ -75,6 +75,7 @@ class ActionStepped(AbstractResponse):
         run_name = tuple(response_data['run_name'])
         step_type, step = response_data['step']
         gui_run = gui_naming_context.resolve(gui_run_name)
+        LOGGER.debug('{0} for action {1.action_name}'.format(step_type, gui_run))
         try:
             serialized_step = json.dumps(step).encode()
             cls._was_canceled(gui_run.gui_context_name)
@@ -106,6 +107,8 @@ class ActionStopped(AbstractResponse):
     def handle_response(cls, response_data, post_method):
         gui_run_name = tuple(response_data['gui_run_name'])
         try:
+            gui_run = gui_naming_context.resolve(gui_run_name)
+            LOGGER.debug('Stop {0.action_name}, took {1}'.format(gui_run, gui_run.time_running()))
             gui_naming_context.unbind(gui_run_name)
         except NameNotFoundException:
             LOGGER.error('Could not unbind gui_run {}'.format(gui_run_name))
