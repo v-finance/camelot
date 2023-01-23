@@ -41,7 +41,6 @@ from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
 from camelot.view.qml_view import get_qml_root_backend
 from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.view.utils import get_settings_group
 from camelot_example.application_admin import MyApplicationAdmin
 
@@ -780,10 +779,10 @@ class ControlsTest(
         #create a table view for an Admin interface with small columns
         self.gui_run(setup_query_proxy_small_columns_name, mode=self.model_context_name)
         widget = TableWidget()
-        model = CollectionProxy(self.admin_route)
+        model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), widget)
         widget.setModel(model)
         model.set_value(self.model_context_name)
-        list(model.add_columns(('first_name', 'suffix')))
+        model.add_columns(('first_name', 'suffix'))
         model.timeout_slot()
         self.process()
         self.grab_widget( widget )
@@ -800,10 +799,10 @@ class ControlsTest(
         #create a table view for an Admin interface with small columns
         self.gui_run(setup_query_proxy_equal_columns_name, mode=self.model_context_name)
         widget = TableWidget()
-        model = CollectionProxy(self.admin_route)
+        model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), widget)
         widget.setModel(model)
         model.set_value(self.model_context_name)
-        list(model.add_columns(('first_name', 'suffix',)))
+        model.add_columns(('first_name', 'suffix',))
         model.timeout_slot()
         self.process()
         self.grab_widget(widget)
