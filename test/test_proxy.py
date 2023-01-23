@@ -26,13 +26,16 @@ class B(object):
         list_display = ['value']
 
 
+class C(B):
+    pass
+
 class A(object):
 
     def __init__(self, x):
         self.w = B(x)
         self.x = x
         self.y = 0
-        self.z = [object(), object()]
+        self.z = [C(0), C(0)]
         self.created = datetime.datetime.now()
 
     class Admin(ObjectAdmin):
@@ -56,7 +59,7 @@ class A(object):
                   },
             'z': {'editable': True,
                   'delegate': delegates.One2ManyDelegate,
-                  'target': int,
+                  'target': C,
                   },
         }
 

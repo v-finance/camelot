@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 from sqlalchemy import create_engine, orm, schema, types
 
+from . import unit_test_context
 from .test_orm import TestMetaData
 from camelot.admin.action import Action
 from camelot.admin.application_admin import ApplicationAdmin
@@ -20,7 +21,6 @@ from camelot.test.action import MockModelContext
 from camelot.view.import_utils import XlsReader
 from camelot.view import action_steps
 from camelot_example.fixtures import load_movie_fixtures
-from camelot_example.view import setup_views
 
 app_admin = ApplicationAdmin()
 
@@ -33,17 +33,17 @@ class LoadSampleData(Action):
 
     def model_run(self, model_context, mode):
         session = Session()
-        setup_views()
         metadata.bind = model_engine
         metadata.create_all(model_engine)
         session.expunge_all()
         update_last_login()
         if mode in (None, True):
-            load_movie_fixtures()
+            load_movie_fixtures(session)
             yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
                 session.query(Person).count(), id(session)
             ))
 
+load_sample_data_name = unit_test_context.bind(('load_sample_data',), LoadSampleData())
 
 class SetupSession(Action):
 
@@ -52,6 +52,7 @@ class SetupSession(Action):
         session.close()
         yield action_steps.UpdateProgress(detail='Session closed')
 
+setup_session_name = unit_test_context.bind(('setup_session',), LoadSampleData())
 
 class DirtySession(Action):
     
@@ -78,11 +79,12 @@ class DirtySession(Action):
         )
         yield action_steps.UpdateProgress(detail='Session dirty')
 
+dirty_session_action_name = unit_test_context.bind(('dirty_session',), DirtySession())
+
 class ExampleModelMixinCase(object):
 
     @classmethod
     def setup_sample_model(cls):
-        setup_views()
         metadata.bind = model_engine
         metadata.create_all(model_engine)
         cls.session = Session()

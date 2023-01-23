@@ -11,8 +11,12 @@ from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
-from .test_item_model import A, QueryQStandardItemModelMixinCase, SetupQueryProxy
-from .test_model import ExampleModelMixinCase, LoadSampleData
+from .test_item_model import (
+    A, QueryQStandardItemModelMixinCase,
+    setup_query_proxy_name, setup_query_proxy_small_columns_name,
+    setup_query_proxy_equal_columns_name
+)
+from .test_model import ExampleModelMixinCase, load_sample_data_name
 from camelot.admin.action import GuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
@@ -466,11 +470,11 @@ class FormTest(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
+        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
 
     def setUp(self):
         super().setUp()
-        self.gui_run(SetupQueryProxy(self.model_context_name))
+        self.gui_run(setup_query_proxy_name, mode=self.model_context_name)
         self.app_admin = ApplicationAdmin()
         self.person_admin = self.app_admin.get_related_admin(Person)
         self.admin_route = self.person_admin.get_admin_route()
@@ -763,28 +767,23 @@ class ControlsTest(
     @classmethod
     def setUpClass(cls):
         super(ControlsTest, cls).setUpClass()
-        cls.gui_run(LoadSampleData(), mode=True)
+        cls.gui_run(load_sample_data_name, mode=True)
         cls.app_admin = MyApplicationAdmin()
         cls.process()
 
     def setUp(self):
-        self.gui_run(SetupQueryProxy(self.model_context_name))
+        self.gui_run(setup_query_proxy_name, mode=self.model_context_name)
         self.admin = self.app_admin.get_entity_admin(Person)
         self.admin_route = admin.get_admin_route()
 
     def test_small_column( self ):
         #create a table view for an Admin interface with small columns
-
-        class SmallColumnsAdmin( Person.Admin ):
-            list_display = ['first_name', 'suffix']
-
-        self.gui_run(SetupQueryProxy(self.model_context_name, SmallColumnsAdmin))
-        admin = SmallColumnsAdmin( self.app_admin, Person )
+        self.gui_run(setup_query_proxy_small_columns_name, mode=self.model_context_name)
         widget = TableWidget()
-        model = CollectionProxy(admin.get_admin_route())
+        model = CollectionProxy(self.admin_route)
         widget.setModel(model)
         model.set_value(self.model_context_name)
-        list(model.add_columns(admin.get_columns()))
+        list(model.add_columns(('first_name', 'suffix')))
         model.timeout_slot()
         self.process()
         self.grab_widget( widget )
@@ -799,42 +798,26 @@ class ControlsTest(
 
     def test_column_width( self ):
         #create a table view for an Admin interface with small columns
-
-        class ColumnWidthAdmin( Person.Admin ):
-            list_display = ['first_name', 'suffix']
-            # begin column width
-            field_attributes = { 'first_name':{'column_width':8},
-                                 'suffix':{'column_width':8},}
-            # end column width
-
-        self.gui_run(SetupQueryProxy(self.model_context_name, ColumnWidthAdmin))
-        admin = ColumnWidthAdmin( self.app_admin, Person )
+        self.gui_run(setup_query_proxy_equal_columns_name, mode=self.model_context_name)
         widget = TableWidget()
-        model = CollectionProxy(admin.get_admin_route())
+        model = CollectionProxy(self.admin_route)
         widget.setModel(model)
         model.set_value(self.model_context_name)
-        list(model.add_columns(admin.get_columns()))
+        list(model.add_columns(('first_name', 'suffix',)))
         model.timeout_slot()
         self.process()
         self.grab_widget(widget)
         model.timeout_slot()
         self.process()
         widget.horizontalHeader()
-
         first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
         suffix_width = self._header_data(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
-
         self.assertEqual(first_name_width, suffix_width)
 
     def test_busy_widget(self):
         busy_widget = BusyWidget()
         busy_widget.set_busy( True )
         self.grab_widget( busy_widget )
-
-    def test_desktop_workspace(self):
-        #workspace = DesktopWorkspace(self.gui_context.admin_route, None)
-        #self.grab_widget(workspace)
-        pass # obsolete?
 
     def test_progress_dialog( self ):
         dialog = ProgressDialog(None)
@@ -870,8 +853,8 @@ class SnippetsTest(RunningThreadCase,
     @classmethod
     def setUpClass(cls):
         super(SnippetsTest, cls).setUpClass()
-        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
-        cls.gui_run(SetupQueryProxy(cls.model_context_name))
+        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
+        cls.gui_run(setup_query_proxy_name, mode=cls.model_context_name)
         cls.app_admin = ApplicationAdmin()
         cls.gui_context = GuiContext()
         cls.process()
