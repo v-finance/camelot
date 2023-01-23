@@ -29,25 +29,22 @@
 
 import contextlib
 import io
-import json
 import logging
 import time
 import typing
 
-from ..core.naming import (
-    initial_naming_context, CompositeName, NameNotFoundException
-)
-from ..core.serializable import DataclassSerializable, json_encoder
+from ..core.naming import CompositeName
+from ..core.serializable import json_encoder, DataclassSerializable
 from ..core.qt import QtCore, QtGui, is_deleted
 from . import gui_naming_context
-from camelot.admin.action import ActionStep
 from camelot.admin.action.base import MetaActionStep
-from camelot.core.exception import GuiException, CancelRequest
+from camelot.core.exception import CancelRequest
 from camelot.core.singleton import QSingleton
-from camelot.view.model_thread import post, get_model_thread
+from camelot.view.model_thread import post
+from .requests import InitiateAction, CancelAction
+from .responses import AbstractResponse, ActionStepped
 
 LOGGER = logging.getLogger('camelot.view.action_runner')
-REQUEST_LOGGER = logging.getLogger('camelot.view.action_runner.request')
 
 @contextlib.contextmanager
 def hide_progress_dialog(gui_context_name):
@@ -85,18 +82,7 @@ def hide_progress_dialog(gui_context_name):
             if original_state == False:
                 progress_dialog.show()
 
-model_run_names = initial_naming_context.bind_new_context('model_run')
 gui_run_names = gui_naming_context.bind_new_context('gui_run')
-
-class ModelRun(object):
-    """
-    Server side information of an ongoing action run
-    """
-
-    def __init__(self, gui_run_name: CompositeName, generator):
-        self.gui_run_name = gui_run_name
-        self.generator = generator
-        self.cancel = False
 
 class GuiRun(object):
     """
@@ -168,7 +154,7 @@ class GuiRun(object):
             )
         else:
             result = cls.gui_run(self.gui_context_name, serialized_step)
-        return cls.deserialize_result(self.gui_context_name, result)
+        return result
 
 class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     """Helper class for handling the signals and slots when an action
@@ -180,14 +166,13 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     """
     
     non_blocking_action_step_signal = QtCore.qt_signal(tuple, tuple, object)
-    serializable_action_step_signal = QtCore.qt_signal(tuple, tuple, str, bool, bytes)
-    action_stopped_signal = QtCore.qt_signal(tuple, tuple, object)
+    response = QtCore.qt_signal(bytes)
+    busy = QtCore.qt_signal(bool)
 
     def __init__(self):
         super().__init__()
         self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
-        self.serializable_action_step_signal.connect(self.serializable_action_step)
-        self.action_stopped_signal.connect(self.action_stopped)
+        self.response.connect(self._handle_response)
 
     @classmethod
     def wait_for_completion(cls, max_wait=5):
@@ -223,217 +208,32 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
 
     def run_gui_run(self, gui_run):
         gui_naming_context.validate_composite_name(gui_run.gui_context_name)
-        gui_run_name = gui_run_names.bind(str(id(gui_run)), gui_run)
-        message = {
-            'action_name': gui_run.action_name,
-            'model_context': gui_run.model_context_name,
-            'gui_run_name': gui_run_name,
-            'mode': gui_run.mode,
-        }
-        serialized_message = json_encoder.encode(message)
-        if REQUEST_LOGGER.isEnabledFor(logging.DEBUG):
-            REQUEST_LOGGER.debug(serialized_message)
-        post(self._initiate_generator, args=(serialized_message,))
-
-    def _initiate_generator(self, serialized_message):
-        """Create the model context and start the generator"""
-        from camelot.view.action_steps import PushProgressLevel, MessageBox
-        message = json.loads(serialized_message)
-        LOGGER.debug('Iniate run of action {}'.format(message['action_name']))
-        action = initial_naming_context.resolve(tuple(message['action_name']))
-        gui_run_name = tuple(message['gui_run_name'])
-        try:
-            model_context = initial_naming_context.resolve(tuple(message['model_context']))
-        except NameNotFoundException:
-            LOGGER.error('Could not create model context, no binding for name: {}'.format(message['model_context']))
-            self.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
-            return
-        try:
-            generator = action.model_run(model_context, message.get('mode'))
-        except Exception as exception:
-            self.serializable_action_step_signal.emit(
-                ('constant', 'null'), gui_run_name, MessageBox.__name__, False,
-                MessageBox.from_exception(
-                    LOGGER,
-                    'Exception caught in {}'.format(type(action).__name__),
-                    exception
-                )._to_bytes()
-            )
-            self.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
-        if generator is None:
-            self.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
-        run = ModelRun(gui_run_name, generator)
-        run_name = model_run_names.bind(str(id(run)), run)
-        self.serializable_action_step_signal.emit(
-            run_name, gui_run_name, PushProgressLevel.__name__, False,
-            PushProgressLevel('Please wait')._to_bytes()
-        )
-        LOGGER.debug('Action {} runs in generator {}'.format(message['action_name'], run_name))
-        return self._iterate_until_blocking(run_name, 'continue')
-
-    def _iterate_until_blocking(self, run_name, method, *args):
-        """Helper calling for generator methods.  The decorated method iterates
-        the generator until the generator yields an :class:`ActionStep` object that
-        is blocking.  If a non blocking :class:`ActionStep` object is yielded, then
-        send it to the GUI thread for execution through the signal slot mechanism.
-        
-        :param generator_method: the method of the generator to be called
-        :param *args: the arguments to use when calling the generator method.
-        """
-        from camelot.view.action_steps import MessageBox, PopProgressLevel
-        try:
-            run = initial_naming_context.resolve(run_name)
-        except NameNotFoundException:
-            LOGGER.error('Run name not found : {}'.format(run_name))
-            return
-        gui_run_name = run.gui_run_name
-        try:
-            if method == 'continue':
-                result = None
-            elif method == 'send':
-                result = run.generator.send(*args)
-            elif method == 'throw':
-                result = run.generator.throw(*args)
-            else:
-                raise Exception('Unhandled method')
-            while True:
-                if isinstance(result, ActionStep):
-                    if isinstance(result, (DataclassSerializable,)):
-                        LOGGER.debug('serializable step, use signal slot')
-                        self.serializable_action_step_signal.emit(
-                            run_name, gui_run_name, type(result).__name__,
-                            result.blocking, result._to_bytes()
-                        )
-                        if result.blocking:
-                            # this step is blocking, interrupt the loop
-                            return
-                    elif result.blocking:
-                        LOGGER.debug( 'non serializable blocking step : {}'.format(result) )
-                        raise Exception('This should not happen')
-                    else:
-                        LOGGER.debug( 'non blocking step, use signal slot' )
-                        self.non_blocking_action_step_signal.emit(
-                            run_name, gui_run_name, result
-                        )
-                #
-                # Cancel requests can arrive asynchronously through non 
-                # blocking ActionSteps such as UpdateProgress
-                #
-                if self.has_cancel_request():
-                    LOGGER.debug( 'asynchronous cancel, raise request' )
-                    result = run.generator.throw(CancelRequest())
-                else:
-                    LOGGER.debug( 'move iterator forward' )
-                    result = next(run.generator)
-        except CancelRequest as e:
-            LOGGER.debug( 'iterator raised cancel request, pass it' )
-            self.serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__, False,
-                PopProgressLevel()._to_bytes()
-            )
-            self.action_stopped_signal.emit(run_name, gui_run_name, e)
-        except StopIteration as e:
-            LOGGER.debug( 'iterator raised stop, pass it' )
-            self.serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__, False,
-                PopProgressLevel()._to_bytes()
-            )
-            initial_naming_context.unbind(run_name)
-            self.action_stopped_signal.emit(run_name, gui_run_name, e)
-        except Exception as e:
-            self.serializable_action_step_signal.emit(
-                ('constant', 'null'), gui_run_name, MessageBox.__name__, False,
-                MessageBox.from_exception(
-                    LOGGER,
-                    'Exception caught',
-                    e
-                )._to_bytes()
-            )
-            LOGGER.debug( 'iterator raised stop, pass it' )
-            self.serializable_action_step_signal.emit(
-                run_name, gui_run_name, PopProgressLevel.__name__, False,
-                PopProgressLevel()._to_bytes()
-            )
-            initial_naming_context.unbind(run_name)
-            self.action_stopped_signal.emit(run_name, gui_run_name, e)
+        post(InitiateAction(
+            gui_run_name = gui_run_names.bind(str(id(gui_run)), gui_run),
+            action_name = gui_run.action_name,
+            model_context = gui_run.model_context_name,
+            mode = gui_run.mode,
+        ))
 
     @QtCore.qt_slot(tuple, tuple, object)
     def non_blocking_action_step(self, run_name, gui_run_name, action_step ):
         gui_run = gui_naming_context.resolve(gui_run_name)
         try:
-            self._was_canceled(gui_run.gui_context_name)
+            AbstractResponse._was_canceled(gui_run.gui_context_name)
             return gui_run.handle_action_step(action_step)
         except CancelRequest:
             LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            self._throw(run_name, CancelRequest())
+            post(CancelAction(run_name=run_name))
 
-    @QtCore.qt_slot(tuple, tuple, str, bool, bytes)
-    def serializable_action_step(self, run_name, gui_run_name, step_type, blocking, serialized_step):
-        gui_run = gui_naming_context.resolve(gui_run_name)
-        try:
-            self._was_canceled(gui_run.gui_context_name)
-            to_send = gui_run.handle_serialized_action_step(step_type, serialized_step)
-            if blocking==True:
-                self._send(run_name, to_send)
-        except CancelRequest:
-            LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            self._throw(run_name, CancelRequest())
-        except Exception as exc:
-            LOGGER.error('gui exception while executing action', exc_info=exc)
-            # In case of an exception in the GUI thread, propagate an
-            # exception to make sure the generator ends.  Don't propagate
-            # the very same exception, because no references from the GUI
-            # should be past to the model.
-            self._throw(run_name, GuiException())
+    def send_response(self, response):
+        if isinstance(response, (ActionStepped,)) and not isinstance(response.step[1], (DataclassSerializable,)):
+            self.non_blocking_action_step_signal.emit(response.run_name, response.gui_run_name, response.step[1])
+        else:
+            self.response.emit(response._to_bytes())
 
-    @QtCore.qt_slot(tuple, tuple, object)
-    def action_stopped(self, run_name, gui_run_name, exc):
-        try:
-            gui_naming_context.unbind(gui_run_name)
-        except NameNotFoundException:
-            LOGGER.error('Could not unbind gui_run {}'.format(gui_run_name))
+    @QtCore.qt_slot(bytes)
+    def _handle_response(self, serialized_response):
+        AbstractResponse.handle_serialized_response(serialized_response, post)
 
-    def _was_canceled(self, gui_context_name):
-        """raise a :class:`camelot.core.exception.CancelRequest` if the
-        user pressed the cancel button of the progress dialog in the
-        gui_context.
-        """
-        from .qml_view import is_cpp_gui_context_name
-        if is_cpp_gui_context_name(gui_context_name):
-            # @TODO : check was canceled for cpp
-            return
-        try:
-            gui_context = gui_naming_context.resolve(gui_context_name)
-        except NameNotFoundException:
-            return
-        if gui_context is None:
-            return
-        progress_dialog = gui_context.get_progress_dialog()
-        if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
-            LOGGER.debug( 'progress dialog was canceled, raise request' )
-            raise CancelRequest()
-
-    def _throw(self, run_name, exc):
-        post(
-            self._iterate_until_blocking,
-            args = (run_name, 'throw', exc,)
-        )
-
-    def _send(self, run_name, to_send):
-        post(
-            self._iterate_until_blocking,
-            args = (run_name, 'send', to_send,)
-        )
-
-    @QtCore.qt_slot()
-    def _cancel_request(self):
-        pass
-
-    def has_cancel_request(self):
-        mt = get_model_thread()
-        for task in mt._request_queue:
-            if task._request == self._cancel_request:
-                return True
-        return False
 
 action_runner = ActionRunner()

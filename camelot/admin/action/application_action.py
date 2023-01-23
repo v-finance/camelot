@@ -27,6 +27,7 @@
 #
 #  ============================================================================
 
+import cProfile
 import logging
 import itertools
 
@@ -393,47 +394,20 @@ class Profiler( Action ):
         self.model_profile = None
         self.gui_profile = None
 
-    def gui_run(self, gui_context_name):
-        import cProfile
-        if self.gui_profile is None:
-            self.gui_profile = cProfile.Profile()
-            self.gui_profile.enable()
-        else:
-            self.gui_profile.disable()
-        super(Profiler, self).gui_run(gui_context_name)
-
     def model_run(self, model_context, mode):
         from ...view import action_steps
-        from io import StringIO
-        import cProfile
-        import pstats
         if self.model_profile is None:
             yield action_steps.MessageBox('Start profiler')
+            yield action_steps.StartProfiler()
             self.model_profile = cProfile.Profile()
             self.model_profile.enable()
         else:
-            yield action_steps.UpdateProgress(text='Creating statistics')
+            yield action_steps.StopProfiler()
             self.model_profile.disable()
-            profiles = [('model', self.model_profile), ('gui', self.gui_profile)]
-            self.model_profile = None
-            self.gui_profile = None
-            for label, profile in profiles:
-                stream = StringIO()
-                stats = pstats.Stats(profile, stream=stream)
-                stats.sort_stats('cumulative')
-                yield action_steps.UpdateProgress(
-                    text='Create {0} report'.format(label)
-                )
-                stats.print_stats()
-                stream.seek(0)
-                yield action_steps.OpenString(stream.getvalue().encode('utf-8'))
-                filename = action_steps.OpenFile.create_temporary_file(
-                    '{0}.prof'.format(label)
-                )
-                stats.dump_stats(filename)
-                yield action_steps.MessageBox(
-                    'Profile stored in {0}'.format(filename))
-            
+            action_steps.StopProfiler.write_profile(self.model_profile, 'model')
+            yield action_steps.MessageBox('Profiler stopped')
+
+
 class Exit( Action ):
     """Exit the application"""
 

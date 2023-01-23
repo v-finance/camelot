@@ -37,7 +37,7 @@ from typing import Any
 
 from ...admin.icon import Icon
 from ...core.qt import QtWidgets, QtGui, transferto
-from ...core.serializable import DataclassSerializable, Serializable
+from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ...view.art import from_admin_icon
 
@@ -222,8 +222,7 @@ class MetaActionStep(type):
 
     def __new__(cls, clsname, bases, attrs):
         newclass = super().__new__(cls, clsname, bases, attrs)
-        if issubclass(newclass, (Serializable,)):
-            cls.action_steps[clsname] = newclass
+        cls.action_steps[clsname] = newclass
         return newclass
 
 class ActionStep(metaclass=MetaActionStep):

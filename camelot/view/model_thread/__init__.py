@@ -30,6 +30,7 @@
 import logging
 
 from ...core.qt import QtCore
+from ..requests import AbstractRequest
 
 logger = logging.getLogger('camelot.view.model_thread')
 
@@ -128,10 +129,11 @@ def get_model_thread():
         _model_thread_[0].start()
         return _model_thread_[0]
 
-def post(request, args=()):
+def post(request):
     """Post a request and a response to the default model thread"""
+    assert isinstance(request, AbstractRequest)
     mt = get_model_thread()
-    mt.post(request, args)
+    mt.post(request)
 
 
 

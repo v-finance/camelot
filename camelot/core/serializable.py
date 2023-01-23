@@ -1,5 +1,3 @@
-import copy
-
 import dataclasses
 import io
 import json
@@ -108,7 +106,8 @@ class DataclassSerializable(Serializable):
             return type(obj)((cls._asdict_inner(k), cls._asdict_inner(v))
                               for k, v in obj.items())
         else:
-            return copy.deepcopy(obj)
+            # we assube obj will be handled by DataclassEncoder.default
+            return obj
     
     @classmethod
     def serialize_fields(cls, obj):
