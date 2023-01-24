@@ -14,7 +14,7 @@ from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    CompletionsRole, PreviewRole, ObjectRole, ColumnAttributesRole, EndRoles,
+    CompletionsRole, ObjectRole, ColumnAttributesRole, EndRoles,
     VerboseIdentifierRole, ValidRole, ValidMessageRole
 )
 from .. import gui_naming_context
@@ -46,8 +46,8 @@ class UpdateMixin(object):
                 "verbose_identifier": header_item.data(VerboseIdentifierRole),
                 "valid": header_item.data(ValidRole),
                 "message": header_item.data(ValidMessageRole),
-                "decoration": header_item.data(Qt.ItemDataRole.DecorationRole)
-                # FIXME: more roles? see camelot/view/crud_action.py:127
+                "decoration": header_item.data(Qt.ItemDataRole.DecorationRole),
+                "display": header_item.data(Qt.ItemDataRole.DisplayRole)
             })
             for column, item in items:
                 cell_data = {
@@ -60,7 +60,6 @@ class UpdateMixin(object):
                     role_data = item.data(role)
                     if role_data is not None:
                         cell_data[role] = role_data
-                cell_data[Qt.ItemDataRole.DisplayRole] = item.data(PreviewRole)
                 # serialize flags
                 cell_data['flags'] = item.flags()
                 cells.append(cell_data)
