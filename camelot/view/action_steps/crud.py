@@ -14,15 +14,15 @@ from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    CompletionsRole, PreviewRole, ChoicesRole, ObjectRole, ColumnAttributesRole
+    CompletionsRole, ObjectRole, ColumnAttributesRole, EndRoles,
+    VerboseIdentifierRole, ValidRole, ValidMessageRole
 )
 from .. import gui_naming_context
 from ..controls import delegates
-#from ..validator import DateValidator
 
 
 non_serializable_roles = (
-    Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
+    Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
 )
 
 def filter_attributes(attributes, keys):
@@ -42,24 +42,24 @@ class UpdateMixin(object):
                 "row": row,
                 "tool_tip": header_item.data(Qt.ItemDataRole.ToolTipRole),
                 "icon_name": header_item.data(Qt.ItemDataRole.WhatsThisRole),
-                "object": header_item.data(ObjectRole)
+                "object": header_item.data(ObjectRole),
+                "verbose_identifier": header_item.data(VerboseIdentifierRole),
+                "valid": header_item.data(ValidRole),
+                "message": header_item.data(ValidMessageRole),
+                "decoration": header_item.data(Qt.ItemDataRole.DecorationRole),
+                "display": header_item.data(Qt.ItemDataRole.DisplayRole)
             })
             for column, item in items:
                 cell_data = {
                     "row": row,
                     "column": column,
                 }
-                for role in range(Qt.ItemDataRole.DisplayRole, ChoicesRole+1):
+                for role in range(Qt.ItemDataRole.DisplayRole, EndRoles):
                     if role in non_serializable_roles:
                         continue
                     role_data = item.data(role)
                     if role_data is not None:
                         cell_data[role] = role_data
-                cell_data[Qt.ItemDataRole.DisplayRole] = item.data(PreviewRole)
-                # serialize EditRole if it is a tuple/name
-                edit = item.data(Qt.ItemDataRole.EditRole)
-                if isinstance(edit, tuple):
-                    cell_data[Qt.ItemDataRole.EditRole] = edit
                 # serialize flags
                 cell_data['flags'] = item.flags()
                 cells.append(cell_data)
@@ -166,6 +166,7 @@ class SetColumns(ActionStep):
                 'field_name': fa['field_name'],
                 'width': fa['column_width'],
                 'delegate': [fa['delegate'].__name__, self.column_attributes[i]],
+                'nullable': fa.get('nullable', True)
             })
         return {
             'columns': columns,

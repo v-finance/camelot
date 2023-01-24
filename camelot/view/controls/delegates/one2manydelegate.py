@@ -32,6 +32,7 @@ from typing import Optional, List
 import itertools
 
 from ....admin.admin_route import Route, RouteWithRenderHint
+from ....admin.action.application_action import model_context_naming, model_context_counter
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
 from ....core.qt import Qt
@@ -71,13 +72,11 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             one2many_model_context = ObjectsModelContext(
                 admin, admin.get_proxy(model_context.value), locale
             )
+            one2many_model_context_name = model_context_naming.bind(str(next(model_context_counter)), one2many_model_context)
             item.setData(
-                transient.bind(str(next(transient_counter)), one2many_model_context),
+                one2many_model_context_name,
                 Qt.ItemDataRole.EditRole
             )
-            # dirty hack to keep model context and its name bound as long as
-            # the item lives
-            item.setData(one2many_model_context, Qt.ItemDataRole.AccessibleDescriptionRole)
         return item
 
     def createEditor( self, parent, option, index ):

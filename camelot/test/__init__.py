@@ -119,18 +119,14 @@ class ActionMixinCase(object):
     Helper methods to simulate running actions in a different thread
     """
 
-    # specify a model context name in each test case
-    model_context_name = None
-
-    @classmethod
-    def get_state(cls, action_name, gui_context):
+    def get_state(self, action_name, gui_context):
         """
         Get the state of an action in the model thread and return
         the result.
         """
-        for step_type, step_data in cls.gui_run(
+        for step_type, step_data in self.gui_run(
             get_action_state_name, mode=action_name,
-            model_context_name=cls.model_context_name
+            model_context_name=self.model_context_name
         ):
             if step_type == action_steps.UpdateProgress.__name__:
                 return step_data['detail']

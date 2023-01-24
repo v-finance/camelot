@@ -6,7 +6,13 @@ logger = logging.getLogger(__name__)
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
 from ..core.cache import ValueCache
-from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
+from ..core.item_model import (
+    ObjectRole, PreviewRole, VerboseIdentifierRole, ValidRole,
+    ActionRoutesRole, ValidMessageRole,
+    ActionStatesRole, CompletionsRole,
+    ActionModeRole, FocusPolicyRole,
+    VisibleRole, NullableRole
+)
 from ..core.exception import log_programming_error
 from ..core.naming import initial_naming_context, NameNotFoundException
 from ..core.qt import Qt, QtGui
@@ -38,6 +44,21 @@ def strip_data_from_object( obj, columns ):
     return row_data
 
 
+
+invalid_data = None
+invalid_item = QtGui.QStandardItem()
+invalid_item.setFlags(Qt.ItemFlag.NoItemFlags)
+invalid_item.setData(invalid_data, Qt.ItemDataRole.EditRole)
+invalid_item.setData(invalid_data, PreviewRole)
+invalid_item.setData(invalid_data, ObjectRole)
+invalid_item.setData(invalid_data, CompletionsRole)
+invalid_item.setData('[]', ActionRoutesRole)
+invalid_item.setData('[]', ActionStatesRole)
+invalid_item.setData(invalid_data, ActionModeRole)
+invalid_item.setData(Qt.FocusPolicy.NoFocus, FocusPolicyRole)
+invalid_item.setData(True, VisibleRole)
+invalid_item.setData(True, NullableRole)
+
 class UpdateMixin(object):
 
     @classmethod
@@ -58,7 +79,6 @@ class UpdateMixin(object):
         :param data: fill the data cache, otherwise only fills the header cache
         :return: the changes to the item model
         """
-        from ..view.proxy.collection_proxy import invalid_item
         admin = model_context.admin
         static_field_attributes = model_context.static_field_attributes
         column_names = [model_context.static_field_attributes[column]['field_name'] for column in columns]

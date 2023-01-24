@@ -81,8 +81,7 @@ class FormEditors(QtCore.QObject):
         widget_mapper = self.parent().findChild(QtWidgets.QDataWidgetMapper)
         model = widget_mapper.model()
         delegate = widget_mapper.itemDelegate()
-        model_index = model.createIndex(widget_mapper.currentIndex(),
-                                        index, 0)
+        model_index = model.index(widget_mapper.currentIndex(), index)
         widget_editor = delegate.createEditor(
             parent,
             self.option,
@@ -162,7 +161,6 @@ class FormWidget(QtWidgets.QWidget):
             model.modelReset.connect(self._layout_changed)
             model.rowsInserted.connect(self._layout_changed)
             model.rowsRemoved.connect(self._layout_changed)
-            model.setParent(self)
             if widget_mapper is not None:
                 widget_mapper.setModel(model)
 
@@ -263,10 +261,12 @@ class FormView(AbstractView, GuiContext):
 
     form_widget = FormWidget
 
-    def __init__(
+    def __init__(self, parent = None):
+        AbstractView.__init__(self, parent)
+
+    def setup(
         self, title, admin_route, close_route, model, form_display,
         fields, index, parent = None):
-        AbstractView.__init__( self, parent )
 
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing( 1 )
@@ -365,7 +365,7 @@ class FormView(AbstractView, GuiContext):
     def current_row_changed( self, current=None, previous=None ):
         if self.widget_mapper is not None:
             current_index = self.widget_mapper.currentIndex()
-            self.model.change_selection(None, current_index)
+            self.model.change_selection_v2([current_index, current_index], current_index, -1)
 
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Orientation.Horizontal:

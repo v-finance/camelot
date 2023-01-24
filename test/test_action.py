@@ -4,6 +4,7 @@ import logging
 import os
 import unittest
 import openpyxl
+import itertools
 
 import camelot.types
 
@@ -23,7 +24,7 @@ from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.qt import QtGui, QtWidgets, Qt, delete
+from camelot.core.qt import QtGui, QtWidgets, Qt, delete, is_deleted
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
@@ -55,6 +56,7 @@ from .test_model import ExampleModelMixinCase, LoadSampleData, load_sample_data_
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
 LOGGER = logging.getLogger(__name__)
+context_counter = itertools.count()
 
 class SerializableMixinCase(object):
 
@@ -263,7 +265,6 @@ class ListActionsCase(
     """
 
     images_path = test_view.static_images_path
-    model_context_name = ('test_list_actions_model_context',)
 
     @classmethod
     def setUpClass(cls):
@@ -272,6 +273,7 @@ class ListActionsCase(
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
+        self.model_context_name = ('test_list_actions_model_context_{0}'.format(next(context_counter)),)
         self.gui_run(setup_session_name, mode=True)
         self.gui_run(setup_query_proxy_name, mode=self.model_context_name)
         self.admin = app_admin.get_related_admin(Person)
@@ -294,7 +296,9 @@ class ListActionsCase(
 
     def tearDown( self ):
         Session().expunge_all()
-        delete(self.item_model)
+        if not is_deleted(self.qt_parent):
+            delete(self.qt_parent)
+        self.qt_parent = None
         self.item_model = None
 
     def test_model_context(self):
@@ -316,7 +320,6 @@ class ListActionsCase(
 
     def test_export_spreadsheet( self ):
         for step in self.gui_run(export_spreadsheet_name, self.gui_context, None, model_context_name=self.model_context_name):
-            print(step)
             if step[0] == 'OpenFile':
                 filename = step[1]["path"]
         self.assertTrue(filename)
@@ -456,7 +459,7 @@ class ListActionsCase(
         for step in open_form_view_action.model_run(model_context, None):
             form = step.render(self.gui_context, step._to_dict())
             form_value = form.model.get_value()
-        self.assertTrue(isinstance(form_value, (tuple,)))
+        self.assertTrue(isinstance(form_value, list))
 
     @staticmethod
     def track_crud_steps(action, model_context):
@@ -620,7 +623,6 @@ class FormActionsCase(
     """Test the standard list actions.
     """
 
-    model_context_name = ('test_form_actions_model_context',)
     images_path = test_view.static_images_path
 
     @classmethod
@@ -630,24 +632,26 @@ class FormActionsCase(
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
-        self.gui_run(setup_query_proxy_name)
+        self.model_context_name = ('test_form_actions_model_context_{0}'.format(next(context_counter)),)
+        self.gui_run(setup_query_proxy_name, mode=self.model_context_name)
         person_admin = app_admin.get_related_admin(Person)
         self.admin_route = person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, person_admin.get_name())
-        self.form_view = FormView(
+        self.form_view = FormView()
+        self.form_view.setup(
             'Test form', self.admin_route, tuple(), self.item_model,
             Form([])._to_dict(), {}, 0
         )
         self.gui_context_name = self.form_view.gui_context_name
 
     def test_previous_next( self ):
-        list(self.gui_run(to_previous_form_name, self.gui_context_name, None))
-        list(self.gui_run(to_next_form_name, self.gui_context_name, None))
-        list(self.gui_run(to_first_form_name, self.gui_context_name, None))
-        list(self.gui_run(to_last_form_name, self.gui_context_name, None))
+        list(self.gui_run(to_previous_form_name, self.gui_context_name, model_context_name=self.model_context_name))
+        list(self.gui_run(to_next_form_name, self.gui_context_name, model_context_name=self.model_context_name))
+        list(self.gui_run(to_first_form_name, self.gui_context_name, model_context_name=self.model_context_name))
+        list(self.gui_run(to_last_form_name, self.gui_context_name, model_context_name=self.model_context_name))
 
     def test_close_form( self ):
-        list(self.gui_run(close_form_name, self.gui_context_name, None))
+        list(self.gui_run(close_form_name, self.gui_context_name, model_context_name=self.model_context_name))
 
 
 backup_action_name = unit_test_context.bind(('backup',), application_action.Backup())

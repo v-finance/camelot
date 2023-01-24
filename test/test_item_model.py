@@ -24,11 +24,12 @@ from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.qt import Qt, QtCore, is_deleted, delete
+from camelot.view.utils import get_settings_group
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, RunningThreadCase
 from camelot.core.cache import ValueCache
-from camelot.view.proxy.collection_proxy import CollectionProxy, invalid_item
 from camelot.view import action_steps
+from camelot.view.qml_view import get_qml_root_backend
 
 LOGGER = logging.getLogger(__name__)
 context_counter = itertools.count()
@@ -161,19 +162,26 @@ class ItemModelCaseMixin(object):
         self.process()
         return item_model.rowCount()
 
+
 class ItemModelTests(object):
     """
     Item model tests to be run both with a thread and with a process
     """
 
     def test_invalid_item(self):
+        self.app_admin = ApplicationAdmin()
+        self.admin = self.app_admin.get_related_admin(A)
+        self.admin_route = self.admin.get_admin_route()
+        qt_parent = QtCore.QObject()
+        item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), qt_parent)
+        invalid_item = item_model.invalidItem()
         self.assertEqual(invalid_item.data(Qt.ItemDataRole.EditRole), None)
         self.assertEqual(bool(invalid_item.flags() & Qt.ItemFlag.ItemIsEditable), False)
-        self.assertEqual(invalid_item.data(FocusPolicyRole), Qt.FocusPolicy.NoFocus)
+        self.assertEqual(Qt.FocusPolicy(invalid_item.data(FocusPolicyRole)), Qt.FocusPolicy.NoFocus)
         invalid_clone = invalid_item.clone()
         self.assertEqual(invalid_clone.data(Qt.ItemDataRole.EditRole), None)
         self.assertEqual(bool(invalid_clone.flags() & Qt.ItemFlag.ItemIsEditable), False)
-        self.assertEqual(invalid_clone.data(FocusPolicyRole), Qt.FocusPolicy.NoFocus)
+        self.assertEqual(Qt.FocusPolicy(invalid_clone.data(FocusPolicyRole)), Qt.FocusPolicy.NoFocus)
 
 class SetupProxy(Action):
 
@@ -183,7 +191,7 @@ class SetupProxy(Action):
         model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
         initial_naming_context.rebind(tuple(mode), model_context)
         id_collection = [id(a) for a in proxy.get_model()]
-        created_collection = [a.created.microsecond for a in proxy.get_model()]
+        created_collection = [a.created.second for a in proxy.get_model()]
         yield action_steps.UpdateProgress(
             text='Proxy setup', detail={
                 'id_collection': id_collection,
@@ -293,7 +301,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
-        self.item_model = CollectionProxy(self.admin_route)
+        self.qt_parent = QtCore.QObject()
+        self.item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         self.item_model.set_value(self.model_context_name)
         self.columns = self.admin.list_display
         list(self.item_model.add_columns(self.columns))
@@ -306,8 +315,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         # since multiple tests share the same model context name, avoid
         # interaction between tests by deleting item_models holding a reference
         # to that name
-        if not is_deleted(self.item_model):
-            delete(self.item_model)
+        if not is_deleted(self.qt_parent):
+            delete(self.qt_parent)
+        self.qt_parent = None
         self.item_model = None
 
     def get_data(self, index_in_collection, attribute, data_is_collection):
@@ -323,8 +333,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
 
     def test_rowcount(self):
         # the rowcount remains 0 while no timeout has passed
-        self.assertEqual(self.item_model.rowCount(), 0)
-        self.process()
         self.assertEqual(self.item_model.rowCount(), 0)
         self.item_model.timeout_slot()
         self.process()
@@ -354,23 +362,23 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         #self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['static'], 'static')
         self.assertEqual(self._data(1, 0, self.item_model, role=PrefixRole), 'pre')
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.ToolTipRole), 'Hint')
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.BackgroundRole), 'red')
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.BackgroundRole).name(), '#ff0000')
         self.assertEqual(len(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))), 2)
         self._data(1, 4, self.item_model, role=ActionRoutesRole)
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['tooltip'], SelectObject.tooltip)
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['icon']['name'], SelectObject.icon.name)
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['tooltip'], ClearObject.tooltip)
         self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['icon']['name'], ClearObject.icon.name)
-        self.assertTrue(isinstance(self._data(1, 2, self.item_model), tuple))
-        self.assertEqual(self._data(1, 2, self.item_model)[0], 'transient')
-        self.assertEqual(self._data(1, 3, self.item_model).microsecond, self.created_collection[1])
+        self.assertTrue(isinstance(self._data(1, 2, self.item_model), list))
+        self.assertEqual(self._data(1, 2, self.item_model)[0], 'model_context')
+        self.assertEqual(initial_naming_context.resolve(tuple(self._data(1, 3, self.item_model))).second, self.created_collection[1])
         
         self.assertEqual(self._data(-1, -1, self.item_model, role=ObjectRole, validate_index=False), None)
         self.assertEqual(self._data(100, 100, self.item_model, role=ObjectRole, validate_index=False), None)
         self.assertEqual(bool(self._flags(-1, -1, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
         self.assertEqual(bool(self._flags(100, 100, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
-        self.assertEqual(self._data(-1, -1, self.item_model, role=FocusPolicyRole, validate_index=False), Qt.FocusPolicy.NoFocus)
-        self.assertEqual(self._data(100, 100, self.item_model, role=FocusPolicyRole, validate_index=False), Qt.FocusPolicy.NoFocus)
+        self.assertEqual(Qt.FocusPolicy(self._data(-1, -1, self.item_model, role=FocusPolicyRole, validate_index=False)), Qt.FocusPolicy.NoFocus)
+        self.assertEqual(Qt.FocusPolicy(self._data(100, 100, self.item_model, role=FocusPolicyRole, validate_index=False)), Qt.FocusPolicy.NoFocus)
 
     def test_first_columns(self):
         # when data is loaded for column 0, it remains loading for column 1
@@ -406,14 +414,14 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertTrue(flags & Qt.ItemFlag.ItemIsSelectable)
 
     def test_sort( self ):
-        self.item_model.sort( 0, Qt.SortOrder.AscendingOrder.value )
+        self.item_model.sort( 0, Qt.SortOrder.AscendingOrder )
         # check the sorting
         self._load_data(self.item_model)
         row_0 = self._data( 0, 0, self.item_model )
         row_1 = self._data( 1, 0, self.item_model )
         LOGGER.debug('row 0 : {0}, row 1 : {1}'.format(row_0, row_1))
         self.assertTrue( row_1 > row_0 )
-        self.item_model.sort( 0, Qt.SortOrder.DescendingOrder.value )
+        self.item_model.sort( 0, Qt.SortOrder.DescendingOrder )
         # check the sorting
         self._load_data(self.item_model)
         row_0 = self._data( 0, 0, self.item_model )
@@ -431,7 +439,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole, self.item_model), None)
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DecorationRole, self.item_model), None)
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, VerboseIdentifierRole, self.item_model), None)
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.vertical_header_size)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.verticalHeaderSize())
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidRole, self.item_model), None)
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), None)
         self.item_model.timeout_slot()
@@ -445,7 +453,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             self.assertTrue(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DecorationRole, self.item_model))
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ObjectRole, self.item_model), self.id_collection[row])
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, VerboseIdentifierRole, self.item_model), 'A : {0}'.format(row))
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.vertical_header_size)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.verticalHeaderSize())
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidRole, self.item_model), True)
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), None)
         # when changing an object, it might become invalid after a timeout
@@ -468,6 +476,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self._set_data(0, 1, 10, self.item_model)
         self.item_model.timeout_slot()
         self.process()
+        self.item_model.timeout_slot()
+        self.process()
         # x is set first, so y becomes not
         # editable and remains at its value
         self.assertEqual(self._data(0, 0, self.item_model), 20)
@@ -476,12 +486,16 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self._set_data(0, 1, 10, self.item_model)
         self.item_model.timeout_slot()
         self.process()
+        self.item_model.timeout_slot()
+        self.process()
         # x is set first, so y becomes
         # editable and its value is changed
         self.assertEqual(self._data(0, 0, self.item_model), 5)
         self.assertEqual(self._data(0, 1, self.item_model), 10)
         self._set_data(0, 1, 15, self.item_model)
         self._set_data(0, 0, 20, self.item_model)
+        self.item_model.timeout_slot()
+        self.process()
         self.item_model.timeout_slot()
         self.process()
         # x is set last, so y stays
@@ -511,6 +525,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self._set_data(0, 0, 7, self.item_model)
         self.item_model.timeout_slot()
         self.process()
+        self.item_model.timeout_slot()
+        self.process()
         self.assertEqual(self._data(0, 0, self.item_model), 7)
         self.assertEqual(self.get_data(1, 'x', False), 7)
 
@@ -521,7 +537,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self._load_data(self.item_model)
         self.assertEqual(self._data(0, 0, self.item_model), 0)
         self._set_data(0, 0, 10, self.item_model)
-        delete(self.item_model)
+        delete(self.qt_parent)
         self.process()
         self.assertEqual(self.get_data(0, 'x', False), 10)
 
@@ -600,6 +616,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         row_count = self.item_model.rowCount()
         self.signal_register.clear()
         self.gui_run(add_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        self.item_model.timeout_slot()
         self.process()
         self.assertEqual(len(self.signal_register.header_changes), 1)
         new_row_count = self.item_model.rowCount()
@@ -666,11 +683,11 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self.get_data(0, 'y', False), 1)
 
     def test_list_attribute(self):
-        # when the data method of a CollectionProxy returns a list, manipulations
+        # when the data method of a CrudItemModel returns a list, manipulations
         # on this list should be reflected in the original list
         self._load_data(self.item_model)
         attribute_model_context_name = self._data(0, 2, self.item_model)
-        attribute_item_model = CollectionProxy(self.admin_route)
+        attribute_item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         attribute_item_model.set_value(attribute_model_context_name)
         list(attribute_item_model.add_columns(['value']))
         self._load_data(attribute_item_model)
@@ -679,6 +696,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         # manipulate the returned list, and see if the original is manipulated
         # as well
         self.gui_run(add_z_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        attribute_item_model.timeout_slot()
+        self.process()
         self.assertEqual(attribute_item_model.rowCount(), 3)
         self._load_data(attribute_item_model)
         self.assertIn(1, self.get_data(0, 'z', True))
@@ -692,7 +711,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_completion(self):
         self._load_data(self.item_model)
         name = self._data(0, 4, self.item_model, role=Qt.ItemDataRole.EditRole)
-        self.assertIsInstance(initial_naming_context.resolve(name), B)
+        self.assertIsInstance(initial_naming_context.resolve(tuple(name)), B)
         self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
         self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
         self.item_model.timeout_slot()
@@ -776,7 +795,8 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
 
     def setup_item_model(self, admin_route, admin_name):
-        self.item_model = CollectionProxy(admin_route)
+        self.qt_parent = QtCore.QObject()
+        self.item_model = get_qml_root_backend().createModel(get_settings_group(admin_route), self.qt_parent)
         self.item_model.set_value(self.model_context_name)
         self.columns = ('first_name', 'last_name', 'id',)
         list(self.item_model.add_columns(self.columns))
@@ -832,17 +852,19 @@ class QueryQStandardItemModelCase(
     def test_insert_after_sort(self):
         self.item_model.timeout_slot()
         self.assertTrue( self.item_model.columnCount() > 0 )
-        self.item_model.sort( 1, Qt.SortOrder.AscendingOrder.value )
+        self.item_model.sort( 1, Qt.SortOrder.AscendingOrder )
         # check the query
         self.assertTrue( self.item_model.columnCount() > 0 )
         rowcount = self._row_count(self.item_model)
         self.assertGreater(rowcount, 1)
         # check the sorting
         self._load_data(self.item_model)
+        self.item_model.timeout_slot()
+        self.process()
         data0 = self._data( 0, 1, self.item_model )
         data1 = self._data( 1, 1, self.item_model )
         self.assertGreater(data1, data0)
-        self.item_model.sort( 1, Qt.SortOrder.DescendingOrder.value )
+        self.item_model.sort( 1, Qt.SortOrder.DescendingOrder )
         self._load_data(self.item_model)
         data0 = self._data( 0, 1, self.item_model )
         data1 = self._data( 1, 1, self.item_model )
@@ -867,6 +889,8 @@ class QueryQStandardItemModelCase(
         self._set_data( new_row, 1, 'Bar', self.item_model )
         self.item_model.timeout_slot()
         self.process()
+        self.item_model.timeout_slot()
+        self.process()
         self.assertTrue( self._data( new_row, 2, self.item_model ) )
         primary_key =  self._data( new_row, 2, self.item_model )
         self.assertEqual( self.get_data(primary_key, 'first_name'), 'Foo')
@@ -887,7 +911,7 @@ class QueryQStandardItemModelCase(
         # those last 2 are needed for the validation of the compounding objects
         self.gui_run(apply_filter_name, model_context_name=self.model_context_name, handle_action_steps=True)
         start = self.query_counter
-        item_model = CollectionProxy(self.admin_route)
+        item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         item_model.set_value(self.model_context_name)
         list(item_model.add_columns(self.columns))
         self._load_data(item_model)

@@ -45,7 +45,6 @@ from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, EntityMeta
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
-from camelot.view.proxy.collection_proxy import CollectionProxy
 from camelot.types.typing import is_optional_type
 from camelot.view.field_attributes import _typing_to_python_type
 from camelot.view.controls import delegates
@@ -256,7 +255,6 @@ be specified using the verbose_name attribute.
     extra_display = []
     lines_per_row = 1
     validator = ObjectValidator
-    model = CollectionProxy
     fields = []
     form_display = []
     form_close_action = CloseForm()

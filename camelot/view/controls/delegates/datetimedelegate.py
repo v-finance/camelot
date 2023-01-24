@@ -31,17 +31,12 @@ from dataclasses import dataclass
 
 from .customdelegate import DocumentationMetaclass
 from .datedelegate import DateDelegate
-from camelot.view.controls import editors
 
 
 @dataclass
 class DateTimeDelegate(DateDelegate, metaclass=DocumentationMetaclass):
 
     editable: bool = True
-
-    @classmethod
-    def get_editor_class(cls):
-        return editors.DateTimeEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

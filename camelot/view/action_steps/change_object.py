@@ -43,7 +43,8 @@ from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.qml_view import get_qml_root_backend
+from camelot.view.utils import get_settings_group
 
 from .form_view import OpenFormView
 from .item_view import UpdateTableView
@@ -84,15 +85,17 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
         self.banner_widget().setStyleSheet('background-color: white;')
 
-        model = CollectionProxy(admin_route)
-        self.action_routes = dict()
-
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(
-            admin_route=admin_route, model=model, form_display=form_display,
+            admin_route=admin_route, model=None, form_display=form_display,
             fields=fields, parent=self
         )
+
+        model = get_qml_root_backend().createModel(get_settings_group(admin_route), form_widget)
+        self.action_routes = dict()
+        form_widget.set_model(model)
+
         note_layout = QtWidgets.QVBoxLayout()
         note = editors.NoteEditor( parent=self )
         note.set_value(None)
@@ -123,7 +126,8 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         # set the value last, so the validity can be updated
         model.set_value(proxy_route)
         self.model_context_name = proxy_route
-        list(model.add_columns((fn for fn, _fa in fields.items())))
+        columns = [fn for fn, _fa in fields.items()]
+        model.add_columns(columns)
         self.gui_context_name = gui_naming_context.bind(
             ('transient', str(id(self))), self
         )
@@ -205,7 +209,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         table_widget = editors.One2ManyEditor(
             admin_route = admin_route,
             parent = self,
-            columns=columns,
+            columns=[column['name'] for column in columns],
             # assume all actions are list actions and no field action,
             list_actions=action_routes,
             list_action=list_action,
