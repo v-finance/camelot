@@ -50,7 +50,7 @@ from ...core.utils import ugettext_lazy
 from ...view.utils import get_settings_group
 from .. import gui_naming_context
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import (
+from camelot.view.crud_action import (
     rowcount_name, rowdata_name, setcolumns_name
 )
 from ..qml_view import qml_action_step, is_cpp_gui_context_name
