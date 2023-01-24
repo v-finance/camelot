@@ -74,8 +74,6 @@ class DataclassEncoder(json.JSONEncoder):
             return obj.name()
         if isinstance(obj, (Decimal, datetime.date, datetime.datetime)):
             return initial_naming_context._bind_object(obj)
-        if isinstance(obj, StoredFile):
-            return obj.verbose_name # FIXME: not sure if this is enough...
         if isinstance(obj, QtGui.QImage):
             byte_array = QtCore.QByteArray()
             buffer = QtCore.QBuffer(byte_array)
