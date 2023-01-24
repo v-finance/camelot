@@ -305,7 +305,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         self.item_model.set_value(self.model_context_name)
         self.columns = self.admin.list_display
-        list(self.item_model.add_columns(self.columns))
+        self.item_model.add_columns(self.columns)
         self.item_model.timeout_slot()
         self.process()
         self.signal_register = ItemModelSignalRegister(self.item_model)
@@ -689,7 +689,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         attribute_model_context_name = self._data(0, 2, self.item_model)
         attribute_item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         attribute_item_model.set_value(attribute_model_context_name)
-        list(attribute_item_model.add_columns(['value']))
+        attribute_item_model.add_columns(['value'])
         self._load_data(attribute_item_model)
         self.assertEqual(attribute_item_model.rowCount(), 2)
         self.assertNotIn(1, self.get_data(0, 'z', True))
@@ -799,7 +799,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
         self.item_model = get_qml_root_backend().createModel(get_settings_group(admin_route), self.qt_parent)
         self.item_model.set_value(self.model_context_name)
         self.columns = ('first_name', 'last_name', 'id',)
-        list(self.item_model.add_columns(self.columns))
+        self.item_model.add_columns(self.columns)
         self.item_model.timeout_slot()
 
 
@@ -913,7 +913,7 @@ class QueryQStandardItemModelCase(
         start = self.query_counter
         item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         item_model.set_value(self.model_context_name)
-        list(item_model.add_columns(self.columns))
+        item_model.add_columns(self.columns)
         self._load_data(item_model)
         self.assertEqual(item_model.columnCount(), 3)
         self.assertEqual(item_model.rowCount(), 1)
