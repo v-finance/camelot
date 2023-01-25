@@ -131,6 +131,8 @@ class DateEditor(CustomEditor):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             if value:
+                if isinstance(value, QtCore.QDateTime):
+                    value = value.date()
                 assert isinstance(value, QtCore.QDate)
                 formatted_date = value.toString(self.date_format)
                 line_edit.setText(formatted_date)
