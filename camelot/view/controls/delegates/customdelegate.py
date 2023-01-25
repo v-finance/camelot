@@ -228,8 +228,6 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
             editor = editor_cls(parent, self.action_routes)
         elif issubclass(editor_cls, editors.DateEditor):
             editor = editor_cls(parent, self.nullable)
-        elif issubclass(editor_cls, editors.DateTimeEditor):
-            editor = editor_cls(parent, self.editable, self.nullable)
         elif issubclass(editor_cls, editors.DbImageEditor):
             editor = editor_cls(parent, self.preview_width, self.preview_height, self.max_size)
         elif issubclass(editor_cls, editors.FloatEditor):

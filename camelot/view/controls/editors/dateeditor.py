@@ -131,10 +131,10 @@ class DateEditor(CustomEditor):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             if value:
-                qdate = QtCore.QDate(value)
-                formatted_date = qdate.toString(self.date_format)
+                assert isinstance(value, QtCore.QDate)
+                formatted_date = value.toString(self.date_format)
                 line_edit.setText(formatted_date)
-                self.calendar_widget.setSelectedDate(qdate)
+                self.calendar_widget.setSelectedDate(value)
             else:
                 line_edit.setText('')
             self.valueChanged.emit()
@@ -143,7 +143,8 @@ class DateEditor(CustomEditor):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             try:
-                value = date_from_string( str( line_edit.text() ) )
+                date = date_from_string( str( line_edit.text() ) )
+                value = QtCore.QDate(date) if date is not None else None
             except ParsingError:
                 value = None
         return CustomEditor.get_value(self) or value

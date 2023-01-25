@@ -37,6 +37,7 @@ from ....core.item_model import (
 )
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.core import constants
+from camelot.core.naming import initial_naming_context
 from camelot.view.controls import editors
 
 long_int = int
@@ -67,6 +68,8 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item.setData(minimum, MinimumRole)
         item.setData(maximum, MaximumRole)
         if model_context.value is not None:
+            # json.JSONEncoder.default() does not handle integers, convert to name here
+            item.setData(initial_naming_context._bind_object(model_context.value), Qt.ItemDataRole.EditRole)
             value_str = locale.toString(long_int(model_context.value))
             if model_context.field_attributes.get('suffix') is not None:
                 value_str = value_str + ' ' + str(model_context.field_attributes.get('suffix'))

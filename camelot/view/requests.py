@@ -5,7 +5,7 @@ import typing
 
 from ..core.exception import CancelRequest
 from ..core.naming import (
-    CompositeName, NameNotFoundException, initial_naming_context
+    CompositeName, NamingException, NameNotFoundException, initial_naming_context
 )
 from ..core.serializable import NamedDataclassSerializable, Serializable
 from ..admin.action import ActionStep
@@ -146,8 +146,11 @@ class InitiateAction(AbstractRequest):
         try:
             action = initial_naming_context.resolve(tuple(request_data['action_name']))
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))
-        except NameNotFoundException as e:
-            LOGGER.error('Could resolve initate action, no binding for name: {}'.format(e.name))
+        except (NamingException, NameNotFoundException) as e:
+            if isinstance(e, NamingException):
+                LOGGER.error('Could resolve initate action, invalid name: {}'.format(e.message_text))
+            else:
+                LOGGER.error('Could resolve initate action, no binding for name: {}'.format(e.name))
             response_handler.send_response(ActionStopped(
                 run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=None
             ))

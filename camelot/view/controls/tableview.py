@@ -185,12 +185,15 @@ class TableWidget(QtWidgets.QTableView):
         # Editor, closed. it should be safe to change the model
         #
         QtWidgets.QTableView.setModel(self, model)
-        model.setParent(self)
+        # not required/allowed for CrudItemModel
+        #model.setParent(self)
         # assign selection model to local variable to keep it alive during
         # method call, or PySide segfaults
         selection_model = self.selectionModel()
         selection_model.currentChanged.connect(self._current_changed)
         model.modelReset.connect(self.update_headers)
+        if hasattr(model, 'updateHeaders'):
+            model.updateHeaders.connect(self.update_headers)
         self.update_headers()
 
     @QtCore.qt_slot()

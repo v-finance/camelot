@@ -21,6 +21,11 @@ class RouteWithRenderHint(DataclassSerializable):
     route: Route
     render_hint: RenderHint
 
+    @staticmethod
+    def from_dict(data):
+        return RouteWithRenderHint(tuple(data['route']), RenderHint(data['render_hint']))
+
+
 class AdminRoute(object):
     """
     Server side register of admins being used on the client side.

@@ -58,7 +58,10 @@ class TextLineEditor(CustomEditor):
         text_input = DecoratedLineEdit(self)
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
-        text_input.setEchoMode(echo_mode or QtWidgets.QLineEdit.EchoMode.Normal)
+        if echo_mode is not None:
+            text_input.setEchoMode(QtWidgets.QLineEdit.EchoMode(echo_mode))
+        else:
+            text_input.setEchoMode(QtWidgets.QLineEdit.EchoMode.Normal)
         validator = AbstractValidator.get_validator(validator_type, self)
         if validator is not None:
             validator.setObjectName('validator')

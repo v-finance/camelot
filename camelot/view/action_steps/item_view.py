@@ -47,9 +47,10 @@ from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
+from ...view.utils import get_settings_group
 from .. import gui_naming_context
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import (
+from camelot.view.crud_action import (
     rowcount_name, rowdata_name, setcolumns_name
 )
 from ..qml_view import qml_action_step, is_cpp_gui_context_name
@@ -113,7 +114,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.actions, self.action_states)
-        self.group = [admin.get_admin_route()[-2][:255]]
+        self.group = get_settings_group(admin.get_admin_route())
 
     @staticmethod
     def _add_action_states(model_context, actions, action_states):

@@ -30,12 +30,14 @@
 import json
 import logging
 
-from camelot.view.proxy.collection_proxy import CollectionProxy
 from ....admin.action.base import GuiContext
+from ....admin.admin_route import RouteWithRenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
 from ....core.item_model import ActionModeRole
 from ... import gui_naming_context
 from ..view import ViewWithActionsMixin
+from camelot.view.qml_view import get_qml_root_backend
+from camelot.view.utils import get_settings_group
 from ..tableview import TableWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
@@ -85,9 +87,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             self.trigger_list_action
         )
         self.action_routes = dict()
-        model = CollectionProxy(admin_route)
+        model = get_qml_root_backend().createModel(get_settings_group(admin_route), table)
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
-        model.setParent(self)
         table.setModel(model)
         self.admin_route = admin_route
         layout.addWidget(table)
@@ -148,6 +149,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
     def set_right_toolbar_actions(self, action_routes, toolbar):
         if action_routes is not None:
             for route_with_render_hint in action_routes:
+                if not isinstance(route_with_render_hint, RouteWithRenderHint):
+                    route_with_render_hint = RouteWithRenderHint.from_dict(route_with_render_hint)
                 action_route = route_with_render_hint.route
                 self.item_view.model().add_action_route(action_route)
                 qaction = self.render_action(
@@ -207,7 +210,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
-                list(model.add_columns(columns))
+                model.add_columns(columns)
                 # this code should be useless, since at this point, the
                 # column count is still 0 ??
                 for i in range(model.columnCount()):
@@ -223,7 +226,8 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             # even if the collection 'is' the same object as the current
             # one, still need to set it, since the content of the collection
             # might have changed.
-            model.set_value(value)
+            if value is not None:
+                model.set_value(tuple(value))
             self.update_list_action_states()
 
     def get_value(self):
