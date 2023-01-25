@@ -1,15 +1,11 @@
 import dataclasses
 import io
 import json
-import datetime
 import base64
 
 from camelot.core.qt import QtCore, QtGui
-from camelot.core.naming import initial_naming_context
-from camelot.core.files.storage import StoredFile
 from .utils import ugettext_lazy
 from enum import Enum
-from decimal import Decimal
 
 
 class Serializable(object):
@@ -70,10 +66,6 @@ class DataclassEncoder(json.JSONEncoder):
             return obj.property('name')
         if isinstance(obj, QtCore.QJsonValue):
             return obj.toVariant()
-        if isinstance(obj, QtGui.QColor):
-            return obj.name()
-        if isinstance(obj, (Decimal, datetime.date, datetime.datetime)):
-            return initial_naming_context._bind_object(obj)
         if isinstance(obj, QtGui.QImage):
             byte_array = QtCore.QByteArray()
             buffer = QtCore.QBuffer(byte_array)

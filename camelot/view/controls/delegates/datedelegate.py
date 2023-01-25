@@ -32,6 +32,7 @@ from typing import ClassVar, Any
 
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, QtCore
+from camelot.core.naming import initial_naming_context
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
@@ -59,6 +60,7 @@ class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super(DateDelegate, cls).get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
+            item.setData(initial_naming_context._bind_object(model_context.value), Qt.ItemDataRole.EditRole)
             value_str = str(locale.toString(model_context.value, QtCore.QLocale.FormatType.ShortFormat))
             item.setData(value_str, PreviewRole)
         else:

@@ -36,6 +36,7 @@ from ....core.item_model import (
     PrecisionRole, MinimumRole, MaximumRole, FocusPolicyRole
 )
 from ....core.qt import Qt
+from camelot.core.naming import initial_naming_context
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core import constants
@@ -75,6 +76,7 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if precision is None:
             precision = 2
         if model_context.value is not None:
+            item.setData(initial_naming_context._bind_object(model_context.value), Qt.ItemDataRole.EditRole)
             value_str = str(
                 locale.toString(float(model_context.value), 'f', precision)
             )

@@ -29,7 +29,7 @@
 
 from dataclasses import dataclass
 
-from camelot.core.qt import Qt
+from camelot.core.qt import Qt, QtGui
 from camelot.view.controls import editors
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
@@ -47,4 +47,7 @@ class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super(ColorDelegate, cls).get_standard_item(locale, model_context)
         color = editors.ColorEditor.to_qcolor(model_context.value, Qt.GlobalColor.transparent)
         item.setData(color, Qt.ItemDataRole.BackgroundRole)
+        if model_context.value is not None:
+            if isinstance(model_context.value, QtGui.QColor):
+                item.setData(model_context.value.name(), Qt.ItemDataRole.EditRole)
         return item
