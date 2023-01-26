@@ -10,7 +10,7 @@ from ..admin.icon import Icon
 from ..admin.action.field_action import FieldActionModelContext
 from ..core.cache import ValueCache
 from ..core.item_model import (
-    ObjectRole, PreviewRole, VerboseIdentifierRole, ValidRole,
+    ObjectRole, PreviewRole,
     ActionRoutesRole, ActionStatesRole, CompletionsRole,
     ActionModeRole, FocusPolicyRole,
     VisibleRole, NullableRole
