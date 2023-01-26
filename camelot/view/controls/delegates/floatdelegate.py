@@ -29,6 +29,7 @@
 
 from dataclasses import dataclass, field
 from typing import List, ClassVar, Any
+from decimal import Decimal
 
 from ....admin.admin_route import Route
 from ....core.item_model import (
@@ -66,17 +67,21 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item.setData(model_context.field_attributes.get('focus_policy'), FocusPolicyRole)
         item.setData(model_context.field_attributes.get('suffix'), SuffixRole)
         item.setData(model_context.field_attributes.get('prefix'), PrefixRole)
-        item.setData(model_context.field_attributes.get('single_step'), SingleStepRole)
+        single_step = model_context.field_attributes.get('single_step')
+        if isinstance(single_step, Decimal):
+            single_step = float(single_step) # FIXME: use bound decimal?
+        item.setData(single_step, SingleStepRole)
         precision = model_context.field_attributes.get('precision', 2)
         item.setData(precision, PrecisionRole)
-        item.setData(minimum, MinimumRole)
-        item.setData(maximum, MaximumRole)
+        item.setData(float(minimum), MinimumRole) # FIXME: use bound decimal?
+        item.setData(float(maximum), MaximumRole) # FIXME: use bound decimal?
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
         if precision is None:
             precision = 2
         if model_context.value is not None:
-            item.setData(initial_naming_context._bind_object(model_context.value), Qt.ItemDataRole.EditRole)
+            # FIXME: require isinstance(model_context.value, Decimal)?
+            item.setData(initial_naming_context._bind_object(Decimal(model_context.value)), Qt.ItemDataRole.EditRole)
             value_str = str(
                 locale.toString(float(model_context.value), 'f', precision)
             )
