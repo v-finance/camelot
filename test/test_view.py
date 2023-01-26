@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import unittest
+from decimal import Decimal
 
 from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
@@ -711,7 +712,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         delegate = delegates.FloatDelegate()
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FloatEditor))
-        self.grab_delegate(delegate, 3.145)
+        self.grab_delegate(delegate, Decimal(3.145))
 
     def test_filedelegate(self):
         delegate = delegates.FileDelegate()
