@@ -36,15 +36,16 @@ from camelot.core.naming import initial_naming_context
 
 from ....admin.icon import CompletionValue
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
-from ....core.serializable import json_encoder, NamedDataclassSerializable, DataclassSerializable
+from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
     ChoicesRole, VisibleRole, NullableRole
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
-from dataclasses import dataclass, InitVar, field
-from typing import Any, ClassVar, Dict
+from camelot.view.crud_action import DataCell
+from dataclasses import dataclass, InitVar
+from typing import Any, ClassVar
 
 
 
@@ -120,14 +121,6 @@ def DocumentationMetaclass(name, bases, dct):
 
 color_groups = {True: QtGui.QPalette.ColorGroup.Inactive,
                 False: QtGui.QPalette.ColorGroup.Disabled}
-
-@dataclass
-class DataCell(DataclassSerializable):
-
-    row: int = -1
-    column: int = -1
-    flags: int = Qt.ItemFlag.NoItemFlags
-    roles: Dict[int, Any] = field(default_factory=dict)
 
 class CustomDelegateMeta(type(NamedDataclassSerializable), type(QtWidgets.QItemDelegate)):
     pass

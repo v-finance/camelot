@@ -295,8 +295,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = 3
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
-        minimum = item.data(MinimumRole)
-        maximum = item.data(MaximumRole)
+        minimum = item.roles.get(MinimumRole)
+        maximum = item.roles.get(MaximumRole)
         
         editor = editors.FloatEditor(parent=None)
         editor.set_prefix('prefix')
@@ -360,8 +360,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = 3
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
-        minimum = item.data(MinimumRole)
-        maximum = item.data(MaximumRole)
+        minimum = item.roles.get(MinimumRole)
+        maximum = item.roles.get(MaximumRole)
         self.assertIsNotNone(minimum)
         self.assertIsNotNone(maximum)
 
@@ -589,6 +589,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         item = delegate.get_standard_item(
             self.locale, field_action_model_context
         )
+        item = item.get_standard_item()
         # make sure a DisplayRole is available in the item, the standard
         # model otherwise returns the EditRole as a DisplayRole
         item.setData(item.data(PreviewRole), Qt.ItemDataRole.DisplayRole)
@@ -680,7 +681,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = today
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(self.locale, field_action_model_context)
-        self.assertTrue(item.data(PreviewRole))
+        self.assertTrue(item.roles.get(PreviewRole))
 
     def test_localfileDelegate(self):
         delegate = delegates.LocalFileDelegate()
@@ -740,7 +741,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = '2'
         field_action_model_context.field_attributes = {'choices':CHOICES}
         item = delegate.get_standard_item(self.locale, field_action_model_context)
-        self.assertEqual(item.data(PreviewRole), 'B')
+        self.assertEqual(item.roles.get(PreviewRole), 'B')
 
     def test_virtualaddressdelegate(self):
         delegate = delegates.VirtualAddressDelegate()

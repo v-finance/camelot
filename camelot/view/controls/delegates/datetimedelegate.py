@@ -45,7 +45,7 @@ class DateTimeDelegate(DateDelegate, metaclass=DocumentationMetaclass):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
-            item.setData(initial_naming_context._bind_object(model_context.value), Qt.ItemDataRole.EditRole)
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
         return item
 
 

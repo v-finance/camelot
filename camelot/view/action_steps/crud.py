@@ -14,16 +14,11 @@ from ...core.naming import NameNotFoundException
 from ...core.qt import Qt, QtGui, QtCore, is_deleted
 from ...core.serializable import DataclassSerializable, json_encoder
 from ...core.item_model import (
-    CompletionsRole, ObjectRole, ColumnAttributesRole, EndRoles,
-    VerboseIdentifierRole, ValidRole, ValidMessageRole
+    CompletionsRole, ColumnAttributesRole,
 )
 from .. import gui_naming_context
 from ..controls import delegates
-
-
-non_serializable_roles = (
-    Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
-)
+from camelot.view.crud_action import DataUpdate
 
 def filter_attributes(attributes, keys):
     filtered = {}
@@ -32,88 +27,6 @@ def filter_attributes(attributes, keys):
             filtered[key] = attributes[key]
     return filtered
 
-'''
-@dataclass
-class DataRowHeader(DataclassSerializable):
-
-    row: int
-    tool_tip: str
-    icon_name: str
-    object: int
-    verbose_identifier: str
-    valid: bool
-    message: str
-    decoration: str
-    display: str
-'''
-
-'''
-@dataclass
-class UpdateMixin(DataclassSerializable):
-
-    header_items: typing.List[DataRowHeader]
-    cells: typing.List[DataCell]
-'''
-
-class UpdateMixin(object):
-
-    def _to_dict(self):
-        header_items = []
-        cells = []
-        for row, header_item, items in self.changed_ranges:
-            header_items.append({
-                "row": row,
-                "tool_tip": header_item.data(Qt.ItemDataRole.ToolTipRole),
-                "icon_name": header_item.data(Qt.ItemDataRole.WhatsThisRole),
-                "object": header_item.data(ObjectRole),
-                "verbose_identifier": header_item.data(VerboseIdentifierRole),
-                "valid": header_item.data(ValidRole),
-                "message": header_item.data(ValidMessageRole),
-                "decoration": header_item.data(Qt.ItemDataRole.DecorationRole),
-                "display": header_item.data(Qt.ItemDataRole.DisplayRole)
-            })
-            for column, item in items:
-                cell_data = {
-                    "row": row,
-                    "column": column,
-                }
-                for role, role_data in item.roles.items():
-                    assert role not in non_serializable_roles
-                    if role_data is not None:
-                        cell_data[role] = role_data
-                # serialize flags
-                cell_data['flags'] = item.flags
-                cells.append(cell_data)
-        return {
-            "header_items": header_items,
-            "cells": cells
-        }
-
-    def update_item_model(self, gui_context_name):
-        try:
-            item_model = gui_naming_context.resolve(gui_context_name)
-        except NameNotFoundException:
-            return
-        if is_deleted(item_model):
-            return
-        root_item = item_model.invisibleRootItem()
-        if is_deleted(root_item):
-            return
-        logger.debug('begin gui update {0} rows'.format(len(self.changed_ranges)))
-        row_range = (item_model.rowCount(), -1)
-        column_range = (item_model.columnCount(), -1)
-        for row, header_item, items in self.changed_ranges:
-            row_range = (min(row, row_range[0]), max(row, row_range[1]))
-            # Setting the vertical header item causes the table to scroll
-            # back to its open editor.  However setting the header item every
-            # time data has changed is needed to signal other parts of the
-            # gui that the object itself has changed.
-            item_model.setVerticalHeaderItem(row, header_item)
-            for column, item in items:
-                column_range = (min(column, column_range[0]), max(column, column_range[1]))
-                root_item.setChild(row, column, item)
-        
-        logger.debug('end gui update rows {0}, columns {1}'.format(row_range, column_range))    
 
 class CrudActionStep(ActionStep, DataclassSerializable):
     """Helper class to implement ActionSteps that require access to the item model"""
@@ -268,28 +181,15 @@ class Completion(CrudActionStep):
             child.setData(completions, CompletionsRole)
         logger.debug('end gui update rows {0}, column {1}'.format(step['row'], step['column']))
 
-class Created(ActionStep, UpdateMixin):
+@dataclass
+class Created(ActionStep, DataUpdate):
     
     blocking = False
-    
-    def __init__(self, changed_ranges):
-        self.changed_ranges = changed_ranges
         
-    def gui_run(self, gui_context_name):
-        # appending new items to the model will increase the rowcount, so
-        # there is no need to set the rowcount explicitly
-        self.update_item_model(gui_context_name) 
+@dataclass
+class Update(ActionStep, DataUpdate):
         
-        
-class Update(ActionStep, UpdateMixin):
-    
     blocking = False
-    
-    def __init__(self, changed_ranges):
-        self.changed_ranges = changed_ranges
-        
-    def gui_run(self, gui_context_name):
-        self.update_item_model(gui_context_name)
 
 @dataclass
 class ChangeSelection(CrudActionStep):
