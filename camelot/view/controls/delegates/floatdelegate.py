@@ -111,4 +111,8 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         editor.set_value(value)
         self.update_field_action_states(editor, index)
 
+    def setModelData(self, editor, model, index):
+        # convert Decimal to float
+        model.setData(index, float(editor.get_value()))
+
 
