@@ -32,6 +32,29 @@ def filter_attributes(attributes, keys):
             filtered[key] = attributes[key]
     return filtered
 
+'''
+@dataclass
+class DataRowHeader(DataclassSerializable):
+
+    row: int
+    tool_tip: str
+    icon_name: str
+    object: int
+    verbose_identifier: str
+    valid: bool
+    message: str
+    decoration: str
+    display: str
+'''
+
+'''
+@dataclass
+class UpdateMixin(DataclassSerializable):
+
+    header_items: typing.List[DataRowHeader]
+    cells: typing.List[DataCell]
+'''
+
 class UpdateMixin(object):
 
     def _to_dict(self):
@@ -54,14 +77,12 @@ class UpdateMixin(object):
                     "row": row,
                     "column": column,
                 }
-                for role in range(Qt.ItemDataRole.DisplayRole, EndRoles):
-                    if role in non_serializable_roles:
-                        continue
-                    role_data = item.data(role)
+                for role, role_data in item.roles.items():
+                    assert role not in non_serializable_roles
                     if role_data is not None:
                         cell_data[role] = role_data
                 # serialize flags
-                cell_data['flags'] = item.flags()
+                cell_data['flags'] = item.flags
                 cells.append(cell_data)
         return {
             "header_items": header_items,

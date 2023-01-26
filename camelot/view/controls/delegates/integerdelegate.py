@@ -60,21 +60,21 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
         minimum = minimum if minimum is not None else constants.camelot_minfloat
         maximum = maximum if maximum is not None else constants.camelot_maxfloat
-        item = super(IntegerDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
-        item.setData(model_context.field_attributes.get('suffix'), SuffixRole)
-        item.setData(model_context.field_attributes.get('prefix'), PrefixRole)
-        item.setData(model_context.field_attributes.get('single_step'), SingleStepRole)
-        item.setData(minimum, MinimumRole)
-        item.setData(maximum, MaximumRole)
+        item.roles[SuffixRole] = model_context.field_attributes.get('suffix')
+        item.roles[PrefixRole] = model_context.field_attributes.get('prefix')
+        item.roles[SingleStepRole] = model_context.field_attributes.get('single_step')
+        item.roles[MinimumRole] = minimum
+        item.roles[MaximumRole] = maximum
         if model_context.value is not None:
-            item.setData(initial_naming_context._bind_object(model_context.value), Qt.ItemDataRole.EditRole)
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
             value_str = locale.toString(long_int(model_context.value))
             if model_context.field_attributes.get('suffix') is not None:
                 value_str = value_str + ' ' + str(model_context.field_attributes.get('suffix'))
             if model_context.field_attributes.get('prefix') is not None:
                 value_str = str(model_context.field_attributes.get('prefix')) + ' ' + value_str
-            item.setData(value_str, PreviewRole)
+            item.roles[PreviewRole] = value_str
         return item
 
     def setEditorData(self, editor, index):

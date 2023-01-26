@@ -44,10 +44,10 @@ class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(ColorDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         color = editors.ColorEditor.to_qcolor(model_context.value, Qt.GlobalColor.transparent)
-        item.setData(color.name(), Qt.ItemDataRole.BackgroundRole)
+        item.roles[Qt.ItemDataRole.BackgroundRole] = color.name()
         if model_context.value is not None:
             if isinstance(model_context.value, QtGui.QColor):
-                item.setData(model_context.value.name(), Qt.ItemDataRole.EditRole)
+                item.roles[Qt.ItemDataRole.EditRole] = model_context.value.name()
         return item

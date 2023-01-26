@@ -54,10 +54,10 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(MonthsDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
-            item.setData(initial_naming_context._bind_object(model_context.value), Qt.ItemDataRole.EditRole)
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
             forever = model_context.field_attributes.get('forever')
             if (forever is not None) and (model_context.value==forever):
                 value_str = qtranslate('Forever')
@@ -68,5 +68,5 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
                     value_str = qtranslate('%n years', n=years) + ' '
                 if months!=0:
                     value_str = value_str + qtranslate('%n months', n=months)
-            item.setData(value_str, PreviewRole)
+            item.roles[PreviewRole] = value_str
         return item
