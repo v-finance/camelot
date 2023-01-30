@@ -54,6 +54,7 @@ class ColorEditor(CustomEditor):
         color_button.clicked.connect(self.buttonClicked)
         self.setLayout(layout)
         self._color = None
+        self._editable = None
 
     @classmethod
     def to_qcolor(self, value, invalid):
@@ -76,8 +77,13 @@ class ColorEditor(CustomEditor):
             if color_button is not None:
                 color_button.setIcon(QtGui.QIcon(pixmap))
 
+    def set_editable(self, editable):
+        self._editable = editable
+
     @QtCore.qt_slot(bool)
     def buttonClicked(self, raised):
+        if self._editable != True:
+            return
         options = QtWidgets.QColorDialog.ColorDialogOption.ShowAlphaChannel
         qcolor = self.to_qcolor(self.get_value(), 'white')
         qcolor = QtWidgets.QColorDialog.getColor(
