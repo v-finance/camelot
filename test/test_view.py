@@ -295,8 +295,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         field_action_model_context.value = 3
         field_action_model_context.field_attributes = {}
         item = delegate.get_standard_item(QtCore.QLocale(), field_action_model_context)
-        minimum = item.roles.get(MinimumRole)
-        maximum = item.roles.get(MaximumRole)
+        minimum = initial_naming_context.resolve(item.roles.get(MinimumRole))
+        maximum = initial_naming_context.resolve(item.roles.get(MaximumRole))
         
         editor = editors.FloatEditor(parent=None)
         editor.set_prefix('prefix')

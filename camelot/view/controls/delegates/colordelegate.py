@@ -29,7 +29,7 @@
 
 from dataclasses import dataclass
 
-from camelot.core.qt import Qt, QtGui
+from camelot.core.qt import Qt
 from camelot.core.naming import initial_naming_context
 from camelot.view.controls import editors
 
