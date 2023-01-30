@@ -59,11 +59,11 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(ComboBoxDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         value_name = initial_naming_context._bind_object(model_context.value)
         # eventually, all values should be names, so this should happen in the
         # custom delegate class
-        item.setData(value_name, Qt.ItemDataRole.EditRole)
+        item.roles[Qt.ItemDataRole.EditRole] = value_name
         cls.set_item_editability(model_context, item, True)
         choices = model_context.field_attributes.get('choices', [])
 
@@ -81,22 +81,22 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
         for key, verbose in choices:
             if key == model_context.value:
-                item.setData(str(verbose), PreviewRole)
+                item.roles[PreviewRole] = str(verbose)
                 break
         else:
             if model_context.value is None:
-                item.setData(str(), PreviewRole)
+                item.roles[PreviewRole] = str()
             else:
                 # the model has a value that is not in the list of choices,
                 # still try to display it
-                item.setData(str(model_context.value), PreviewRole)
+                item.roles[PreviewRole] = str(model_context.value)
                 choicesData.append(CompletionValue(
                     value=initial_naming_context._bind_object(model_context.value),
                     verbose_name=str(model_context.value),
                     background = ColorScheme.VALIDATION_ERROR.name(),
                     virtual = True
                     )._to_dict())
-        item.setData(choicesData, ChoicesRole)
+        item.roles[ChoicesRole] = choicesData
         return item
 
     def setEditorData(self, editor, index):

@@ -61,6 +61,9 @@ class A(object):
                   'delegate': delegates.One2ManyDelegate,
                   'target': C,
                   },
+            'created': {
+                'delegate': delegates.DateTimeDelegate
+            }
         }
 
         def get_verbose_identifier(self, obj):

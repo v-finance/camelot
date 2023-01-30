@@ -22,11 +22,11 @@ class DbImageDelegate(CustomDelegate):
     
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(DbImageDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         if model_context.value is not None:
             image = QtGui.QImage()
             byte_array = QtCore.QByteArray.fromBase64( model_context.value.encode() )
             image.loadFromData( byte_array )
             thumbnail = image.scaled(100,100, Qt.AspectRatioMode.KeepAspectRatio)
-            item.setData(thumbnail, PreviewRole)
+            item.roles[PreviewRole] = thumbnail
         return item  

@@ -14,6 +14,7 @@ import weakref
 
 from enum import Enum
 
+from camelot.core.qt import QtGui
 from camelot.core.utils import Arity
 
 from decimal import Decimal
@@ -843,6 +844,7 @@ class Constant(Enum):
     integer = constant('int',      int,               Arity.unary,   str)
     string =  constant('str',      str,               Arity.unary,   str)
     decimal = constant('decimal',  Decimal,           Arity.unary,   str)
+    color =   constant('color',    QtGui.QColor,      Arity.unary,   str)
     time =    constant('datetime', datetime.datetime, Arity.senary,  int)
     date =    constant('date',     datetime.date,     Arity.ternary, int)
 
@@ -1105,6 +1107,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
                 if isinstance(obj, Constant.decimal.composite_type):
                     # Normalize decimals to remove trailing zeros, to allow equality comparisons between named bindings.
                     return (*base_name, str(obj.normalize()))
+                if isinstance(obj, Constant.color.composite_type):
+                    return (*base_name, obj.name())
                 return (*base_name, str(obj))
         if isinstance(obj, Entity):
             primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
