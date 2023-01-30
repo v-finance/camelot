@@ -57,6 +57,8 @@ class ColorEditor(CustomEditor):
 
     @classmethod
     def to_qcolor(self, value, invalid):
+        if isinstance(value, QtGui.QColor):
+            return value
         if (value is not None) and QtGui.QColor.isValidColor(value):
             return QtGui.QColor(value)
         return QtGui.QColor(invalid)

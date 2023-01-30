@@ -203,9 +203,10 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         item.roles[Qt.ItemDataRole.TextAlignmentRole] = cls.horizontal_align
         item.roles[Qt.ItemDataRole.ToolTipRole] = model_context.field_attributes.get('tooltip')
         background_color = model_context.field_attributes.get('background_color')
-        if isinstance(background_color, QtGui.QColor):
-            background_color = background_color.name()
-        item.roles[Qt.ItemDataRole.BackgroundRole] = background_color
+        if background_color is not None:
+            if not isinstance(background_color, QtGui.QColor):
+                background_color = QtGui.QColor(background_color)
+            item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(background_color)
         item.roles[VisibleRole] = model_context.field_attributes.get('visible', True)
         item.roles[NullableRole] = model_context.field_attributes.get('nullable', True)
         # FIXME: move choices to delegates that actually use it?
