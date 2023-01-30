@@ -68,19 +68,17 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item.roles[SuffixRole] = model_context.field_attributes.get('suffix')
         item.roles[PrefixRole] = model_context.field_attributes.get('prefix')
         single_step = model_context.field_attributes.get('single_step')
-        if isinstance(single_step, Decimal):
-            single_step = float(single_step) # FIXME: use bound decimal?
-        item.roles[SingleStepRole] = single_step
+        if single_step is not None:
+            item.roles[SingleStepRole] = initial_naming_context._bind_object(Decimal(single_step))
         precision = model_context.field_attributes.get('precision', 2)
         item.roles[PrecisionRole] = precision
-        item.roles[MinimumRole] = float(minimum) # FIXME: use bound decimal?
-        item.roles[MaximumRole] = float(maximum) # FIXME: use bound decimal?
+        item.roles[MinimumRole] = initial_naming_context._bind_object(Decimal(minimum))
+        item.roles[MaximumRole] = initial_naming_context._bind_object(Decimal(maximum))
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
         if precision is None:
             precision = 2
         if model_context.value is not None:
-            # FIXME: require isinstance(model_context.value, Decimal)?
             item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(Decimal(model_context.value))
             value_str = str(
                 locale.toString(float(model_context.value), 'f', precision)
