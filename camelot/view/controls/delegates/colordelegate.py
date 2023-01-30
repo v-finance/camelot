@@ -30,6 +30,7 @@
 from dataclasses import dataclass
 
 from camelot.core.qt import Qt
+from camelot.core.naming import initial_naming_context
 from camelot.view.controls import editors
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
@@ -44,7 +45,9 @@ class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(ColorDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         color = editors.ColorEditor.to_qcolor(model_context.value, Qt.GlobalColor.transparent)
-        item.setData(color, Qt.ItemDataRole.BackgroundRole)
+        item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(color)
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(color)
         return item

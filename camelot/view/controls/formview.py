@@ -42,7 +42,7 @@ from ...core.item_model import ActionModeRole
 from .. import gui_naming_context
 from ..action_runner import action_runner
 from camelot.admin.action.base import GuiContext
-from camelot.view.crud_action import VerboseIdentifierRole
+from camelot.core.item_model import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
 from .delegates.delegatemanager import DelegateManager

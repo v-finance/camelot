@@ -43,6 +43,7 @@ from ....core.item_model import (
 )
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
+from camelot.view.crud_action import DataCell
 from dataclasses import dataclass, InitVar
 from typing import Any, ClassVar
 
@@ -157,9 +158,9 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
     def set_item_editability(cls, model_context, item, default):
         editable = model_context.field_attributes.get('editable', default)
         if editable:
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+            item.flags = item.flags | Qt.ItemFlag.ItemIsEditable
         else:
-            item.setFlags(item.flags() ^ Qt.ItemFlag.ItemIsEditable)
+            item.flags = item.flags ^ Qt.ItemFlag.ItemIsEditable
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
@@ -186,8 +187,8 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         # python.
         serialized_action_routes = json_encoder.encode(routes)
         serialized_action_states = json_encoder.encode(states)
-        item = QtGui.QStandardItem()
-        item.setData(model_context.value, Qt.ItemDataRole.EditRole)
+        item = DataCell()
+        item.roles[Qt.ItemDataRole.EditRole] = model_context.value
         # NOTE: one of the goals is to serialize the field attributes, which currently
         # still comprises a large variety of elements, some of which should still be made serializable,
         # while others may only be used at the model side and should not be included in the serialization.
@@ -197,13 +198,17 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         # that are already made serializable, as to gradually get towards the final goal.
         # Eventually, when the final set of serializable field attributes is known, those roles
         # may be combined again somehow, but this is still TBD.
-        item.setData(serialized_action_routes, ActionRoutesRole)
-        item.setData(serialized_action_states, ActionStatesRole)
-        item.setData(cls.horizontal_align, Qt.ItemDataRole.TextAlignmentRole)
-        item.setData(model_context.field_attributes.get('tooltip'), Qt.ItemDataRole.ToolTipRole)
-        item.setData(model_context.field_attributes.get('background_color'), Qt.ItemDataRole.BackgroundRole)
-        item.setData(model_context.field_attributes.get('visible', True), VisibleRole)
-        item.setData(model_context.field_attributes.get('nullable', True), NullableRole)
+        item.roles[ActionRoutesRole] = serialized_action_routes
+        item.roles[ActionStatesRole] = serialized_action_states
+        item.roles[Qt.ItemDataRole.TextAlignmentRole] = cls.horizontal_align
+        item.roles[Qt.ItemDataRole.ToolTipRole] = model_context.field_attributes.get('tooltip')
+        background_color = model_context.field_attributes.get('background_color')
+        if background_color is not None:
+            if not isinstance(background_color, QtGui.QColor):
+                background_color = QtGui.QColor(background_color)
+            item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(background_color)
+        item.roles[VisibleRole] = model_context.field_attributes.get('visible', True)
+        item.roles[NullableRole] = model_context.field_attributes.get('nullable', True)
         # FIXME: move choices to delegates that actually use it?
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
@@ -211,7 +216,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
                 value=initial_naming_context._bind_object(obj),
                 verbose_name=verbose_name
                 )._to_dict() for obj, verbose_name in choices]
-        item.setData(choices, ChoicesRole)
+        item.roles[ChoicesRole] = choices
         return item
 
     def createEditor(self, parent, option, index):

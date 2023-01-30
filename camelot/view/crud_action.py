@@ -1,21 +1,25 @@
 import collections
 import logging
+from dataclasses import dataclass, field, asdict, InitVar
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 from ..admin.action.base import Action
+from ..admin.icon import Icon
 from ..admin.action.field_action import FieldActionModelContext
 from ..core.cache import ValueCache
 from ..core.item_model import (
-    ObjectRole, PreviewRole, VerboseIdentifierRole, ValidRole,
-    ActionRoutesRole, ValidMessageRole,
-    ActionStatesRole, CompletionsRole,
+    ObjectRole, PreviewRole,
+    ActionRoutesRole, ActionStatesRole, CompletionsRole,
     ActionModeRole, FocusPolicyRole,
     VisibleRole, NullableRole
 )
 from ..core.exception import log_programming_error
 from ..core.naming import initial_naming_context, NameNotFoundException
 from ..core.qt import Qt, QtGui
+from camelot.core.serializable import DataclassSerializable
+
 
 crud_action_context = initial_naming_context.bind_new_context(
     'crud_action', immutable=True
@@ -44,20 +48,67 @@ def strip_data_from_object( obj, columns ):
     return row_data
 
 
+non_serializable_roles = (
+    Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
+)
 
-invalid_data = None
-invalid_item = QtGui.QStandardItem()
-invalid_item.setFlags(Qt.ItemFlag.NoItemFlags)
-invalid_item.setData(invalid_data, Qt.ItemDataRole.EditRole)
-invalid_item.setData(invalid_data, PreviewRole)
-invalid_item.setData(invalid_data, ObjectRole)
-invalid_item.setData(invalid_data, CompletionsRole)
-invalid_item.setData('[]', ActionRoutesRole)
-invalid_item.setData('[]', ActionStatesRole)
-invalid_item.setData(invalid_data, ActionModeRole)
-invalid_item.setData(Qt.FocusPolicy.NoFocus, FocusPolicyRole)
-invalid_item.setData(True, VisibleRole)
-invalid_item.setData(True, NullableRole)
+@dataclass
+class DataCell(DataclassSerializable):
+
+    row: int = -1
+    column: int = -1
+    flags: int = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsDropEnabled | Qt.ItemFlag.ItemIsDragEnabled | Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable
+
+    roles: Dict[int, Any] = field(default_factory=dict)
+
+    # used in camelot tests
+    def get_standard_item(self):
+        item = QtGui.QStandardItem()
+        item.setFlags(self.flags)
+        for role, value in self.roles.items():
+            item.setData(value, role)
+        return item
+
+@dataclass
+class DataRowHeader(DataclassSerializable):
+
+    row: int = -1
+    tool_tip: Optional[str] = None
+    icon_name: Optional[str] = None
+    object: int = 0
+    verbose_identifier: str = ''
+    valid: bool = True
+    message: str = ''
+    decoration: Optional[Icon] = None
+    display: Optional[str] = None
+
+@dataclass
+class DataUpdate(DataclassSerializable):
+
+    changed_ranges: InitVar
+
+    header_items: List[DataRowHeader] = field(default_factory=list)
+    cells: List[DataCell] = field(default_factory=list)
+
+    def __post_init__(self, changed_ranges):
+        for row, header_item, items in changed_ranges:
+            self.header_items.append(header_item)
+            self.cells.extend(items)
+
+
+invalid_item = DataCell()
+invalid_item.flags = Qt.ItemFlag.NoItemFlags
+invalid_item.roles[Qt.ItemDataRole.EditRole] = None
+invalid_item.roles[PreviewRole] = None
+invalid_item.roles[ObjectRole] = None
+invalid_item.roles[CompletionsRole] = None
+invalid_item.roles[ActionRoutesRole] = '[]'
+invalid_item.roles[ActionStatesRole] = '[]'
+invalid_item.roles[ActionModeRole] = None
+invalid_item.roles[FocusPolicyRole] = Qt.FocusPolicy.NoFocus
+invalid_item.roles[VisibleRole] = True
+invalid_item.roles[NullableRole] = True
+
 
 class UpdateMixin(object):
 
@@ -83,7 +134,6 @@ class UpdateMixin(object):
         static_field_attributes = model_context.static_field_attributes
         column_names = [model_context.static_field_attributes[column]['field_name'] for column in columns]
         action_state = None
-        changed_ranges = []
         logger.debug('add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
         is_object_valid = True
@@ -103,6 +153,7 @@ class UpdateMixin(object):
         changed_columns = set()
         changed_columns.update(model_context.edit_cache.add_data(row, obj, row_data))
         changed_columns.update(model_context.attributes_cache.add_data(row, obj, dynamic_field_attributes))
+        changed_ranges = []
         if row is not None:
             items = []
             locale = model_context.locale
@@ -121,9 +172,13 @@ class UpdateMixin(object):
                         model_context, obj, field_attributes
                     )
                     item = delegate.get_standard_item(locale, field_action_model_context)
-                    items.append((column, item))
                 else:
-                    items.append((column, invalid_item.clone()))
+                    item = DataCell(**asdict(invalid_item))
+                # remove roles with None values
+                item.roles = { role: value for role, value in item.roles.items() if value is not None and role not in non_serializable_roles}
+                item.row = row
+                item.column = column
+                items.append(item)
             try:
                 verbose_identifier = admin.get_verbose_identifier(obj)
             except (Exception, RuntimeError, TypeError, NameError) as e:
@@ -139,20 +194,21 @@ class UpdateMixin(object):
                     break
                 else:
                     valid = True
-            header_item = QtGui.QStandardItem()
-            header_item.setData(id(obj), ObjectRole)
-            header_item.setData(verbose_identifier, VerboseIdentifierRole)
-            header_item.setData(valid, ValidRole)
-            header_item.setData(message, ValidMessageRole)
+            header_item = DataRowHeader()
+            header_item.row = row
+            header_item.object = id(obj)
+            header_item.verbose_identifier = verbose_identifier
+            header_item.valid = valid
+            header_item.message = message
             if action_state is not None:
-                header_item.setData(action_state.tooltip, Qt.ItemDataRole.ToolTipRole)
-                header_item.setData(str(action_state.verbose_name), Qt.ItemDataRole.DisplayRole)
+                header_item.tool_tip = action_state.tooltip
+                header_item.display = str(action_state.verbose_name)
                 # The decoration role contains the icon as a QPixmap which is used in the old table view.
-                header_item.setData(action_state.icon, Qt.ItemDataRole.DecorationRole)
+                header_item.decoration = action_state.icon
                 if action_state.icon is not None:
                     # The whatsThis role contains the icon name which is used in the QML table view.
                     # (note: user roles can't be used in a QML VerticalHeaderView)
-                    header_item.setData(action_state.icon.name, Qt.ItemDataRole.WhatsThisRole)
+                    header_item.icon_name = action_state.icon.name
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
@@ -357,10 +413,11 @@ class Deleted(RowCount, UpdateMixin):
             # If the object was valid, the header item should be updated
             # make sure all views know the validity of the row has changed
             #
-            header_item = QtGui.QStandardItem()
-            header_item.setData(None, ObjectRole)
-            header_item.setData(u'', VerboseIdentifierRole)
-            header_item.setData(True, ValidRole)
+            header_item = DataRowHeader()
+            header_item.row = row
+            header_item.object = None
+            header_item.verbose_identifier = u''
+            header_item.valid = True
             changed_ranges.append((row, header_item, tuple()))
         #
         # if the object that is going to be deleted is in the proxy, the

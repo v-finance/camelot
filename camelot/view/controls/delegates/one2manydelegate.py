@@ -66,17 +66,14 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(One2ManyDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         if model_context.value is not None:
             admin = model_context.field_attributes['admin']
             one2many_model_context = ObjectsModelContext(
                 admin, admin.get_proxy(model_context.value), locale
             )
             one2many_model_context_name = model_context_naming.bind(str(next(model_context_counter)), one2many_model_context)
-            item.setData(
-                one2many_model_context_name,
-                Qt.ItemDataRole.EditRole
-            )
+            item.roles[Qt.ItemDataRole.EditRole] = one2many_model_context_name
         return item
 
     def createEditor( self, parent, option, index ):

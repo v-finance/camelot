@@ -43,12 +43,12 @@ class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(BoolDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, True)
         if model_context.value is not None:
             if model_context.value == True:
                 value_str = '\u2611' # checkmark
             else:
                 value_str = '\u2610' # checkbox
-            item.setData(value_str, PreviewRole)
+            item.roles[PreviewRole] = value_str
         return item

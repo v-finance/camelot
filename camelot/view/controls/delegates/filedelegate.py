@@ -30,6 +30,7 @@
 from dataclasses import dataclass, field
 from typing import List
 
+from camelot.core.qt import Qt
 from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
@@ -49,12 +50,13 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
-        item = super(FileDelegate, cls).get_standard_item(locale, model_context)
+        item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
-            item.setData(model_context.value.verbose_name, PreviewRole)
+            item.roles[Qt.ItemDataRole.EditRole] = model_context.value.verbose_name # FIXME: bind object?
+            item.roles[PreviewRole] = model_context.value.verbose_name
         else:
-            item.setData(str(), PreviewRole)
+            item.roles[PreviewRole] = str()
         return item
 
 
