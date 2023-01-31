@@ -442,6 +442,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.verticalHeaderSize())
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidRole, self.item_model), None)
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), None)
+            # Make sure to also request at least one column
+            self._data(row, 0, self.item_model)
         self.item_model.timeout_slot()
         self.process()
         # after the timeout, the data is available
