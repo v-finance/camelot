@@ -34,6 +34,7 @@ import logging
 import six
 
 from .qt import QtCore, qtranslate
+from sqlalchemy import sql
 
 logger = logging.getLogger('camelot.core.utils')
 
@@ -76,23 +77,19 @@ def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
 
-def load_translations():
+def load_translations(connectable):
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
-    language = six.text_type(QtCore.QLocale().name())
-    from sqlalchemy import sql
+    language = str(QtCore.QLocale().name())
     from camelot.model.i18n import Translation
-    # only load translations when the camelot model is active
-    if not hasattr(Translation, 'query'):
-        return
-    query = sql.select( [Translation.source, Translation.value],
-                        whereclause = sql.and_(Translation.language==language,
-                                               Translation.value!=None,
-                                               Translation.value!=u'') )
-    for source, value in Translation.query.session.execute(query):
+    query = sql.select([Translation.source, Translation.value],
+                       whereclause = sql.and_(Translation.language==language,
+                                              Translation.value!=None,
+                                              Translation.value!=u''))
+    for source, value in connectable.execute(query):
         _translations_[source] = value
 
-def ugettext(string_to_translate):
+def ugettext(string_to_translate, msgctxt=''):
     """Translate the string_to_translate to the language of the current locale.
     This is a two step process.  First the function will try to get the
     translation out of the Translation entity, if this is not successfull, the
@@ -101,7 +98,7 @@ def ugettext(string_to_translate):
     assert isinstance(string_to_translate, six.string_types)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = qtranslate( string_to_translate )
+        result = qtranslate(string_to_translate, disambiguation=msgctxt)
         #print string_to_translate, result
         # try one more time with string_to_translate capitalized
         if result is string_to_translate:

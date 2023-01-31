@@ -19,7 +19,7 @@ from camelot.model.authentication import (
 )
 from camelot.model.batch_job import BatchJob, BatchJobType
 from camelot.model.fixture import Fixture, FixtureVersion
-from camelot.model.i18n import Translation, ExportAsPO
+from camelot.model.i18n import Translation
 
 from camelot.test.action import MockModelContext
 
@@ -125,15 +125,6 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
                                    value = 'emmer' )
         orm.object_session( translation ).flush()
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
-        export_action = ExportAsPO()
-        model_context = MockModelContext()
-        model_context.obj = translation
-        try:
-            generator = export_action.model_run( model_context )
-            file_step = six.advance_iterator( generator )
-            generator.send('/tmp/test.po')
-        except StopIteration:
-            pass
         
     def test_batch_job_example( self ):
         # begin batch job example
@@ -225,7 +216,8 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         city = self.test_geographic_boundary()
         address = party.Address.get_or_create( street1 = 'Avenue Louise',
                                                street2 = None,
-                                               city = city )
+                                               city = city,
+                                               zip_code='1000')
         self.assertTrue( six.text_type( address ) )
         return address
 

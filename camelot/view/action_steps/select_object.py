@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-from ...core.qt import Qt, QtWidgets
+from ...core.qt import Qt, QtWidgets, QtCore
 
 from camelot.admin.action import ActionStep, Action
 from camelot.core.exception import CancelRequest
@@ -74,9 +74,14 @@ class SelectDialog(QtWidgets.QDialog):
         self.setSizeGripEnabled(True)
         table = TableView(gui_context, admin_route, parent=self)
         table.setObjectName('table_view')
+        table.close_clicked_signal.connect(self.close_view)
         layout.addWidget(table)
         self.setLayout( layout )
         self.objects = []
+
+    @QtCore.qt_slot()
+    def close_view(self):
+        self.reject()
 
 class SelectObjects( OpenTableView ):
     """Select one or more object from a query.  The `yield` of this action step

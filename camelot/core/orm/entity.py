@@ -266,12 +266,7 @@ class EntityMeta( DeclarativeMeta ):
               |
               | class SomeGroupFacadeClass(EntityFacade)
               |     __facade_args__ = {
-              |         'group': allowed_type_groups.certain_type_group.name
-              |     }
-              |     ...
-              |
-              | class SomeGroupFacadeClass(EntityFacade)
-              |     __facade_args__ = {
+              |         'subsystem_cls': SomeClass, 
               |         'group': allowed_type_groups.certain_type_group.name
               |     }
               |     ...

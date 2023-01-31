@@ -27,12 +27,16 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui
+import os
+
+from ...core.qt import QtCore, QtGui, QtWidgets
   
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
+from camelot.core.utils import ugettext
 
 from six import BytesIO
+
 
 class OpenFile( ActionStep ):
     """
@@ -75,6 +79,32 @@ class OpenFile( ActionStep ):
         return file_name
         
     def gui_run( self, gui_context ):
+        if not os.path.exists(self.path):
+            QtWidgets.QMessageBox.warning(gui_context.get_window(),
+                                          ugettext('Could not open file or directory'),
+                                          ugettext('"{}" is does not exist').format(self.path))
+            return
+
+        is_readable = True
+        if os.path.isfile(self.path):
+            # Test if file is readable, both os.access and QFileInfo.isReadable
+            # can result in false positives on windows.
+            f = QtCore.QFile(self.path)
+            if f.open(QtCore.QIODevice.ReadOnly):
+                f.close()
+            else:
+                is_readable = False
+        elif os.path.isdir(self.path):
+            # https://doc.qt.io/qt-5/qdir.html#isReadable
+            # Warning: A false value from this function is not a guarantee that files in the directory are not accessible.
+            is_readable = QtCore.QDir(self.path).isReadable()
+
+        if not is_readable:
+            QtWidgets.QMessageBox.warning(gui_context.get_window(),
+                                          ugettext('Could not open file or directory'),
+                                          ugettext('"{}" is not readable').format(self.path))
+            return
+
         #
         # support for windows shares
         #
