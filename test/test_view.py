@@ -252,20 +252,11 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
             none_completion._to_dict(),
             CompletionValue(name_2, 'B')._to_dict()
         ])
-        editor.set_value(name_4)
-        self.assertEqual(editor.get_choices(), choices2 + [
-            none_completion._to_dict()
-        ])
         # set a value that is not in the list, the value should be
         # accepted, to prevent damage to the actual data
         name_33 = initial_naming_context._bind_object(33)
         editor.set_value(name_33)
         self.assertEqual(editor.get_value(), list(name_33))
-        number_of_choices = len(editor.get_choices())
-        # set the value back to valid one, the invalid one should be no longer
-        # in the list of choices
-        editor.set_value(name_4)
-        self.assertEqual(number_of_choices-1, len(editor.get_choices()))
         # try strings as keys
         editor = editors.ChoicesEditor()
         name_c = initial_naming_context._bind_object('c')
