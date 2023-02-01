@@ -115,13 +115,11 @@ class AbstractRequest(NamedDataclassSerializable):
                     LOGGER.debug( 'asynchronous cancel, raise request' )
                     result = run.generator.throw(CancelRequest())
                 else:
-                    LOGGER.debug( 'move iterator forward' )
                     result = next(run.generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except StopIteration as e:
-            LOGGER.debug( 'iterator raised stop, pass it' )
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except Exception as e:
             cls._send_stop_message(
@@ -143,8 +141,8 @@ class InitiateAction(AbstractRequest):
     def execute(cls, request_data, response_handler, cancel_handler):
         from .action_steps import PushProgressLevel
         from .responses import ActionStopped, ActionStepped
-        LOGGER.debug('Iniate run of action {}'.format(request_data['action_name']))
         gui_run_name = tuple(request_data['gui_run_name'])
+        LOGGER.debug('Run of action {} with mode {}'.format(request_data['action_name'], request_data['mode']))
         try:
             action = initial_naming_context.resolve(tuple(request_data['action_name']))
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))
