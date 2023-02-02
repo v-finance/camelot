@@ -227,6 +227,7 @@ class BatchJob( Entity, type_and_status.StatusMixin ):
         
     class Admin(EntityAdmin):
         verbose_name = _('Batch job')
+        verbose_name_plural = _('Batch jobs')
         list_display = ['host', 'type', 'current_status']
         list_filter = [
             type_and_status.StatusFilter('status'),

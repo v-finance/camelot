@@ -33,7 +33,7 @@ import logging
 
 import six
 
-from ..core.qt import QtCore
+from ..core.qt import QtCore, is_deleted
 from camelot.admin.action import ActionStep
 from camelot.core.exception import GuiException, CancelRequest
 from camelot.view.controls.exception import ExceptionDialog
@@ -58,9 +58,10 @@ def hide_progress_dialog( gui_context ):
             progress_dialog.hide()
         yield
     finally:
-        progress_dialog.setMinimumDuration(original_minimum_duration)
-        if original_state == False:
-            progress_dialog.show()
+        if not is_deleted(progress_dialog):
+            progress_dialog.setMinimumDuration(original_minimum_duration)
+            if original_state == False:
+                progress_dialog.show()
 
 class ActionRunner( QtCore.QEventLoop ):
     """Helper class for handling the signals and slots when an action

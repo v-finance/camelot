@@ -137,7 +137,7 @@ class SelectItem(ActionStep):
         dialog.set_choices(self.items)
         dialog.set_value(self.value)
         dialog.setWindowTitle( six.text_type( self.title ) )
-        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
+        dialog.set_banner_title( six.text_type( self.subtitle ) )
         return dialog
 
     def gui_run(self, gui_context):
