@@ -294,30 +294,36 @@ if qt_api in ('PyQt4', 'PySide'):
     #
     _encoding=QtCore.QCoreApplication.UnicodeUTF8
 
-    def qtranslate(string_to_translate, n=-1):
+    def qtranslate(string_to_translate, n=-1, msgctxt=None):
         """Translate a string using the QCoreApplication translation framework
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
+        msgctxt_encoded = None
+        if msgctxt is not None:
+            msgctxt_encoded = msgctxt.encode('utf-8')
         return str(QtCore.QCoreApplication.translate(
             '',
             string_to_translate.encode('utf-8'),
-            '',
+            msgctxt_encoded,
             _encoding,
             n
         ))
 
 else:
 
-    def qtranslate(string_to_translate, n=-1):
+    def qtranslate(string_to_translate, n=-1, msgctxt=None):
         """Translate a string using the QCoreApplication translation framework
         :param string_to_translate: a unicode string
         :return: the translated unicode string if it was possible to translate
         """
+        msgctxt_encoded = None
+        if msgctxt is not None:
+            msgctxt_encoded = msgctxt.encode('utf-8')
         return str(QtCore.QCoreApplication.translate(
             '',
             string_to_translate.encode('utf-8'),
-            '',
+            msgctxt_encoded,
             n,
         ))
 
@@ -338,6 +344,12 @@ else:
     # Qt messages are now remotely logged by the launcher's message handler
     #QtCore.qInstallMessageHandler(qmsghandler)
 
+def jsonvalue_to_py(obj=None):
+    """Convert QJsonValue to python equivalent"""
+    if isinstance(obj, QtCore.QJsonValue):
+        return obj.toVariant()
+    return obj
+
 __all__ = [
     QtCore.__name__,
     QtGui.__name__,
@@ -346,5 +358,6 @@ __all__ = [
     py_to_variant.__name__,
     valid_variant.__name__,
     variant_to_py.__name__,
+    jsonvalue_to_py.__name__,
 ]
 

@@ -27,26 +27,28 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+
 from ....core.item_model import PreviewRole
 from ....core.qt import py_to_variant
-
-
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
 from ...utils import text_from_richtext
 
+@dataclass
 class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for rich text (HTML) string values
   """
     
-    editor = editors.RichTextEditor
-    
-    def __init__(self, parent=None, editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable)
-        self.editable = editable
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         self._height = self._height * 10
         self._width = self._width * 3
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.RichTextEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

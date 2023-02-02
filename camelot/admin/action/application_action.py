@@ -28,16 +28,15 @@
 #  ============================================================================
 
 import logging
-import os
+import itertools
 
-
+from ...core.naming import initial_naming_context, NameNotFoundException
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from .base import RenderHint
-from camelot.admin.icon import Icon
-from camelot.admin.action.base import Action, GuiContext, Mode, ModelContext
+from camelot.admin.icon import Icon, CompletionValue
+from camelot.admin.action.base import Action, Mode, ModelContext
 from camelot.core.exception import CancelRequest
-from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
@@ -48,7 +47,14 @@ application.
 
 LOGGER = logging.getLogger( 'camelot.admin.action.application_action' )
 
-class ApplicationActionModelContext( ModelContext ):
+application_action_context = initial_naming_context.bind_new_context(
+    'application_action', immutable=True
+)
+
+model_context_counter = itertools.count(1)
+model_context_naming = initial_naming_context.bind_new_context('model_context')
+
+class ApplicationActionModelContext(ModelContext):
     """The Model context for an :class:`camelot.admin.action.Action`.  On top 
     of the attributes of the :class:`camelot.admin.action.base.ModelContext`, 
     this context contains :
@@ -66,9 +72,9 @@ class ApplicationActionModelContext( ModelContext ):
         the active session
     """
     
-    def __init__( self ):
-        super( ApplicationActionModelContext, self ).__init__()
-        self.admin = None
+    def __init__(self, admin):
+        super(ApplicationActionModelContext, self).__init__()
+        self.admin = admin
         self.actions = []
 
     # Cannot set session in constructor because constructor is called
@@ -76,66 +82,6 @@ class ApplicationActionModelContext( ModelContext ):
     @property
     def session( self ):
         return Session()
-        
-class ApplicationActionGuiContext( GuiContext ):
-    """The GUI context for an :class:`camelot.admin.action.Action`.  On top of 
-    the attributes of the :class:`camelot.admin.action.base.GuiContext`, this 
-    context contains :
-    
-    .. attribute:: workspace
-    
-        the :class:`camelot.view.workspace.DesktopWorkspace` of the 
-        application in which views can be opened or adapted.
-        
-    .. attribute:: admin_route
-    
-        the route to the reference of the view on the server
-
-    .. attribute:: action_routes
-
-        a list with routes to actions in the current context, mapping the
-        route to the action to the route to the rendered action displaying the
-        action state.
-    """
-    
-    model_context = ApplicationActionModelContext
-    
-    def __init__( self ):
-        super( ApplicationActionGuiContext, self ).__init__()
-        self.context_id = None
-        self.workspace = None
-        self.admin_route = None
-        self.action_routes = {}
-    
-    def get_progress_dialog(self):
-        from camelot.view.qml_view import get_qml_root_backend
-        root_backend = get_qml_root_backend()
-        if root_backend is not None and root_backend.isVisible():
-            progress_dialog = root_backend.progressDialog()
-            if progress_dialog is not None:
-                return progress_dialog
-
-        # return the regular progress dialog
-        return super( ApplicationActionGuiContext, self ).get_progress_dialog()
-
-    def get_window(self):
-        from camelot.view.qml_view import get_qml_window
-        return get_qml_window()
-
-    def create_model_context(self):
-        context = super(ApplicationActionGuiContext, self).create_model_context()
-        context.admin = initial_naming_context.resolve(self.admin_route)
-        # todo : action routes should be translated to actions here
-        context.actions = list(self.action_routes.keys())
-        return context
-        
-    def copy(self, base_class=None):
-        new_context = super( ApplicationActionGuiContext, self ).copy(base_class)
-        new_context.context_id = self.context_id
-        new_context.workspace = self.workspace
-        new_context.admin_route = self.admin_route
-        new_context.action_routes = dict(self.action_routes)
-        return new_context
 
 
 class UpdateActions(Action):
@@ -147,6 +93,12 @@ class UpdateActions(Action):
             actions_state[action] = action.get_state(model_context)
         yield action_steps.UpdateActionsState(model_context, actions_state)
 
+new_profile, save_profiles, load_profiles = object(), object(), object()
+profiles_context = initial_naming_context.bind_new_context('profiles')
+new_profile_name = profiles_context.bind('new_profile', new_profile)
+save_profiles_name = profiles_context.bind('save_profiles', save_profiles)
+load_profiles_name = profiles_context.bind('load_profiles', load_profiles)
+store_context = profiles_context.bind_new_context('store')
 
 class SelectProfileMixin:
     """Select the application profile to use
@@ -155,48 +107,50 @@ class SelectProfileMixin:
         :class:`camelot.core.profile.ProfileStore`
     """
 
-    new_icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    save_icon = Icon('save') # 'tango/16x16/actions/document-save.png'
-    load_icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     file_name_filter = _('Profiles file (*.ini)')
-    
-    def __init__( self, profile_store):
-        from camelot.core.profile import ProfileStore
-        if profile_store==None:
-            profile_store=ProfileStore()
-        self.profile_store = profile_store
-        self.selected_profile = None
-    
-    def select_profile(self):
-        from camelot.view import action_steps
-        from camelot.view.action_steps.profile import EditProfiles
 
-        # dummy profiles
-        new_profile, save_profiles, load_profiles = object(), object(), object()
+    @classmethod
+    def select_profile(cls, profile_store, app_admin):
+        from camelot.view import action_steps
+        from camelot.core.profile import Profile, NonEditableProfileAdmin
         selected_profile = new_profile
         try:
-            while selected_profile in (None, new_profile, 
+            while selected_profile in (None, new_profile,
                                        save_profiles, load_profiles):
-                profiles = self.profile_store.read_profiles()
+                profiles = profile_store.read_profiles()
                 profiles.sort()
-                items = [(None,'')] + [(p,p.name) for p in profiles]
-                font = QtGui.QFont()
-                font.setItalic(True)
-                items.append({Qt.ItemDataRole.UserRole: new_profile, Qt.ItemDataRole.FontRole: font,
-                              Qt.ItemDataRole.DisplayRole: ugettext('new/edit profile'),
-                              Qt.ItemDataRole.DecorationRole: self.new_icon
-                              })
+                last_profile = profile_store.get_last_profile()
+                last_profile_name = initial_naming_context._bind_object(None)
+                items = [CompletionValue(
+                    value = initial_naming_context._bind_object(None),
+                    verbose_name = '',
+                )]
+                for profile in profiles:
+                    profile_name = store_context.rebind(profile.name, profile)
+                    items.append(CompletionValue(
+                        value = profile_name,
+                        verbose_name = profile.name,
+                    ))
+                    if profile == last_profile:
+                        last_profile_name = profile_name
+                items.append(CompletionValue(
+                    value = new_profile_name,
+                    verbose_name = ugettext('new/edit profile'),
+                    icon = Icon('plus-circle'),
+                ))
                 if len(profiles):
-                    items.append({Qt.ItemDataRole.UserRole: save_profiles, Qt.ItemDataRole.FontRole: font,
-                                  Qt.ItemDataRole.DisplayRole: ugettext('save profiles'),
-                                  Qt.ItemDataRole.DecorationRole: self.save_icon
-                                  })
-                items.append({Qt.ItemDataRole.UserRole: load_profiles, Qt.ItemDataRole.FontRole: font,
-                              Qt.ItemDataRole.DisplayRole: ugettext('load profiles'),
-                              Qt.ItemDataRole.DecorationRole: self.load_icon
-                              })
-                select_profile = action_steps.SelectItem( items )
-                last_profile = self.profile_store.get_last_profile()
+                    items.append(CompletionValue(
+                        value = save_profiles_name,
+                        verbose_name = ugettext('save profiles'),
+                        icon = Icon('save')
+                    ))
+                items.append(CompletionValue(
+                    value = load_profiles_name,
+                    verbose_name = ugettext('load profiles'),
+                    icon = Icon('folder-open')
+                ))
+                select_profile = action_steps.SelectItem(items)
+                
                 select_profile.title = ugettext('Profile Selection')
                 if len(profiles):
                     subtitle = ugettext('Select a stored profile:')
@@ -205,57 +159,39 @@ class SelectProfileMixin:
                                         ''' create a new profile''')
                 select_profile.subtitle = subtitle
                 if last_profile in profiles:
-                    select_profile.value = last_profile
+                    select_profile.value = last_profile_name
                 elif len(profiles):
                     select_profile.value = None
                 else:
-                    select_profile.value = load_profiles
-                selected_profile = yield select_profile
+                    select_profile.value = load_profiles_name
+                selected_name = yield select_profile
+                selected_profile = initial_naming_context.resolve(selected_name)
                 if selected_profile is new_profile:
-                    edit_profile_name = ''
                     while selected_profile is new_profile:
-                        profile_info = yield EditProfiles(profiles, current_profile=edit_profile_name)
-                        profile = self.profile_store.read_profile(profile_info['name'])
-                        if profile is None:
-                            profile = self.profile_store.profile_class(**profile_info)
-                        else:
-                            profile.__dict__.update(profile_info)
-                        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
-                        engine = profile.create_engine()
+                        profile_admin = NonEditableProfileAdmin(app_admin, Profile)
+                        proxy = profile_admin.get_proxy(profiles)
                         try:
-                            connection = engine.raw_connection()
-                            cursor = connection.cursor()
-                            cursor.close()
-                            connection.close()
-                        except Exception as e:
-                            exception_box = action_steps.MessageBox( title = ugettext('Could not connect to database, please check host and port'),
-                                                                     text = _('Verify driver, host and port or contact your system administrator'),
-                                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
-                            exception_box.informative_text = str(e)
-                            yield exception_box
-                            edit_profile_name = profile.name
-                            if profile in profiles:
-                                profiles.remove(profile)
-                            profiles.append(profile)
-                            profiles.sort()
-                            continue
-                        self.profile_store.write_profile(profile)
-                        selected_profile = profile
+                            yield action_steps.ChangeObjects(profiles, profile_admin, proxy)
+                            profile_store.write_profiles(proxy.get_model())
+                        except CancelRequest:
+                            pass
+                        selected_profile = None
                 elif selected_profile is save_profiles:
-                    file_name = yield action_steps.SaveFile(file_name_filter=self.file_name_filter)
-                    self.profile_store.write_to_file(file_name)
+                    file_name = yield action_steps.SaveFile(file_name_filter=cls.file_name_filter)
+                    profile_store.write_to_file(file_name)
                 elif selected_profile is load_profiles:
-                    file_names =  yield action_steps.SelectFile(file_name_filter=self.file_name_filter)
+                    file_names =  yield action_steps.SelectFile(file_name_filter=cls.file_name_filter)
                     for file_name in file_names:
-                        self.profile_store.read_from_file(file_name)
+                        profile_store.read_from_file(file_name)
         except CancelRequest:
             # explicit handling of exit when cancel button is pressed,
             # to avoid the use of subgenerators in the main action
+            from camelot.view.action_steps.application import Exit
             yield Exit()
+            return
         message = ugettext(u'Use {} profile'.format(selected_profile.name))
         yield action_steps.UpdateProgress(text=message)
-        self.profile_store.set_last_profile( selected_profile )
-        self.selected_profile = selected_profile
+        profile_store.set_last_profile(selected_profile)
 
 
 class EntityAction( Action ):
@@ -294,46 +230,11 @@ class OpenTableView( EntityAction ):
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Open table'))
-        # set environment variable to turn on old Qt table view (QML table view is now the default)
-        if os.environ.get('VFINANCE_OLD_TABLE'):
-            Step = action_steps.OpenTableView
-        else:
-            Step = action_steps.OpenQmlTableView
-        step = Step(
-            self._entity_admin, self._entity_admin.get_query()
+        yield action_steps.OpenQmlTableView(
+            self._entity_admin.get_query(),
+            self._entity_admin,
         )
-        step.new_tab = (mode == 'new_tab')
-        yield step
 
-class OpenNewView( EntityAction ):
-    """An application action that opens a new view of an Entity
-    
-    :param entity_admin: an instance of 
-        :class:`camelot.admin.entity_admin.EntityAdmin` to be used to
-        visualize the entities
-    
-    """
-
-    verbose_name = _('New')
-    shortcut = QtGui.QKeySequence.StandardKey.New
-    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    tooltip = _('New')
-            
-    def get_state( self, model_context ):
-        state = super( OpenNewView, self ).get_state( model_context )
-        state.verbose_name = self.verbose_name or ugettext('New %s')%(self._entity_admin.get_verbose_name())
-        state.tooltip = ugettext('Create a new %s')%(self._entity_admin.get_verbose_name())
-        return state
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        admin = self._entity_admin
-        new_object = admin.entity()
-        # Give the default fields their value
-        admin.add(new_object)
-        admin.set_defaults(new_object)
-        yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
-        
 
 class ShowAbout(Action):
     """Show the about dialog with the content returned by the
@@ -421,13 +322,14 @@ class Refresh( Action ):
                 session.expunge( obj )
                 expunged_objects.append( obj )
             if i%10 == 0:
-                yield action_steps.UpdateProgress( i, 
+                yield action_steps.UpdateProgress( i + 1,
                                                    session_items, 
                                                    progress_db_message )
-        yield action_steps.UpdateProgress( text = progress_view_message )
+        yield action_steps.UpdateProgress(text = progress_view_message )
         yield action_steps.UpdateObjects(refreshed_objects)
         yield action_steps.DeleteObjects(expunged_objects)
         yield action_steps.Refresh()
+        yield action_steps.UpdateProgress(1, 1)
 
 refresh = Refresh()
 
@@ -462,6 +364,23 @@ Restore the database to disk
             for step in super(Restore, self).model_run(model_context, mode):
                 yield step
 
+
+class Unbind(Action):
+
+    name = 'unbind'
+
+    def model_run(self, model_context, mode):
+        from camelot.view.action_steps import UpdateProgress
+        if len(mode) == 0:
+            yield UpdateProgress()
+        for lease in mode:
+            try:
+                initial_naming_context.unbind(tuple(lease))
+            except NameNotFoundException:
+                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))
+
+unbind_name = application_action_context.bind(Unbind.name, Unbind(), True)
+
 class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging
     purposes, to evaluate where an application spends its time.
@@ -474,14 +393,14 @@ class Profiler( Action ):
         self.model_profile = None
         self.gui_profile = None
 
-    def gui_run(self, gui_context):
+    def gui_run(self, gui_context_name):
         import cProfile
         if self.gui_profile is None:
             self.gui_profile = cProfile.Profile()
             self.gui_profile.enable()
         else:
             self.gui_profile.disable()
-        super(Profiler, self).gui_run(gui_context)
+        super(Profiler, self).gui_run(gui_context_name)
 
     def model_run(self, model_context, mode):
         from ...view import action_steps
@@ -555,7 +474,7 @@ def structure_to_application_action(structure, application_admin):
     if isinstance(structure, Action):
         return structure
     admin = application_admin.get_related_admin( structure )
-    return OpenTableView( admin )
+    return OpenTableView(admin.get_query(), admin)
 
 
 

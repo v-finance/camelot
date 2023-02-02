@@ -509,13 +509,6 @@ class DecimalFilter(FieldFilter):
 
         elif operator == Operator.between and None not in (float_operands[0], float_operands[1]):
             return super().get_attribute_clause(attribute, operator, float_operands[0]-delta, float_operands[1]+delta)
-        
-class TimeFilter(FieldFilter):
-    
-    name = 'time_filter'
-    python_type = datetime.time
-    operators = Operator.numerical_operators()
-    _default_from_string = utils.time_from_string
 
 class DateFilter(FieldFilter):
 
@@ -665,7 +658,7 @@ class SearchFilter(Action, AbstractModelFilter):
         return state
 
     @classmethod
-    def decorate_query(cls, query, value):
+    def decorate_query(cls, query, value, **kwargs):
         if value is not None:
             search_text, *search_strategies = value
             if search_text is not None and len(search_text.strip()) > 0:
@@ -687,10 +680,10 @@ class SearchFilter(Action, AbstractModelFilter):
                     query = query.order_by(sql.func.least(*[cls._order_by_decorator(order_by, search_text) for order_by in order_search_by]))
         return query
 
-    def gui_run(self, gui_context):
+    def gui_run(self, gui_context_name):
         # overload the action gui run to avoid a progress dialog
         # popping up while searching
-        super(SearchFilter, self).gui_run(gui_context)
+        super(SearchFilter, self).gui_run(gui_context_name)
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -764,10 +757,13 @@ class Filter(Action):
     def get_name(self):
         return '{}_{}'.format(self.name, self.attribute.key)
 
-    def gui_run(self, gui_context, value):
-        model = gui_context.get_item_model()
-        if model is not None:
-            model.set_filter(self, value)
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        new_value = mode
+        old_value = model_context.proxy.get_filter(self)
+        if old_value != new_value:
+            model_context.proxy.filter(self, new_value)
+            yield action_steps.RefreshItemView()
 
     def get_operator(self, values):
         return Operator.in_ if values else Operator.is_empty
@@ -813,7 +809,7 @@ class Filter(Action):
 
         state.verbose_name = self.verbose_name or self.filter_names[0]
         # sort outside the query to sort on the verbose name of the value
-        modes.sort(key=lambda state:state.verbose_name)
+        modes.sort(key=lambda state:str(state.verbose_name))
         # put all mode first, no mater of its verbose name
         if self.exclusive:
             all_mode = FilterMode(value=All,

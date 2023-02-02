@@ -27,15 +27,19 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
 
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
+@dataclass
 class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for boolean values"""
 
-    editor = editors.BoolEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.BoolEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

@@ -27,11 +27,13 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass, field
+from typing import List
 import logging
 
-
-
-from ....core.qt import QtCore, py_to_variant, variant_to_py
+from ....admin.admin_route import Route
+from ....core.naming import initial_naming_context
+from ....core.qt import Qt, QtCore, py_to_variant, variant_to_py
 from ....core.item_model import (
     PreviewRole, CompletionPrefixRole, CompletionsRole
 )
@@ -40,6 +42,7 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
 
+@dataclass
 class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for many 2 one relations
 
@@ -50,23 +53,24 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
   their __unicode__ method.
   """
 
-    editor = editors.Many2OneEditor
+    action_routes: List[Route] = field(default_factory=list)
 
-    def __init__(self,
-                 parent=None,
-                 admin=None,
-                 editable=True,
-                 **kwargs):
+    def __post_init__(self, parent):
         logger.debug('create many2onecolumn delegate')
-        assert admin != None
-        CustomDelegate.__init__(self, parent, editable, **kwargs)
-        self.admin = admin
-        self._kwargs = kwargs
+        super().__post_init__(parent)
         self._width = self._width * 2
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.Many2OneEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super(Many2OneDelegate, cls).get_standard_item(locale, model_context)
+        value_name = initial_naming_context._bind_object(model_context.value)
+        # eventually, all values should be names, so this should happen in the
+        # custom delegate class
+        item.setData(py_to_variant(value_name), Qt.ItemDataRole.EditRole)
         if model_context.value is not None:
             admin = model_context.field_attributes['admin']
             verbose_name = admin.get_verbose_object_name(model_context.value)
@@ -74,10 +78,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return item
 
     def createEditor(self, parent, option, index):
-        editor = editors.Many2OneEditor( self.admin,
-                                         parent,
-                                         editable=self.editable,
-                                         **self._kwargs )
+        editor = editors.Many2OneEditor(parent, self.action_routes)
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect(self.commitAndCloseEditor)

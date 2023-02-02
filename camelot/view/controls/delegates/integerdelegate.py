@@ -27,23 +27,37 @@
 #
 #  ============================================================================
 
-
+from dataclasses import dataclass
+from typing import ClassVar, Any
 
 from ....core.qt import py_to_variant, Qt
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.core import constants
 from camelot.view.controls import editors
 
 long_int = int
 
+@dataclass
 class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
-    editor = editors.IntegerEditor
-    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    calculator: bool = True
+    decimal: bool = False
+
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.IntegerEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
+        minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
+        model_context.field_attributes.update({
+            'minimum': minimum if minimum is not None else constants.camelot_minfloat,
+            'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
+        })
         item = super(IntegerDelegate, cls).get_standard_item(locale, model_context)
         if model_context.value is not None:
             value_str = locale.toString(long_int(model_context.value))

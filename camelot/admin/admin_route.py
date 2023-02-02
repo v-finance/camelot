@@ -59,7 +59,7 @@ class AdminRoute(object):
         """
         Check to make sure that each action in an inheritance hierarchy has a different name.
         """
-        names = set(action.name)
+        names = set()
         success = True
         for cls in action.__class__.mro():
             if not hasattr(cls, 'name'):

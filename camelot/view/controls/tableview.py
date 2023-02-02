@@ -38,59 +38,6 @@ from ...core.qt import QtCore, QtGui, QtWidgets, Qt, variant_to_py
 logger = logging.getLogger('camelot.view.controls.tableview')
 
 
-class ColumnGroupsWidget(QtWidgets.QTabBar):
-    """
-    A tabbar the user can use to select a group of columns within an
-    item view.
-
-    :param table: a :class:`camelot.admin.table.Table` object, describing the
-        column groups.
-    :param table_widget: a :class:`QtWidgets.QTableView` widget of which
-        columns will be hidden and shown depending on the selected tab.
-    :param parent: a :class:`QtWidgets.QWidget`
-    """
-
-    def __init__(self, table, table_widget, parent=None):
-        from camelot.admin.table import ColumnGroup
-        super(ColumnGroupsWidget, self).__init__(parent)
-        assert object_thread(self)
-        self.setShape(QtWidgets.QTabBar.Shape.RoundedSouth)
-        self.groups = dict()
-        self.table_widget = table_widget
-        column_index = 0
-        tab_index = 0
-        for column in table.columns:
-            if isinstance(column, ColumnGroup):
-                self.addTab(str(column.verbose_name))
-                previous_column_index = column_index
-                column_index = column_index + len(column.get_fields())
-                self.groups[tab_index] = (previous_column_index,
-                                          column_index)
-                tab_index += 1
-            else:
-                column_index += 1
-        self.currentChanged.connect(self._current_index_changed)
-
-    @QtCore.qt_slot(QtCore.QModelIndex, int, int)
-    def columns_changed(self, index, first_column, last_column):
-        assert object_thread(self)
-        self._current_index_changed(self.currentIndex())
-
-    @QtCore.qt_slot()
-    def model_reset(self):
-        assert object_thread(self)
-        self._current_index_changed(self.currentIndex())
-
-    @QtCore.qt_slot(int)
-    def _current_index_changed(self, current_index):
-        assert object_thread(self)
-        for tab_index, (first_column,
-                        last_column) in self.groups.items():
-            for column_index in range(first_column, last_column):
-                self.table_widget.setColumnHidden(column_index,
-                                                  tab_index != current_index)
-
-
 class TableWidget(QtWidgets.QTableView):
     """
     A widget displaying a table, to be used within a TableView.  But it does
@@ -299,6 +246,8 @@ class TableWidget(QtWidgets.QTableView):
         # changes should not be saved.
         self._columns_changed = dict()
 
+        self.model().change_selection_v2([current.row(), current.row()], current.row(), current.column())
+
     def keyPressEvent(self, e):
         assert object_thread(self)
         if self.hasFocus() and e.key() in (QtCore.Qt.Key.Key_Enter,
@@ -306,32 +255,3 @@ class TableWidget(QtWidgets.QTableView):
             self.keyboard_selection_signal.emit()
         else:
             super(TableWidget, self).keyPressEvent(e)
-
-
-class AdminTableWidget(QtWidgets.QWidget):
-    """
-    A table widget that inspects the admin class and changes the behavior
-    of the table as specified in the admin class
-    """
-
-    def __init__(self, parent=None):
-        super(AdminTableWidget, self).__init__(parent)
-        assert object_thread(self)
-        table_widget = TableWidget(parent=self)
-        table_widget.setObjectName('table_widget')
-        layout = QtWidgets.QVBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(table_widget)
-        self.setLayout(layout)
-
-    def __getattr__(self, name):
-        table_widget = self.findChild(QtWidgets.QWidget, 'table_widget')
-        if table_widget is not None:
-            return getattr(table_widget, name)
-
-    def setModel(self, model):
-        assert object_thread(self)
-        table_widget = self.findChild(QtWidgets.QWidget, 'table_widget')
-        if table_widget is not None:
-            table_widget.setModel(model)

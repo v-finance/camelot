@@ -28,29 +28,31 @@
 #  ============================================================================
 
 """
-Various ``ActionStep`` subclasses that manipulate the `item_view` of 
-the `ListActionGuiContext`.
+Various ``ActionStep`` subclasses that manipulate the `item_view`
 """
 
 from dataclasses import dataclass, InitVar, field
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Any
 import json
 import logging
 
-from ...admin.admin_route import Route
-from ...admin.action.base import ActionStep, RenderHint, State
-from ...admin.action.list_action import ListActionModelContext, ListActionGuiContext, ApplicationActionGuiContext
+from ...admin.admin_route import Route, RouteWithRenderHint
+from ...admin.action import ActionStep, State
 from ...admin.action.list_filter import SearchFilter, Filter, All
-from ...core.item_model import ProxyRegistry
+from ...admin.action.application_action import model_context_naming, model_context_counter
+from ...admin.model_context import ObjectsModelContext
+from ...admin.object_admin import ObjectAdmin
+from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
-from ...core.qt import Qt
+from ...core.qt import Qt, QtCore
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
+from .. import gui_naming_context
 from ..workspace import show_top_level
 from ..proxy.collection_proxy import (
-    CollectionProxy, RowCount, RowData, SetColumns
+    rowcount_name, rowdata_name, setcolumns_name
 )
-from ..qml_view import qml_action_step
+from ..qml_view import qml_action_step, is_cpp_gui_context_name
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,8 +63,10 @@ class Sort( ActionStep, DataclassSerializable ):
             :param column: the index of the column on which to sort
             :param order: a :class:`Qt.SortOrder`
     """
+
     column: int
     order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
+    blocking: bool = False
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
@@ -70,10 +74,6 @@ class Sort( ActionStep, DataclassSerializable ):
         model = gui_context.get_item_model()
         if model is not None:
             model.sort( step["column"], step["order"] )
-
-row_count_instance = RowCount()
-set_columns_instance = SetColumns()
-row_data_instance = RowData()
 
 @dataclass
 class CrudActions(DataclassSerializable):
@@ -83,23 +83,62 @@ class CrudActions(DataclassSerializable):
     """
 
     admin: InitVar
-    row_count: Route = field(init=False)
-    set_columns: Route = field(init=False)
-    row_data: Route = field(init=False)
-
-    def __post_init__(self, admin):
-        self.row_count = admin._register_action_route(
-            admin.get_admin_route(), row_count_instance
-        )
-        self.row_data = admin._register_action_route(
-            admin.get_admin_route(), row_data_instance
-        )
-        self.set_columns = admin._register_action_route(
-            admin.get_admin_route(), set_columns_instance
-        )
+    row_count: Route = field(init=False, default=rowcount_name)
+    set_columns: Route = field(init=False, default=setcolumns_name)
+    row_data: Route = field(init=False, default=rowdata_name)
 
 @dataclass
-class UpdateTableView( ActionStep, DataclassSerializable ):
+class AbstractCrudView(ActionStep, DataclassSerializable):
+    """Abstract action step to define attributes common to all item view
+    based action steps
+    """
+
+    value: InitVar[Any]
+    admin: InitVar[ObjectAdmin]
+    proxy: InitVar[AbstractModelProxy] = None
+
+    title: Union[str, ugettext_lazy] = field(init=False)
+    model_context_name: Route = field(init=False)
+    actions: List[RouteWithRenderHint] = field(init=False, default_factory=list)
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
+    crud_actions: CrudActions = field(init=False)
+    close_route: Route = field(init=False)
+    group: List[str] = field(init=False)
+
+    def __post_init__(self, value, admin, proxy):
+        assert value is not None
+        assert isinstance(proxy, AbstractModelProxy)
+        self.crud_actions = CrudActions(admin)
+        # Create the model_context for the table view
+        model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+        self._add_action_states(model_context, self.actions, self.action_states)
+        self.group = [admin.get_admin_route()[-2][:255]]
+
+    @staticmethod
+    def _add_action_states(model_context, actions, action_states):
+        for action_route in actions:
+            action = initial_naming_context.resolve(action_route.route)
+            state = action.get_state(model_context)
+            action_states.append((action_route.route, state))
+
+    def get_objects(self):
+        """Use this method to get access to the objects to change in unit tests
+
+        :return: the list of objects to display in the form view
+        """
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        return model_context.proxy.get_model()
+
+@dataclass
+class Column(DataclassSerializable):
+
+    name: str
+    verbose_name: str
+    default_visible: bool
+
+@dataclass
+class UpdateTableView(AbstractCrudView):
     """Change the admin and or value of an existing table view
     
     :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
@@ -107,24 +146,25 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
     
     """
 
-    admin: InitVar
-    value: InitVar
     search_text: InitVar[Union[str, None]] = None
-    title: Union[str, ugettext_lazy] = field(init=False)
-    columns: List[str] = field(init=False)
-    list_action: Union[Route, None] = field(init=False)
-    proxy_route: Route = field(init=False)
-    actions: List[Tuple[Route, RenderHint]] = field(init=False)
-    action_states: List[Tuple[Route, State]] = field(default_factory=list)
-    crud_actions: CrudActions = field(init=False)
 
-    def __post_init__(self, admin, value, search_text):
-        self.value = value
+    columns: List[Column] = field(init=False, default_factory=list)
+    list_action: Union[Route, None] = field(init=False)
+
+    def __post_init__(self, value, admin, proxy, search_text):
+        assert (search_text is None) or isinstance(search_text, str)
         self.title = admin.get_verbose_name_plural()
-        self._post_init_actions__(admin)
-        self.columns = admin.get_columns()
+        self._add_actions(admin, self.actions)
+        for field_name in admin.get_columns():
+            fa = list(admin.get_static_field_attributes([field_name]))
+            self.columns.append(Column(field_name, fa[0]['name'], True))
+        for field_name in admin.get_extra_columns():
+            fa = list(admin.get_static_field_attributes([field_name]))
+            self.columns.append(Column(field_name, fa[0]['name'], False))
         self.list_action = admin.get_list_action()
-        proxy = admin.get_proxy(value)
+        self.close_route = None
+        if proxy is None:
+            proxy = admin.get_proxy(value)
         if search_text is not None:
             for action_route in self.actions:
                 action = initial_naming_context.resolve(action_route.route)
@@ -135,26 +175,14 @@ class UpdateTableView( ActionStep, DataclassSerializable ):
                     break
             else:
                 LOGGER.warn('No SearchFilter found to apply search text')
-
-        self.proxy_route = ProxyRegistry.register(proxy)
-        self._add_action_states(admin, proxy, self.actions, self.action_states)
         self.set_filters(self.action_states, proxy)
-        self.crud_actions = CrudActions(admin)
-
-    def _post_init_actions__(self, admin):
-        self.actions = admin.get_list_actions().copy()
-        self.actions.extend(admin.get_filters())
-        self.actions.extend(admin.get_list_toolbar_actions())
+        super().__post_init__(value, admin, proxy)
 
     @staticmethod
-    def _add_action_states(admin, proxy, actions, action_states):
-        model_context = ListActionModelContext()
-        model_context.admin = admin
-        model_context.proxy = proxy
-        for action_route in actions:
-            action = initial_naming_context.resolve(action_route.route)
-            state = action.get_state(model_context)
-            action_states.append((action_route.route, state))
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_list_actions())
+        actions.extend(admin.get_filters())
+        actions.extend(admin.get_list_toolbar_actions())
 
     @staticmethod
     def set_filters(action_states, model):
@@ -198,9 +226,10 @@ class OpenTableView( UpdateTableView ):
     """
     new_tab: bool = False
     admin_route: Route = field(init=False)
+    blocking: bool = False
 
-    def __post_init__(self, admin, value, search_text):
-        super(OpenTableView, self).__post_init__(admin, value, search_text)
+    def __post_init__(self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
 
     @classmethod
@@ -244,36 +273,11 @@ class OpenQmlTableView(OpenTableView):
         
     """
 
-    def __init__(self, admin, value, search_text=None):
-        super().__init__(admin, value, search_text=search_text)
-        self.list_action = admin.get_list_action()
-
     @classmethod
     def render(cls, gui_context, action_step_name, serialized_step):
-        step = json.loads(serialized_step)
-
-        class QmlListActionGuiContext(ListActionGuiContext):
-
-            def get_progress_dialog(self):
-                return ApplicationActionGuiContext.get_progress_dialog(self)
-
-        list_gui_context = gui_context.copy(QmlListActionGuiContext)
-        list_gui_context.admin_route = tuple(step['admin_route'])
-
-        new_model = CollectionProxy(tuple(step['admin_route']))
-        list(new_model.add_columns(step['columns']))
-        new_model.set_value(step['proxy_route'])
-
-        for action in step['actions']:
-            render_hint = action['render_hint']
-            if render_hint in ['combo_box', 'non_exclusive_group_box', 'exclusive_group_box']:
-                continue
-            new_model.add_action_route(tuple(action['route']))
-
-        response = qml_action_step(list_gui_context, action_step_name,
-                serialized_step, { 'model': new_model }, model=new_model)
-
-        return response, new_model
+        response = qml_action_step(gui_context, action_step_name,
+                serialized_step)
+        return response, None
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
@@ -283,35 +287,38 @@ class OpenQmlTableView(OpenTableView):
 class ToFirstRow(ActionStep, DataclassSerializable):
     """Move to the first row in a table"""
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if gui_context.item_view is not None:
-            gui_context.item_view.selectRow( 0 )
-        else:
-            qml_action_step(gui_context, 'ToFirstRow', keep_context_id=True)
+    blocking: bool = False
+
 
 @dataclass
 class ToLastRow(ActionStep, DataclassSerializable):
     """Move to the last row in a table"""
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if gui_context.item_view is not None:
-            item_view = gui_context.item_view
-            item_view.selectRow( item_view.model().rowCount() - 1 )
-        else:
-            qml_action_step(gui_context, 'ToLastRow', keep_context_id=True)
+    blocking: bool = False
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
     """Deselect all selected items."""
 
+    blocking: bool = False
+
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if gui_context.item_view is not None:
-            gui_context.item_view.clearSelection()
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'ClearSelection', serialized_step)
         else:
-            qml_action_step(gui_context, 'ClearSelection', serialized_step, keep_context_id=True)
+            gui_context = gui_naming_context.resolve(gui_context_name)
+            gui_context.item_view.clearSelection()
+
+
+@dataclass
+class SetSelection(ActionStep, DataclassSerializable):
+    """Set selection."""
+
+    blocking: bool = False
+
+    rows: List[int] = field(default_factory=list)
+
 
 @dataclass
 class RefreshItemView(ActionStep, DataclassSerializable):
@@ -319,8 +326,14 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     Refresh only the current item view
     """
 
+    blocking: bool = False
+
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        model = gui_context.get_item_model()
-        if model is not None:
-            model.refresh()
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'RefreshItemView', serialized_step)
+        else:
+            gui_context = gui_naming_context.resolve(gui_context_name)
+            model = gui_context.get_item_model()
+            if model is not None:
+                model.refresh()

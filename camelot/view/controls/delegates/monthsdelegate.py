@@ -27,20 +27,29 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+from typing import ClassVar, Any
 
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, qtranslate
 from camelot.view.controls.editors import MonthsEditor
 from camelot.view.controls.delegates.customdelegate import CustomDelegate, DocumentationMetaclass
 
+@dataclass
 class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """MonthsDelegate
 
     custom delegate for showing and editing months and years
     """
 
-    editor = MonthsEditor
-    horizontal_align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    minimum: int = 0
+    maximum: int = 10000
+
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+
+    @classmethod
+    def get_editor_class(cls):
+        return MonthsEditor
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

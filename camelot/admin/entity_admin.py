@@ -46,7 +46,7 @@ from camelot.core.orm import Session
 from camelot.core.orm.entity import entity_to_dict
 from camelot.types import PrimaryKey
 
-from sqlalchemy import orm, schema, sql, __version__ as sqlalchemy_version
+from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
 from sqlalchemy.orm.exc import UnmappedClassError
@@ -317,17 +317,14 @@ and used as a custom action.
                     # the 'appropriate' way to get it from the class.  Getting it
                     # from the descriptor seems to manipulate  the actual descriptor
                     class_attribute = getattr(self.entity, field_name)
-                    # class attribute of hybrid properties is changed from
-                     # expression to comparator from sqla v1.2 onwards.
-                    if sqlalchemy_version.startswith('1.2') or sqlalchemy_version.startswith('1.3'):
-                        if class_attribute.comparator and isinstance(class_attribute.comparator, hybrid.Comparator):
-                            class_attribute = class_attribute.comparator.expression
                     if class_attribute is not None:
+                        # Attribute should always have an expression because of the check made above.
+                        expression = class_attribute.expression
                         columns = []
-                        if isinstance(class_attribute, sql.elements.Label):
-                            columns = [class_attribute]
-                        elif isinstance(class_attribute, sql.Select):
-                            columns = class_attribute.columns
+                        if isinstance(expression, (schema.Column, sql.elements.Label)):
+                            columns = [expression]
+                        elif isinstance(expression, sql.Select):
+                            columns = expression.columns
                         for k, v in self.get_sql_field_attributes(columns).items():
                             # the defaults or the nullable status of the column
                             # does not need to be the default or the nullable
@@ -446,7 +443,7 @@ and used as a custom action.
                         attributes['editable'] = False
             yield attributes
 
-    def get_completions(self, obj, field_name, prefix):
+    def get_completions(self, obj, field_name, prefix, **kwargs):
         """
         Overwrites `ObjectAdmin.get_completions` and searches for autocompletion
         along relationships.
@@ -459,9 +456,9 @@ and used as a custom action.
                 search_filter = initial_naming_context.resolve(action_route.route)
                 if isinstance(search_filter, list_filter.SearchFilter):
                     query = admin.get_query(session)
-                    query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]))
+                    query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]), **kwargs)
                     return [e for e in query.limit(20).all()]
-        return super(EntityAdmin, self).get_completions(obj, field_name, prefix)
+        return super(EntityAdmin, self).get_completions(obj, field_name, prefix, **kwargs)
 
     @register_list_actions('_admin_route', '_filter_actions')
     def get_filters( self ):
@@ -657,6 +654,17 @@ and used as a custom action.
             return True
         return False
 
+    def is_readable(self, obj):
+        """
+        :return: True if the object is readable, False otherwise.
+            Deleted objects are not considered to be readable."""
+        state = instance_state( obj )
+        if state is None:
+            return False
+        if state.deleted or state.detached:
+            return False
+        return True
+
     def get_all_fields_and_attributes(self):
         """In addition to all the fields that are defined in the views
         or through the field_attributes, this method returns all the fields
@@ -775,6 +783,8 @@ and used as a custom action.
             return [strategy for strategy in field_strategies if strategy.priority_level == priority_level]
         return field_strategies
 
+    def get_discriminator_value(self, obj):
+        return self.entity.get_discriminator_value(obj)
+
     def set_discriminator_value(self, obj, discriminator_value):
-        if discriminator_value is not None:
-            self.entity.set_discriminator_value(obj, discriminator_value)
+        self.entity.set_discriminator_value(obj, discriminator_value)

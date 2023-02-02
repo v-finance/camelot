@@ -44,9 +44,9 @@ from .list_action import AddNewObjectMixin
 from .application_action import ApplicationActionModelContext
 
 
-class FieldActionModelContext( ApplicationActionModelContext ):
+class FieldActionModelContext(ApplicationActionModelContext):
     """The context for a :class:`Action` on a field.  On top of the attributes of the
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`,
+    :class:`camelot.admin.action.application_action.ApplicationActionModelContext`,
     this context contains :
 
     .. attribute:: obj
@@ -68,8 +68,8 @@ class FieldActionModelContext( ApplicationActionModelContext ):
 
     """
 
-    def __init__(self):
-        super( FieldActionModelContext, self ).__init__()
+    def __init__(self, admin):
+        super( FieldActionModelContext, self ).__init__(admin)
         self.obj = None
         self.field = None
         self.value = None
@@ -103,7 +103,7 @@ class SelectObject(EditFieldAction):
         from camelot.view import action_steps
         field_admin = model_context.field_attributes.get('admin')
         if field_admin is not None:
-            selected_objects = yield action_steps.SelectObjects(field_admin)
+            selected_objects = yield action_steps.SelectObjects(field_admin.get_query(), field_admin)
             for selected_object in selected_objects:
                 model_context.admin.set_field_value(
                     model_context.obj, model_context.field, selected_object
@@ -127,15 +127,17 @@ class OpenObject(SelectObject):
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         obj = model_context.value
-        if obj is not None:
+        # Disregard the case of having no value, or having multiple defined.
+        if obj is not None and not isinstance(obj, list):
             admin = model_context.field_attributes['admin']
             admin = admin.get_related_admin(obj.__class__)
-            yield action_steps.OpenFormView(obj, admin.get_proxy([obj]), admin)
+            yield action_steps.OpenFormView(obj, admin)
 
     def get_state(self, model_context):
         state = super(OpenObject, self).get_state(model_context)
-        state.visible = (model_context.value is not None)
-        state.enabled = (model_context.value is not None)
+        obj = model_context.value
+        state.visible = (obj is not None and not isinstance(obj, list))
+        state.enabled = (obj is not None and not isinstance(obj, list))
         return state
 
 class ClearObject(EditFieldAction):
@@ -179,7 +181,7 @@ class UploadFile(EditFieldAction):
             if model_context.field_attributes.get('remove_original'):
                 reply = yield action_steps.MessageBox(
                     text = _('Do you want to remove the original file?'),
-                    icon = QtWidgets.QMessageBox.Icon.Warning,
+                    icon = Icon('question'),
                     title = _('The file will be stored.'),
                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes]
                     )
@@ -317,7 +319,7 @@ class AddExistingObject(EditFieldAction):
         super().model_run(model_context, mode)
         field_admin = model_context.field_attributes.get('admin')
         if field_admin is not None:
-            objs_to_add = yield action_steps.SelectObjects(field_admin)
+            objs_to_add = yield action_steps.SelectObjects(field_admin.get_query(), field_admin)
             for obj_to_add in objs_to_add:
                 for obj in model_context.value:
                     if obj_to_add == obj:

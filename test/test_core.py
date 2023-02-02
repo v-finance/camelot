@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import copy
 import datetime
 import os
 import tempfile
@@ -10,7 +9,7 @@ from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
     AlreadyBoundException, BindingType, Constant, ConstantNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
-    NameNotFoundException, NamingContext, NamingException, UnboundException
+    NameNotFoundException, NamingContext, NamingException, UnboundException, WeakRefNamingContext,
 )
 from camelot.core.orm import Entity, EntityBase, Session
 from camelot.core.profile import Profile, ProfileStore
@@ -23,7 +22,7 @@ from decimal import Decimal
 from sqlalchemy import MetaData, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData
 from .test_orm import EntityMetaMock
 
 memento_id_counter = 0
@@ -118,18 +117,22 @@ class ProfileCase(unittest.TestCase):
         store = ProfileStore(filename)
         self.assertEqual( store.read_profiles(), [] )
         self.assertEqual( store.get_last_profile(), None )
-        profile_1 = Profile(u'prôfile_1')
-        profile_1.dialect = u'sqlite'
-        profile_2 = Profile(u'prôfile_2')
-        profile_2.dialect = u'mysql'
+        profile_1 = Profile('prôfile_1')
+        profile_1.dialect = 'sqlite'
+        profile_1.locale_language = 'en_US'
+        profile_2 = Profile('prôfile_2')
+        profile_2.dialect = 'mysql'
+        profile_2.locale_language = 'en_GB'
         store.write_profiles( [profile_1, profile_2] )
         self.assertEqual( len(store.read_profiles()), 2 )
         store.set_last_profile( profile_1 )
-        self.assertTrue( store.get_last_profile().name, u'prôfile_1' )
-        self.assertTrue( store.get_last_profile().dialect, u'sqlite' )
+        self.assertTrue( store.get_last_profile().name, 'prôfile_1' )
+        self.assertTrue( store.get_last_profile().dialect, 'sqlite' )
+        self.assertTrue( store.get_last_profile().locale_language, 'en_US' )
         store.set_last_profile( profile_2 )
-        self.assertTrue( store.get_last_profile().name, u'prôfile_2' )
-        self.assertTrue( store.get_last_profile().dialect, u'mysql' )
+        self.assertTrue( store.get_last_profile().name, 'prôfile_2' )
+        self.assertTrue( store.get_last_profile().dialect, 'mysql' )
+        self.assertTrue( store.get_last_profile().locale_language, 'en_GB' )
         # os.remove(filename)
 
         return store
@@ -270,6 +273,9 @@ class AbstractNamingContextCaseMixin(object):
         with self.assertRaises(NotImplementedError):
             self.context.unbind_context('test')
 
+class Object(object):
+    pass
+
 class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
     def test_qualified_name(self):
@@ -278,6 +284,19 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         # the name of its associated context:
         subcontext = self.context.bind_new_context('subcontext')
         self.assertEqual(subcontext.get_qual_name('test'), (*self.context_name, 'subcontext', 'test'))
+
+    def test_list(self):
+        initial_size_before_bind = len(list(initial_naming_context.list()))
+        if not isinstance(self.context, InitialNamingContext):
+            initial_naming_context.bind_context(self.context_name, self.context)
+            obj =  Object()
+            self.context.bind('obj1', obj)
+            context_size = len(list(self.context.list()))
+            self.assertEqual(context_size, 1)
+            initial_size_after_bind = len(list(initial_naming_context.list()))
+            self.assertEqual(initial_size_after_bind, initial_size_before_bind+context_size)
+            # keep obj alive to be able to test the weak ref naming context
+            del obj
 
     def test_bind(self):
         # In case of a regular NamingContext, assert that the action throws the appropriate UnboundException,
@@ -299,7 +318,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         # Test the binding of an object to the context, which should return the fully qualified binding name,
         # and verify it can be looked back up on both the context (with the bound name),
         # and on the initial context (using the returned fully qualified name).
-        name, obj = 'obj1', object()
+        name, obj = 'obj1', Object()
         qual_name = self.context.bind(name, obj)
         self.assertEqual(qual_name, (*self.context_name, name))
         self.assertIn(qual_name, initial_naming_context)
@@ -310,10 +329,10 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
         # Verify that trying to bind again under the same name throws the appropriate exception:
         with self.assertRaises(AlreadyBoundException):
-            self.context.bind(name, object())
+            self.context.bind(name, Object())
 
         # Trying to bind an object using a composite name for which no subcontext binding could be found:
-        name, obj = ('subcontext', 'obj2'), object()
+        name, obj = ('subcontext', 'obj2'), Object()
         with self.assertRaises(NameNotFoundException) as exc:
             self.context.bind(name, obj)
         self.assertEqual(exc.exception.name, 'subcontext')
@@ -332,9 +351,10 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
         # Add immutable bindings and verify that the appropriate exception is thrown
         # when trying to mutate them:
-        self.context.bind('immutable', 'test', immutable=True)
+        obj = Object()
+        self.context.bind('immutable', obj, immutable=True)
         with self.assertRaises(ImmutableBindingException) as exc:
-            self.context.rebind('immutable', 'test')
+            self.context.rebind('immutable', obj)
         self.assertEqual(exc.exception.binding_type, BindingType.named_object)
         self.assertEqual(exc.exception.name, 'immutable')
 
@@ -356,7 +376,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # Test rebinding without an existing binding, which should behave like the regular bind():
-        name, obj = 'obj1', object()
+        name, obj = 'obj1', Object()
         qual_name = self.context.rebind(name, obj)
         self.assertEqual(qual_name, (*self.context_name, name))
         self.assertIn(qual_name, initial_naming_context)
@@ -367,7 +387,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
         # Rebinding again under same name now should replace
         # the binding (in contrast to the AlreadyBoundException thrown with the regular bind).
-        obj2 = object()
+        obj2 = Object()
         self.context.rebind(name, obj2)
         self.assertIn(qual_name, initial_naming_context)
         self.assertIn(name, self.context)
@@ -375,7 +395,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         self.assertEqual(initial_naming_context.resolve(qual_name), obj2)
 
         # Trying to rebind an object using a composite name for which no subcontext binding could be found:
-        name, obj = ('subcontext', 'obj2'), object()
+        name, obj = ('subcontext', 'obj2'), Object()
         with self.assertRaises(NameNotFoundException) as exc:
             self.context.rebind(name, obj)
         self.assertEqual(exc.exception.name, 'subcontext')
@@ -393,7 +413,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         self.assertEqual(initial_naming_context.resolve(qual_name), obj)
 
         # Composite rebinding under same name
-        obj2 = object()
+        obj2 = Object()
         self.context.rebind(name, obj2)
         self.assertIn(qual_name, initial_naming_context)
         self.assertIn(name, self.context)
@@ -403,7 +423,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         # Test binding a context as a regular object to another object.
         # Context need to be bound, so bind to the initial context, and add some binding:
         context_obj = initial_naming_context.bind_new_context('context2')
-        name, obj = 'test', object()
+        name, obj = 'test', Object()
         context_obj.bind(name, obj)        
         # Then regularly bind the second context as an object to the subcontext created above:
         qual_name = subcontext.bind('context_obj', context_obj)
@@ -444,7 +464,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # The passed object should be asserted to be an instance of NamingContext:
-        for invalid_context in [None, '', object()]:
+        for invalid_context in [None, '', Object()]:
             with self.assertRaises(NamingException) as exc:
                 self.context.bind_context(name, invalid_context)
             self.assertEqual(exc.exception.message, NamingException.Message.context_expected)
@@ -512,7 +532,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             self.assertEqual(exc.exception.reason, reason, invalid_name)
 
         # The passed object should be asserted to be an instance of NamingContext:
-        for invalid_context in [None, '', object()]:
+        for invalid_context in [None, '', Object()]:
             with self.assertRaises(NamingException) as exc:
                 self.context.rebind_context(name, invalid_context)
             self.assertEqual(exc.exception.message, NamingException.Message.context_expected)
@@ -567,8 +587,8 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             initial_naming_context.bind_context(self.context_name, self.context)
 
         self.context.bind_new_context('subcontext')
-        name1, obj1 = 'obj1', object()
-        name2, obj2 = ('subcontext', 'obj2'), object()
+        name1, obj1 = 'obj1', Object()
+        name2, obj2 = ('subcontext', 'obj2'), Object()
 
         # Verify invalid names throw the appropriate exception:
         for invalid_name, reason in self.invalid_names:
@@ -629,7 +649,8 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
         # Add immutable bindings and verify that the appropriate exception is thrown
         # when trying to unbind it:
-        self.context.bind('immutable', 'test', immutable=True)
+        obj = Object()
+        self.context.bind('immutable', obj, immutable=True)
         with self.assertRaises(ImmutableBindingException) as exc:
             self.context.unbind('immutable')
         self.assertEqual(exc.exception.binding_type, BindingType.named_object)
@@ -660,7 +681,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
         # Bind new context to be able to verify unbinding it:
         subcontext = self.context.bind_new_context('subcontext')
-        name, obj = 'obj', object()
+        name, obj = 'obj', Object()
         qual_name = subcontext.bind(name, obj)
         self.assertIn(name, subcontext)
         self.assertIn(('subcontext', name), self.context)
@@ -686,7 +707,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
         self.assertEqual(exc.exception.binding_type, BindingType.named_context)
         # The unbound context should now also throw unbound exceptions:
         with self.assertRaises(UnboundException):
-            subcontext.bind('test', object())
+            subcontext.bind('test', Object())
 
         # Add immutable binding and verify that the appropriate exception is thrown
         # when trying to rebind it:
@@ -722,7 +743,8 @@ class AbstractNamingContextCase(unittest.TestCase):
         super().setUp()
         # Store a copy of initial context's bindings before each test,
         # so that they can be reinstated in the tear down afterwards.
-        self.initial_context_bindings = {k:copy.copy(v) for k,v in InitialNamingContext()._bindings.items()}
+        self.initial_context_bindings = InitialNamingContext()._bindings
+        InitialNamingContext()._bindings = {btype: bstorage.copy() for btype, bstorage in InitialNamingContext()._bindings.items()}
         self.context = self.new_context()
 
     def tearDown(self):
@@ -860,7 +882,7 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
     def setUpClass(cls):
         super(InitialNamingContextCase, cls).setUpClass()
         cls.setup_sample_model()
-        cls.load_example_data()
+        LoadSampleData().model_run(None, None)
         cls.session = Session()
 
         class CompositePkEntity(Entity):
@@ -952,8 +974,9 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (0,               ('constant', 'int', '0')),
             (-1,              ('constant', 'int', '-1')),
             (Decimal('-2.1'), ('constant', 'decimal', '-2.1')),
-            (Decimal('0.0'),  ('constant', 'decimal', '0.0')),
+            (Decimal('0.0'),  ('constant', 'decimal', '0')), # Should remove trailing zeros.
             (Decimal('3.5'),  ('constant', 'decimal', '3.5')),
+            (Decimal('4.7500'),('constant', 'decimal', '4.75')),
             (obj1,            ('object', str(id(obj1)))),
             (obj2,            ('object', str(id(obj2)),)),
             (entity1,         ('entity', 'organization', str(entity1.id))),
@@ -1030,7 +1053,7 @@ class AbstractEntityNamingContextCase(AbstractNamingContextCase, ExampleModelMix
     def setUpClass(cls):
         super(AbstractEntityNamingContextCase, cls).setUpClass()
         cls.setup_sample_model()
-        cls.load_example_data()
+        LoadSampleData().model_run(None, None)
         cls.session = Session()
 
     @classmethod
@@ -1158,3 +1181,31 @@ class TernaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCas
         a2 = PK3Entity(id_1=1, id_2=2, id_3=3)
         cls.session.flush()
         cls.compatible_names = [(str(a1.id_1), str(a1.id_2), str(a1.id_3)), (str(a2.id_1), str(a2.id_2), str(a2.id_3))]
+
+class WeakRefNamingContextCase(AbstractNamingContextCase, NamingContextCaseMixin):
+
+    context_name = ('weakref',)
+    context_cls = WeakRefNamingContext
+
+    def test_bind(self):
+        # Verify that objects bound to a WeakRefNamingContext are removed once they are not hard referenced anymore,
+        # regardless of their mutability:
+        super().test_bind()
+
+        # * binding an unreferenced object:
+        for immutable in [True, False]:
+            self.context.bind('test', Object(), immutable)
+            with self.assertRaises(NameNotFoundException) as exc:
+                self.context.resolve('test')
+            self.assertEqual(exc.exception.name, 'test')
+            self.assertEqual(exc.exception.binding_type, BindingType.named_object)
+
+        obj = Object()
+        self.context.bind('test', obj, immutable)
+        self.assertEqual(obj, self.context.resolve('test'))
+        # * removing the last hard reference post-binding:
+        del obj
+        with self.assertRaises(NameNotFoundException) as exc:
+            self.context.resolve('test')
+        self.assertEqual(exc.exception.name, 'test')
+        self.assertEqual(exc.exception.binding_type, BindingType.named_object)

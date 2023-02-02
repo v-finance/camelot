@@ -155,10 +155,7 @@ class SignalSlotCase( unittest.TestCase ):
     
     def setUp(self):
         self.app = QtWidgets.QApplication.instance()
-        if self.app == None:
-            self.app = QtWidgets.QApplication([])
-        #from camelot.test import get_application
-        #self.app = get_application()
+        assert self.app is not None
 
     def test_queued_connection_after_delete(self):
         """Connect emitter and receiver in a different thread with a

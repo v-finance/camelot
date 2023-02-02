@@ -4,9 +4,10 @@ import dataclasses
 import io
 import json
 
-from camelot.core.qt import QtGui
+from camelot.core.qt import QtCore, QtGui
 from .utils import ugettext_lazy
 from enum import Enum
+
 
 class Serializable(object):
     """
@@ -52,6 +53,8 @@ class Serializable(object):
 class DataclassEncoder(json.JSONEncoder):
 
     def default(self, obj):
+        from ..view.qml_view import LiveRef
+
         if isinstance(obj, ugettext_lazy):
             return str(obj)
         if isinstance(obj, QtGui.QKeySequence):
@@ -60,6 +63,17 @@ class DataclassEncoder(json.JSONEncoder):
             return QtGui.QKeySequence(obj).toString()
         if isinstance(obj, Enum):
             return obj.value
+        if isinstance(obj, LiveRef):
+            return obj.property('name')
+        if isinstance(obj, QtCore.QJsonValue):
+            return obj.toVariant()
+        if isinstance(obj, QtGui.QColor):
+            return obj.name()
+         # FIXME: Remove this when all classes are serializable.
+         #        Currently needed to serialize some fields
+         #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
+        if isinstance(obj, DataclassSerializable):
+            return obj.asdict(obj)
         return json.JSONEncoder.default(self, obj)
 
 
@@ -87,7 +101,7 @@ class DataclassSerializable(Serializable):
     @classmethod
     def _asdict_inner(cls, obj):
         if dataclasses._is_dataclass_instance(obj):
-            return cls.serialize_fields(obj)
+            return type(obj).serialize_fields(obj)
         elif isinstance(obj, (list, tuple)):
             return type(obj)(cls._asdict_inner(v) for v in obj)
         elif isinstance(obj, dict):

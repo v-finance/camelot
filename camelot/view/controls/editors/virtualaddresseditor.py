@@ -57,8 +57,7 @@ class VirtualAddressEditor(CustomEditor):
     def __init__(self,
                  parent = None,
                  address_type = None,
-                 field_name = 'virtual_address',
-                 **kwargs):
+                 field_name = 'virtual_address'):
         """
         :param address_type: limit the allowed address to be entered to be
             of a certain time, can be 'phone', 'fax', 'email', 'mobile', 'pager'.

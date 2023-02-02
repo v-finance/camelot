@@ -48,18 +48,15 @@ class DateEditor(CustomEditor):
     special_date_icon = FontIcon('calendar-alt') # 'tango/16x16/apps/office-calendar.png'
     
     def __init__(self, parent = None,
-                       editable = True,
-                       nullable = True, 
-                       field_name = 'date',
-                       validator = DateValidator(),
-                       **kwargs):
+                       nullable = True,
+                       field_name = 'date'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
-        line_edit.setValidator(validator)
+        line_edit.setValidator(DateValidator())
         line_edit.setObjectName('date_line_edit')
         line_edit.set_minimum_width(str(QtCore.QDate(2000,12,22).toString(self.date_format)))
         line_edit.setPlaceholderText(QtCore.QDate(2000,1,1).toString(self.date_format))

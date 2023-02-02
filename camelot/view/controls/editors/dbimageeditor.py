@@ -17,11 +17,10 @@ class DbImageEditor(CustomEditor):
 
     def __init__(self,
                  parent,
-                 field_name='db_image',
                  preview_width=100,
                  preview_height=100,
                  max_size=50000,
-                 **kwargs):
+                 field_name='db_image'):
         self.preview_width = preview_width
         self.preview_height = preview_height
         self.max_size = max_size
@@ -153,8 +152,7 @@ class DbImageEditor(CustomEditor):
     
     @QtCore.qt_slot()
     def open(self):
-        options = QtWidgets.QFileDialog.Options()
-        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "", self.image_filter, options=options)
+        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "", self.image_filter)
         if file_name:
             statinfo = os.stat(file_name)
             image_size = statinfo.st_size         

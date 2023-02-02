@@ -34,6 +34,7 @@ blocks for creating the :class:`camelot.core.orm.Entity`.
 These classes can be reused if a custom base class is needed.
 """
 
+import datetime
 import logging
 import re
 
@@ -41,7 +42,7 @@ from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Integer
+from sqlalchemy.types import Date, Integer
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
@@ -70,10 +71,12 @@ class EntityMeta( DeclarativeMeta ):
     Currently, the following entity args are supported:
 
     * 'discriminator'
-       The discriminator entity argument registers one of the entity's type based columns as one by which entity instances can be categorized by,
-       on a more broader basis than the primary key identity.
-       This column should be an Enumeration type column, which defines the types that are allowed as values for the discriminator column.
+       The discriminator definition registers the column or properties by which instances of the entity class can be categorized,
+       on a more broader basis than the primary key identity or polymorphism.
+       This discriminator definition can be a single discriminator property, or a combination of multiple.
+       The primary discriminator should always be an Enumeration type column, which defines the types that are allowed as values for the discriminator column.
        The enumeration's types and/or type_groups are extracted from its definition and set as class attributes on the entity class.
+       Secondary discriminators should always be relationship properties to a related Entity class.
 
        :example:
        | class SomeClass(Entity):
@@ -87,21 +90,34 @@ class EntityMeta( DeclarativeMeta ):
        |     ...
        |
        | SomeClass.__types__ == some_class_types
+       |
+       | class OtherClass(Entity):
+       |     ...
+       |     described_by = Column(IntEnum(other_class_types))
+       |     related_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(SomeClass.id))
+       |     related_entity = orm.relationship(SomeClass)
+       |     ...
+       |     __entity_args__ = {
+       |         'discriminator': (described_by, related_entity),
+       |     }
+       |     ...
+       |
+       | OtherClass.__types__ == other_class_types
 
-       This metaclass will also provide entity classes with the `get_cls_discriminator` method, which returns the registered discriminator property,
-       and `set_discriminator_value` to set the discriminator value one a provided entity instance.
-       In unison with discriminator entity argument, the metaclass also imparts an entity class with the ability to register and later retrieve classes for a specify discriminator type or type group.
-       These registered classes are stored in the __cls_for_type__ class argument and registered classes can be retrieved for a specific type (group) with the 'get_cls_by_type' method.
+       This metaclass will also provide entity classes with the `get_cls_discriminator` method, which returns the registered discriminator definition,
+       and the `get_discriminator_value` & `set_discriminator_value` method to retrieve or set the discriminator value on a provided entity instance.
+       In unison with the discriminator argument, the metaclass also imparts entity classes with the ability to register and later retrieve classes for concrete discriminator values.
+       These registered classes are stored in the __discriminator_cls_registry__ class argument and registered classes can be retrieved for a specific discriminator value with the 'get_cls_by_discriminator' method.
        See its documentation for more details.
 
        All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
-       NOTE: this class registration system could possibly be moved to the level of the facade, to not be limited to a single hierarchy for each entity class.
+       NOTE: this class registration system could possibly be moved to the level of the facade in the future, to not be limited to a single hierarchy for each entity class.
 
     * 'ranked_by'
        This entity argument allows registering a rank-based entity class its ranking definition.
        Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
        which should be an Integer type column that holds the numeric rank value.
-       The registered rank definition can be retrieved on an entity class pos- declaration using the provided `get_ranked_by` method.
+       The registered rank definition can be retrieved on an entity class post-declaration using the provided `get_ranked_by` method.
        See its documentation for more details.
 
        :example:
@@ -136,11 +152,26 @@ class EntityMeta( DeclarativeMeta ):
        |
        | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
 
+    * 'application_date'
+       Registers the application date attribute of the target entity.
+       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
+       which should be of type Date.
+
+    * 'transition_types'
+       Enumeration that defines the types of state transitions instances of the entity class can undergo.
+
     * 'editable'
        This entity argument is a flag that when set to False will register the entity class as globally non-editable.
 
     * 'editable_fields'
        List of field_names that should be excluded from the globally non-editable registration, if present.
+
+    * 'retention_level'
+       Configures the data retention of the entity, e.g. how long it should be kept in the system before its final archiving or removal.
+
+    * 'retention_cut_off_date'
+       Registers a date attribute of the target entity, which value signals the point at which the entity's retention period begins.
+       This argument is an optional parameter in the retention policy configuration of entities.
 
     Notes on metaclasses
     --------------------
@@ -150,6 +181,9 @@ class EntityMeta( DeclarativeMeta ):
     In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
+
+    # Supported retention levels; is explicitly set in vFinance.__init__.
+    retention_levels = util.OrderedProperties()
 
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
@@ -191,25 +225,30 @@ class EntityMeta( DeclarativeMeta ):
                 dict_.setdefault('__type_groups__', None)
             
             for base in bases:
-                if hasattr(base, '__cls_for_type__'):
+                if hasattr(base, '__discriminator_cls_registry__'):
                     break
             else:
-                dict_.setdefault('__cls_for_type__', dict())
+                dict_.setdefault('__discriminator_cls_registry__', dict())
         
             entity_args = dict_.get('__entity_args__')
             if entity_args is not None:
                 discriminator = entity_args.get('discriminator')
                 if discriminator is not None:
-                    assert isinstance(discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Discriminator must be a sql.schema.Column or an InstrumentedAttribute'
-                    discriminator_col = discriminator
-                    if isinstance(discriminator, orm.attributes.InstrumentedAttribute):
-                        discriminator_col = discriminator.prop.columns[0]
+                    (primary_discriminator, *secondary_discriminators) = discriminator if isinstance(discriminator, tuple) else (discriminator,)
+                    assert isinstance(primary_discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)),\
+                           'Primary discriminator must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
+                    discriminator_col = primary_discriminator
+                    if isinstance(primary_discriminator, orm.attributes.InstrumentedAttribute):
+                        discriminator_col = primary_discriminator.prop.columns[0]
                     assert isinstance(discriminator_col.type, Enumeration), 'Discriminator column must be of type Enumeration'
                     assert isinstance(discriminator_col.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
                     dict_['__types__'] = discriminator_col.type.enum
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
-                    dict_['__cls_for_type__'] = dict()
+                    dict_['__discriminator_cls_registry__'] = dict()
+                    assert len(secondary_discriminators) <= 1, 'Only a single secondary discriminator is currently supported'
+                    for secondary_discriminator in secondary_discriminators:
+                        assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must be instances of `orm.properties.RelationshipProperty`'
 
                 ranked_by = entity_args.get('ranked_by')
                 if ranked_by is not None:
@@ -225,6 +264,26 @@ class EntityMeta( DeclarativeMeta ):
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
 
+                application_date = entity_args.get('application_date')
+                if application_date is not None:
+                    assert isinstance(application_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
+                    application_date_col = application_date.prop.columns[0] if isinstance(application_date, orm.attributes.InstrumentedAttribute) else application_date
+                    assert isinstance(application_date_col.type, Date), 'The application date should be of type Date'
+
+                transition_types = entity_args.get('transition_types')
+                if transition_types is not None:
+                    assert isinstance(transition_types, util.OrderedProperties), 'Transition types argument should define enumeration types'
+
+                retention_level = entity_args.get('retention_level')
+                if retention_level is not None:
+                    assert retention_level in cls.retention_levels.values(), 'Unsupported retention level'
+
+                retention_cut_off_date = entity_args.get('retention_cut_off_date')
+                if retention_cut_off_date is not None:
+                    assert isinstance(retention_cut_off_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Retention cut-off date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
+                    retention_cut_off_date_col = retention_cut_off_date.prop.columns[0] if isinstance(retention_cut_off_date, orm.attributes.InstrumentedAttribute) else retention_cut_off_date
+                    assert isinstance(retention_cut_off_date_col.type, Date), 'The retention cut-off date should be of type Date'
+
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity' and dict_.get('__tablename__') is not None:
@@ -235,7 +294,7 @@ class EntityMeta( DeclarativeMeta ):
                 # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
                 # table.primary_key returns an iterator so we can't test the length or something like that
                 table = dict_.get('__table__', None)
-                if table is None or table.primary_key.issubset([]):
+                if table is None or table.primary_key is None:
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
             # Auto-assign entity_args and name entity argument if not configured explicitly.
@@ -258,60 +317,121 @@ class EntityMeta( DeclarativeMeta ):
         # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
         return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
 
-    def get_cls_by_type(cls, _type):
+    def get_polymorphic_types(cls):
         """
-        Retrieve the corresponding class for the given type or type_group if one is registered on this class or its base.
-        This can be the class that is specifically registered for the given type or type group, or a possible registered default class otherwise.
-        Providing no type will also return the default registered class if present.
-        
-        :param _type:  either None which will lookup a possible registered default class, or a member of a sqlalchemy.util.OrderedProperties instance.
-                       If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
-                       __type_groups__, that get auto-set in case the set types are grouped.
-        :return:       the class that is registered for the given type, which inherits from the class where the allowed types are registered on, or the class itself if not.
-                       In case the given type is:
-                        * None; the registered default class will be returned, if present.
-                        * a member of the allowed __type_groups__; a possible registered class for the type group will be returned, or the registered default class otherwise.
-                        * a member of the allowed __types__; a possible registered class for the type will be returned,
-                          otherwise a possible registered class for the group of the type, if applicable, and otherwise the registered default class.
-                       Examples:
-                       | BaseClass.get_cls_by_type(allowed_types.certain_type.name) == CertainTypeClass
-                       | BaseClass.get_cls_by_type(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
-                       | BaseClass.get_cls_by_type(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
-        :raises :      an AttributeException when the given argument is not a valid type
+        In case of a polymorphic base class with a polymorphic discriminator column
+        that is of type Enumeration, return its contained type enumeration.
         """
+        polymorphic_on = cls.__mapper_args__.get('polymorphic_on')
+        if polymorphic_on is not None:
+            polymorphic_on_col = polymorphic_on
+            if isinstance(polymorphic_on, orm.attributes.InstrumentedAttribute):
+                polymorphic_on_col = polymorphic_on.prop.columns[0]
+            if isinstance(polymorphic_on_col.type, Enumeration):
+                return polymorphic_on_col.type.enum
+
+    def get_cls_by_discriminator(cls, discriminator_value):
+        """
+        Retrieve the corresponding class for the given discriminator value if one is registered on this class or its base.
+        This can be the class that is specifically registered for the given discriminator value, or a possible registered default class otherwise.
+        Providing no value will also return the default registered class if present.
+        Additionally, in case of a polymorphic base class, passing one of the polymorphic identities will also retrieve
+        the entity corresponding to the identity based on the polymorphic map.
+
+        :param discriminator_value: can be one of either following values:
+          * None: will lookup a possible registered default class
+          * a member of a sqlalchemy.util.OrderedProperties instance, in case of a singular primary discriminator.
+            If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
+            __type_groups__, that get auto-set in case the set types are grouped.
+          * a tuple containing multi-level discriminator values, with a primary discriminator value of the type above,
+            and secondary Entity class discriminator values.
+        :return: the class that is registered for the given discriminator value, which inherits from the class where the discriminator is registered on, or the class itself if not.
+                 In case the discriminator value is:
+                   * None; the registered default class will be returned, if present.
+                   * a member of the allowed __type_groups__; a possible registered class for the type group will be returned, or the registered default class otherwise.
+                   * a member of the allowed __types__; a possible registered class for the type will be returned,
+                     otherwise a possible registered class for the group of the type, if applicable, and otherwise the registered default class.
+                   * a tuple combining a primary discriminator of one of the previous types, and secondary Entity discriminators.
+                 Examples:
+                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_type.name) == CertainTypeClass
+                  | BaseClass.get_cls_by_discriminator(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
+                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
+                  | BaseClass.get_cls_by_discriminator((allowed_types.certain_type.name, Organization)) == CertainTypeClassWithOrganization
+                  | BaseClass.get_cls_by_discriminator((allowed_types.certain_type.name, Person)) == CertainTypeClassWithPerson
+        :raises : an AttributeException when the given argument is not a valid type
+        """
+        (primary_discriminator, *secondary_discriminators) = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
+        if 'polymorphic_on' in cls.__mapper_args__ and primary_discriminator in cls.__mapper__.polymorphic_map:
+            return cls.__mapper__.polymorphic_map[primary_discriminator].entity
         if cls.__types__ is not None:
             groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
             types = cls.__types__
-            if _type is None or _type in types.__members__ or _type in groups:
-                group = _type
-                if groups and _type in types.__members__ and types[_type].grouped_by is not None:
-                    group = types[_type].grouped_by.name
-                
-                return cls.__cls_for_type__.get(_type) or \
-                       cls.__cls_for_type__.get(group) or \
-                       cls.__cls_for_type__.get(None)
-            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
-            raise Exception("No registered class found for '{0}' (of type {1})".format(_type, type(_type)))
-    
+            if primary_discriminator is None or primary_discriminator in types.__members__ or primary_discriminator in groups:
+                group = primary_discriminator
+                if groups and primary_discriminator in types.__members__ and types[primary_discriminator].grouped_by is not None:
+                    group = types[primary_discriminator].grouped_by.name
+
+                # Support passing secondary discriminator arguments both on the instance as the class level.
+                secondary_discriminators = [
+                    secondary_discriminator.__class__ if not isinstance(secondary_discriminator, EntityMeta) \
+                    else secondary_discriminator for secondary_discriminator in secondary_discriminators]
+                if primary_discriminator in cls.__discriminator_cls_registry__:
+                    if isinstance(cls.__discriminator_cls_registry__[primary_discriminator], dict):
+                        if (*secondary_discriminators,) in cls.__discriminator_cls_registry__[primary_discriminator]:
+                            return cls.__discriminator_cls_registry__[primary_discriminator][(*secondary_discriminators,)]
+                    else:
+                        return cls.__discriminator_cls_registry__[primary_discriminator]
+                if group in cls.__discriminator_cls_registry__:
+                    if isinstance(cls.__discriminator_cls_registry__[group], dict):
+                        if (*secondary_discriminators,) in cls.__discriminator_cls_registry__[group]:
+                            return cls.__discriminator_cls_registry__[group][(*secondary_discriminators,)]
+                    else:
+                        return cls.__discriminator_cls_registry__[group]
+                return cls.__discriminator_cls_registry__.get(None)
+
+            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
+            raise Exception("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
+
     def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
             if hasattr(cls_, '__entity_args__') and key in cls_.__entity_args__:
                 return cls_.__entity_args__[key]
     
     def get_cls_discriminator(cls):
+        """
+        Retrieve the clas
+        """
         discriminator = cls._get_entity_arg('discriminator')
         if discriminator is not None:
-            if isinstance(discriminator, sql.schema.Column):
-                return getattr(cls, discriminator.key)
-            return discriminator
+            discriminator = discriminator if isinstance(discriminator, tuple) else (discriminator,)
+            discriminator_cols = [
+                getattr(cls, discriminator_col.key) \
+                if isinstance(discriminator_col, (sql.schema.Column, orm.properties.RelationshipProperty)) \
+                else discriminator_col for discriminator_col in discriminator
+            ]
+            return tuple(discriminator_cols)
+
+    def get_discriminator_value(cls, entity_instance):
+        """Return the given entity instance's discriminator value."""
+        assert isinstance(entity_instance, cls)
+        discriminator = cls.get_cls_discriminator()
+        if discriminator is not None:
+            return tuple([discriminator_prop.__get__(entity_instance, None) for discriminator_prop in discriminator])
 
     def set_discriminator_value(cls, entity_instance, discriminator_value):
         """Set the given entity instance's discriminator with the provided discriminator value."""
         assert isinstance(entity_instance, cls)
         discriminator = cls.get_cls_discriminator()
         if discriminator is not None:
-            assert discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(discriminator_value)
-            discriminator.__set__(entity_instance, discriminator_value)
+            (primary_discriminator, *secondary_discriminators) = discriminator
+            (primary_discriminator_value, *secondary_discriminator_values) = discriminator_value if isinstance(discriminator_value, tuple) else (discriminator_value,)
+            if primary_discriminator_value is not None:
+                assert primary_discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
+                primary_discriminator.__set__(entity_instance, primary_discriminator_value)
+                for secondary_discriminator_prop, secondary_discriminator_value in zip(secondary_discriminators, secondary_discriminator_values):
+                    entity = secondary_discriminator_prop.prop.entity.entity
+                    assert isinstance(secondary_discriminator_value, entity), '{} is not a valid secondary discriminator value for this entity. Must be of type {}'.format(secondary_discriminator_value, entity)
+                    secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
 
     def get_ranked_by(cls):
         ranked_by = cls._get_entity_arg('ranked_by')
@@ -333,6 +453,21 @@ class EntityMeta( DeclarativeMeta ):
                 else:
                     order_by_clauses.append(order_by)
             return tuple(order_by_clauses)
+
+    @property
+    def transition_types(cls):
+        return cls._get_entity_arg('transition_types')
+
+    @property
+    def retention_level(cls):
+        return cls._get_entity_arg('retention_level')
+
+    @property
+    def retention_cut_off_date(cls):
+        retention_cut_off_date = cls._get_entity_arg('retention_cut_off_date')
+        if retention_cut_off_date is not None:
+            mapper = orm.class_mapper(cls)
+            return mapper.get_property(retention_cut_off_date.key).class_attribute
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
@@ -532,3 +667,22 @@ class EntityBase( object ):
         session.query(MyClass).get(...)
         """
         return Session().query( cls ).get(*args, **kwargs)
+
+    def is_applicable_at(self, at):
+        """
+        Return whether this entity instance is applicable at the given date.
+        This method requires the entity class to have its application date range
+        configured by the 'application_date' __entity_args__ argument.
+        An instance is applicable at the given date when it is later than the instance's
+        application date, and the application date is not later than end_of_times.
+
+        :raises: An AssertionError when the application_date is not configured in the entity's __entity_args__.
+        """
+        from camelot.model.authentication import end_of_times
+        entity = type(self)
+        assert entity._get_entity_arg('application_date') is not None
+        assert isinstance(at, datetime.date)
+        mapper = orm.class_mapper(entity)
+        application_date_prop = mapper.get_property(entity._get_entity_arg('application_date').key)
+        application_date = application_date_prop.class_attribute.__get__(self, None)
+        return application_date is not None and not (application_date >= end_of_times() or at < application_date)

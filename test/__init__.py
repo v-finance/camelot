@@ -1,6 +1,7 @@
 import faulthandler
 import logging
 import sys
+import traceback
 
 from camelot.core.conf import settings
 
@@ -17,15 +18,6 @@ from camelot.admin.application_admin import ApplicationAdmin
 
 from sqlalchemy.pool import StaticPool
 from sqlalchemy import create_engine
-
-# a QApplication is needed to be able to construct other
-# objects.
-_application_ = []
-if QtWidgets.QApplication.instance() is None:
-    # set up a test application
-    _application_.append(QtWidgets.QApplication([a for a in sys.argv if a]))
-    # to generate consistent screenshots
-    _application_[0].setStyle('fusion')
 
 # set up a specific locale to test import of files
 QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
@@ -52,3 +44,10 @@ class TestSettings( object ):
         return self.engine
    
 settings.append( TestSettings() )
+
+def excepthook(type, value, tb):
+    print('Camelot Unit Test Excepthook')
+    for line in traceback.format_exception(type, value, tb):
+        print(line)
+
+sys.excepthook = excepthook

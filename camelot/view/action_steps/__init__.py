@@ -29,16 +29,16 @@
 
 from .application import (
     MainWindow, InstallTranslator, Exit, RemoveTranslators, NavigationPanel,
-    MainMenu, UpdateActionsState
+    MainMenu, UpdateActionsState, SetThemeColors, Authenticate
 )
-from .change_object import ChangeField, ChangeObject, ChangeObjects
+from .change_object import ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
                         ToPreviousForm)
 from .gui import (
     CloseView, MessageBox, Refresh, SelectItem
 )
 from .item_view import (
-    Sort, OpenTableView, UpdateTableView, ClearSelection,
+    Sort, OpenTableView, UpdateTableView, ClearSelection, SetSelection,
     RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
@@ -49,17 +49,18 @@ from .orm import (
 )
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects
-from .update_progress import UpdateProgress
+from .update_progress import UpdateProgress, PushProgressLevel, PopProgressLevel
 from .crud import (
     SetColumns, Completion, CompletionValue, Created, RowCount, Update, ChangeSelection
 )
 
 __all__ = [
-    ChangeField.__name__,
+    Authenticate.__name__,
     ChangeObject.__name__,
     ChangeObjects.__name__,
     ChangeSelection.__name__,
     ClearSelection.__name__,
+    SetSelection.__name__,
     CloseView.__name__,
     Completion.__name__,
     CompletionValue.__name__,
@@ -71,6 +72,7 @@ __all__ = [
     FlushSession.__name__,
     InstallTranslator.__name__,
     MainMenu,
+    SetThemeColors.__name__,
     MainWindow.__name__,
     MessageBox.__name__,
     NavigationPanel.__name__,
@@ -101,6 +103,8 @@ __all__ = [
     UpdateActionsState.__name__,
     UpdateObjects.__name__,
     UpdateProgress.__name__,
+    PushProgressLevel.__name__,
+    PopProgressLevel.__name__,
     UpdateTableView.__name__,
     WordJinjaTemplate.__name__,
     ]

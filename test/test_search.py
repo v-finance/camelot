@@ -130,4 +130,7 @@ class SearchCase( test_orm.TestMetaData ):
 
             list(search_filter.model_run(model_context, string_value))
             query = model_context.proxy.get_query()
-            self.assertTrue( 0 < query.count() < initial_count)
+            self.assertTrue(initial_count > query.count() > 0, 'Count return 0 for {} {}'.format(
+                name, definition
+            ))
+

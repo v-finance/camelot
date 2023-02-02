@@ -60,21 +60,7 @@ The GUI context in which an action is running.  This object can contain
 references to widgets and other useful information.  This object cannot
 contain reference to anything database or model related, as those belong
 strictly to the :class:`ModelContext`
-
-.. attribute:: mode_name
-
-    the name of the mode in which the action was triggered
-    
-.. attribute:: model_context
-
-    a subclass of :class:`ModelContext` to be used in :meth:`create_model_context`
-    as the type of object to return.
     """
-    
-    model_context = ModelContext
-    
-    def __init__( self ):
-        self.mode_name = None
 
     def get_progress_dialog(self):
         """
@@ -103,18 +89,6 @@ strictly to the :class:`ModelContext`
         """
         return None
 
-    def create_model_context( self ):
-        """Create a :class:`ModelContext` filled with base information, 
-        extracted from this GuiContext.  This function will be called in the
-        GUI thread, so it should not access the model directly, but rather
-        extract all information needed from te GUI to be available in the
-        model.
-        
-        :return: a :class:`ModelContext`
-        """
-        context = self.model_context()
-        return context
-        
     def copy( self, base_class = None ):
         """Create a copy of the GuiContext, this function is used
         to create new GuiContext's that are more specialized without
@@ -124,7 +98,6 @@ strictly to the :class:`ModelContext`
             if the new context should be of the same type as the copied context.
         """
         new_context = (base_class or self.__class__)()
-        new_context.mode_name = self.mode_name
         return new_context
 
 
@@ -280,37 +253,30 @@ return immediately and the :meth:`model_run` will not be blocked.
 
     blocking = True
     cancelable = True
-            
-    def gui_run( self, gui_context ):
+
+    @classmethod
+    def gui_run( cls, gui_context_name, serialized_step=b'' ):
         """This method is called in the *GUI thread* upon execution of the
         action step.  The return value of this method is the result of the
         :keyword:`yield` statement in the *model thread*.
         
-        The default behavior of this method is to call the model_run generator
-        in the *model thread* until it is finished.
+        The default behavior of this method is to call the qml_action_step
+        function.
         
         :param gui_context:  An object of type 
             :class:`camelot.admin.action.GuiContext`, which is the context 
             of this action available in the *GUI thread*.  What is in the 
             context depends on how the action was called.
+        :param serialized_step: The serialized action step.
             
         this method will raise a :class:`camelot.core.exception.CancelRequest`
         exception, if the user canceled the operation.
         """
-        from camelot.view.action_runner import ActionRunner
-        runner = ActionRunner( self.model_run, gui_context )
-        runner.exec()
-        
+        from camelot.view.qml_view import qml_action_step
+        return qml_action_step(gui_context_name, cls.__name__, serialized_step)
+
     def model_run( self, model_context, mode ):
-        """A generator that yields :class:`camelot.admin.action.ActionStep`
-        objects.  This generator can be called in the *model thread*.
-        
-        :param context:  An object of type
-            :class:`camelot.admin.action.ModelContext`, which is context 
-            of this action available in the model_thread.  What is in the 
-            context depends on how the action was called.
-        """
-        yield
+        raise Exception('This should not happen')
 
     @classmethod
     def deserialize_result(cls, gui_context, serialized_result):
@@ -327,25 +293,6 @@ return immediately and the :meth:`model_run` will not be blocked.
             this behavior.
         """
         return serialized_result
-
-class ProgressLevel(object):
-
-    def __init__(self, gui_context, verbose_name):
-        self.verbose_name = verbose_name
-        self.gui_context = gui_context
-        self.progress_dialog = None
-
-    def __enter__(self):
-        self.progress_dialog = self.gui_context.get_progress_dialog()
-        if self.progress_dialog is not None:
-            self.progress_dialog.push_level(self.verbose_name)
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if self.progress_dialog is not None:
-            self.progress_dialog.pop_level()
-        self.progress_dialog = None
-        return False
 
 
 class RenderHint(Enum):
@@ -471,22 +418,20 @@ with a view.
 
         return tooltip
 
-
-    def gui_run( self, gui_context ):
-        """This method is called inside the GUI thread, by default it
-        executes the :meth:`model_run` in the Model thread.
+    def model_run( self, model_context, mode ):
+        """A generator that yields :class:`camelot.admin.action.ActionStep`
+        objects.  This generator can be called in the *model thread*.
         
-        :param gui_context: the context available in the *GUI thread*,
-            of type :class:`GuiContext`
-            
+        :param context:  An object of type
+            :class:`camelot.admin.action.ModelContext`, which is context 
+            of this action available in the model_thread.  What is in the 
+            context depends on how the action was called.
         """
-        # only create a progress dialog if there is none yet, or if the
-        # existing dialog was canceled
-        LOGGER.debug( 'action gui run started' )
-        with ProgressLevel(gui_context, str(self.verbose_name or '')):
-            super(Action, self).gui_run(gui_context)
-        LOGGER.debug( 'gui run finished' )
-        
+        yield
+
+    def gui_run( self, gui_context_name ):
+        raise Exception('This should not happen')
+
     def get_state( self, model_context ):
         """
         This method is called inside the Model thread to verify if

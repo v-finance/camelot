@@ -41,9 +41,9 @@ class TextLineEditor(CustomEditor):
                  parent,
                  length=20,
                  echo_mode=None,
-                 field_name='text_line',
                  column_width=None,
-                 **kwargs):
+                 action_routes=[],
+                 field_name='text_line'):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
                            QtWidgets.QSizePolicy.Policy.Fixed)
@@ -61,7 +61,7 @@ class TextLineEditor(CustomEditor):
         self.setFocusProxy(text_input)
         self.setObjectName(field_name)
         self._value = None
-        self.add_actions(kwargs['action_routes'], layout)
+        self.add_actions(action_routes, layout)
         self.setLayout(layout)
 
     @QtCore.qt_slot()

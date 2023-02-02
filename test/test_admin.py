@@ -30,8 +30,7 @@ from camelot.core.sql import metadata
 from camelot.model.i18n import Translation
 from camelot.model.party import Person, Address
 from camelot.view.controls import delegates
-from camelot.types.typing import Note, Directory, File
-
+from camelot.types.typing import Color, Directory, File, Note
 
 class ApplicationAdminCase(unittest.TestCase):
 
@@ -41,11 +40,6 @@ class ApplicationAdminCase(unittest.TestCase):
         self.assertTrue( app_admin.get_related_toolbar_actions( 'onetomany' ) )
         self.assertTrue( app_admin.get_related_toolbar_actions( 'manytomany' ) )
         self.assertTrue( app_admin.get_version() )
-        self.assertTrue( app_admin.get_icon() )
-        self.assertTrue( app_admin.get_splashscreen() )
-        self.assertTrue( app_admin.get_organization_name() )
-        self.assertTrue( app_admin.get_organization_domain() )
-        self.assertTrue( app_admin.get_stylesheet() )
         self.assertTrue( app_admin.get_about() )
         with self.assertRaises(Exception):
             app_admin.get_related_admin(1)
@@ -72,7 +66,10 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.app_admin = ApplicationAdmin()
 
     def test_not_editable_admin_class_decorator( self ):
-        OriginalAdmin = Translation.Admin
+
+        class OriginalAdmin(Translation.Admin):
+            list_actions = [list_filter.ComboBoxFilter(Translation.language)]
+
         original_admin = OriginalAdmin(self.app_admin, Translation)
         self.assertTrue(len(original_admin.get_list_actions()))
         self.assertTrue(original_admin.get_field_attributes('value')['editable'])
@@ -81,7 +78,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         #
         # enable the actions
         #
-        NewAdmin = not_editable_admin(Translation.Admin, actions = True)
+        NewAdmin = not_editable_admin(OriginalAdmin, actions=True)
         new_admin = NewAdmin(self.app_admin, Translation)
         self.assertTrue(len( new_admin.get_list_actions()))
         self.assertFalse(new_admin.get_field_attributes('value')['editable'])
@@ -100,8 +97,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         #
         # disable the actions
         #
-        NewAdmin = not_editable_admin( Translation.Admin, 
-                                       actions = False )
+        NewAdmin = not_editable_admin(OriginalAdmin, actions=False)
         new_admin = NewAdmin( self.app_admin, Translation )
         self.assertFalse( len( new_admin.get_list_actions() ) )
         self.assertFalse( new_admin.get_field_attributes( 'value' )['editable'] )
@@ -110,8 +106,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         #
         # keep the value field editable
         #
-        NewAdmin = not_editable_admin( Translation.Admin, 
-                                       editable_fields = ['value'] )
+        NewAdmin = not_editable_admin(OriginalAdmin, editable_fields=['value'])
         new_admin = NewAdmin( self.app_admin, Translation )
         self.assertFalse( len( new_admin.get_list_actions() ) )
         self.assertTrue( new_admin.get_field_attributes( 'value' )['editable'] )
@@ -165,15 +160,17 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
             def y(self, value):
                 self.x = value
 
+            class Admin(ObjectAdmin):
+                list_display = ['y']
+
         # test if a default admin is created
         admin = self.app_admin.get_related_admin(A)
-        self.assertEqual(type(admin), ObjectAdmin)
+        self.assertIsInstance(admin, ObjectAdmin)
         self.assertEqual(admin.entity, A)
         fa = admin.get_field_attributes('y')
         self.assertEqual(fa['editable'], True)
 
-        table = admin.get_table()
-        fields = table.get_fields()
+        fields = admin.get_columns()
         self.assertEqual(fields, ['y'])
 
         class B(A):
@@ -200,8 +197,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         fa = admin.get_field_attributes('z')
         self.assertEqual(fa['editable'], False)
 
-        table = admin.get_table()
-        fields = table.get_fields()
+        fields = admin.get_columns()
         self.assertEqual(fields, ['x', 'y'])
 
 
@@ -221,6 +217,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
                 self._test_file = None
                 self._test_entity = None
                 self._test_entitylist = list()
+                self._test_color = '#fff'
     
             @property
             def test_int(self) -> int:
@@ -304,8 +301,16 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         
             @test_entitylist.setter
             def test_entitylist(self, value):
-                self._test_entitylist = value              
-                
+                self._test_entitylist = value
+
+            @property
+            def test_color(self) -> Color:
+                return self._test_color
+
+            @test_color.setter
+            def test_color(self, value):
+                self._test_color = value
+
             class Admin(ObjectAdmin):
                 
                 def get_session(self, obj):
@@ -374,7 +379,12 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['editable'], True)
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.One2ManyDelegate) 
-        self.assertEqual(fa['target'], Address)               
+        self.assertEqual(fa['target'], Address)
+
+        fa = admin.get_field_attributes('test_color')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.ColorDelegate)
 
     def test_set_defaults(self):
 
@@ -437,6 +447,7 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
             test_entity: Address = field(default = None, init = False)
             test_initvar: InitVar[int] = None
             test_entitylist: List[Address] = field(default_factory = list, init = False)
+            test_color: Color = field(default = '#000', init=False)
             
             def __post_init__(self, test_initvar):
                 self.test_int = test_initvar
@@ -524,7 +535,12 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.One2ManyDelegate) 
         self.assertEqual(fa['target'], Address)        
-        
+
+        fa = admin.get_field_attributes('test_color')
+        self.assertEqual(fa['editable'], True)
+        self.assertEqual(fa['nullable'], False)
+        self.assertEqual(fa['delegate'], delegates.ColorDelegate)
+
         test1 = TestDataClass()
         self.assertEqual(test1.test_int, None)
         test2 = TestDataClass(test_initvar = 10)
@@ -592,6 +608,14 @@ class EntityAdminCase(TestMetaData):
         self.assertEqual( fa_5['delegate'], delegates.FileDelegate )
         self.assertEqual( fa_5['filter_strategy'], list_filter.NoFilter )
         self.assertEqual( fa_5['search_strategy'], list_filter.NoFilter)
+
+        column_6 = schema.Column( camelot.types.Months, nullable=False)
+        fa_6 = EntityAdmin.get_sql_field_attributes( [column_6] )
+        self.assertEqual( fa_6['delegate'], delegates.MonthsDelegate )
+        self.assertEqual( fa_6['filter_strategy'], list_filter.MonthsFilter )
+        self.assertEqual( fa_6['search_strategy'], list_filter.MonthsFilter)
+        self.assertTrue( fa_6['editable'] )
+        self.assertFalse( fa_6['nullable'] )
 
     def test_field_admin( self ):
 

@@ -1,10 +1,10 @@
 import logging
-import itertools
 import json
 
-from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, variant_to_py, is_deleted
+from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, jsonvalue_to_py
 from camelot.core.exception import UserException
-from camelot.core.naming import initial_naming_context
+from .action_runner import action_runner
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -80,88 +80,56 @@ def get_qml_window():
         if widget.objectName() == 'cpp_qml_window':
             return widget
 
+def get_crud_signal_handler():
+    """
+    Get the CRUD signal handler singleton instance.
+    """
+    app = QtWidgets.QApplication.instance()
+    crud_signal_handler = app.findChild(QtCore.QObject, 'cpp_crud_signal_handler')
+    return crud_signal_handler
+
+def get_dgc_client():
+    """
+    Get the distributed grabage collection client singleton instance.
+    """
+    app = QtWidgets.QApplication.instance()
+    dgc_client = app.findChild(QtCore.QObject, 'cpp_dgc_client')
+    return dgc_client
+
+def is_cpp_gui_context_name(gui_context_name):
+    """
+    Check if a GUI context name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
+    """
+    if not len(gui_context_name):
+        return False
+    return gui_context_name[0] == 'cpp_gui_context'
+
 # FIXME: add timeout + keep-alive on client
 class QmlActionDispatch(QtCore.QObject):
 
-    _context_ids = itertools.count()
-
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.gui_contexts = {}
-        self.models = {}
         root_backend = get_qml_root_backend()
         if root_backend is not None:
             root_backend.runAction.connect(self.run_action)
-        # register None gui_context as with context_id 0
-        self.register(None)
 
-    def register(self, gui_context, model=None):
-        if gui_context is None:
-            context_id = self._context_ids.__next__()
-            self.gui_contexts[context_id] = gui_context
-            return context_id
-        if gui_context.context_id is not None:
-            if id(self.gui_contexts[gui_context.context_id]) == id(gui_context):
-                return gui_context.context_id
-        context_id = self._context_ids.__next__()
-        self.gui_contexts[context_id] = gui_context
-        if model is not None:
-            self.models[context_id] = model
-            model.destroyed.connect(self.remove_model)
-        gui_context.context_id = context_id
-        return context_id
-
-    @QtCore.qt_slot(QtCore.QObject)
-    def remove_model(self):
-        for context_id, model in list(self.models.items()):
-            if is_deleted(model):
-                del self.models[context_id]
-
-    def has_context(self, gui_context):
-        if gui_context is None:
-            return True
-        if gui_context.context_id is None:
-            return False
-        return gui_context.context_id in self.gui_contexts
-
-    def get_context(self, context_id):
-        return self.gui_contexts[context_id]
-
-    def get_model(self, context_id):
-        return self.models.get(context_id)
-
-    def run_action(self, context_id, route, args):
-        LOGGER.info('QmlActionDispatch.run_action({}, {}, {})'.format(context_id, route, args))
-        if context_id not in self.gui_contexts:
-            raise UserException(
-                'Could not find gui_context for context id: {}'.format(context_id),
-                detail='run_action({}, {})'.format(route, args)
-            )
-        action = initial_naming_context.resolve(tuple(route.split('/')))
-
-        gui_context = self.gui_contexts[context_id].copy()
-
-        if isinstance(args, QtQml.QJSValue):
-            args = variant_to_py(args.toVariant())
-        if isinstance(args, list):
-            action.gui_run( gui_context, args )
-        else:
-            gui_context.mode_name = args
-            action.gui_run( gui_context )
+    def run_action(self, gui_context_name, route, args, model_context_name):
+        LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
+        action_runner.run_action(
+            tuple(route), tuple(gui_context_name), tuple(model_context_name), args
+        )
 
 qml_action_dispatch = QmlActionDispatch()
 
 
-def qml_action_step(gui_context, name, step=QtCore.QByteArray(), props={}, keep_context_id=False, model=None):
-    """
-    Register the gui_context and execute the action step by specifying a name and serialized action step.
-    """
-    global qml_action_dispatch
-    if keep_context_id:
-        assert gui_context.context_id is not None
-        context_id = gui_context.context_id
-    else:
-        context_id = qml_action_dispatch.register(gui_context, model)
+def qml_action_step(gui_context_name, name, step=QtCore.QByteArray(), props={}):
     backend = get_qml_root_backend()
-    response = backend.actionStep(context_id, name, step, props)
+    response = backend.actionStep(gui_context_name, name, step, props)
     return json.loads(response.data())
+
+class LiveRef(QtCore.QObject):
+
+    def __init__(self, name, parent=None):
+        super().__init__(parent)
+        self.setProperty('name', name)
+        get_dgc_client().registerRef(self)

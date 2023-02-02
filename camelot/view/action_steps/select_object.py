@@ -28,16 +28,16 @@
 #  ============================================================================
 
 
-from dataclasses import dataclass, InitVar, field
+from dataclasses import dataclass, field
 
 from camelot.core.exception import CancelRequest
+from camelot.core.naming import initial_naming_context
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.qml_view import qml_action_dispatch
 
 from .item_view import OpenTableView, OpenQmlTableView
 
 @dataclass
-class SelectObjects( OpenTableView ):
+class SelectObjects(OpenTableView):
     """Select one or more object from a query.  The `yield` of this action step
     return a list of objects.
 
@@ -48,20 +48,26 @@ class SelectObjects( OpenTableView ):
         be made.  If none is given, the default query from the admin is taken.
     """
 
-    value: InitVar = None
     verbose_name_plural: str = field(init=False)
+    blocking: bool = True
 
-
-    def __post_init__(self, admin, value, search_text):
-        if value is None:
-            value = admin.get_query()
-        super(SelectObjects, self).__post_init__(admin, value, search_text)
+    def __post_init__(self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
         self.verbose_name_plural = str(admin.get_verbose_name_plural())
-        self.actions = admin.get_list_actions().copy()
-        self.actions.extend(admin.get_filters())
-        self.actions.extend(admin.get_select_list_toolbar_actions())
         self.action_states = list()
-        self._add_action_states(admin, admin.get_proxy(value), self.actions, self.action_states)
+        self._add_action_states(
+            initial_naming_context.resolve(self.model_context_name),
+            self.actions,
+            self.action_states
+        )
+        # Allow custom column settings for SelectObjects
+        self.group.append('SelectObjects')
+
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_list_actions())
+        actions.extend(admin.get_filters())
+        actions.extend(admin.get_select_list_toolbar_actions())
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
@@ -74,10 +80,9 @@ class SelectObjects( OpenTableView ):
     @classmethod
     def deserialize_result(cls, gui_context, response):
         objects = []
-        list_gui_context = qml_action_dispatch.get_context(response['context_id'])
-        model = list_gui_context.get_item_model()
-        if model is not None:
-            proxy = model.get_value()
+        model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
+        proxy = model_context.proxy
+        if proxy is not None:
             selected_rows = response['selected_rows']
             for i in range(len(selected_rows) // 2):
                 first_row = selected_rows[2 * i]

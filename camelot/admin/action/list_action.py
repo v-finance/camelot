@@ -28,238 +28,26 @@
 #  ============================================================================
 
 import codecs
-import copy
 import datetime
 import enum
 import logging
 import itertools
-
-from sqlalchemy import orm
+import dataclasses
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import Qt, QtGui, QtWidgets, variant_to_py, is_deleted
-from .base import Action, Mode, GuiContext, RenderHint
-from .application_action import ( ApplicationActionGuiContext,
-                                 ApplicationActionModelContext )
+from ...core.qt import QtCore, QtGui, QtWidgets
+from .base import Action, Mode, RenderHint
 from camelot.core.exception import UserException
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
-from camelot.view.qml_view import qml_action_step, qml_action_dispatch
+from camelot.view.action_runner import CancelRequest
+
 
 import xlsxwriter
 
-LOGGER = logging.getLogger( 'camelot.admin.action.list_action' )
+LOGGER = logging.getLogger('camelot.admin.action.list_action')
 
-class ListActionModelContext( ApplicationActionModelContext ):
-    """On top of the attributes of the 
-    :class:`camelot.admin.action.application_action.ApplicationActionModelContext`, 
-    this context contains :
-        
-    .. attribute:: selection_count
-    
-        the number of selected rows.
-        
-    .. attribute:: collection_count
-    
-        the number of rows in the list.
-        
-    .. attribute:: selected_rows
-    
-        an ordered list with tuples of selected row ranges.  the range is
-        inclusive.
-        
-    .. attribute:: current_row
-    
-        the current row in the list if a cell is active
-    
-    .. attribute:: current_column
-    
-        the current column in the table if a cell is active
-    
-    .. attribute:: current_field_name
-    
-        the name of the field displayed in the current column
-        
-    .. attribute:: session
-    
-        The session to which the objects in the list belong.
-
-    .. attribute:: proxy
-
-        A :class:`camelot.core.item_model.AbstractModelProxy` object that gives
-        access to the objects in the list
-
-    .. attribute:: field_attributes
-    
-        The field attributes of the field to which the list relates, for example
-        the attributes of Person.addresses if the list is the list of addresses
-        of the Person.
-       
-    The :attr:`collection_count` and :attr:`selection_count` attributes allow the 
-    :meth:`model_run` to quickly evaluate the size of the collection or the
-    selection without calling the potentially time consuming methods
-    :meth:`get_collection` and :meth:`get_selection`.
-
-    """
-    
-    def __init__( self ):
-        super( ListActionModelContext, self ).__init__()
-        self.proxy = None
-        self.admin = None
-        self.current_row = None
-        self.current_column = None
-        self.current_field_name = None
-        self.selection_count = 0
-        self.collection_count = 0
-        self.selected_rows = []
-        self.field_attributes = dict()
-        
-    def get_selection( self, yield_per = None ):
-        """
-        :param yield_per: an integer number giving a hint on how many objects
-            should fetched from the database at the same time.
-        :return: a generator over the objects selected
-        """
-        # during deletion or duplication, the collection might
-        # change, while the selection remains the same, so we should
-        # be careful when using the collection to generate selection data
-        for (first_row, last_row) in self.selected_rows:
-            for obj in self.proxy[first_row:last_row + 1]:
-                yield obj
-
-    def get_collection( self, yield_per = None ):
-        """
-        :param yield_per: an integer number giving a hint on how many objects
-            should fetched from the database at the same time.
-        :return: a generator over the objects in the list
-        """
-        for obj in self.proxy[0:self.collection_count]:
-            yield obj
-            
-    def get_object( self ):
-        """
-        :return: the object displayed in the current row or None
-        """
-        if self.current_row != None:
-            for obj in self.proxy[self.current_row:self.current_row+1]:
-                return obj
-        
-class ListActionGuiContext( ApplicationActionGuiContext ):
-    """The context for an :class:`Action` on a table view.  On top of the attributes of the 
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`, 
-    this context contains :
-
-    .. attribute:: item_view
-    
-       the :class:`QtWidgets.QAbstractItemView` class that relates to the table 
-       view on which the widget will be placed.
-       
-    .. attribute:: view
-    
-       a :class:`camelot.view.controls.view.AbstractView` class that represents
-       the view in which the action is triggered.
-       
-    .. attribute:: field_attributes
-    
-       a dictionary with the field attributes of the list.  This dictionary will
-       be filled in case if the list displayed is related to a field on another
-       object.  For example, the list of addresses of Person will have the field
-       attributes of the Person.addresses field when displayed on the Person 
-       form.
-       
-    """
-        
-    model_context = ListActionModelContext
-    
-    def __init__( self ):
-        super( ListActionGuiContext, self ).__init__()
-        self.item_view = None
-        self.view = None
-        self.field_attributes = dict()
-
-    def get_progress_dialog(self):
-        return GuiContext.get_progress_dialog(self)
-
-    def get_window(self):
-        if self.item_view is not None and not is_deleted(self.item_view):
-            return self.item_view.window()
-        return super(ListActionGuiContext, self).get_window()
-
-    def get_item_model(self):
-        if self.item_view is not None:
-            return self.item_view.model()
-        return qml_action_dispatch.get_model(self.context_id)
-
-    def create_model_context( self ):
-        context = super( ListActionGuiContext, self ).create_model_context()
-        context.field_attributes = copy.copy( self.field_attributes )
-        current_row, current_column, current_field_name = None, None, None
-        proxy = None
-        collection_count = 0
-        selection_count = 0
-        selected_rows = []
-        if self.item_view is not None:
-            current_index = self.item_view.currentIndex()
-            if current_index.isValid():
-                current_row = current_index.row()
-                current_column = current_index.column()
-            model = self.item_view.model()
-            if model is not None:
-                proxy = model.get_value()
-                collection_count = model.rowCount()
-                if current_column is not None:
-                    current_field_name = variant_to_py(
-                        model.headerData(
-                            current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
-                        )
-                    )
-            if self.item_view.selectionModel() is not None:
-                selection = self.item_view.selectionModel().selection()
-                for i in range( len( selection ) ):
-                    selection_range = selection[i]
-                    rows_range = ( selection_range.top(), selection_range.bottom() )
-                    selected_rows.append( rows_range )
-                    selection_count += ( rows_range[1] - rows_range[0] ) + 1
-        else:
-            model = self.get_item_model()
-            if model is not None:
-                collection_count = model.rowCount()
-                proxy = model.get_value()
-            response = qml_action_step(self, 'GetSelection', keep_context_id=True)
-            selection_count = response['selection_count']
-            current_row = response['current_row']
-            for i in range(len(response['selected_rows']) // 2):
-                selected_rows.append((response['selected_rows'][2 * i], response['selected_rows'][2 * i + 1]))
-        context.selection_count = selection_count
-        context.collection_count = collection_count
-        context.selected_rows = selected_rows
-        context.current_row = current_row
-        context.current_column = current_column
-        context.current_field_name = current_field_name
-        context.proxy = proxy
-        return context
-        
-    def copy( self, base_class = None ):
-        new_context = super( ListActionGuiContext, self ).copy( base_class )
-        new_context.item_view = self.item_view
-        new_context.view = self.view
-        new_context.field_attributes = self.field_attributes
-        return new_context
-
-class ListContextAction( Action ):
-    """An base class for actions that should only be enabled if the
-    gui_context is a :class:`ListActionModelContext`
-    """
-
-    name = 'list_context_action'
-    
-    def get_state( self, model_context ):
-        state = super( ListContextAction, self ).get_state( model_context )
-        if isinstance( model_context, ListActionModelContext ):
-            state.enabled = True
-        else:
-            state.enabled = False
-        return state
 
 class RowNumberAction( Action ):
     """
@@ -276,7 +64,7 @@ class RowNumberAction( Action ):
 
 row_number_action = RowNumberAction()
 
-class EditAction( ListContextAction ):
+class EditAction(Action):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
@@ -296,10 +84,9 @@ class EditAction( ListContextAction ):
     def get_state( self, model_context ):
         state = super( EditAction, self ).get_state( model_context )
         # Check for editability on the level of the field
-        if isinstance( model_context, ListActionModelContext ):
-            editable = model_context.field_attributes.get( 'editable', True )
-            if editable == False:
-                state.enabled = False
+        editable = model_context.field_attributes.get('editable', True)
+        if editable == False:
+            state.enabled = False
         # Check for editability on the level of the entity
         admin = model_context.admin
         if admin and not admin.is_editable():
@@ -345,7 +132,7 @@ class ListLabel(Action):
 
 list_label = ListLabel()
 
-class OpenFormView( ListContextAction ):
+class OpenFormView(Action):
     """Open a form view for the current row of a list."""
     
     shortcut = QtGui.QKeySequence.StandardKey.Open
@@ -358,7 +145,9 @@ class OpenFormView( ListContextAction ):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        yield action_steps.OpenFormView(model_context.get_object(), model_context.proxy, admin=model_context.admin)
+        yield action_steps.OpenFormView(
+            model_context.get_object(), model_context.admin, model_context.proxy
+        )
 
     def get_state( self, model_context ):
         state = Action.get_state(self, model_context)
@@ -393,10 +182,9 @@ class DuplicateSelection( EditAction ):
                 yield action_steps.UpdateObjects(updated_objects)
                 yield action_steps.FlushSession(model_context.session)
             else:
-                yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
+                yield action_steps.OpenFormView(new_object, admin)
 
     def get_state(self, model_context):
-        assert isinstance(model_context, ListActionModelContext)
         state = super().get_state(model_context)
         if model_context.selection_count <= 0:
             state.enabled = False
@@ -429,8 +217,8 @@ class DeleteSelection( EditAction ):
         for o in objects_to_remove:
             depending_objects.update( set( admin.get_depending_objects( o ) ) )
         for i, obj in enumerate( objects_to_remove ):
-            yield action_steps.UpdateProgress( i, 
-                                               model_context.selection_count,
+            yield action_steps.UpdateProgress( i + 1,
+                                               (1 if self.remove_only() else 2) * model_context.selection_count,
                                                _('Removing') )
             #
             # We should not update depending objects that have
@@ -440,19 +228,21 @@ class DeleteSelection( EditAction ):
                 depending_objects.remove( obj )
             except KeyError:
                 pass
-            for step in self.handle_object( model_context, obj ):
-                yield step
+            model_context.proxy.remove(obj)
+        if not self.remove_only():
+            yield action_steps.DeleteObjects(objects_to_remove)
+            for i, obj in enumerate( objects_to_remove ):
+                yield action_steps.UpdateProgress( model_context.selection_count + i + 1,
+                                                   2 * model_context.selection_count,
+                                                   _('Removing') )
+                model_context.admin.delete(obj)
         yield action_steps.UpdateObjects(depending_objects)
         yield action_steps.FlushSession( model_context.session )
-        
-    def handle_object( self, model_context, obj ):
-        from camelot.view import action_steps
-        model_context.proxy.remove(obj)
-        yield action_steps.DeleteObjects((obj,))
-        model_context.admin.delete(obj)
+
+    def remove_only(self):
+        return False
 
     def get_state(self, model_context):
-        assert isinstance(model_context, ListActionModelContext)
         state = super().get_state(model_context)
         if model_context.selection_count <= 0:
             state.enabled = False
@@ -513,7 +303,6 @@ class MoveRankUp(EditAction):
                     model_context.session.refresh(updated_obj)
 
     def get_state(self, model_context):
-        assert isinstance(model_context, ListActionModelContext)
         state = super().get_state(model_context)
         state.enabled = model_context.selection_count == 1
         return state
@@ -556,7 +345,7 @@ class AbstractToFirst(object):
     tooltip = _('First')
     verbose_name = _('First')
 
-class ToFirstRow( AbstractToFirst, ListContextAction ):
+class ToFirstRow(AbstractToFirst, Action):
     """Move to the first row in a table"""
 
     name = 'to_first'
@@ -583,7 +372,7 @@ class AbstractToLast(object):
     tooltip = _('Last')
     verbose_name = _('Last')
     
-class ToLastRow( AbstractToLast, ListContextAction ):
+class ToLastRow(AbstractToLast, Action):
     """Move to the last row in a table"""
 
     name = 'to_last'
@@ -613,7 +402,7 @@ class ClearMapping(Action):
         yield action_steps.UpdateObjects(cleared_mappings)
 
 
-class ExportSpreadsheet( ListContextAction ):
+class ExportSpreadsheet(Action):
     """Export all rows in a table to a spreadsheet"""
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -738,7 +527,7 @@ class ExportSpreadsheet( ListContextAction ):
                                                                      field_names )
             row = offset + j
             if j % 100 == 0:
-                yield action_steps.UpdateProgress( j, model_context.collection_count )
+                yield action_steps.UpdateProgress( j + 1, model_context.collection_count )
             fields = enumerate(zip(field_names, 
                                              static_attributes,
                                              dynamic_attributes))
@@ -784,7 +573,7 @@ class ExportSpreadsheet( ListContextAction ):
 
 export_spreadsheet = ExportSpreadsheet()
     
-class SelectAll( ListContextAction ):
+class SelectAll(Action):
     """Select all rows in a table"""
     
     verbose_name = _('Select &All')
@@ -792,11 +581,8 @@ class SelectAll( ListContextAction ):
     tooltip = _('Select all rows in the table')
     name = 'select_all'
 
-    def gui_run( self, gui_context ):
-        gui_context.item_view.selectAll()
-
 select_all = SelectAll()
-        
+
 class ImportFromFile( EditAction ):
     """Import a csv file in the current table"""
 
@@ -869,7 +655,7 @@ class ImportFromFile( EditAction ):
             #
             # Ask confirmation
             #
-            yield action_steps.MessageBox( icon = QtWidgets.QMessageBox.Icon.Warning, 
+            yield action_steps.MessageBox( icon = Icon('question'),
                                            title = _('Proceed with import'), 
                                            text = _('Importing data cannot be undone,\n'
                                                     'are you sure you want to continue') )
@@ -891,15 +677,24 @@ class ImportFromFile( EditAction ):
                     # in case the model is a collection proxy, the new objects should
                     # be appended
                     model_context.proxy.append(new_entity_instance)
-                    yield action_steps.UpdateProgress( i, len( collection ), _('Importing data') )
+                    yield action_steps.UpdateProgress( i + 1, len( collection ), _('Importing data') )
                 yield action_steps.FlushSession( model_context.session )
             yield action_steps.Refresh()
         
 import_from_file = ImportFromFile()
 
+class FieldValue(object):
+    """
+    Abstract helper class for the `ReplaceFieldContents` action to configure
+    the field values for a certain delegate.
+    """
+
+    def __init__(self, value):
+        self.value = value
+
 class ReplaceFieldContents( EditAction ):
     """Select a field an change the content for a whole selection"""
-    
+
     verbose_name = _('Replace field contents')
     tooltip = _('Replace the content of a field for all rows in a selection')
     icon = Icon('edit') # 'tango/16x16/actions/edit-find-replace.png'
@@ -908,24 +703,41 @@ class ReplaceFieldContents( EditAction ):
     shortcut = QtGui.QKeySequence.StandardKey.Replace
     name = 'replace'
 
-    def model_run( self, model_context, mode ):
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        if model_context.selection_count <= 0:
+            state.enabled = False
+            return state
+        state.modes = []
+        for key, attributes in model_context.admin.get_all_fields_and_attributes().items():
+            if attributes.get('change_value_admin') is None:
+                continue
+            state.modes.append(Mode(key, attributes['name']))
+        return state
+
+    def model_run( self, model_context, selected_field ):
         from camelot.view import action_steps
-        super().model_run(model_context, mode)
-        field_name, value = yield action_steps.ChangeField(
-            model_context.admin,
-            field_name = model_context.current_field_name
-        )
-        yield action_steps.UpdateProgress( text = _('Replacing field') )
-        dynamic_field_attributes = model_context.admin.get_dynamic_field_attributes
-        with model_context.session.begin():
-            for obj in model_context.get_selection():
-                dynamic_fa = list(dynamic_field_attributes(obj, [field_name]))[0]
-                if dynamic_fa.get('editable', True) == False:
-                    raise UserException(self.message, resolution=self.resolution)
-                setattr( obj, field_name, value )
-                # dont rely on the session to update the gui, since the objects
-                # might not be in a session
-            yield action_steps.UpdateObjects(model_context.get_selection())
+        super().model_run(model_context, selected_field)
+        if selected_field is not None:
+            admin = model_context.admin
+            field_attributes = admin.get_field_attributes(selected_field)
+            field_value = FieldValue(None)
+            change_object = action_steps.ChangeObject(
+                field_value, field_attributes['change_value_admin']
+            )
+            change_object.title = _('Replace field contents')
+            yield change_object
+            yield action_steps.UpdateProgress(text=_('Replacing field'))
+            dynamic_field_attributes = admin.get_dynamic_field_attributes
+            with model_context.session.begin():
+                for obj in model_context.get_selection():
+                    dynamic_fa = list(dynamic_field_attributes(obj, [selected_field]))[0]
+                    if dynamic_fa.get('editable', True) == False:
+                        raise UserException(self.message, resolution=self.resolution)
+                    admin.set_field_value(obj, selected_field, field_value.value)
+                    # dont rely on the session to update the gui, since the objects
+                    # might not be in a session
+                yield action_steps.UpdateObjects(model_context.get_selection())
             yield action_steps.FlushSession(model_context.session)
 
 replace_field_contents = ReplaceFieldContents()
@@ -1062,11 +874,10 @@ class SetFilters(Action, AbstractModelFilter):
                 # So let the user select one, and programmatically set the filter value to the selected entity's id.
                 if isinstance(filter_field_strategy, (Many2OneFilter, One2ManyFilter)):
                     admin = filter_field_strategy.admin or model_context.admin.get_related_admin(filter_field_strategy.entity)
-                    query = None
+                    query = admin.get_query()
                     if filter_field_strategy.where is not None:
-                        query = admin.get_query()
                         query = query.filter(filter_field_strategy.where)
-                    objects = yield action_steps.SelectObjects(admin, query)
+                    objects = yield action_steps.SelectObjects(query, admin)
                     filter_value.set_operands(*objects)
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
                 else:
@@ -1076,7 +887,9 @@ class SetFilters(Action, AbstractModelFilter):
                         (existing_operator, *existing_operands) = filter_values[filter_field_name]
                         if existing_operator == filter_operator:
                             filter_value.set_operands(*existing_operands)
-                    yield action_steps.ChangeObject(filter_value, filter_value_admin, title=ugettext('Filter {}').format(filter_field_strategy.get_verbose_name()))
+                    step = action_steps.ChangeObject(filter_value, filter_value_admin)
+                    step.title = ugettext('Filter {}').format(filter_field_strategy.get_verbose_name())
+                    yield step
 
             operands = filter_value.get_operands()
             new_filter_values = {k:v for k,v in filter_values.items()}
@@ -1125,12 +938,15 @@ set_filters = SetFilters()
 
 class AddNewObjectMixin(object):
     
-    def create_object(self, model_context, admin, type_=None, session=None):
+    def create_object(self, model_context, admin, discriminator_value=None, session=None):
         """
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
         """
-        new_object = admin.entity(_session=session)
+        if issubclass(admin.entity, Entity):
+            new_object = admin.entity(_session=session)
+        else:
+            new_object = admin.entity()
         admin.add(new_object)
         # defaults might depend on object being part of a collection
         self.get_proxy(model_context, admin).append(admin.get_subsystem_object(new_object))
@@ -1147,20 +963,41 @@ class AddNewObjectMixin(object):
             raise RuntimeError("Action's model_run() called on noneditable entity")
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin, mode)
+        # Resolve admin again after the new object has been created, as it may
+        # have gotten secondary discriminators set.
+        # So only at this point we can be certain of the discriminatory value.
+        admin = self.get_admin(model_context, admin.get_discriminator_value(new_object))
         subsystem_object = admin.get_subsystem_object(new_object)
         # if the object is valid, flush it, but in ancy case inform the gui
         # the object has been created
         yield action_steps.CreateObjects((subsystem_object,))
         if not len(admin.get_validator().validate_object(new_object)):
-            session = orm.object_session(subsystem_object)
-            yield action_steps.FlushSession(session)
+            admin.flush(new_object)
         # Even if the object was not flushed, it's now part of a collection,
         # so it's dependent objects should be updated
         yield action_steps.UpdateObjects(
             tuple(admin.get_depending_objects(new_object))
         )
         if create_inline is False:
-            yield action_steps.OpenFormView(new_object, admin.get_proxy([new_object]), admin)
+            yield from self.edit_object(new_object, model_context, admin)
+
+    def edit_object(self, new_object, model_context, admin):
+        from camelot.view import action_steps
+        yield action_steps.OpenFormView(new_object, admin)
+
+    def get_modes(self, model_context):
+        """
+        Determine and/or construct the applicable modes for this add action based on the given model_context.
+        This will either be the explicitly set modes, or modes constructed based on registere types for the admin.
+        """
+        admin = self.get_admin(model_context)
+        if not self.modes and admin is not None and issubclass(admin.entity, Entity):
+            polymorphic_types = admin.entity.get_polymorphic_types()
+            if admin.entity.__types__ is not None:
+                return admin.entity.__types__.get_modes()
+            elif polymorphic_types is not None:
+                return polymorphic_types.get_modes()
+        return self.modes
 
 class AddNewObject( AddNewObjectMixin, EditAction ):
     """Add a new object to a collection. Depending on the
@@ -1176,12 +1013,17 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     verbose_name = _('New')
     name = 'new_object'
 
-    def get_admin(self, model_context, mode):
+    def get_admin(self, model_context, mode=None):
         """
         Return the admin used for creating and handling the new entity instance with.
         By default, the given model_context's admin is used.
         """
-        return model_context.admin
+        admin = model_context.admin
+        if (admin is not None) and (mode is not None):
+            facade_cls = admin.entity.get_cls_by_discriminator(mode)
+            if facade_cls is not None:
+                return admin.get_related_admin(facade_cls)
+        return admin
 
     def get_proxy(self, model_context, admin):
         return model_context.proxy
@@ -1191,6 +1033,11 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
         yield from super().model_run(model_context, mode)
         # Scroll to last row so that the user sees the newly added object in the list.
         yield action_steps.ToLastRow()
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        state.modes = self.get_modes(model_context)
+        return state
 
 add_new_object = AddNewObject()
 
@@ -1202,11 +1049,113 @@ class RemoveSelection(DeleteSelection):
     verbose_name = _('Remove')
     icon = Icon('minus') # 'tango/16x16/actions/list-remove.png'
     name = 'remove_selection'
-            
-    def handle_object( self, model_context, obj ):
-        model_context.proxy.remove( obj )
-        # no StopIteration, since the supergenerator needs to
-        # continue to flush the session
-        yield None
+
+    def remove_only(self):
+        return True
 
 remove_selection = RemoveSelection()
+
+class EditProfileMixin:
+
+    database_error_title = ugettext('Could not connect to database, please check host and port')
+    media_location_not_readable_title = ugettext('Media location path is not accessible')
+    media_location_not_writeable_title = ugettext('Media location path is not writeable')
+
+    def validate_profile(self, profile):
+        from camelot.view import action_steps
+        # Validate database settings
+        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
+        try:
+            #if not profile.dialect:
+            #    raise RuntimeError('No database dialect selected')
+            engine = profile.create_engine()
+            connection = engine.raw_connection()
+            cursor = connection.cursor()
+            cursor.close()
+            connection.close()
+        except Exception as e:
+            exception_box = action_steps.MessageBox( title = self.database_error_title,
+                                                     text = _('Verify driver, host and port or contact your system administrator'),
+                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            exception_box.informative_text = str(e)
+            yield exception_box
+            return False
+        # Validate media location
+        info = QtCore.QFileInfo(profile.media_location)
+        if not info.isReadable(): # or not profile.media_location:
+            yield action_steps.MessageBox( title = self.media_location_not_readable_title,
+                                                   text = _('Verify that the path exists and it is readable or contact your system administrator'),
+                                                   standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            return False
+        if not info.isWritable():
+            yield action_steps.MessageBox( title = self.media_location_not_writeable_title,
+                                                   text = _('Verify that the path is writeable or contact your system administrator'),
+                                                   standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            return False
+        # Success
+        return True
+
+class AddNewProfile(AddNewObject, EditProfileMixin):
+
+    name = 'add_new_profile'
+
+    def edit_object(self, new_object, model_context, admin):
+        from camelot.view import action_steps
+        from camelot.core.profile import Profile
+        app_admin = admin.get_application_admin()
+        profile_admin = app_admin.get_related_admin(Profile)
+        while True:
+            try:
+                yield action_steps.ChangeObject(new_object, profile_admin)
+            except CancelRequest:
+                # Remove profile
+                model_context.proxy.remove(new_object)
+                yield action_steps.DeleteObjects([new_object])
+                return
+            is_valid = yield from self.validate_profile(new_object)
+            if is_valid:
+                break
+
+add_new_profile = AddNewProfile()
+
+class EditProfile(Action, EditProfileMixin):
+    """Edit a profile and validate it."""
+
+    shortcut = QtGui.QKeySequence.StandardKey.Open
+    icon = Icon('folder')
+    tooltip = _('Edit Profile')
+    name = 'edit_profile'
+
+    def model_run(self, model_context, mode):
+        from camelot.view import action_steps
+        from camelot.core.profile import Profile
+        profile = model_context.get_object()
+        profile_copy = self.copy_profile(profile)
+        app_admin = model_context.admin.get_application_admin()
+        profile_admin = app_admin.get_related_admin(Profile)
+        while True:
+            try:
+                yield action_steps.ChangeObject(profile, profile_admin)
+            except CancelRequest:
+                # Restore profile
+                self.copy_profile(profile_copy, profile)
+                yield action_steps.UpdateObjects([profile])
+                return
+            is_valid = yield from self.validate_profile(profile)
+            if is_valid:
+                break
+
+    def copy_profile(self, from_profile, to_profile=None):
+        from camelot.core.profile import Profile
+        if to_profile is None:
+            to_profile = Profile()
+        for field in dataclasses.fields(Profile):
+            setattr(to_profile, field.name, getattr(from_profile, field.name))
+        return to_profile
+
+    def get_state( self, model_context ):
+        state = Action.get_state(self, model_context)
+        state.verbose_name = str()
+        return state
+
+edit_profile = EditProfile()

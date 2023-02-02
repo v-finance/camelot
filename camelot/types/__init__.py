@@ -341,3 +341,18 @@ class File(types.TypeDecorator):
 
     def __repr__(self):
         return 'File()'
+
+class Months(types.TypeDecorator):
+    """
+    Months fields are integer fields that represent a number of months.
+    It will be rendered in the corresponding months editor.
+    """
+
+    impl = types.Integer
+
+    @property
+    def python_type(self):
+        return self.impl.python_type
+
+    def __repr__(self):
+        return 'Months()'

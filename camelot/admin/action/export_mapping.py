@@ -1,11 +1,13 @@
 import dataclasses
 
 from .base import Action
+from ..icon import CompletionValue
 from ...core.qt import variant_to_py, py_to_variant
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view import action_steps
 from camelot.admin.dataclass_admin import DataclassAdmin
 from camelot.core.dataclasses import dataclass
+from camelot.core.naming import initial_naming_context
 
 @dataclass
 class ExportMappingOptions(object):
@@ -59,6 +61,15 @@ class SaveExportMapping( Action ):
         self.settings.endArray()
         self.settings.sync()
 
+    def mapping_items(self, mappings):
+        items = [CompletionValue(initial_naming_context._bind_object(None), '')]
+        for mapping_name in mappings.keys():
+            items.append(CompletionValue(
+                value = initial_naming_context._bind_object(mapping_name),
+                verbose_name = mapping_name
+            ))
+        return items
+
     def model_run(self, model_context, mode):
         if model_context.collection_count:
             mappings = self.read_mappings()
@@ -81,8 +92,8 @@ class RestoreExportMapping( SaveExportMapping ):
 
     def model_run(self, model_context, mode):
         mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in mappings.keys()]
-        mapping_name = yield action_steps.SelectItem(mapping_names)
+        mapping_name_name = yield action_steps.SelectItem(self.mapping_items(mappings))
+        mapping_name = initial_naming_context.resolve(mapping_name_name)
         if mapping_name is not None:
             fields = mappings[mapping_name]
             for i, column_mapping in enumerate(model_context.get_collection()):
@@ -107,8 +118,8 @@ class RemoveExportMapping( SaveExportMapping ):
 
     def model_run(self, model_context, mode):
         mappings = self.read_mappings()
-        mapping_names = [(k,k) for k in mappings.keys()]
-        mapping_name = yield action_steps.SelectItem(mapping_names)
+        mapping_name_name = yield action_steps.SelectItem(self.mapping_items(mappings))
+        mapping_name = initial_naming_context.resolve(mapping_name_name)
         if mapping_name is not None:
             mappings.pop(mapping_name)
             self.write_mappings(mappings)

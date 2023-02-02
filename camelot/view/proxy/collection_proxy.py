@@ -52,29 +52,28 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ...admin.action.application_action import ApplicationActionGuiContext
-from ...admin.action.base import State
-from ...admin.action.list_action import ListActionModelContext
-from ...admin.action.form_action import FormActionModelContext
+from ...admin.action.base import GuiContext
 from ...core.naming import initial_naming_context
 from ...core.qt import (Qt, QtCore, QtGui, QtWidgets, is_deleted,
                         py_to_variant, variant_to_py)
 from ...core.item_model import (
     ObjectRole, FieldAttributesRole, PreviewRole, 
-    AbstractModelProxy, CompletionPrefixRole, ActionRoutesRole,
-    ActionStatesRole, ProxyRegistry, ProxyDict, CompletionsRole,
+    CompletionPrefixRole, ActionRoutesRole,
+    ActionStatesRole, ProxyDict, CompletionsRole,
     ActionModeRole,
 )
 from ..crud_action import (
-    ChangeSelection, Created, Completion, Deleted, Filter, RowCount, RowData,
-    SetData, SetColumns, Sort, Update, run_field_action
+    changeselection_name, created_name, completion_name, deleted_name,
+    rowcount_name, rowdata_name, setdata_name, setcolumns_name, sort_name,
+    update_name, runfieldaction_name
 )
-from ..crud_signals import CrudSignalHandler
-from ..item_model.cache import ValueCache
+from camelot.view.qml_view import get_crud_signal_handler
 from ..utils import get_settings
+from ..qml_view import LiveRef
+from .. import gui_naming_context
 from camelot.view.model_thread import object_thread
 from camelot.view.art import from_admin_icon
-from camelot.view.action_runner import ActionRunner
+from camelot.view.action_runner import action_runner
 
 
 invalid_data = py_to_variant()
@@ -99,39 +98,10 @@ initial_delay = 50
 maximum_delay = 1000
 
 
-class RowModelContext(ListActionModelContext):
-    """A list action model context for a single row.  This context is used
-    to get the state of the list action on a row
-    """
-    
-    def __init__( self ):
-        super( RowModelContext, self ).__init__()
-        self.proxy = None
-        self.admin = None
-        self.edit_cache = ValueCache(100)
-        self.attributes_cache = ValueCache(100)
-        self.static_field_attributes = []
-        self.current_row = None
-        self.selection_count = 0
-        self.collection_count = 0
-        self.selected_rows = []
-        self.field_attributes = dict()
-        self.obj = None
-        self.locale = QtCore.QLocale()
-        
-    def get_selection( self, yield_per = None ):
-        return []
-    
-    def get_collection( self, yield_per = None ):
-        return []
-            
-    def get_object( self ):
-        return self.obj
-
-# CollectionProxy subclasses ApplicationActionGuiContext to be able to behave
+# CollectionProxy subclasses GuiContext to be able to behave
 # as a gui_context when running field actions.  To be removed later on.
 
-class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
+class CollectionProxy(QtGui.QStandardItemModel, GuiContext):
     """The :class:`CollectionProxy` contains a limited copy of the data in the
     actual collection, usable for fast visualisation in a 
     :class:`QtWidgets.QTableView`  
@@ -144,22 +114,18 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         amount of memory, this maximum puts an upper limit on that.
     """
 
-    action_state_changed_signal = QtCore.qt_signal(tuple, State) # still used in python
-    action_state_changed_cpp_signal = QtCore.qt_signal(str, QtCore.QByteArray) # used in C++
+    action_state_changed_cpp_signal = QtCore.qt_signal('QStringList', QtCore.QByteArray) # used in C++
 
     max_row_count = 10000000 # display maxium 10M rows
 
-    def __init__(self, admin_route, max_number_of_rows=10):
+    def __init__(self, admin_route):
         """
         :param admin_route: the route to the view to display
         """
         super(CollectionProxy, self).__init__()
-        ApplicationActionGuiContext.__init__(self)
         assert object_thread(self)
-        assert isinstance(max_number_of_rows, int)
         assert isinstance(admin_route, tuple)
         assert len(admin_route)
-        from camelot.view.model_thread import get_model_thread
         # TODO: replace with passed entity_name as part of future changes.
         admin_name = admin_route[-2]
         self.logger = logger.getChild('{0}.{1}'.format(id(self), admin_name))
@@ -173,9 +139,10 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         self.vertical_header_size =  QtCore.QSize(
             16 + 10, self._vertical_header_height
         )
-        self._max_number_of_rows = max_number_of_rows
+        self._gui_context = gui_naming_context.bind(
+            ('transient', str(id(self))), self
+        )
         self._model_context = None
-        self._model_thread = get_model_thread()
         self._action_routes = []
         #
         # The timer reduced the number of times the model thread is
@@ -190,15 +157,14 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
         self.__time = QtCore.QDateTime.currentDateTime()
 
-        self._filters = dict()
         self._columns = []
 
         self.__crud_request_counter = itertools.count()
         self.__crud_requests = collections.deque()
 
         self._reset()
-        self._crud_signal_handler = CrudSignalHandler()
-        self._crud_signal_handler.connect_signals( self )
+        crud_signal_handler = get_crud_signal_handler()
+        crud_signal_handler.connectSignals( self )
         self.logger.debug( 'initialization finished' )
 
     
@@ -238,8 +204,8 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if (rows == 0) and (self._model_context is not None) and self.columnCount():
             root_item = self.invisibleRootItem()
             if not root_item.isEnabled():
-                if not isinstance(self._last_request(), RowCount):
-                    self._append_request(RowCount(), None)
+                self._append_request(rowcount_name, None)
+                root_item.setEnabled(True)
             return 0
         return rows
 
@@ -275,16 +241,16 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         timer = self.findChild(QtCore.QTimer, 'timer')
         if timer is not None:
             if self._update_requests:
-                self._append_request(SetData(self._update_requests), None)
+                self._append_request(setdata_name, [u for u in self._update_requests])
                 self._update_requests = list()
             if self._rows_under_request:
                 self._append_request(
-                    RowData(),
+                    rowdata_name,
                     {
                         # take a copy, since the collection might be cleared
                         # before it is processed
-                        "rows": self._rows_under_request.copy(),
-                        "columns": self._cols_under_request.copy(),
+                        "rows": list(self._rows_under_request),
+                        "columns": list(self._cols_under_request),
                     }
                 )
                 self._rows_under_request.clear()
@@ -301,14 +267,12 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                 # convert interval to int in case a long is returned
                 timer.setInterval(min(maximum_delay, int(timer.interval()) * 2))
             while len(self.__crud_requests):
-                model_context, request_id, request, mode = self.__crud_requests.popleft()
+                model_context, request_id, request, mode = self.__crud_requests.popleft() # <- too soon
                 self.logger.debug('post request {0} {1} : {2}'.format(request_id, request, mode))
-                # dirty hack to get mode to the action runner
-                self.mode_name = mode
-                runner = ActionRunner(request.model_run, self)
-                runner.exec()
-                self.mode_name = None
-                # end of dirty hack
+                action_runner.run_action(
+                    request, self._gui_context,
+                    model_context.property('name'), mode
+                )
 
     def _start_timer(self):
         """
@@ -370,9 +334,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                               )
 
     # Methods to behave like a GuiContext.
-    def create_model_context(self):
-        return self._model_context
-    
+
     def get_progress_dialog(self):
         pass
 
@@ -383,7 +345,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
     def copy(self, base_class=None):
         return super().copy(
-            base_class=base_class or ApplicationActionGuiContext
+            base_class=base_class or GuiContext
         )
 
     # End of methods to behave like a GuiContext. 
@@ -423,83 +385,66 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
 
     def set_value(self, value):
         """
-        :param value: The route containing the proxy id of te collection of objects to display.
-                      This route will contain only 1 integer which is a valid id for the
-                      :class:`camelot.core.item_model.ProxyRegistry` (e.g. ['123']).
-                      This is also the return type of ProxyRegistry.register().
+        :param value: The name of the model context to execute the crud
+            actions against.
         """
         self.logger.debug('set_value called')
-        model_context = RowModelContext()
-        model_context.admin = initial_naming_context.resolve(self.admin_route)
-        model_context.proxy = ProxyRegistry.pop(value)
-        assert isinstance(model_context.proxy, AbstractModelProxy)
-        # todo : remove the concept of a validator
-        model_context.validator = model_context.admin.get_validator()
-        self._model_context = model_context
-        #self._filters = dict()
+        self._model_context = None
         self._reset()
-        # filters might be applied before the value is set
-        for list_filter, value in self._filters.items():
-            self._append_request(Filter(list_filter, None, value), None)
-        # the columns might be set before the value, but they might be running
-        # in the model thread for a different model context as well, so
-        # resubmit the set columns task for this model context
-        self._append_request(SetColumns(), self._columns)
+        if value is not None:
+            self._model_context = LiveRef(list(value))
+            # the columns might be set before the value, but they might be running
+            # in the model thread for a different model context as well, so
+            # resubmit the set columns task for this model context
+            columns = [c['name'] if isinstance(c, dict) else c for c in self._columns]
+            self._append_request(setcolumns_name, columns)
         self.layoutChanged.emit()
     
     def get_value(self):
         if self._model_context is not None:
-            return self._model_context.proxy
+            return tuple(self._model_context.property('name'))
 
-    def set_filter(self, list_filter, value):
-        """
-        Set the filter mode for a specific filter
-
-        :param list_filter: a :class:`camelot.admin.action.list_filter.Filter`
-           object, used as the key to filter on
-        :param value: the value on which to filter,
-        """
-        self.logger.debug('set_filter called')
-        old_value = self._filters.get(list_filter)
-        self._filters[list_filter] = value
-        if (self._model_context is not None):
-            self._append_request(Filter(list_filter, old_value, value), None)
-
-    @QtCore.qt_slot(tuple)
-    def objects_updated(self, objects):
+    @QtCore.qt_slot(list)
+    def objectsUpdated(self, objects):
         """Handles the entity signal, indicating that the model is out of
-            )
         date
         """
         assert object_thread(self)
         if self._model_context is not None:
             self.logger.debug(
-                'received {0} objects updated'.format(len(objects))
+                'received objects updated: {}'.format(objects)
             )
-            self._append_request(Update(objects), None)
+            self._append_request(update_name, {'objects': LiveRef(objects)})
+            self.timeout_slot()
 
-    @QtCore.qt_slot(tuple)
-    def objects_deleted(self, objects):
+    @QtCore.qt_slot(list)
+    def objectsDeleted(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
         if self._model_context is not None:
             self.logger.debug(
-                'received {0} objects deleted'.format(len(objects))
+                #'received {0} objects deleted'.format(len(objects))
+                'received objects deleted: {}'.format(objects)
                 )
-            self._append_request(Deleted(objects, super(CollectionProxy, self).rowCount()), None)
+            self._append_request(deleted_name, {
+                'objects': LiveRef(objects),
+                'rows': super(CollectionProxy, self).rowCount()
+            })
+            #self.timeout_slot()
 
-    @QtCore.qt_slot(tuple)
-    def objects_created(self, objects):
+    @QtCore.qt_slot(list)
+    def objectsCreated(self, objects):
         """Handles the entity signal, indicating that the model is out of
         date"""
         assert object_thread( self )
         if self._model_context is not None:
             self.logger.debug(
-                'received {0} objects created'.format(len(objects))
+                'received objects created: {}'.format(objects)
+                #'received {0} objects created'.format(len(objects))
             )
-            self._append_request(Created(objects), None)
-
+            self._append_request(created_name, {'objects': LiveRef(objects)})
+            self.timeout_slot()
 
     def add_columns(self, field_names):
         """
@@ -521,7 +466,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
             self._columns.append(field_name)
             yield i
         if len(self._columns) and (self._model_context is not None):
-            self._append_request(SetColumns(), self._columns)
+            self._append_request(setcolumns_name, self._columns)
 
     # decorate method as a slot, to make it accessible in QML
     @QtCore.qt_slot(int, Qt.Orientation, QtCore.QVariant, int)
@@ -574,7 +519,7 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         """reimplementation of the :class:`QtGui.QAbstractItemModel` its sort function"""
         self.logger.debug('sort called')
         assert object_thread( self )
-        self._append_request(Sort(), (column, order))
+        self._append_request(sort_name, (column, order))
 
     def data(self, index, role = Qt.ItemDataRole.DisplayRole):
         """:return: the data at index for the specified role
@@ -656,20 +601,23 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
                 logger.debug('set data called on row without object')
                 return False
             self.logger.debug('set data ({0},{1})'.format(row, column))
+            if not isinstance(value, (list, tuple)):
+                # the value is not a name, bind it
+                value = initial_naming_context._bind_object(value)
             self._update_requests.append((row, obj_id, column, value))
             # dont trigger the timer, since the item  model might be deleted
             # by the time the timout happens
             self.timeout_slot()
         elif role == CompletionPrefixRole:
             self._append_request(
-                Completion(), {'row': index.row(), 'column': index.column(), 'prefix': value}
+                completion_name, {'row': index.row(), 'column': index.column(), 'prefix': value}
             )
         elif role == ActionModeRole:
             value = json.loads(value)
             row = index.row()
             obj_id = variant_to_py(self.headerData(row, Qt.Orientation.Vertical, ObjectRole))
             self._append_request(
-                run_field_action, {
+                runfieldaction_name, {
                     'row': row,
                     'column': index.column(),
                     'object': obj_id,
@@ -703,64 +651,62 @@ class CollectionProxy(QtGui.QStandardItemModel, ApplicationActionGuiContext):
         if self.get_value() is None:
             return
 
+        current_row, current_column, row_ranges = -1, None, []
+
         if selection_model is not None:
-            # Create model context based on selection
-            # model_conext.field_attributes required???
-            model_context = ListActionModelContext()
-            model_context.proxy = self.get_value()
-            model_context.admin = self.get_admin()
             if current_index.isValid():
-                model_context.current_row = current_index.row()
-                model_context.current_column = current_index.column()
-            model_context.collection_count = self.rowCount()
-            if model_context.current_column is not None:
-                model_context.current_field_name = variant_to_py(
-                    self.headerData(
-                        model_context.current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
-                    )
-                )
+                current_row = current_index.row()
+                current_column = current_index.column()
             if selection_model is not None:
                 selection = selection_model.selection()
                 for i in range( len( selection ) ):
                     selection_range = selection[i]
-                    rows_range = ( selection_range.top(), selection_range.bottom() )
-                    model_context.selected_rows.append( rows_range )
-                    model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+                    rows_range = (selection_range.top(), selection_range.bottom())
+                    row_ranges.extend(rows_range)
         else:
-            model_context = FormActionModelContext()
-            model_context.proxy = self.get_value()
-            model_context.admin = self.get_admin()
             if current_index >= 0:
-                model_context.current_row = current_index
-                model_context.selection_count = 1
+                current_row = current_index
+                row_ranges.extend((current_row, current_row))
 
-        request = ChangeSelection(self._action_routes, model_context)
-        self._append_request(request, None)
+        self.change_selection_v2(row_ranges, current_row, current_column)
 
-    @QtCore.qt_slot(list, int)
-    def change_selection_v2(self, row_ranges, current_row):
+    @QtCore.qt_slot(list, int, int)
+    def change_selection_v2(self, row_ranges, current_row, current_column):
         self.logger.debug('change_selection_v2 called')
 
-        # Create model context based on selection
-        # model_conext.field_attributes required???
-        model_context = ListActionModelContext()
-        model_context.proxy = self.get_value()
-        model_context.admin = self.get_admin()
-        if current_row != -1:
-            model_context.current_row = current_row
-            model_context.current_column = 0
-        model_context.collection_count = self.rowCount()
-        if model_context.current_column is not None:
-            model_context.current_field_name = variant_to_py(
+        if current_row < 0:
+            current_row = None
+            current_row_id = None
+        else:
+            current_row_id = self.headerData(current_row, Qt.Orientation.Vertical, ObjectRole)
+
+
+        current_field_name = None
+        if current_column is not None:
+            current_field_name = variant_to_py(
                 self.headerData(
-                    model_context.current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
+                    current_column, Qt.Orientation.Horizontal, Qt.ItemDataRole.UserRole
                 )
             )
         assert len(row_ranges) % 2 == 0
+        selected_rows = []
+        selected_rows_ids = []
         for i in range(len(row_ranges) // 2):
-            rows_range = ( row_ranges[2 * i], row_ranges[2 * i + 1] )
-            model_context.selected_rows.append( rows_range )
-            model_context.selection_count += ( rows_range[1] - rows_range[0] ) + 1
+            begin_row = row_ranges[2 * i]
+            end_row = row_ranges[2 * i + 1]
+            selected_rows.append(( begin_row, end_row))
+            selected_rows_ids.append((
+                self.headerData(begin_row, Qt.Orientation.Vertical, ObjectRole),
+                self.headerData(end_row, Qt.Orientation.Vertical, ObjectRole)
+            ))
 
-        request = ChangeSelection(self._action_routes, model_context)
-        self._append_request(request, None)
+        request = changeselection_name
+        self._append_request(request, {
+            'action_routes': self._action_routes,
+            'current_row': current_row,
+            'current_row_id': current_row_id,
+            'current_column': current_column,
+            'selected_rows': selected_rows,
+            'selected_rows_ids': selected_rows_ids,
+            'current_field_name': current_field_name,
+        })
