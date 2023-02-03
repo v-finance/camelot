@@ -155,14 +155,16 @@ class InitiateAction(AbstractRequest):
                 run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=None
             ))
             return
+        generator, exception = None, None
         try:
             generator = action.model_run(model_context, request_data.get('mode'))
-        except Exception as exception:
-            response_handler.send_response(ActionStopped(
-                run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=str(exception)
-            ))
+        except Exception as exc:
+            exception = str(exc)
         if generator is None:
-            response_handler.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
+            response_handler.send_response(ActionStopped(
+                run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=exception
+            ))
+            return
         run = ModelRun(gui_run_name, generator)
         run_name = model_run_names.bind(str(id(run)), run)
         response_handler.send_response(ActionStepped(
