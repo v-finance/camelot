@@ -335,6 +335,6 @@ class RefreshItemView(ActionStep, DataclassSerializable):
             qml_action_step(gui_context_name, 'RefreshItemView', serialized_step)
         else:
             gui_context = gui_naming_context.resolve(gui_context_name)
-            model = gui_context.get_item_model()
+            model = gui_context.get_model()
             if model is not None:
                 model.refresh()
