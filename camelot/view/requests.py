@@ -115,13 +115,11 @@ class AbstractRequest(NamedDataclassSerializable):
                     LOGGER.debug( 'asynchronous cancel, raise request' )
                     result = run.generator.throw(CancelRequest())
                 else:
-                    LOGGER.debug( 'move iterator forward' )
                     result = next(run.generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except StopIteration as e:
-            LOGGER.debug( 'iterator raised stop, pass it' )
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except Exception as e:
             cls._send_stop_message(
@@ -143,8 +141,8 @@ class InitiateAction(AbstractRequest):
     def execute(cls, request_data, response_handler, cancel_handler):
         from .action_steps import PushProgressLevel
         from .responses import ActionStopped, ActionStepped
-        LOGGER.debug('Iniate run of action {}'.format(request_data['action_name']))
         gui_run_name = tuple(request_data['gui_run_name'])
+        LOGGER.debug('Run of action {} with mode {}'.format(request_data['action_name'], request_data['mode']))
         try:
             action = initial_naming_context.resolve(tuple(request_data['action_name']))
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))
@@ -157,14 +155,16 @@ class InitiateAction(AbstractRequest):
                 run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=None
             ))
             return
+        generator, exception = None, None
         try:
             generator = action.model_run(model_context, request_data.get('mode'))
-        except Exception as exception:
-            response_handler.send_response(ActionStopped(
-                run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=str(exception)
-            ))
+        except Exception as exc:
+            exception = str(exc)
         if generator is None:
-            response_handler.action_stopped_signal.emit(('constant', 'null'), gui_run_name, None)
+            response_handler.send_response(ActionStopped(
+                run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=exception
+            ))
+            return
         run = ModelRun(gui_run_name, generator)
         run_name = model_run_names.bind(str(id(run)), run)
         response_handler.send_response(ActionStepped(

@@ -28,13 +28,12 @@
 #  ============================================================================
 
 import contextlib
-import io
 import logging
 import time
 import typing
 
 from ..core.naming import CompositeName
-from ..core.serializable import json_encoder, DataclassSerializable
+from ..core.serializable import DataclassSerializable
 from ..core.qt import QtCore, QtGui, is_deleted
 from . import gui_naming_context
 from camelot.admin.action.base import MetaActionStep
@@ -114,23 +113,10 @@ class GuiRun(object):
         return time.time() - self.started_at
 
     def handle_action_step(self, action_step):
-        from .action_steps.crud import crud_action_steps
-        from .qml_view import is_cpp_gui_context_name, qml_action_step
         self.steps.append(type(action_step).__name__)
-        # force crud actions steps with a cpp gui context towards qml
-        if is_cpp_gui_context_name(self.gui_context_name) and isinstance(action_step, crud_action_steps):
-            # FIXME: step is not (yet) serializable, use _to_dict for now
-            stream = io.BytesIO()
-            stream.write(json_encoder.encode(action_step._to_dict()).encode())
-            serialized_step = stream.getvalue()
-            return qml_action_step(
-                self.gui_context_name, type(action_step).__name__, serialized_step
-            )
         return action_step.gui_run(self.gui_context_name)
 
     def handle_serialized_action_step(self, step_type, serialized_step):
-        from .action_steps.crud import crud_action_steps
-        from .qml_view import is_cpp_gui_context_name, qml_action_step
         self.steps.append(step_type)
         cls = MetaActionStep.action_steps[step_type]
         if cls.blocking==True:
@@ -147,14 +133,8 @@ class GuiRun(object):
                 print("======================================================================")
                 print()
                 app.exit(-1)
-        # force crud actions steps with a cpp gui context towards qml
-        if is_cpp_gui_context_name(self.gui_context_name) and issubclass(cls, crud_action_steps):
-            result = qml_action_step(
-                self.gui_context_name, step_type, serialized_step
-            )
-        else:
-            result = cls.gui_run(self.gui_context_name, serialized_step)
-        return result
+        return cls.gui_run(self.gui_context_name, serialized_step)
+
 
 class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     """Helper class for handling the signals and slots when an action
