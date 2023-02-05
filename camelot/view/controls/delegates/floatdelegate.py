@@ -116,6 +116,8 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     def setModelData(self, editor, model, index):
         # convert Decimal to float
-        model.setData(index, float(editor.get_value()))
+        value = editor.get_value()
+        value = float(value) if value is not None else value
+        model.setData(index, value)
 
 

@@ -178,9 +178,9 @@ class DateEditor(CustomEditor):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             if str(action.text()) == ugettext('Today'):
-                self.set_value(datetime.date.today())
+                self.set_value(QtCore.QDate.currentDate())
             elif str(action.text()) == ugettext('Far future'):
-                self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
+                self.set_value(QtCore.QDate(2400, 12, 31))
             elif str(action.text()) == ugettext('Clear'):
                 self.set_value(None)
             line_edit.setFocus()
