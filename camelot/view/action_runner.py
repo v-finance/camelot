@@ -33,15 +33,13 @@ import time
 import typing
 
 from ..core.naming import CompositeName
-from ..core.serializable import DataclassSerializable
 from ..core.qt import QtCore, QtGui, is_deleted
 from . import gui_naming_context
 from camelot.admin.action.base import MetaActionStep
-from camelot.core.exception import CancelRequest
 from camelot.core.singleton import QSingleton
 from camelot.view.model_thread import post
-from .requests import InitiateAction, CancelAction
-from .responses import AbstractResponse, ActionStepped
+from .requests import InitiateAction
+from .responses import AbstractResponse
 
 LOGGER = logging.getLogger('camelot.view.action_runner')
 
@@ -144,14 +142,12 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     
     This is class is intended for internal Camelot use only.
     """
-    
-    non_blocking_action_step_signal = QtCore.qt_signal(tuple, tuple, object)
+
     response = QtCore.qt_signal(bytes)
     busy = QtCore.qt_signal(bool)
 
     def __init__(self):
         super().__init__()
-        self.non_blocking_action_step_signal.connect(self.non_blocking_action_step)
         self.response.connect(self._handle_response)
 
     @classmethod
@@ -195,21 +191,8 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
             mode = gui_run.mode,
         ))
 
-    @QtCore.qt_slot(tuple, tuple, object)
-    def non_blocking_action_step(self, run_name, gui_run_name, action_step ):
-        gui_run = gui_naming_context.resolve(gui_run_name)
-        try:
-            AbstractResponse._was_canceled(gui_run.gui_context_name)
-            return gui_run.handle_action_step(action_step)
-        except CancelRequest:
-            LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            post(CancelAction(run_name=run_name))
-
     def send_response(self, response):
-        if isinstance(response, (ActionStepped,)) and not isinstance(response.step[1], (DataclassSerializable,)):
-            self.non_blocking_action_step_signal.emit(response.run_name, response.gui_run_name, response.step[1])
-        else:
-            self.response.emit(response._to_bytes())
+        self.response.emit(response._to_bytes())
 
     @QtCore.qt_slot(bytes)
     def _handle_response(self, serialized_response):
