@@ -25,7 +25,7 @@ from camelot.admin.application_admin import ApplicationAdmin
 from camelot.core.constants import camelot_maxfloat, camelot_minfloat
 from camelot.core.exception import UserException
 from camelot.core.files.storage import Storage, StoredFile
-from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole
+from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole, ChoicesRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string
 from camelot.model.party import Person
@@ -252,7 +252,14 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
             none_completion._to_dict(),
             CompletionValue(name_2, 'B')._to_dict()
         ])
+        # Set value back to existing value, the choices should remain
+        # the same, new choices will be set via the model/delegate
         editor.set_value(name_4)
+        self.assertEqual(editor.get_choices(), choices2 + [
+            none_completion._to_dict(),
+            CompletionValue(name_2, 'B')._to_dict()
+        ])
+        editor.set_choices(choices2)
         self.assertEqual(editor.get_choices(), choices2 + [
             none_completion._to_dict()
         ])
@@ -261,11 +268,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         name_33 = initial_naming_context._bind_object(33)
         editor.set_value(name_33)
         self.assertEqual(editor.get_value(), list(name_33))
-        number_of_choices = len(editor.get_choices())
-        # set the value back to valid one, the invalid one should be no longer
-        # in the list of choices
-        editor.set_value(name_4)
-        self.assertEqual(number_of_choices-1, len(editor.get_choices()))
         # try strings as keys
         editor = editors.ChoicesEditor()
         name_c = initial_naming_context._bind_object('c')
@@ -738,10 +740,57 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         field_action_model_context = FieldActionModelContext(
             app_admin.get_related_admin(Person)
         )
+        # None equals space for qml compatibility
+        none_completion = CompletionValue(initial_naming_context._bind_object(None), ' ')._to_dict()
+        # Value is in the list
         field_action_model_context.value = '2'
-        field_action_model_context.field_attributes = {'choices':CHOICES}
+        field_action_model_context.field_attributes = { 'choices': CHOICES }
         item = delegate.get_standard_item(self.locale, field_action_model_context)
         self.assertEqual(item.roles.get(PreviewRole), 'B')
+        choices = [c._to_dict() for c in [
+            CompletionValue(initial_naming_context._bind_object('1'), 'A'),
+            CompletionValue(initial_naming_context._bind_object('2'), 'B'),
+            CompletionValue(initial_naming_context._bind_object('3'), 'C'),
+        ]]
+        self.assertEqual(item.roles[ChoicesRole], choices + [none_completion])
+        # Value is not in the list
+        field_action_model_context.value = '4'
+        field_action_model_context.field_attributes = { 'choices': CHOICES }
+        item = delegate.get_standard_item(self.locale, field_action_model_context)
+        self.assertEqual(item.roles.get(PreviewRole), '4')
+        choices = [c._to_dict() for c in [
+            CompletionValue(initial_naming_context._bind_object('1'), 'A'),
+            CompletionValue(initial_naming_context._bind_object('2'), 'B'),
+            CompletionValue(initial_naming_context._bind_object('3'), 'C'),
+        ]]
+        self.assertEqual(item.roles[ChoicesRole], choices + [none_completion] + [
+            CompletionValue(initial_naming_context._bind_object('4'), '4',
+                            background=ColorScheme.VALIDATION_ERROR.name(), virtual=True)._to_dict()
+        ])
+        # None is not in the list of field attribute choices,
+        # it should still be added
+        field_action_model_context.value = None
+        field_action_model_context.field_attributes = { 'choices': CHOICES }
+        item = delegate.get_standard_item(self.locale, field_action_model_context)
+        self.assertEqual(item.roles.get(PreviewRole), ' ')
+        choices = [c._to_dict() for c in [
+            CompletionValue(initial_naming_context._bind_object('1'), 'A'),
+            CompletionValue(initial_naming_context._bind_object('2'), 'B'),
+            CompletionValue(initial_naming_context._bind_object('3'), 'C'),
+        ]]
+        self.assertEqual(item.roles[ChoicesRole], choices + [none_completion])
+        # None is in the list of field attribute choices,
+        # no second None should be added
+        field_action_model_context.value = None
+        field_action_model_context.field_attributes = { 'choices': CHOICES + ((None, ' '),) }
+        item = delegate.get_standard_item(self.locale, field_action_model_context)
+        self.assertEqual(item.roles.get(PreviewRole), ' ')
+        choices = [c._to_dict() for c in [
+            CompletionValue(initial_naming_context._bind_object('1'), 'A'),
+            CompletionValue(initial_naming_context._bind_object('2'), 'B'),
+            CompletionValue(initial_naming_context._bind_object('3'), 'C'),
+        ]]
+        self.assertEqual(item.roles[ChoicesRole], choices + [none_completion])
 
     def test_virtualaddressdelegate(self):
         delegate = delegates.VirtualAddressDelegate()
