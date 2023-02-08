@@ -38,6 +38,7 @@ class LabelDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """
     
     text: str = '<loading>'
+    field_name: str = 'label'
 
     @classmethod
     def get_editor_class(cls):
