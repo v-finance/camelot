@@ -52,8 +52,6 @@ class Serializable(object):
 class DataclassEncoder(json.JSONEncoder):
 
     def default(self, obj):
-        from ..view.qml_view import LiveRef
-
         if isinstance(obj, ugettext_lazy):
             return str(obj)
         if isinstance(obj, QtGui.QKeySequence):
@@ -62,8 +60,6 @@ class DataclassEncoder(json.JSONEncoder):
             return QtGui.QKeySequence(obj).toString()
         if isinstance(obj, Enum):
             return obj.value
-        if isinstance(obj, LiveRef):
-            return obj.property('name')
         if isinstance(obj, QtCore.QJsonValue):
             return obj.toVariant()
         if isinstance(obj, QtGui.QImage):
