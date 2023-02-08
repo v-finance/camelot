@@ -122,9 +122,9 @@ class QmlActionDispatch(QtCore.QObject):
 qml_action_dispatch = QmlActionDispatch()
 
 
-def qml_action_step(gui_context_name, name, step=QtCore.QByteArray(), props={}):
+def qml_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     backend = get_qml_root_backend()
-    response = backend.actionStep(gui_context_name, name, step, props)
+    response = backend.actionStep(gui_context_name, name, step)
     return json.loads(response.data())
 
 class LiveRef(QtCore.QObject):
