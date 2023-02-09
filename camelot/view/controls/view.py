@@ -51,9 +51,12 @@ class ViewWithActionsMixin(object):
         return rendered_action_name
 
     def render_action(self, render_hint, action_route, gui_context, parent):
-        if render_hint == RenderHint.TOOL_BUTTON:
+        if render_hint in (RenderHint.TOOL_BUTTON, RenderHint.CLOSE_BUTTON):
             qobject = QtWidgets.QToolButton(parent)
-            qobject.clicked.connect(self.button_clicked)
+            if render_hint == RenderHint.TOOL_BUTTON:
+                qobject.clicked.connect(self.button_clicked)
+            else:
+                qobject.clicked.connect(self.validate_close)
         elif render_hint == RenderHint.COMBO_BOX:
             qobject = QtWidgets.QComboBox(parent)
             qobject.activated.connect(self.combobox_activated)

@@ -1039,7 +1039,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
         from camelot.view import action_steps
         yield from super().model_run(model_context, mode)
         # Scroll to last row so that the user sees the newly added object in the list.
-        yield action_steps.ToLastRow()
+        yield action_steps.ToLastRow(wait_for_new_row=True)
 
     def get_state(self, model_context):
         state = super().get_state(model_context)
