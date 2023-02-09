@@ -47,14 +47,12 @@ Or use introspection of the SQLAlchemy session to update the GUI :
 """
 from dataclasses import dataclass, field, InitVar
 import itertools
-import json
 import logging
 import typing
 
 from ...admin.action.base import ActionStep
 from ...core.naming import CompositeName, initial_naming_context
 from ...core.serializable import DataclassSerializable
-from camelot.view.qml_view import get_crud_signal_handler
 
 leases = initial_naming_context.resolve_context('leases')
 
@@ -85,20 +83,6 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
             self.created = leases.bind(str(next(self._lease_counter)), objects_created)
         if len(leases) > 10:
             LOGGER.warn('Number of leases is growing to {}'.format(len(leases)))
-
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        step = json.loads(serialized_step)
-        # super would send the step to c++, which might or might not be a good
-        # idea
-        #super(CreateUpdateDelete, self).gui_run(gui_context)
-        crud_signal_handler = get_crud_signal_handler()
-        if step['deleted'] is not None:
-            crud_signal_handler.objectsDeleted.emit(step['deleted'])
-        if step['updated'] is not None:
-            crud_signal_handler.objectsUpdated.emit(step['updated'])
-        if step['created'] is not None:
-            crud_signal_handler.objectsCreated.emit(step['created'])
 
 
 class FlushSession(CreateUpdateDelete):

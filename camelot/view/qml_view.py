@@ -1,67 +1,11 @@
 import logging
 import json
 
-from camelot.core.qt import QtWidgets, QtQuick, QtCore, QtQml, jsonvalue_to_py
-from camelot.core.exception import UserException
+from camelot.core.qt import QtWidgets, QtCore, jsonvalue_to_py
 from .action_runner import action_runner
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-def check_qml_errors(obj, url):
-    """
-    Check for QML errors.
-
-    :param obj: a `QtQml.QQmlComponent` or `QtQuick.QQuickView` instance.
-    :param url: The component QML source url.
-    """
-    Error = QtQml.QQmlComponent.Status.Error if isinstance(obj, QtQml.QQmlComponent) else QtQuick.QQuickView.Status.Error
-    if obj.status() == Error:
-        errors = []
-        for error in obj.errors():
-            errors.append(error.description())
-            LOGGER.error(error.description())
-        raise UserException(
-            "Could not create QML component {}".format(url),
-            detail='\n'.join(errors)
-        )
-
-def create_qml_component(url, engine=None):
-    """
-    Create a `QtQml.QQmlComponent` from an url.
-
-    :param url: The url containing the QML source.
-    :param engine: A `QtQml.QQmlEngine` instance.
-    """
-    if engine is None:
-        engine = QtQml.QQmlEngine()
-    component = QtQml.QQmlComponent(engine, url)
-    check_qml_errors(component, url)
-    return component
-
-def create_qml_item(url, initial_properties={}, engine=None):
-    """
-    Create a `QtQml.QQmlComponent` from an url.
-
-    :param url: The url containing the QML source.
-    :param initial_properties: dict containing the initial properties for the QML Item.
-    :param engine: A `QtQml.QQmlEngine` instance.
-    """
-    component = create_qml_component(url, engine)
-    item = component.createWithInitialProperties(initial_properties)
-    check_qml_errors(component, url)
-    return item
-
-
-def get_qml_engine():
-    """
-    Get the QQmlEngine that was created in C++. This engine contains the Font
-    Awesome image provider plugin.
-    """
-    app = QtWidgets.QApplication.instance()
-    engine = app.findChild(QtQml.QQmlEngine, 'cpp_qml_engine')
-    return engine
 
 def get_qml_root_backend():
     """
@@ -79,22 +23,6 @@ def get_qml_window():
     for widget in app.allWindows():
         if widget.objectName() == 'cpp_qml_window':
             return widget
-
-def get_crud_signal_handler():
-    """
-    Get the CRUD signal handler singleton instance.
-    """
-    app = QtWidgets.QApplication.instance()
-    crud_signal_handler = app.findChild(QtCore.QObject, 'cpp_crud_signal_handler')
-    return crud_signal_handler
-
-def get_dgc_client():
-    """
-    Get the distributed grabage collection client singleton instance.
-    """
-    app = QtWidgets.QApplication.instance()
-    dgc_client = app.findChild(QtCore.QObject, 'cpp_dgc_client')
-    return dgc_client
 
 def is_cpp_gui_context_name(gui_context_name):
     """
@@ -126,10 +54,3 @@ def qml_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     backend = get_qml_root_backend()
     response = backend.actionStep(gui_context_name, name, step)
     return json.loads(response.data())
-
-class LiveRef(QtCore.QObject):
-
-    def __init__(self, name, parent=None):
-        super().__init__(parent)
-        self.setProperty('name', name)
-        get_dgc_client().registerRef(self)

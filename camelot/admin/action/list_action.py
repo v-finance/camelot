@@ -37,11 +37,10 @@ import dataclasses
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import QtCore, QtGui, QtWidgets
 from .base import Action, Mode, RenderHint
-from camelot.core.exception import UserException
+from camelot.core.exception import UserException, CancelRequest
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.admin.icon import Icon
-from camelot.view.action_runner import CancelRequest
 
 
 import xlsxwriter
