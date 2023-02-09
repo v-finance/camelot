@@ -296,6 +296,7 @@ class ToLastRow(ActionStep, DataclassSerializable):
     """Move to the last row in a table"""
 
     blocking: bool = False
+    wait_for_new_row: bool = False
 
 @dataclass
 class ClearSelection(ActionStep, DataclassSerializable):
