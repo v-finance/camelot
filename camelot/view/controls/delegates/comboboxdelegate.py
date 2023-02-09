@@ -85,7 +85,7 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
                 break
         else:
             if model_context.value is None:
-                item.roles[PreviewRole] = str()
+                item.roles[PreviewRole] = ' '
             else:
                 # the model has a value that is not in the list of choices,
                 # still try to display it

@@ -388,10 +388,11 @@ class FormView(AbstractView, GuiContext):
         if is_deleted(self):
             return
         if (accept == True):
-            # clear mapping to prevent data being written again to the model,
-            # when the underlying object would be reverted
             form = self.findChild( QtWidgets.QWidget, 'form' )
             if form is not None:
+                form.submit()
+                # clear mapping to prevent data being written again to the model,
+                # when the underlying object would be reverted
                 form.clear_mapping()
         self.close()
 

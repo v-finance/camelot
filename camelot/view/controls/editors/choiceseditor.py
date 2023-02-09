@@ -126,24 +126,21 @@ class ChoicesEditor(CustomEditor):
     @classmethod
     def row_with_value(cls, model, value, display_role):
         rows = model.rowCount()
-        # remove the last item if it was an invalid one
-        if model.data(model.index(rows-1, 0), Qt.ItemDataRole.UserRole+1)==True:
-            model.removeRow(rows-1)
-            rows -= 1
         for i in range(rows):
             if value == model.data(model.index(i, 0), Qt.ItemDataRole.UserRole):
                 return i
-        # it might happen, that when we set the editor data, the set_choices
-        # method has not happened yet or the choices don't contain the value
-        # set
-        if display_role is None:
-            display_role = str(value[-1]) if value is not None else ''
-        cls.append_item(model, CompletionValue.asdict(CompletionValue(
-            value = value, verbose_name=display_role,
-            background = ColorScheme.VALIDATION_ERROR.name(),
-            virtual = True
-        )))
-        return rows
+        else:
+            # it might happen, that when we set the editor data, the set_choices
+            # method has not happened yet or the choices don't contain the value
+            # set
+            if display_role is None:
+                display_role = str(value[-1]) if value is not None else ''
+            cls.append_item(model, CompletionValue.asdict(CompletionValue(
+                value = value, verbose_name=display_role,
+                background = ColorScheme.VALIDATION_ERROR.name(),
+                virtual = True
+            )))
+            return rows
             
     def set_choices( self, choices ):
         """

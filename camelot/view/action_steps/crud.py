@@ -78,7 +78,7 @@ class SetColumns(ActionStep, DataclassSerializable):
         elif issubclass(fa['delegate'], delegates.IntegerDelegate):
             attrs = filter_attributes(fa, ['calculator', 'decimal'])
         elif issubclass(fa['delegate'], delegates.LabelDelegate):
-            attrs = filter_attributes(fa, ['text'])
+            attrs = filter_attributes(fa, ['text', 'field_name'])
         elif issubclass(fa['delegate'], delegates.LocalFileDelegate):
             attrs = filter_attributes(fa, ['directory', 'save_as', 'file_filter'])
         elif issubclass(fa['delegate'], delegates.MonthsDelegate):

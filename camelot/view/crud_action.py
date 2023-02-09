@@ -47,11 +47,6 @@ def strip_data_from_object( obj, columns ):
             row_data.append( field_value )
     return row_data
 
-
-non_serializable_roles = (
-    Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.AccessibleDescriptionRole
-)
-
 @dataclass
 class DataCell(DataclassSerializable):
 
@@ -175,7 +170,7 @@ class UpdateMixin(object):
                 else:
                     item = DataCell(**asdict(invalid_item))
                 # remove roles with None values
-                item.roles = { role: value for role, value in item.roles.items() if value is not None and role not in non_serializable_roles}
+                item.roles = { role: value for role, value in item.roles.items() if value is not None}
                 item.row = row
                 item.column = column
                 items.append(item)
