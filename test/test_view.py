@@ -578,6 +578,8 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         # set its background
         self.option.version = 5
         self.locale = QtCore.QLocale()
+        person_admin = app_admin.get_related_admin(Person)
+        self.field_action_model_context = FieldActionModelContext(person_admin)
 
     def grab_delegate(self, delegate, value, suffix='editable', field_attributes={}):
 
@@ -648,6 +650,15 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         small_size = small_text_delegate.sizeHint( None, 0 ).width()
         wide_size = wide_text_delegate.sizeHint( None, 0 ).width()
         self.assertTrue( small_size < wide_size )
+        # the standard item for various model values
+        self.field_action_model_context.value = 'A real string'
+        item = delegate.get_standard_item(self.locale, self.field_action_model_context)
+        self.assertIsInstance(item.roles.get(PreviewRole), str)
+        self.assertIsInstance(item.roles.get(Qt.ItemDataRole.EditRole), str)
+        self.field_action_model_context.value = 5.3
+        item = delegate.get_standard_item(self.locale, self.field_action_model_context)
+        self.assertIsInstance(item.roles.get(PreviewRole), str)
+        self.assertIsInstance(item.roles.get(Qt.ItemDataRole.EditRole), str)
 
     def test_texteditdelegate(self):
         delegate = delegates.TextEditDelegate(editable=True)

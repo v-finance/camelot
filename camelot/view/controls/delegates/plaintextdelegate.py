@@ -72,6 +72,7 @@ class PlainTextDelegate(CustomDelegate):
         item.roles[CompleterStateRole] = model_context.field_attributes.get('completer_state')
         if model_context.value is not None:
             value = str(model_context.value)
+            item.roles[Qt.ItemDataRole.EditRole] = value
             # If a validator is defined, use it to format the model value:
             validator = AbstractValidator.get_validator(model_context.field_attributes.get('validator_type'))
             if validator is not None:

@@ -37,6 +37,10 @@ class AbstractResponse(NamedDataclassSerializable):
         progress_dialog = gui_context.get_progress_dialog()
         if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
             LOGGER.debug( 'progress dialog was canceled, raise request' )
+            # @todo : to avoid a second raise of a cancelrequest, reset
+            #         the dialog, this might hide the dialog, even if the
+            #         cancel request is not accepted.
+            progress_dialog.reset()
             raise CancelRequest()
 
     @classmethod

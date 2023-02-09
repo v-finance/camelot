@@ -30,6 +30,7 @@
 from dataclasses import dataclass
 
 from ....core.item_model import PreviewRole
+from ....core.qt import Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
@@ -49,6 +50,7 @@ class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super().get_standard_item(locale, model_context)
         if model_context.value is not None:
             item.roles[PreviewRole] = str(model_context.value)
+            item.roles[Qt.ItemDataRole.EditRole] = item.roles[PreviewRole]
         return item
 
 
