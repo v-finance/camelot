@@ -50,12 +50,39 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
     verbose_name: str
     blocking: bool = False
 
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # @TODO : this needs to be handled in the action runner
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
+            return
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        if gui_context is None:
+            return
+        progress_dialog = gui_context.get_progress_dialog()
+        if progress_dialog is not None:
+            step = json.loads(serialized_step)
+            progress_dialog.push_level(step['verbose_name'])
+
 
 @dataclass
 class PopProgressLevel(ActionStep, DataclassSerializable):
 
     blocking: bool = False
 
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # @TODO : this needs to be handled in the action runner
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
+            return
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        if gui_context is None:
+            return
+        progress_dialog = gui_context.get_progress_dialog()
+        if progress_dialog is not None:
+            step = json.loads(serialized_step)
+            progress_dialog.pop_level()
 
 @dataclass
 class UpdateProgress(ActionStep, DataclassSerializable):
