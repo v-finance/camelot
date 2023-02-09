@@ -81,7 +81,6 @@ class PopProgressLevel(ActionStep, DataclassSerializable):
             return
         progress_dialog = gui_context.get_progress_dialog()
         if progress_dialog is not None:
-            step = json.loads(serialized_step)
             progress_dialog.pop_level()
 
 @dataclass
