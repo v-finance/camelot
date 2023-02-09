@@ -338,7 +338,7 @@ class FormView(AbstractView, GuiContext):
                     self, self
                 )
                 self.model.add_action_route(tuple(action_route))
-                if render_hint == RenderHint.TOOL_BUTTON:
+                if render_hint in (RenderHint.TOOL_BUTTON, RenderHint.CLOSE_BUTTON):
                     toolbar.addWidget(action_widget)
                 else:
                     side_panel_layout.addWidget(action_widget)
@@ -377,7 +377,7 @@ class FormView(AbstractView, GuiContext):
 
     @QtCore.qt_slot()
     def validate_close( self ):
-        # widget_mapper.submit() ??
+        self.widget_mapper.submit()
         action_runner.run_action(
             self.close_route, self.gui_context_name,
             self.model.get_value(), None

@@ -88,7 +88,7 @@ show_history = ShowHistory()
 class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
 
-    render_hint = RenderHint.TOOL_BUTTON
+    render_hint = RenderHint.CLOSE_BUTTON
     shortcut = QtGui.QKeySequence.StandardKey.Close
     icon = Icon('times-circle') # 'tango/16x16/actions/system-log-out.png'
     verbose_name = _('Close')

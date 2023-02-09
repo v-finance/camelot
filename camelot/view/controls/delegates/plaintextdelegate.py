@@ -40,6 +40,7 @@ from ....core.qt import Qt
 from .customdelegate import CustomDelegate
 
 from camelot.view.controls import editors
+from camelot.view.validator import AbstractValidator
 
 DEFAULT_COLUMN_WIDTH = 20
 
@@ -70,7 +71,14 @@ class PlainTextDelegate(CustomDelegate):
         item.roles[ValidatorStateRole] = model_context.field_attributes.get('validator_state')
         item.roles[CompleterStateRole] = model_context.field_attributes.get('completer_state')
         if model_context.value is not None:
-            item.roles[PreviewRole] = str(model_context.value)
+            value = str(model_context.value)
+            item.roles[Qt.ItemDataRole.EditRole] = value
+            # If a validator is defined, use it to format the model value:
+            validator = AbstractValidator.get_validator(model_context.field_attributes.get('validator_type'))
+            if validator is not None:
+                validator.set_state(model_context.field_attributes.get('validator_state'))
+                value = validator.format_value(value)
+            item.roles[PreviewRole] = value
         return item
 
     def setEditorData(self, editor, index):

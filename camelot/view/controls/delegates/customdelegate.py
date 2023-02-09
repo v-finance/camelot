@@ -188,6 +188,8 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         serialized_action_routes = json_encoder.encode(routes)
         serialized_action_states = json_encoder.encode(states)
         item = DataCell()
+        # @todo : the line below should be removed, but only after testing
+        #         if each delegate properly handles setting edit role
         item.roles[Qt.ItemDataRole.EditRole] = model_context.value
         # NOTE: one of the goals is to serialize the field attributes, which currently
         # still comprises a large variety of elements, some of which should still be made serializable,
@@ -240,7 +242,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         elif issubclass(editor_cls, editors.IntegerEditor):
             editor = editor_cls(parent, self.calculator, self.decimal, option)
         elif issubclass(editor_cls, editors.LabelEditor):
-            editor = editor_cls(parent, self.text, option)
+            editor = editor_cls(parent, self.text, self.field_name)
         elif issubclass(editor_cls, editors.LocalFileEditor):
             editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
         elif issubclass(editor_cls, editors.MonthsEditor):
