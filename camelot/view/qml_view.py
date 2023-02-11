@@ -42,7 +42,7 @@ class QmlActionDispatch(QtCore.QObject):
             root_backend.runAction.connect(self.run_action)
 
     def run_action(self, gui_context_name, route, model_context_name, args):
-        LOGGER.info('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
+        LOGGER.debug('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
         action_runner.run_action(
             tuple(route), tuple(gui_context_name), tuple(model_context_name), jsonvalue_to_py(args)
         )
