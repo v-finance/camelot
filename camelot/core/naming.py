@@ -1116,13 +1116,13 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
                     return (*base_name, obj.name())
                 return (*base_name, str(obj))
         if isinstance(obj, Entity):
+            session = orm.object_session(obj)
+            if session is None:
+                raise NotImplementedError('Only entity instances that are bound to a session are supported')
             primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)
             if not inspect(obj).persistent or None in primary_key:
                 raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
-            session = orm.object_session(obj)
-            if session is None:
-                raise NotImplementedError('Only entity instances that are bound to a session are supported')
             return ('entity', entity._get_entity_arg('name'), str(session.hash_key), *[str(key) for key in primary_key])
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')

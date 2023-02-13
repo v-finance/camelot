@@ -1003,6 +1003,10 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         self.session.flush()
         with self.assertRaises(NotImplementedError):
             self.context._bind_object(entity1)
+        # Only entities bound to a session should be supported:
+        self.session.expunge(entity2)
+        with self.assertRaises(NotImplementedError):
+            self.context._bind_object(entity2)
 
 class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
@@ -1027,10 +1031,20 @@ class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
         (session_id, '1'),
         (session_id, '2'),
         (session_id, '9999'),
+        # With unexisting session id:
+        ('9999', '0'),
+        ('9999', '1'),
+        ('9999', '2'),
+        ('9999', '9999'),
     ]
     incompatible_names = [
         (session_id, '0'),
         (session_id, '9999'),
+        # With unexisting session id:
+        ('9999', '0'),
+        ('9999', '1'),
+        ('9999', '2'),
+        ('9999', '9999'),
     ]
     compatible_names = [
         (session_id, '1'),
