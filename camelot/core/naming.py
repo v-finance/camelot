@@ -1017,7 +1017,6 @@ class EntityNamingContext(EndpointNamingContext):
             NamingException NamingException.Message.invalid_name: when the name is invalid.
             NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
         """
-        from camelot.core.orm import Session
         name = self.get_composite_name(name)
         session = orm.session._sessions.get(int(name[0]))
         instance = session.query(self.entity).get(name[1:]) if session is not None else None
