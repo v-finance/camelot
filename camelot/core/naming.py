@@ -981,19 +981,23 @@ class EntityNamingContext(EndpointNamingContext):
     def validate_composite_name(self, name: CompositeName) -> bool:
         """
         Customized atomic name validation for this entity naming context that expands on the default composite name validation inherited from ´camelot.core.naming.AbstractNamingContext´
-        in that it only allows composite names with a numer of atomic parts that equals the dimension of entity mapper this context handles.
+        in that it only allows composite names with a certain number of atomic parts.
+        This number is equal to the dimension of the primary key dimension of entity mapper this context handles, incremented by 1 for the inclusion of the id of
+        the session the bound entity instance resides in.
 
         :raises:
             NamingException NamingException.Message.invalid_composite_name when the given composite name is not a tuple instance.
             NamingException NamingException.Message.multiary_name_expected when the given composite name has no composed atomic parts.
             NamingException NamingException.Message.invalid_composite_name_parts when the given composite name is not composed of valid atomic parts.
             NamingException NamingException.Message.invalid_composite_name_length: when the given composite name's numer of composed atomic parts does 
-            not equal the dimension of primary key of this context's entity mapper.
+            not equal the dimension of primary key of this context's entity mapper incremented by 1.
         """
         super(EndpointNamingContext, self).validate_composite_name(name)
         mapper = orm.class_mapper(self.entity)
-        if len(name) != len(mapper.primary_key):
-            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=len(mapper.primary_key))
+        if len(name) != len(mapper.primary_key) + 1:
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=len(mapper.primary_key)+1)
+        if not all([name_part.isdecimal() for name_part in name]):
+            raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_atomic_name_numeric)
 
     @AbstractNamingContext.check_bounded
     def resolve(self, name: Name) -> object:
@@ -1015,7 +1019,8 @@ class EntityNamingContext(EndpointNamingContext):
         """
         from camelot.core.orm import Session
         name = self.get_composite_name(name)
-        instance = Session().query(self.entity).get(name)
+        session = orm.session._sessions.get(int(name[0]))
+        instance = session.query(self.entity).get(name[1:]) if session is not None else None
         if instance is None:
             raise NameNotFoundException(name[0], BindingType.named_object)
         return instance
