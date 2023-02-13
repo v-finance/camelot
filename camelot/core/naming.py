@@ -1120,7 +1120,10 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             if not inspect(obj).persistent or None in primary_key:
                 raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
-            return ('entity', entity._get_entity_arg('name'), *[str(key) for key in primary_key])
+            session = orm.object_session(obj)
+            if session is None:
+                raise NotImplementedError('Only entity instances that are bound to a session are supported')
+            return ('entity', entity._get_entity_arg('name'), str(session.hash_key), *[str(key) for key in primary_key])
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
         LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
