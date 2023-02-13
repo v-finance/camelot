@@ -26,6 +26,7 @@ from .test_model import ExampleModelMixinCase, LoadSampleData
 from .test_orm import EntityMetaMock
 
 memento_id_counter = 0
+session_id = str(Session().hash_key)
 
 class MementoCase(unittest.TestCase, ExampleModelMixinCase):
     """test functions from camelot.core.memento
@@ -939,10 +940,10 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         self.assertEqual(self.context.resolve(('constant', 'date', '2022', '04', '13')), datetime.date(2022, 4, 13))
         self.assertEqual(self.context.resolve(('constant', 'date', '2021', '02', '05')), datetime.date(2021, 2, 5))
         # Entities
-        self.assertEqual(self.context.resolve(('entity', 'organization', str(entity1.id))), entity1)
-        self.assertEqual(self.context.resolve(('entity', 'person', str(entity2.id))), entity2)
-        self.assertEqual(self.context.resolve(('entity', 'composite_pk_entity', str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))), self.binary_entity_1)
-        self.assertEqual(self.context.resolve(('entity', 'composite_pk_entity', str(self.binary_entity_2.id_1), str(self.binary_entity_2.id_2))), self.binary_entity_2)
+        self.assertEqual(self.context.resolve(('entity', 'organization', session_id, str(entity1.id))), entity1)
+        self.assertEqual(self.context.resolve(('entity', 'person', session_id, str(entity2.id))), entity2)
+        self.assertEqual(self.context.resolve(('entity', 'composite_pk_entity', session_id, str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))), self.binary_entity_1)
+        self.assertEqual(self.context.resolve(('entity', 'composite_pk_entity', session_id, str(self.binary_entity_2.id_1), str(self.binary_entity_2.id_2))), self.binary_entity_2)
 
         # Verify that subcontexts and/or values are immutabe on the initial naming context:
         for subcontext in ['constant', 'entity', 'object']:
@@ -979,10 +980,10 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (Decimal('4.7500'),('constant', 'decimal', '4.75')),
             (obj1,            ('object', str(id(obj1)))),
             (obj2,            ('object', str(id(obj2)),)),
-            (entity1,         ('entity', 'organization', str(entity1.id))),
-            (entity2,         ('entity', 'person', str(entity2.id))),
-            (self.binary_entity_1, ('entity', 'composite_pk_entity', str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))),
-            (self.binary_entity_2, ('entity', 'composite_pk_entity', str(self.binary_entity_2.id_1), str(self.binary_entity_2.id_2))),
+            (entity1,         ('entity', 'organization', session_id, str(entity1.id))),
+            (entity2,         ('entity', 'person', session_id, str(entity2.id))),
+            (self.binary_entity_1, ('entity', 'composite_pk_entity', session_id, str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))),
+            (self.binary_entity_2, ('entity', 'composite_pk_entity', session_id, str(self.binary_entity_2.id_1), str(self.binary_entity_2.id_2))),
             (datetime.datetime(2022, 4, 13, 13, 51, 46), ('constant', 'datetime', '2022', '4', '13', '13', '51', '46')),
             (datetime.date(2022, 4, 13),                 ('constant', 'date', '2022', '4', '13')),
             ]:
@@ -1010,20 +1011,31 @@ class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
 
     # Entity naming context only allows singular names, and numeric atomic names.
     invalid_names = [
-        (None,             NamingException.Message.invalid_name_type),
-        ('',               NamingException.Message.invalid_atomic_name_numeric),
-        (tuple(),          NamingException.Message.multiary_name_expected),
-        (('',),            NamingException.Message.invalid_atomic_name_numeric),
-        ((None,),          NamingException.Message.invalid_composite_name_parts),
-        ((1,),             NamingException.Message.invalid_composite_name_parts),
-        ((None,),          NamingException.Message.invalid_composite_name_parts),
-        (('test', ''),     NamingException.Message.invalid_composite_name_length),
-        (('test', None),   NamingException.Message.invalid_composite_name_parts),
-        (('test', 'test'), NamingException.Message.invalid_composite_name_length),
+        (None,                          NamingException.Message.invalid_name_type),
+        ('',                            NamingException.Message.invalid_atomic_name_numeric),
+        (tuple(),                       NamingException.Message.multiary_name_expected),
+        ((session_id, '',),             NamingException.Message.invalid_atomic_name_numeric),
+        ((session_id, None,),           NamingException.Message.invalid_composite_name_parts),
+        ((session_id, 1,),              NamingException.Message.invalid_composite_name_parts),
+        ((session_id, None,),           NamingException.Message.invalid_composite_name_parts),
+        ((session_id, 'test', ''),      NamingException.Message.invalid_composite_name_length),
+        ((session_id, 'test', None),    NamingException.Message.invalid_composite_name_parts),
+        ((session_id, 'test', 'test'),  NamingException.Message.invalid_composite_name_length),
     ]
-    valid_names = ['0', '1', '2', '9999']
-    incompatible_names = ['0', '9999']
-    compatible_names = ['1', '2']
+    valid_names = [
+        (session_id, '0'),
+        (session_id, '1'),
+        (session_id, '2'),
+        (session_id, '9999'),
+    ]
+    incompatible_names = [
+        (session_id, '0'),
+        (session_id, '9999'),
+    ]
+    compatible_names = [
+        (session_id, '1'),
+        (session_id, '2'),
+    ]
 
     def new_context(self):
         return self.context_cls(self.entity)
@@ -1041,7 +1053,7 @@ class EntityNamingContextCaseMixin(AbstractNamingContextCaseMixin):
         # Verify compatible names resolve to the expected entity instances:
         # Both string names as singular composite names should be allowed:
         for name in self.compatible_names:
-            expected_instance = self.session.query(self.entity).get(name)
+            expected_instance = self.session.query(self.entity).get(name[1:])
             self.assertIsNotNone(expected_instance)
             self.assertEqual(self.context.resolve(name), expected_instance)
             if not isinstance(name, tuple):
@@ -1077,20 +1089,23 @@ class OrganizationEntityNamingContextCase(AbstractEntityNamingContextCase, Entit
         org1 = party.Organization( name = 'Test1' )
         org2 = party.Organization( name = 'Test2' )
         cls.session.flush()
-        cls.compatible_names = [str(org1.id), str(org2.id)]
+        cls.compatible_names = [
+            (session_id, str(org1.id)),
+            (session_id, str(org2.id)),
+        ]
 
 class AbstractCompositePKEntityNamingContextCase(AbstractEntityNamingContextCase):
 
     invalid_names = [
-        (None,                 NamingException.Message.invalid_name_type),
-        ('',                   NamingException.Message.invalid_atomic_name_numeric),
-        (tuple(),              NamingException.Message.multiary_name_expected),
-        ((None,),              NamingException.Message.invalid_composite_name_parts),
-        ((1,),                 NamingException.Message.invalid_composite_name_parts),
-        ((None,),              NamingException.Message.invalid_composite_name_parts),
-        (('test', None),       NamingException.Message.invalid_composite_name_parts),
-        (('',),                NamingException.Message.invalid_composite_name_length),
-        (('1', '1', '1', '1'), NamingException.Message.invalid_composite_name_length),
+        (None,                             NamingException.Message.invalid_name_type),
+        ('',                               NamingException.Message.invalid_atomic_name_numeric),
+        (tuple(),                          NamingException.Message.multiary_name_expected),
+        ((None,),                          NamingException.Message.invalid_composite_name_parts),
+        ((1,),                             NamingException.Message.invalid_composite_name_parts),
+        ((None,),                          NamingException.Message.invalid_composite_name_parts),
+        (('test', None),                   NamingException.Message.invalid_composite_name_parts),
+        (('',),                            NamingException.Message.invalid_composite_name_length),
+        ((session_id, '1', '1', '1', '1'), NamingException.Message.invalid_composite_name_length),
     ]
 
     @classmethod
@@ -1118,16 +1133,29 @@ class BinaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCase
 
     context_name = ('entity2',)
     invalid_names = AbstractCompositePKEntityNamingContextCase.invalid_names + [
-        ('0',              NamingException.Message.invalid_composite_name_length),
-        ('1',              NamingException.Message.invalid_composite_name_length),
-        ('2',              NamingException.Message.invalid_composite_name_length),
-        ('9999',           NamingException.Message.invalid_composite_name_length),
-        (('test', ''),     NamingException.Message.invalid_atomic_name_numeric),
-        (('test', 'test'), NamingException.Message.invalid_atomic_name_numeric),
+        ('0',                          NamingException.Message.invalid_composite_name_length),
+        ('1',                          NamingException.Message.invalid_composite_name_length),
+        ('2',                          NamingException.Message.invalid_composite_name_length),
+        ('9999',                       NamingException.Message.invalid_composite_name_length),
+        (('test', session_id, ''),     NamingException.Message.invalid_atomic_name_numeric),
+        (('test', session_id, 'test'), NamingException.Message.invalid_atomic_name_numeric),
     ]
-    valid_names = [('0', '0'), ('1', '1'),  ('1', '2'), ('2', '2'), ('9999', '9999')]
-    incompatible_names = [('0', '0'), ('2', '2'), ('9999', '9999')]
-    compatible_names = [('1', '1'),  ('1', '2')]
+    valid_names = [
+        (session_id, '0', '0'),
+        (session_id, '1', '1'),
+        (session_id, '1', '2'),
+        (session_id, '2', '2'),
+        (session_id, '9999', '9999'),
+    ]
+    incompatible_names = [
+        (session_id, '0', '0'),
+        (session_id, '2', '2'),
+        (session_id, '9999', '9999'),
+    ]
+    compatible_names = [
+        (session_id, '1', '1'),
+        (session_id, '1', '2'),
+    ]
 
     @classmethod
     def setUpClass(cls):
@@ -1143,7 +1171,10 @@ class BinaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCase
         a1 = PK2Entity(id_1=1, id_2=1)
         a2 = PK2Entity(id_1=1, id_2=2)
         cls.session.flush()
-        cls.compatible_names = [(str(a1.id_1), str(a1.id_2)), (str(a2.id_1), str(a2.id_2))]
+        cls.compatible_names = [
+            (session_id, str(a1.id_1), str(a1.id_2)),
+            (session_id, str(a2.id_1), str(a2.id_2)),
+        ]
 
 class TernaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCase, EntityNamingContextCaseMixin):
 
@@ -1161,9 +1192,22 @@ class TernaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCas
         (('test', ''),     NamingException.Message.invalid_composite_name_length),
         (('test', 'test'), NamingException.Message.invalid_composite_name_length),
     ]
-    valid_names = [('0', '0', '0'), ('1', '1', '1'),  ('1', '2', '3'), ('2', '2', '2'), ('9999', '9999', '9999')]
-    incompatible_names = [('0', '0', '0'), ('2', '2', '2'), ('9999', '9999', '9999')]
-    compatible_names = [('1', '1', '1'),  ('1', '2', '3')]
+    valid_names = [
+        (session_id, '0', '0', '0'),
+        (session_id, '1', '1', '1'),
+        (session_id, '1', '2', '3'),
+        (session_id, '2', '2', '2'),
+        (session_id, '9999', '9999', '9999'),
+    ]
+    incompatible_names = [
+        (session_id, '0', '0', '0'),
+        (session_id, '2', '2', '2'),
+        (session_id, '9999', '9999', '9999'),
+    ]
+    compatible_names = [
+        (session_id, '1', '1', '1'),
+        (session_id, '1', '2', '3'),
+    ]
 
     @classmethod
     def setUpClass(cls):
@@ -1180,7 +1224,10 @@ class TernaryPKEntityNamingContextCase(AbstractCompositePKEntityNamingContextCas
         a1 = PK3Entity(id_1=1, id_2=1, id_3=1)
         a2 = PK3Entity(id_1=1, id_2=2, id_3=3)
         cls.session.flush()
-        cls.compatible_names = [(str(a1.id_1), str(a1.id_2), str(a1.id_3)), (str(a2.id_1), str(a2.id_2), str(a2.id_3))]
+        cls.compatible_names = [
+            (session_id, str(a1.id_1), str(a1.id_2), str(a1.id_3)),
+            (session_id, str(a2.id_1), str(a2.id_2), str(a2.id_3)),
+        ]
 
 class WeakRefNamingContextCase(AbstractNamingContextCase, NamingContextCaseMixin):
 
