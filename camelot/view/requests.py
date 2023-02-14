@@ -206,7 +206,7 @@ class ThrowActionException(AbstractRequest):
 
     @classmethod
     def _next(cls, run, request_data):
-        return run.generator.throw(request_data['exception'])
+        return run.generator.throw(Exception(request_data['exception']))
 
 
 @dataclass

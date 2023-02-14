@@ -58,6 +58,12 @@ class AbstractValidator:
     def set_state(self, state):
         pass
 
+    def format_value(self, value):
+        """
+        Format the given value for display.
+        The value is left untouched by default.
+        """
+        return value
 
 class DateValidator(QtGui.QValidator):
 

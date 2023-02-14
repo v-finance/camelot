@@ -39,7 +39,7 @@ from camelot.view.art import FontIcon
 
 from ...core.qt import QtModel, QtCore, QtWidgets, Qt, is_deleted
 
-LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
+LOGGER = logging.getLogger('camelot.view.controls.progress_dialog')
 
 class ProgressDialog(QtWidgets.QProgressDialog):
     """
@@ -132,21 +132,27 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             QtWidgets.QApplication.clipboard().setText(text)
 
     def push_level(self, verbose_name):
+        if is_deleted(self):
+            return
         label = self.findChild(QtWidgets.QLabel)
         if label is not None:
             label.setText(verbose_name)
         self.levels.append(verbose_name)
+        LOGGER.debug('Push level to {} with {}'.format(len(self.levels), verbose_name))
 
     def pop_level(self):
         self.levels.pop()
         if is_deleted(self):
             return
+        LOGGER.debug('Pop level to {}'.format(len(self.levels)))
         if len(self.levels):
             label = self.findChild(QtWidgets.QLabel)
             if label is not None:
                 label.setText(self.levels[-1])
         else:
+            LOGGER.debug('Reset dialog')
             self.reset()
+        
 
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog
