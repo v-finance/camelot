@@ -241,7 +241,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         # close the editor to prevent certain Qt crashes
         table.close_editor()
         # make sure ChangeSelection action is executed before list action
-        table.model().timeout_slot()
+        table.model().onTimeout()
         self._run_list_context_action(self, None)
 
     @QtCore.qt_slot()

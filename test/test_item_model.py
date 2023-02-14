@@ -120,10 +120,10 @@ class ItemModelCaseMixin(object):
 
     def _load_data(self, item_model):
         """Trigger the loading of data by the QAbstractItemModel"""
-        item_model.timeout_slot()
+        item_model.onTimeout()
         self.process()
         item_model.rowCount()
-        item_model.timeout_slot()
+        item_model.onTimeout()
         self.process()
         row_count = item_model.rowCount()
         column_count = item_model.columnCount()
@@ -131,7 +131,7 @@ class ItemModelCaseMixin(object):
         for row in range(row_count):
             for col in range(column_count):
                 self._data(row, col, item_model)
-        item_model.timeout_slot()
+        item_model.onTimeout()
         self.process()
 
     def _data(self, row, column, item_model, role=Qt.ItemDataRole.EditRole, validate_index=True):
@@ -158,7 +158,7 @@ class ItemModelCaseMixin(object):
     def _row_count(self, item_model):
         """Set data to the proxy"""
         item_model.rowCount()
-        item_model.timeout_slot()
+        item_model.onTimeout()
         self.process()
         return item_model.rowCount()
 
@@ -306,7 +306,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.item_model.set_value(self.model_context_name)
         self.columns = self.admin.list_display
         self.item_model.add_columns(self.columns)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.signal_register = ItemModelSignalRegister(self.item_model)
 
@@ -334,7 +334,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
     def test_rowcount(self):
         # the rowcount remains 0 while no timeout has passed
         self.assertEqual(self.item_model.rowCount(), 0)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self.item_model.rowCount(), 3)
 
@@ -352,7 +352,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self._data(1, 2, self.item_model)
         self._data(1, 3, self.item_model)
         self._data(1, 4, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
         # the prefix is prepended to the display role
@@ -384,11 +384,11 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         # when data is loaded for column 0, it remains loading for column 1
         self.assertTrue(self._row_count(self.item_model) > 1)
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
         self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
         self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
@@ -397,11 +397,11 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         # when data is loaded for column 1, it remains loading for column 0
         self.assertTrue(self._row_count(self.item_model) > 1)
         self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
         self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
@@ -444,7 +444,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), None)
             # Make sure to also request at least one column
             self._data(row, 0, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         # after the timeout, the data is available
         for row in range(row_count):
@@ -464,7 +464,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             set_data_name, mode=(1, 'y', None),
             model_context_name=self.model_context_name, handle_action_steps=True
         )
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidRole, self.item_model), False)
         self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), 'Y is a required field')
@@ -476,9 +476,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self._load_data(self.item_model)
         self._set_data(0, 0, 20, self.item_model)
         self._set_data(0, 1, 10, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         # x is set first, so y becomes not
         # editable and remains at its value
@@ -486,9 +486,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(0, 1, self.item_model),  0)
         self._set_data(0, 0, 5, self.item_model)
         self._set_data(0, 1, 10, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         # x is set first, so y becomes
         # editable and its value is changed
@@ -496,9 +496,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(0, 1, self.item_model), 10)
         self._set_data(0, 1, 15, self.item_model)
         self._set_data(0, 0, 20, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         # x is set last, so y stays
         # editable and its value is changed
@@ -506,7 +506,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(0, 1, self.item_model), 15)
 
     def test_change_column_width(self):
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.item_model.setHeaderData(1, Qt.Orientation.Horizontal, QtCore.QSize(140,10),
                                  Qt.ItemDataRole.SizeHintRole)
         size_hint = self.item_model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
@@ -525,9 +525,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data( 1, 0, self.item_model), 1)
         # now change the data
         self._set_data(0, 0, 7, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._data(0, 0, self.item_model), 7)
         self.assertEqual(self.get_data(1, 'x', False), 7)
@@ -553,9 +553,9 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(2, 0, self.item_model), 2)
         self.signal_register.clear()
         self._set_data( 0, 0, 8, self.item_model )
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
         for changed_range in self.signal_register.data_changes:
@@ -572,7 +572,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             set_data_name, mode=(0, 'y', 10),
             model_context_name=self.model_context_name, handle_action_steps=True
         )
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
         self.assertEqual( self.signal_register.data_changes[0],
@@ -582,7 +582,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         # only load data for a single column
         self.assertTrue(self._row_count(self.item_model) > 1)
         self._data(0, 1, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._data(0, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
         # modify two columns to test if only a change for the loaded
@@ -596,7 +596,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             set_data_name, mode=(0, 'y', 10),
             model_context_name=self.model_context_name, handle_action_steps=True
         )
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
         self.assertEqual( self.signal_register.data_changes[0],
@@ -607,7 +607,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         name = initial_naming_context._bind_object((object(),))
         self.item_model.objectsUpdated(list(name))
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
         self.assertEqual( len(self.signal_register.header_changes), 0 )
@@ -618,7 +618,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         row_count = self.item_model.rowCount()
         self.signal_register.clear()
         self.gui_run(add_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(len(self.signal_register.header_changes), 1)
         new_row_count = self.item_model.rowCount()
@@ -629,7 +629,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         name = initial_naming_context._bind_object((object(),))
         self.item_model.objectsCreated(list(name))
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
         self.assertEqual( len(self.signal_register.header_changes), 0 )
@@ -642,14 +642,14 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         self.gui_run(remove_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
         # but the timeout might be after the object was deleted
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self.signal_register.layout_changes, 1)
         new_row_count = self.item_model.rowCount()
         self.assertEqual(new_row_count, row_count-1)
         # after the delete, all data is cleared
         self.assertEqual(self._data(0, 0, self.item_model), None)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self._data(0, 0, self.item_model), 0)
 
@@ -658,7 +658,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.signal_register.clear()
         name = initial_naming_context._bind_object((object(),))
         self.item_model.objectsDeleted(list(name))
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual( len(self.signal_register.data_changes), 0 )
         self.assertEqual( len(self.signal_register.header_changes), 0 )
@@ -675,12 +675,12 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(0, 1, self.item_model), 0)
         # initialy, field is editable
         self._set_data(0, 1, 1, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self.get_data(0, 'y', False), 1)
         self._set_data(0, 0, 11, self.item_model)
         self._set_data(0, 1, 0, self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertEqual(self.get_data(0, 'y', False), 1)
 
@@ -698,7 +698,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         # manipulate the returned list, and see if the original is manipulated
         # as well
         self.gui_run(add_z_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        attribute_item_model.timeout_slot()
+        attribute_item_model.onTimeout()
         self.process()
         self.assertEqual(attribute_item_model.rowCount(), 3)
         self._load_data(attribute_item_model)
@@ -716,7 +716,7 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertIsInstance(initial_naming_context.resolve(tuple(name)), B)
         self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
         self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
 
@@ -802,7 +802,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
         self.item_model.set_value(self.model_context_name)
         self.columns = ('first_name', 'last_name', 'id',)
         self.item_model.add_columns(self.columns)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
 
 
 class QueryQStandardItemModelCase(
@@ -852,7 +852,7 @@ class QueryQStandardItemModelCase(
                 return step[1]['detail']
 
     def test_insert_after_sort(self):
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.assertTrue( self.item_model.columnCount() > 0 )
         self.item_model.sort( 1, Qt.SortOrder.AscendingOrder )
         # check the query
@@ -861,7 +861,7 @@ class QueryQStandardItemModelCase(
         self.assertGreater(rowcount, 1)
         # check the sorting
         self._load_data(self.item_model)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         data0 = self._data( 0, 1, self.item_model )
         data1 = self._data( 1, 1, self.item_model )
@@ -877,7 +877,7 @@ class QueryQStandardItemModelCase(
             if step[0] == action_steps.UpdateProgress.__name__:
                 person_id = step[1]['detail']
         self.assertTrue(person_id)
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         new_rowcount = self.item_model.rowCount()
         self.assertEqual(new_rowcount, rowcount + 1)
@@ -889,9 +889,9 @@ class QueryQStandardItemModelCase(
         self._set_data( new_row, 0, 'Foo', self.item_model )
         self.assertFalse( self._data( new_row, 2, self.item_model ) )
         self._set_data( new_row, 1, 'Bar', self.item_model )
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
-        self.item_model.timeout_slot()
+        self.item_model.onTimeout()
         self.process()
         self.assertTrue( self._data( new_row, 2, self.item_model ) )
         primary_key =  self._data( new_row, 2, self.item_model )
