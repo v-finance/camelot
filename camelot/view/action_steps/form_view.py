@@ -124,7 +124,7 @@ class OpenFormView(AbstractCrudView):
         model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), form)
         model.set_value(step['model_context_name'])
         columns = [ fn for fn, fa in step['fields'].items() ]
-        model.add_columns(columns)
+        model.setColumns(columns)
 
         form.setup(
             title=step['title'], admin_route=step['admin_route'],

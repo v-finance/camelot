@@ -127,7 +127,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         model.set_value(proxy_route)
         self.model_context_name = proxy_route
         columns = [fn for fn, _fa in fields.items()]
-        model.add_columns(columns)
+        model.setColumns(columns)
         self.gui_context_name = gui_naming_context.bind(
             ('transient', str(id(self))), self
         )

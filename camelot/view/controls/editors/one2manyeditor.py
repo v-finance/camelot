@@ -210,7 +210,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
-                model.add_columns(columns)
+                model.setColumns(columns)
                 # this code should be useless, since at this point, the
                 # column count is still 0 ??
                 for i in range(model.columnCount()):
