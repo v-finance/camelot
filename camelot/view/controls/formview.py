@@ -365,7 +365,7 @@ class FormView(AbstractView, GuiContext):
     def current_row_changed( self, current=None, previous=None ):
         if self.widget_mapper is not None:
             current_index = self.widget_mapper.currentIndex()
-            self.model.change_selection_v2([current_index, current_index], current_index, -1)
+            self.model.changeSelection([current_index, current_index], current_index, -1)
 
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Orientation.Horizontal:
