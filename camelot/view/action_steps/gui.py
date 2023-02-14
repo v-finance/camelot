@@ -227,8 +227,8 @@ class MessageBox( ActionStep, DataclassSerializable ):
             ))
         if step.get("icon"):
             message_box.setIconPixmap(FontIcon(**step["icon"]).getQPixmap())
-        message_box.setInformativeText(str(step["informative_text"]))
-        message_box.setDetailedText(str(step["detailed_text"]))
+        message_box.setInformativeText(str(step["informative_text"] or ''))
+        message_box.setDetailedText(str(step["detailed_text"] or ''))
         return message_box
 
     @classmethod
