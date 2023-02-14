@@ -458,7 +458,7 @@ class ListActionsCase(
         open_form_view_action = list_action.OpenFormView()
         for step in open_form_view_action.model_run(model_context, None):
             form = step.render(self.gui_context, step._to_dict())
-            form_value = form.model.get_value()
+            form_value = form.model.value()
         self.assertTrue(isinstance(form_value, list))
 
     @staticmethod

@@ -122,7 +122,7 @@ class OpenFormView(AbstractCrudView):
     def render(self, gui_context_name, step):
         form = FormView()
         model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), form)
-        model.set_value(step['model_context_name'])
+        model.setValue(step['model_context_name'])
         columns = [ fn for fn, fa in step['fields'].items() ]
         model.setColumns(columns)
 

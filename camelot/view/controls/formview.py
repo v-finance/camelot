@@ -355,12 +355,12 @@ class FormView(AbstractView, GuiContext):
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
-        self.run_action(self.sender(), self.gui_context_name, self.model.get_value(), None)
+        self.run_action(self.sender(), self.gui_context_name, self.model.value(), None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.gui_context_name, self.model.get_value(), qaction.data())
+        self.run_action(qaction, self.gui_context_name, self.model.value(), qaction.data())
         
     def current_row_changed( self, current=None, previous=None ):
         if self.widget_mapper is not None:
@@ -380,7 +380,7 @@ class FormView(AbstractView, GuiContext):
         self.widget_mapper.submit()
         action_runner.run_action(
             self.close_route, self.gui_context_name,
-            self.model.get_value(), None
+            self.model.value(), None
         )
 
     def close_view( self, accept ):

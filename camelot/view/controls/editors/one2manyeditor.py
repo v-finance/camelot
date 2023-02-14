@@ -129,7 +129,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         table = self.findChild(QtWidgets.QWidget, 'table')
         model = table.model()
         self.run_action(
-            action_widget, self.list_gui_context_name, model.get_value(), mode
+            action_widget, self.list_gui_context_name, model.value(), mode
         )
 
     @QtCore.qt_slot(int)
@@ -227,13 +227,13 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             # one, still need to set it, since the content of the collection
             # might have changed.
             if value is not None:
-                model.set_value(tuple(value))
+                model.setValue(tuple(value))
             self.update_list_action_states()
 
     def get_value(self):
         model = self.get_model()
         if model is not None:
-            return model.get_value()
+            return model.value()
 
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):
