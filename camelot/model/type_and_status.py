@@ -364,7 +364,10 @@ class ChangeStatus( Action ):
                     subsystem_obj.change_status(new_status)
                     for step in self.after_status_change(model_context, obj):
                         yield step
-                    yield action_steps.UpdateObjects([subsystem_obj])
+                    objects_to_update = [subsystem_obj]
+                    if obj != subsystem_obj:
+                        objects_to_update.append(obj)
+                    yield action_steps.UpdateObjects(objects_to_update)
             yield action_steps.FlushSession(model_context.session)
 
 class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
