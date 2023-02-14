@@ -70,11 +70,19 @@ class Sort( ActionStep, DataclassSerializable ):
     blocking: bool = False
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        model = gui_context.get_item_model()
-        if model is not None:
-            model.sort( step["column"], step["order"] )
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'Sort', serialized_step)
+        else:
+            gui_context = gui_naming_context.resolve(gui_context_name)
+            step = json.loads(serialized_step)
+            model = gui_context.get_model()
+            if model is not None:
+                model.sort(
+                    step["column"],
+                    Qt.SortOrder._value2member_map_[step["order"]]
+                )
+
 
 @dataclass
 class CrudActions(DataclassSerializable):
