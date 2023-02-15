@@ -293,7 +293,7 @@ class FormView(AbstractView, GuiContext):
         self.setLayout( layout )
         self.change_title(title)
 
-        model.action_state_changed_cpp_signal.connect(self.action_state_changed)
+        model.actionStateChanged.connect(self.action_state_changed)
         self.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
         self.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
         self.gui_context_name = gui_naming_context.bind(
