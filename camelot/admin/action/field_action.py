@@ -315,11 +315,12 @@ class AddExistingObject(EditFieldAction):
         super().model_run(model_context, mode)
         field_admin = model_context.field_attributes.get('admin')
         if field_admin is not None:
-            objs_to_add = yield action_steps.SelectObjects(field_admin.get_query(), field_admin)
+            objs_to_add = yield action_steps.SelectObjects(field_admin.get_query(), field_admin, single=False)
+            # filter out objects already in model_context.value
+            objs_to_add = [obj for obj in objs_to_add if obj not in model_context.value]
+            if not objs_to_add:
+                return
             for obj_to_add in objs_to_add:
-                for obj in model_context.value:
-                    if obj_to_add == obj:
-                        return
                 model_context.value.append(obj_to_add)
             yield action_steps.UpdateObjects(objs_to_add)
             for obj_to_add in objs_to_add:

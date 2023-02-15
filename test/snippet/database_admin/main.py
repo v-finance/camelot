@@ -48,7 +48,7 @@ class DatabaseAdministrator(Application):
         table_admin = TableAdmin(model_context.admin, Table)
         while True:
             LOGGER.info('show all tables')
-            selected_tables = yield action_steps.SelectObjects(table_admin, value=tables)
+            selected_tables = yield action_steps.SelectObjects(table_admin, value=tables, single=False)
             for table in selected_tables:
                 LOGGER.info('table {0.name} was selected'.format(table))
                 
