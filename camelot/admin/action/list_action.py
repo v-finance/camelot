@@ -878,7 +878,7 @@ class SetFilters(Action, AbstractModelFilter):
                     query = admin.get_query()
                     if filter_field_strategy.where is not None:
                         query = query.filter(filter_field_strategy.where)
-                    objects = yield action_steps.SelectObjects(query, admin, single=False)
+                    objects = yield action_steps.SelectObjects(query, admin)
                     filter_value.set_operands(*objects)
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
                 else:
