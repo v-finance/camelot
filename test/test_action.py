@@ -772,7 +772,7 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         generator = select_object.model_run(self.director_context, mode=None)
         for step in generator:
             if isinstance(step, action_steps.SelectObjects):
-                generator.send([person])
+                generator.send(person)
                 object_selected = True
         self.assertTrue(object_selected)
         self.assertEqual(self.movie.director, person)
