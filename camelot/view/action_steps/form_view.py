@@ -122,9 +122,9 @@ class OpenFormView(AbstractCrudView):
     def render(self, gui_context_name, step):
         form = FormView()
         model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), form)
-        model.set_value(step['model_context_name'])
+        model.setValue(step['model_context_name'])
         columns = [ fn for fn, fa in step['fields'].items() ]
-        model.add_columns(columns)
+        model.setColumns(columns)
 
         form.setup(
             title=step['title'], admin_route=step['admin_route'],
@@ -159,7 +159,7 @@ class ChangeFormIndex(ActionStep, DataclassSerializable):
         # submit all pending requests to the model thread
         if is_deleted(gui_context.widget_mapper):
             return
-        gui_context.widget_mapper.model().timeout_slot()
+        gui_context.widget_mapper.model().onTimeout()
         # wait until they are handled
         super(ChangeFormIndex, self).gui_run(gui_context)
 

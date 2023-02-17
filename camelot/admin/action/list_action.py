@@ -235,6 +235,8 @@ class DeleteSelection( EditAction ):
                                                    2 * model_context.selection_count,
                                                    _('Removing') )
                 model_context.admin.delete(obj)
+        else:
+            yield action_steps.RefreshItemView()
         yield action_steps.UpdateObjects(depending_objects)
         yield action_steps.FlushSession( model_context.session )
 

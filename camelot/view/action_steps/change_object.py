@@ -124,10 +124,10 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         for action_route, action_state in action_states:
             self.set_action_state(self, tuple(action_route), action_state)
         # set the value last, so the validity can be updated
-        model.set_value(proxy_route)
+        model.setValue(proxy_route)
         self.model_context_name = proxy_route
         columns = [fn for fn, _fa in fields.items()]
-        model.add_columns(columns)
+        model.setColumns(columns)
         self.gui_context_name = gui_naming_context.bind(
             ('transient', str(id(self))), self
         )

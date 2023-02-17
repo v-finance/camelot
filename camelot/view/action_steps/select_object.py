@@ -48,12 +48,15 @@ class SelectObjects(OpenTableView):
         be made.  If none is given, the default query from the admin is taken.
     """
 
-    verbose_name_plural: str = field(init=False)
+    verbose_name: str = field(init=False)
+    single: bool = field(init=False)
+
     blocking: bool = True
 
     def __post_init__(self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
-        self.verbose_name_plural = str(admin.get_verbose_name_plural())
+        self.single = False
+        self.verbose_name = str(admin.get_verbose_name_plural())
         self.action_states = list()
         self._add_action_states(
             initial_naming_context.resolve(self.model_context_name),
@@ -90,3 +93,17 @@ class SelectObjects(OpenTableView):
                 for obj in proxy[first_row:last_row + 1]:
                     objects.append(obj)
         return objects
+
+@dataclass
+class SelectObject(SelectObjects):
+
+    def __post_init__(self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
+        self.single = True
+        self.verbose_name = str(admin.get_verbose_name())
+
+    @classmethod
+    def deserialize_result(cls, gui_context, response):
+        objects = super().deserialize_result(gui_context, response)
+        if objects:
+            return objects[0]
