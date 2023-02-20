@@ -88,7 +88,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         )
         self.action_routes = dict()
         model = get_qml_root_backend().createModel(get_settings_group(admin_route), table)
-        model.action_state_changed_cpp_signal.connect(self.action_state_changed)
+        model.actionStateChanged.connect(self.action_state_changed)
         table.setModel(model)
         self.admin_route = admin_route
         layout.addWidget(table)
@@ -129,7 +129,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         table = self.findChild(QtWidgets.QWidget, 'table')
         model = table.model()
         self.run_action(
-            action_widget, self.list_gui_context_name, model.get_value(), mode
+            action_widget, self.list_gui_context_name, model.value(), mode
         )
 
     @QtCore.qt_slot(int)
@@ -210,7 +210,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
-                model.add_columns(columns)
+                model.setColumns(columns)
                 # this code should be useless, since at this point, the
                 # column count is still 0 ??
                 for i in range(model.columnCount()):
@@ -227,13 +227,13 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             # one, still need to set it, since the content of the collection
             # might have changed.
             if value is not None:
-                model.set_value(tuple(value))
+                model.setValue(tuple(value))
             self.update_list_action_states()
 
     def get_value(self):
         model = self.get_model()
         if model is not None:
-            return model.get_value()
+            return model.value()
 
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):
@@ -241,7 +241,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         # close the editor to prevent certain Qt crashes
         table.close_editor()
         # make sure ChangeSelection action is executed before list action
-        table.model().timeout_slot()
+        table.model().onTimeout()
         self._run_list_context_action(self, None)
 
     @QtCore.qt_slot()

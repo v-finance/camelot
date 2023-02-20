@@ -49,7 +49,7 @@ from .orm import (
     UpdateObjects
 )
 from .select_file import SelectFile, SelectDirectory, SaveFile
-from .select_object import SelectObjects
+from .select_object import SelectObjects, SelectObject
 from .update_progress import UpdateProgress, PushProgressLevel, PopProgressLevel
 from .crud import (
     SetColumns, Completion, CompletionValue, Created, RowCount, Update, ChangeSelection
@@ -92,6 +92,7 @@ __all__ = [
     SelectFile.__name__,
     SelectItem.__name__,
     SelectObjects.__name__,
+    SelectObject.__name__,
     SetColumns.__name__,
     Sort.__name__,
     StartProfiler.__name__,

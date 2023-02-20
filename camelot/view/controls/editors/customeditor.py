@@ -82,6 +82,8 @@ class AbstractCustomEditor(object):
 
     def __init__(self):
         self.setProperty('value_loading', True)
+        # self.isVisible() is not updated directly (e.g. the ancestors are not (yet) visible)
+        self._visible = True
         self.nullable = True
         self.field_label = None
 
@@ -89,7 +91,7 @@ class AbstractCustomEditor(object):
         self.field_label = label
         # set label might be called after a set_visible/set_nullable, so
         # immediately update the attributes of the label
-        self.field_label.set_visible(self.isVisible())
+        self.field_label.set_visible(self._visible)
         self.field_label.set_nullable(self.nullable)
 
     def set_value(self, value):
@@ -117,6 +119,7 @@ class AbstractCustomEditor(object):
         self.setToolTip(str(tooltip or ''))
 
     def set_visible(self, visible):
+        self._visible = visible
         self.setVisible(visible)
         if self.field_label is not None:
             self.field_label.set_visible(visible)

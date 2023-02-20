@@ -103,14 +103,13 @@ class SelectObject(EditFieldAction):
         from camelot.view import action_steps
         field_admin = model_context.field_attributes.get('admin')
         if field_admin is not None:
-            selected_objects = yield action_steps.SelectObjects(field_admin.get_query(), field_admin)
-            for selected_object in selected_objects:
+            selected_object = yield action_steps.SelectObject(field_admin.get_query(), field_admin)
+            if selected_object is not None:
                 model_context.admin.set_field_value(
                     model_context.obj, model_context.field, selected_object
                 )
                 model_context.admin.set_defaults(model_context.obj)
                 yield None
-                break
 
     def get_state(self, model_context):
         state = super().get_state(model_context)
@@ -316,10 +315,11 @@ class AddExistingObject(EditFieldAction):
         field_admin = model_context.field_attributes.get('admin')
         if field_admin is not None:
             objs_to_add = yield action_steps.SelectObjects(field_admin.get_query(), field_admin)
+            # filter out objects already in model_context.value
+            objs_to_add = [obj for obj in objs_to_add if obj not in model_context.value]
+            if not objs_to_add:
+                return
             for obj_to_add in objs_to_add:
-                for obj in model_context.value:
-                    if obj_to_add == obj:
-                        return
                 model_context.value.append(obj_to_add)
             yield action_steps.UpdateObjects(objs_to_add)
             for obj_to_add in objs_to_add:

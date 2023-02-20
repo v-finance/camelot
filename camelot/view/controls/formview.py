@@ -293,7 +293,7 @@ class FormView(AbstractView, GuiContext):
         self.setLayout( layout )
         self.change_title(title)
 
-        model.action_state_changed_cpp_signal.connect(self.action_state_changed)
+        model.actionStateChanged.connect(self.action_state_changed)
         self.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
         self.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
         self.gui_context_name = gui_naming_context.bind(
@@ -355,17 +355,17 @@ class FormView(AbstractView, GuiContext):
 
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
-        self.run_action(self.sender(), self.gui_context_name, self.model.get_value(), None)
+        self.run_action(self.sender(), self.gui_context_name, self.model.value(), None)
 
     @QtCore.qt_slot()
     def menu_triggered(self):
         qaction = self.sender()
-        self.run_action(qaction, self.gui_context_name, self.model.get_value(), qaction.data())
+        self.run_action(qaction, self.gui_context_name, self.model.value(), qaction.data())
         
     def current_row_changed( self, current=None, previous=None ):
         if self.widget_mapper is not None:
             current_index = self.widget_mapper.currentIndex()
-            self.model.change_selection_v2([current_index, current_index], current_index, -1)
+            self.model.changeSelection([current_index, current_index], current_index, -1)
 
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Orientation.Horizontal:
@@ -380,7 +380,7 @@ class FormView(AbstractView, GuiContext):
         self.widget_mapper.submit()
         action_runner.run_action(
             self.close_route, self.gui_context_name,
-            self.model.get_value(), None
+            self.model.value(), None
         )
 
     def close_view( self, accept ):
