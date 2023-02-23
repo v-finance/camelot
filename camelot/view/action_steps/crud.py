@@ -38,6 +38,7 @@ class DataColumn(ActionStep, DataclassSerializable):
     width: int
     delegate_type: str
     delegate_state: Dict[str, Any]
+    default_visible: bool # TableView
 
 
 @dataclass
@@ -45,19 +46,22 @@ class SetColumns(ActionStep, DataclassSerializable):
 
     blocking: ClassVar[bool] = False
 
+    admin: InitVar[Any]
     static_field_attributes: InitVar[Any]
 
     columns: List[DataColumn] = field(default_factory=list)
 
-    def __post_init__(self, static_field_attributes):
+    def __post_init__(self, admin, static_field_attributes):
         for fa in static_field_attributes:
+            field_name = fa['field_name']
             self.columns.append(DataColumn(
-                field_name = fa['field_name'],
+                field_name = field_name,
                 verbose_name = str(fa['name']),
                 nullable = fa.get('nullable', True),
                 width = fa['column_width'],
                 delegate_type = fa['delegate'].__name__,
-                delegate_state = self.get_delegate_state(fa)
+                delegate_state = self.get_delegate_state(fa),
+                default_visible = field_name in admin.get_columns()
             ))
 
     def get_delegate_state(self, static_field_attributes):

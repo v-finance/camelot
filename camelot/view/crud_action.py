@@ -502,7 +502,7 @@ class SetColumns(Action):
         #for fa in model_context.static_field_attributes:
             #included_attrs = ['name', 'field_name', 'editable', 'nullable', 'colmn_width']
             #static_field_attributes.append({attr: fa[attr] for attr in included_attrs})
-        yield action_steps.SetColumns(model_context.static_field_attributes)
+        yield action_steps.SetColumns(model_context.admin, model_context.static_field_attributes)
 
 setcolumns_name = crud_action_context.bind(SetColumns.name, SetColumns(), True)
 
