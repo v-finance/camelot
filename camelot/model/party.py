@@ -276,8 +276,10 @@ class City( GeographicBoundary ):
         return cls.administrative_translation(language='fr_BE')
     
     def __str__(self):
-        if None not in (self.code, self.name, self.country):
-            return u'{0.code} {0.name} [{1.code}]'.format( self, self.country )
+        if None not in (self.name, self.country):
+            if self.code is not None:
+                return u'{0.code} {0.name} [{1.code}]'.format(self, self.country)
+            return u'{0.name} [{1.code}]'.format(self, self.country )
         return u''
     
     @classmethod
