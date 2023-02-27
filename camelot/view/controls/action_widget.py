@@ -51,34 +51,38 @@ class AbstractActionWidget(object):
         # modes.
         cls.set_widget_state(toolbutton, state)
         cls._set_menu(toolbutton, state, toolbutton, slot)
-        if state['verbose_name'] != None:
+        if state['verbose_name'] is not None:
             toolbutton.setText( str( state['verbose_name'] ) )
-        if state['icon'] != None:
+        if state['icon'] is not None:
             icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
             toolbutton.setIcon( from_admin_icon(icon).getQIcon() )
         else:
             toolbutton.setIcon( QtGui.QIcon() )
-        if state['tooltip'] != None:
+        if state['tooltip'] is not None:
             toolbutton.setToolTip( str( state['tooltip'] ) )
         else:
             toolbutton.setToolTip( '' )
         if state['modes']:
             toolbutton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        if state['shortcut'] is not None:
+            toolbutton.setShortcut(state['shortcut'])
 
     @classmethod
     def set_pushbutton_state(cls, push_button, state, parent, slot):
         cls.set_widget_state(push_button, state)
-        if state['verbose_name'] != None:
+        if state['verbose_name'] is not None:
             push_button.setText( str( state['verbose_name'] ) )
-        if state['icon'] != None:
+        if state['icon'] is not None:
             icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
             push_button.setIcon( from_admin_icon(icon).getQIcon() )
         else:
             push_button.setIcon( QtGui.QIcon() )
-        if state['tooltip'] != None:
+        if state['tooltip'] is not None:
             push_button.setToolTip( str( state['tooltip'] ) )
         else:
             push_button.setToolTip( '' )
+        if state['shortcut'] is not None:
+            push_button.setShortcut(state['shortcut'])
         cls._set_menu(push_button, state, parent, slot)
 
     @classmethod
