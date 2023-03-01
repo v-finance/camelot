@@ -146,7 +146,12 @@ class ItemModelCaseMixin(object):
         index = item_model.index( row, column )
         if validate_index and not index.isValid():
             raise Exception('Index ({0},{1}) is not valid with {2} rows, {3} columns'.format(index.row(), index.column(), item_model.rowCount(), item_model.columnCount()))
-        return item_model.setData( index, value, role )
+        result = item_model.setData( index, value, role )
+        item_model.onTimeout()
+        self.process()
+        item_model.onTimeout()
+        self.process()
+        return result
 
     def _header_data(self, section, orientation, role, item_model):
         return item_model.headerData(section, orientation, role)
@@ -476,30 +481,18 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self._load_data(self.item_model)
         self._set_data(0, 0, 20, self.item_model)
         self._set_data(0, 1, 10, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.item_model.onTimeout()
-        self.process()
         # x is set first, so y becomes not
         # editable and remains at its value
         self.assertEqual(self._data(0, 0, self.item_model), 20)
         self.assertEqual(self._data(0, 1, self.item_model),  0)
         self._set_data(0, 0, 5, self.item_model)
         self._set_data(0, 1, 10, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.item_model.onTimeout()
-        self.process()
         # x is set first, so y becomes
         # editable and its value is changed
         self.assertEqual(self._data(0, 0, self.item_model), 5)
         self.assertEqual(self._data(0, 1, self.item_model), 10)
         self._set_data(0, 1, 15, self.item_model)
         self._set_data(0, 0, 20, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.item_model.onTimeout()
-        self.process()
         # x is set last, so y stays
         # editable and its value is changed
         self.assertEqual(self._data(0, 0, self.item_model), 20)
@@ -525,10 +518,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data( 1, 0, self.item_model), 1)
         # now change the data
         self._set_data(0, 0, 7, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.item_model.onTimeout()
-        self.process()
         self.assertEqual(self._data(0, 0, self.item_model), 7)
         self.assertEqual(self.get_data(1, 'x', False), 7)
 
@@ -540,7 +529,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(0, 0, self.item_model), 0)
         self._set_data(0, 0, 10, self.item_model)
         delete(self.qt_parent)
-        self.process()
         self.assertEqual(self.get_data(0, 'x', False), 10)
 
     def test_data_changed( self ):
@@ -553,10 +541,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(2, 0, self.item_model), 2)
         self.signal_register.clear()
         self._set_data( 0, 0, 8, self.item_model )
-        self.item_model.onTimeout()
-        self.process()
-        self.item_model.onTimeout()
-        self.process()
         self.assertEqual( len(self.signal_register.data_changes), 1 )
         for changed_range in self.signal_register.data_changes:
             for index in changed_range:
@@ -675,8 +659,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual(self._data(0, 1, self.item_model), 0)
         # initialy, field is editable
         self._set_data(0, 1, 1, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
         self.assertEqual(self.get_data(0, 'y', False), 1)
         self._set_data(0, 0, 11, self.item_model)
         self._set_data(0, 1, 0, self.item_model)
@@ -716,8 +698,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertIsInstance(initial_naming_context.resolve(tuple(name)), B)
         self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
         self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
-        self.item_model.onTimeout()
-        self.process()
         self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
 
 
@@ -889,10 +869,6 @@ class QueryQStandardItemModelCase(
         self._set_data( new_row, 0, 'Foo', self.item_model )
         self.assertFalse( self._data( new_row, 2, self.item_model ) )
         self._set_data( new_row, 1, 'Bar', self.item_model )
-        self.item_model.onTimeout()
-        self.process()
-        self.item_model.onTimeout()
-        self.process()
         self.assertTrue( self._data( new_row, 2, self.item_model ) )
         primary_key =  self._data( new_row, 2, self.item_model )
         self.assertEqual( self.get_data(primary_key, 'first_name'), 'Foo')
