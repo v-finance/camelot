@@ -160,7 +160,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         if editable:
             item.flags = item.flags | Qt.ItemFlag.ItemIsEditable
         else:
-            item.flags = item.flags ^ Qt.ItemFlag.ItemIsEditable
+            item.flags = item.flags & ~Qt.ItemFlag.ItemIsEditable
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
