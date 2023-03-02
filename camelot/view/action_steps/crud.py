@@ -52,6 +52,7 @@ class SetColumns(ActionStep, DataclassSerializable):
     columns: List[DataColumn] = field(default_factory=list)
 
     def __post_init__(self, admin, static_field_attributes):
+        columns = admin.get_columns()
         for fa in static_field_attributes:
             field_name = fa['field_name']
             self.columns.append(DataColumn(
@@ -61,7 +62,7 @@ class SetColumns(ActionStep, DataclassSerializable):
                 width = fa['column_width'],
                 delegate_type = fa['delegate'].__name__,
                 delegate_state = self.get_delegate_state(fa),
-                default_visible = field_name in admin.get_columns()
+                default_visible = field_name in columns
             ))
 
     def get_delegate_state(self, static_field_attributes):

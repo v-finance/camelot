@@ -836,6 +836,7 @@ class SetFilters(Action, AbstractModelFilter):
     to apply filters from within its widget.
     """
 
+    shortcut = QtGui.QKeySequence.StandardKey.FindNext
     render_hint = RenderHint.TOOL_BUTTON
     verbose_name = _('Find')
     tooltip = _('Filter the data')
