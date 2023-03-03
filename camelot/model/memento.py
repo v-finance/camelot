@@ -58,6 +58,8 @@ from .authentication import AuthenticationMechanism
 class PreviousAttribute( object ):
     """Helper class to display previous attributes"""
 
+    __types__ = None
+
     def __init__( self, attribute, previous_value ):
         self.attribute = attribute
         self.previous_value = six.text_type( previous_value )
