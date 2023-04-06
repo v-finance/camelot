@@ -362,12 +362,10 @@ class EntityMeta( DeclarativeMeta ):
         if 'polymorphic_on' in cls.__mapper_args__ and primary_discriminator in cls.__mapper__.polymorphic_map:
             return cls.__mapper__.polymorphic_map[primary_discriminator].entity
         if cls.__types__ is not None:
-            groups = cls.__type_groups__.__members__ if cls.__type_groups__ is not None else []
-            types = cls.__types__
-            if primary_discriminator is None or primary_discriminator in types.__members__ or primary_discriminator in groups:
-                group = primary_discriminator
-                if groups and primary_discriminator in types.__members__ and types[primary_discriminator].grouped_by is not None:
-                    group = types[primary_discriminator].grouped_by.name
+            if primary_discriminator in cls.__types__:
+                type_group = None
+                if cls.__type_groups__ is not None:
+                    type_group = cls.__types__[primary_discriminator].grouped_by
 
                 # Support passing secondary discriminator arguments both on the instance as the class level.
                 secondary_discriminators = [
@@ -379,16 +377,13 @@ class EntityMeta( DeclarativeMeta ):
                             return cls.__discriminator_cls_registry__[primary_discriminator][(*secondary_discriminators,)]
                     else:
                         return cls.__discriminator_cls_registry__[primary_discriminator]
-                if group in cls.__discriminator_cls_registry__:
-                    if isinstance(cls.__discriminator_cls_registry__[group], dict):
-                        if (*secondary_discriminators,) in cls.__discriminator_cls_registry__[group]:
-                            return cls.__discriminator_cls_registry__[group][(*secondary_discriminators,)]
+                if type_group is not None and type_group.name in cls.__discriminator_cls_registry__:
+                    if isinstance(cls.__discriminator_cls_registry__[type_group.name], dict):
+                        if (*secondary_discriminators,) in cls.__discriminator_cls_registry__[type_group.name]:
+                            return cls.__discriminator_cls_registry__[type_group.name][(*secondary_discriminators,)]
                     else:
-                        return cls.__discriminator_cls_registry__[group]
-                return cls.__discriminator_cls_registry__.get(None)
-
-            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
-            raise Exception("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
+                        return cls.__discriminator_cls_registry__[type_group.name]
+            return cls.__discriminator_cls_registry__.get(None)
 
     def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
