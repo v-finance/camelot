@@ -45,7 +45,6 @@ class IntegerEditor(CustomEditor):
     
     def __init__(self, parent = None,
                        calculator = True,
-                       decimal = False,
                        option = None,
                        field_name = 'integer'):
         CustomEditor.__init__(self, parent)
@@ -85,7 +84,6 @@ class IntegerEditor(CustomEditor):
         self.setFocusProxy(spin_box)
         self.setLayout(layout)
         self.option = option
-        self.decimal = decimal
 
     def set_suffix(self, suffix):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
@@ -149,9 +147,6 @@ class IntegerEditor(CustomEditor):
             value = int(spin_box.value())
             if value==int(spin_box.minimum()):
                 return None
-            elif self.decimal:
-                import decimal
-                return decimal.Decimal(value)
             return value
 
     def set_enabled(self, editable=True):
