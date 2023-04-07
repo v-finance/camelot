@@ -74,15 +74,6 @@ class EntityClsRegistry(object):
         """
         self._registry = {disc_type: dict() for disc_type in self.DiscriminatorType}
 
-    def has(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
-        """
-        Return True if a class registration exists for the given discriminatory values.
-        """
-        assert discriminator_type in self.DiscriminatorType
-        return primary_discriminator in self._registry[discriminator_type] and \
-               (not secondary_discriminators or \
-                (*secondary_discriminators,) in self._registry[discriminator_type][primary_discriminator])
-
     def register(self, cls, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
         """
         Register a class for the given discriminatory values.
@@ -91,17 +82,17 @@ class EntityClsRegistry(object):
         if secondary_discriminators:
             # With secondary discriminators, the primary discriminator should resolve to a map of its secondary discriminator,
             # allowing for multiple discriminated classes for the same primary discriminator.
-            if not self.has(primary_discriminator, discriminator_type=discriminator_type):
+            if primary_discriminator not in self._registry[discriminator_type]:
                 self._registry[discriminator_type][primary_discriminator] = dict()
             assert isinstance(self._registry[discriminator_type][primary_discriminator], dict),\
                    'Already a class registered for the single primary discriminatory type {0}. Can not be combined with a multi-level discriminator registration.'.format(primary_discriminator)
-            assert not self.has(primary_discriminator, *secondary_discriminators, discriminator_type=discriminator_type),\
+            assert (*secondary_discriminators,) not in self._registry[discriminator_type][primary_discriminator],\
                    'Already a class registered for multi-level discriminators {}'.format(tuple(primary_discriminator, *secondary_discriminators))
             self._registry[discriminator_type][primary_discriminator][(*secondary_discriminators,)] = cls
         else:
             # With only a primary discriminator value, the registered class should resolve to it directly,
             # so there should not already by an entry present:
-            assert not self.has(primary_discriminator, discriminator_type=discriminator_type), \
+            assert primary_discriminator not in self._registry[discriminator_type], \
                    'Already a {} class registered for discriminatory type {0}'.format(discriminator_type, primary_discriminator)
             self._registry[discriminator_type][primary_discriminator] = cls
 
@@ -109,8 +100,17 @@ class EntityClsRegistry(object):
         """
         Return the class registration for the given discriminatory values, if it exists.
         """
-        if self.has(primary_discriminator, *secondary_discriminators, discriminator_type=discriminator_type):
-            return self._registry[discriminator_type][primary_discriminator][(*secondary_discriminators,)]
+        if primary_discriminator in self._registry[discriminator_type]:
+            if isinstance(self._registry[discriminator_type][primary_discriminator], dict):
+                return self._registry[discriminator_type][primary_discriminator].get((*secondary_discriminators,))
+            return self._registry[discriminator_type][primary_discriminator]
+
+    def has(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
+        """
+        Return True if a class registration exists for the given discriminatory values.
+        """
+        assert discriminator_type in self.DiscriminatorType
+        return self.get(primary_discriminator, *secondary_discriminators, discriminator_type=discriminator_type) is not None
 
 class EntityMeta( DeclarativeMeta ):
     """
@@ -440,8 +440,9 @@ class EntityMeta( DeclarativeMeta ):
                        type_group.name, *secondary_discriminators, discriminator_type=EntityClsRegistry.DiscriminatorType.group)) is not None:
                     return registered_class
 
-                # Finally, return a default class registration if it exists.
-                return cls.__discriminator_cls_registry__.get(None)
+            # If no other more concrete class registration is found, return a default class registration if it exists.
+            if (registered_class := cls.__discriminator_cls_registry__.get(None)) is not None:
+                return registered_class
 
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
             raise Exception("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
