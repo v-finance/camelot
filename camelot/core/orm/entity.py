@@ -75,15 +75,6 @@ class EntityClsRegistry(object):
         """
         self._registry = {disc_type: dict() for disc_type in self.DiscriminatorType}
 
-    def has(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
-        """
-        Return True if a class registration exists for the given discriminatory values.
-        """
-        assert discriminator_type in self.DiscriminatorType
-        return primary_discriminator in self._registry[discriminator_type] and \
-               (not secondary_discriminators or \
-                (*secondary_discriminators,) in self._registry[discriminator_type][primary_discriminator])
-
     def register(self, cls, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
         """
         Register a class for the given discriminatory values.
@@ -94,6 +85,22 @@ class EntityClsRegistry(object):
             self._registry[discriminator_type][primary_discriminator][(*secondary_discriminators,)] = cls
         else:
             self._registry[discriminator_type][primary_discriminator] = cls
+
+    def has(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
+        """
+        Return True if a class registration exists for the given discriminatory values.
+        """
+        assert discriminator_type in self.DiscriminatorType
+        return primary_discriminator in self._registry[discriminator_type] and \
+               (not secondary_discriminators or \
+                (*secondary_discriminators,) in self._registry[discriminator_type][primary_discriminator])
+
+    def get(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
+        """
+        Return the class registration for the given discriminatory values, if it exists.
+        """
+        if self.has(primary_discriminator, *secondary_discriminators, discriminator_type=discriminator_type):
+            return self._registry[discriminator_type][primary_discriminator][(*secondary_discriminators,)]
 
 class EntityMeta( DeclarativeMeta ):
     """
