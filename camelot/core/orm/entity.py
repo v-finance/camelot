@@ -73,8 +73,9 @@ class EntityClsRegistry(object):
         Construct a new :class:`.EntityClsRegistry`.
         """
         self._registry = {disc_type: dict() for disc_type in self.DiscriminatorType}
+        self._exclusive = {disc_type: dict() for disc_type in self.DiscriminatorType}
 
-    def register(self, cls, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
+    def register(self, cls, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single, exclusive=False):
         """
         Register a class for the given discriminatory values.
         """
@@ -88,7 +89,11 @@ class EntityClsRegistry(object):
                    'Already a class registered for the single primary discriminatory type {0}. Can not be combined with a multi-level discriminator registration.'.format(primary_discriminator)
             assert (*secondary_discriminators,) not in self._registry[discriminator_type][primary_discriminator],\
                    'Already a class registered for multi-level discriminators {}'.format(tuple(primary_discriminator, *secondary_discriminators))
+            assert primary_discriminator not in self._exclusive[discriminator_type],\
+                   'Already a class registered exclusively for multi-level discriminators {}'.format(tuple(primary_discriminator, ))
             self._registry[discriminator_type][primary_discriminator][(*secondary_discriminators,)] = cls
+            if exclusive:
+                self._exclusive[discriminator_type][primary_discriminator] = (*secondary_discriminators,)
         else:
             # With only a primary discriminator value, the registered class should resolve to it directly,
             # so there should not already by an entry present:
@@ -102,6 +107,8 @@ class EntityClsRegistry(object):
         """
         if primary_discriminator in self._registry[discriminator_type]:
             if isinstance(self._registry[discriminator_type][primary_discriminator], dict):
+                if primary_discriminator in self._exclusive[discriminator_type]:
+                    return list(self._registry[discriminator_type][primary_discriminator].values())[0]
                 return self._registry[discriminator_type][primary_discriminator].get((*secondary_discriminators,))
             return self._registry[discriminator_type][primary_discriminator]
 
@@ -451,7 +458,7 @@ class EntityMeta( DeclarativeMeta ):
     
     def get_cls_discriminator(cls):
         """
-        Retrieve the clas
+        Retrieve this entity class discriminator definition.
         """
         discriminator = cls._get_entity_arg('discriminator')
         if discriminator is not None:
@@ -483,6 +490,10 @@ class EntityMeta( DeclarativeMeta ):
                     entity = secondary_discriminator_prop.prop.entity.entity
                     assert isinstance(secondary_discriminator_value, entity), '{} is not a valid secondary discriminator value for this entity. Must be of type {}'.format(secondary_discriminator_value, entity)
                     secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
+
+    def get_secondary_discriminator_types(cls):
+        (_, *secondary_discriminators) = cls.get_cls_discriminator()
+        return [secondary_discriminator.prop.entity.entity for secondary_discriminator in secondary_discriminators]
 
     def get_ranked_by(cls):
         ranked_by = cls._get_entity_arg('ranked_by')
