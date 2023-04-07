@@ -491,6 +491,10 @@ class EntityMeta( DeclarativeMeta ):
                     assert isinstance(secondary_discriminator_value, entity), '{} is not a valid secondary discriminator value for this entity. Must be of type {}'.format(secondary_discriminator_value, entity)
                     secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
 
+    def get_secondary_discriminator_types(cls):
+        (_, *secondary_discriminators) = cls.get_cls_discriminator()
+        return [secondary_discriminator.prop.entity.entity for secondary_discriminator in secondary_discriminators]
+
     def get_ranked_by(cls):
         ranked_by = cls._get_entity_arg('ranked_by')
         if ranked_by is not None:
