@@ -38,6 +38,8 @@ import datetime
 import logging
 import re
 
+from enum import Enum
+
 from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
                                              DeclarativeMeta )
@@ -50,6 +52,48 @@ from . statements import MUTATORS
 from . import Session, options
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
+
+class EntityClsRegistry(object):
+    """
+    A Registry that stores class registration for
+    discriminatory values of a :class:`.Entity` class.
+    """
+
+    class DiscriminatorType(Enum):
+        """
+        Enumeration that described the aggregation level of
+        a class registration's discriminator value.
+        """
+
+        single =  1
+        group =   2
+        default = 3
+
+    def __init__(self):
+        """
+        Construct a new :class:`.EntityClsRegistry`.
+        """
+        self._registry = {disc_type: dict() for disc_type in self.DiscriminatorType}
+
+    def has(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
+        """
+        Return True if a class registration exists for the given discriminatory values.
+        """
+        assert discriminator_type in self.DiscriminatorType
+        return primary_discriminator in self._registry[discriminator_type] and \
+               (not secondary_discriminators or \
+                (*secondary_discriminators,) in self._registry[discriminator_type][primary_discriminator])
+
+    def register(self, cls, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
+        """
+        Register a class for the given discriminatory values.
+        """
+        assert discriminator_type in self.DiscriminatorType
+        if secondary_discriminators:
+            self._registry[discriminator_type][primary_discriminator] = dict()
+            self._registry[discriminator_type][primary_discriminator][(*secondary_discriminators,)] = cls
+        else:
+            self._registry[discriminator_type][primary_discriminator] = cls
 
 class EntityMeta( DeclarativeMeta ):
     """
@@ -377,13 +421,16 @@ class EntityMeta( DeclarativeMeta ):
                             return cls.__discriminator_cls_registry__[primary_discriminator][(*secondary_discriminators,)]
                     else:
                         return cls.__discriminator_cls_registry__[primary_discriminator]
-                if type_group is not None and type_group.name in cls.__discriminator_cls_registry__:
-                    if isinstance(cls.__discriminator_cls_registry__[type_group.name], dict):
-                        if (*secondary_discriminators,) in cls.__discriminator_cls_registry__[type_group.name]:
-                            return cls.__discriminator_cls_registry__[type_group.name][(*secondary_discriminators,)]
+                if type_group is not None and type_group in cls.__discriminator_cls_registry__:
+                    if isinstance(cls.__discriminator_cls_registry__[type_group], dict):
+                        if (*secondary_discriminators,) in cls.__discriminator_cls_registry__[type_group]:
+                            return cls.__discriminator_cls_registry__[type_group][(*secondary_discriminators,)]
                     else:
-                        return cls.__discriminator_cls_registry__[type_group.name]
-            return cls.__discriminator_cls_registry__.get(None)
+                        return cls.__discriminator_cls_registry__[type_group]
+                return cls.__discriminator_cls_registry__.get(None)
+
+            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
+            raise Exception("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
 
     def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
