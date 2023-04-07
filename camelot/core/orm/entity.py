@@ -93,7 +93,7 @@ class EntityClsRegistry(object):
             # With only a primary discriminator value, the registered class should resolve to it directly,
             # so there should not already by an entry present:
             assert primary_discriminator not in self._registry[discriminator_type], \
-                   'Already a {} class registered for discriminatory type {0}'.format(discriminator_type, primary_discriminator)
+                   'Already a {} class registered for discriminatory type {}'.format(discriminator_type, primary_discriminator)
             self._registry[discriminator_type][primary_discriminator] = cls
 
     def get(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
