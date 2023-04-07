@@ -67,7 +67,6 @@ class EntityClsRegistry(object):
 
         single =  1
         group =   2
-        default = 3
 
     def __init__(self):
         """
@@ -279,7 +278,7 @@ class EntityMeta( DeclarativeMeta ):
                 if hasattr(base, '__discriminator_cls_registry__'):
                     break
             else:
-                dict_.setdefault('__discriminator_cls_registry__', dict())
+                dict_.setdefault('__discriminator_cls_registry__', EntityClsRegistry())
         
             entity_args = dict_.get('__entity_args__')
             if entity_args is not None:
@@ -296,7 +295,7 @@ class EntityMeta( DeclarativeMeta ):
                     dict_['__types__'] = discriminator_col.type.enum
                     if hasattr(discriminator_col.type.enum, 'get_groups'):
                         dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
-                    dict_['__discriminator_cls_registry__'] = dict()
+                    dict_['__discriminator_cls_registry__'] = EntityClsRegistry()
                     assert len(secondary_discriminators) <= 1, 'Only a single secondary discriminator is currently supported'
                     for secondary_discriminator in secondary_discriminators:
                         assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must be instances of `orm.properties.RelationshipProperty`'
@@ -414,26 +413,23 @@ class EntityMeta( DeclarativeMeta ):
             return cls.__mapper__.polymorphic_map[primary_discriminator].entity
         if cls.__types__ is not None:
             if primary_discriminator in cls.__types__:
-                type_group = None
-                if cls.__type_groups__ is not None:
-                    type_group = cls.__types__[primary_discriminator].grouped_by
-
                 # Support passing secondary discriminator arguments both on the instance as the class level.
                 secondary_discriminators = [
                     secondary_discriminator.__class__ if not isinstance(secondary_discriminator, EntityMeta) \
                     else secondary_discriminator for secondary_discriminator in secondary_discriminators]
-                if primary_discriminator in cls.__discriminator_cls_registry__:
-                    if isinstance(cls.__discriminator_cls_registry__[primary_discriminator], dict):
-                        if (*secondary_discriminators,) in cls.__discriminator_cls_registry__[primary_discriminator]:
-                            return cls.__discriminator_cls_registry__[primary_discriminator][(*secondary_discriminators,)]
-                    else:
-                        return cls.__discriminator_cls_registry__[primary_discriminator]
-                if type_group is not None and type_group in cls.__discriminator_cls_registry__:
-                    if isinstance(cls.__discriminator_cls_registry__[type_group], dict):
-                        if (*secondary_discriminators,) in cls.__discriminator_cls_registry__[type_group]:
-                            return cls.__discriminator_cls_registry__[type_group][(*secondary_discriminators,)]
-                    else:
-                        return cls.__discriminator_cls_registry__[type_group]
+
+                # First check if a class is registered under a single-type discriminatory value.
+                if (registered_class := cls.__discriminator_cls_registry__.get(primary_discriminator, *secondary_discriminators)) is not None:
+                    return registered_class
+
+                # If no single-type registration exists, try with its type group (if applicable).
+                if cls.__type_groups__ is not None and \
+                   (type_group := cls.__types__[primary_discriminator].grouped_by) is not None and \
+                   (registered_class := cls.__discriminator_cls_registry__.get(
+                       type_group.name, *secondary_discriminators, discriminator_type=EntityClsRegistry.DiscriminatorType.group)) is not None:
+                    return registered_class
+
+                # Finally, return a default class registration if it exists.
                 return cls.__discriminator_cls_registry__.get(None)
 
             LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
