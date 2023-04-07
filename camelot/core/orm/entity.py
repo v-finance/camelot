@@ -74,17 +74,6 @@ class EntityClsRegistry(object):
         """
         self._registry = {disc_type: dict() for disc_type in self.DiscriminatorType}
 
-    def register(self, cls, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
-        """
-        Register a class for the given discriminatory values.
-        """
-        assert discriminator_type in self.DiscriminatorType
-        if secondary_discriminators:
-            self._registry[discriminator_type][primary_discriminator] = dict()
-            self._registry[discriminator_type][primary_discriminator][(*secondary_discriminators,)] = cls
-        else:
-            self._registry[discriminator_type][primary_discriminator] = cls
-
     def has(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
         """
         Return True if a class registration exists for the given discriminatory values.
@@ -93,6 +82,28 @@ class EntityClsRegistry(object):
         return primary_discriminator in self._registry[discriminator_type] and \
                (not secondary_discriminators or \
                 (*secondary_discriminators,) in self._registry[discriminator_type][primary_discriminator])
+
+    def register(self, cls, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
+        """
+        Register a class for the given discriminatory values.
+        """
+        assert discriminator_type in self.DiscriminatorType
+        if secondary_discriminators:
+            # With secondary discriminators, the primary discriminator should resolve to a map of its secondary discriminator,
+            # allowing for multiple discriminated classes for the same primary discriminator.
+            if not self.has(primary_discriminator, discriminator_type=discriminator_type):
+                self._registry[discriminator_type][primary_discriminator] = dict()
+            assert isinstance(self._registry[discriminator_type][primary_discriminator], dict),\
+                   'Already a class registered for the single primary discriminatory type {0}. Can not be combined with a multi-level discriminator registration.'.format(primary_discriminator)
+            assert not self.has(primary_discriminator, *secondary_discriminators, discriminator_type=discriminator_type),\
+                   'Already a class registered for multi-level discriminators {}'.format(tuple(primary_discriminator, *secondary_discriminators))
+            self._registry[discriminator_type][primary_discriminator][(*secondary_discriminators,)] = cls
+        else:
+            # With only a primary discriminator value, the registered class should resolve to it directly,
+            # so there should not already by an entry present:
+            assert not self.has(primary_discriminator, discriminator_type=discriminator_type), \
+                   'Already a {} class registered for discriminatory type {0}'.format(discriminator_type, primary_discriminator)
+            self._registry[discriminator_type][primary_discriminator] = cls
 
     def get(self, primary_discriminator, *secondary_discriminators, discriminator_type=DiscriminatorType.single):
         """
