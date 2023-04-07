@@ -444,9 +444,6 @@ class EntityMeta( DeclarativeMeta ):
             if (registered_class := cls.__discriminator_cls_registry__.get(None)) is not None:
                 return registered_class
 
-            LOGGER.warn("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
-            raise Exception("No registered class found for '{0}' (of type {1})".format(primary_discriminator, type(primary_discriminator)))
-
     def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
             if hasattr(cls_, '__entity_args__') and key in cls_.__entity_args__:
