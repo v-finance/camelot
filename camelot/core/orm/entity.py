@@ -107,7 +107,7 @@ class EntityClsRegistry(object):
         """
         if primary_discriminator in self._registry[discriminator_type]:
             if isinstance(self._registry[discriminator_type][primary_discriminator], dict):
-                if primary_discriminator in self._exclusive[discriminator_type]:
+                if not secondary_discriminators and primary_discriminator in self._exclusive[discriminator_type]:
                     return list(self._registry[discriminator_type][primary_discriminator].values())[0]
                 return self._registry[discriminator_type][primary_discriminator].get((*secondary_discriminators,))
             return self._registry[discriminator_type][primary_discriminator]
