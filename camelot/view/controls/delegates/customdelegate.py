@@ -240,7 +240,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         elif issubclass(editor_cls, editors.FloatEditor):
             editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)
         elif issubclass(editor_cls, editors.IntegerEditor):
-            editor = editor_cls(parent, self.calculator, self.decimal, option)
+            editor = editor_cls(parent, self.calculator, option)
         elif issubclass(editor_cls, editors.LabelEditor):
             editor = editor_cls(parent, self.text, self.field_name)
         elif issubclass(editor_cls, editors.LocalFileEditor):
