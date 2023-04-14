@@ -593,7 +593,6 @@ be specified using the verbose_name attribute.
                         search_filter = initial_naming_context.resolve(action_route.route)
                         if isinstance(search_filter, list_filter.SearchFilter):
                             query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]), **kwargs)
-                    query = admin.decorate_search_query(query, prefix)
                 return [e for e in query.limit(20).all()]
 
     def get_session(self, obj):
