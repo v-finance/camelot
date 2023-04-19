@@ -46,6 +46,8 @@ from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
 from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.not_editable_admin import not_editable_admin
+from camelot.core.exception import UserException
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import delegates
@@ -55,7 +57,9 @@ from .authentication import AuthenticationMechanism
 
 class PreviousAttribute( object ):
     """Helper class to display previous attributes"""
-    
+
+    __types__ = None
+
     def __init__( self, attribute, previous_value ):
         self.attribute = attribute
         self.previous_value = str( previous_value )
@@ -98,15 +102,27 @@ class Memento( Entity ):
         return ''
 
 class MementoAdmin( EntityAdmin ):
+
     verbose_name = _( 'History' )
     verbose_name_plural = _( 'History' )
+
     list_display = ['creation_date', 'authentication', 'model',
                     'primary_key', ]
     form_display = list_display + ['previous']
     list_filter = [list_filter.ComboBoxFilter(Memento.model)]
     field_attributes = {'previous':{'target':PreviousAttribute,
                                     'delegate':delegates.One2ManyDelegate,
+                                    'actions': [],
                                     'python_type':list}
                         }
 
-Memento.Admin = MementoAdmin
+    def add(self, obj):
+        raise UserException(_('Not Authorized'))
+
+    def delete(self, obj):
+        raise UserException(_('Not Authorized'))
+
+    def copy(self, obj, new_obj=None):
+        raise UserException(_('Not Authorized'))
+
+Memento.Admin = not_editable_admin(MementoAdmin)

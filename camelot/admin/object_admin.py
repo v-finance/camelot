@@ -593,7 +593,6 @@ be specified using the verbose_name attribute.
                         search_filter = initial_naming_context.resolve(action_route.route)
                         if isinstance(search_filter, list_filter.SearchFilter):
                             query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]), **kwargs)
-                    query = admin.decorate_search_query(query, prefix)
                 return [e for e in query.limit(20).all()]
 
     def get_session(self, obj):
@@ -729,7 +728,7 @@ be specified using the verbose_name attribute.
                 attributes['delegate'] = delegates.ComboBoxDelegate
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
-                    attributes['to_string'] = lambda x : choices_dict.get(x, '')
+                    attributes['to_string'] = lambda x : str(choices_dict.get(x, ''))
                     if filter_strategy_overrulable:
                         # Only overrule the filter strategy to ChoicesFilter if the choices are non-dynamic,
                         # as the choices needed for filtering should apply for all entities.
