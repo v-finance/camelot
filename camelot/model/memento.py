@@ -47,6 +47,7 @@ from camelot.admin.action import list_filter
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.not_editable_admin import not_editable_admin
+from camelot.core.exception import UserException
 from camelot.core.orm import Entity, ManyToOne
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import delegates
@@ -56,7 +57,9 @@ from .authentication import AuthenticationMechanism
 
 class PreviousAttribute( object ):
     """Helper class to display previous attributes"""
-    
+
+    __types__ = None
+
     def __init__( self, attribute, previous_value ):
         self.attribute = attribute
         self.previous_value = six.text_type( previous_value )
@@ -104,9 +107,19 @@ class Memento( Entity ):
         list_filter = [list_filter.ComboBoxFilter('model')]
         field_attributes = {'previous':{'target':PreviousAttribute,
                                         'delegate':delegates.One2ManyDelegate,
+                                        'actions': [],
                                         'python_type':list}
                             }
-        
+
+        def add(self, obj):
+            raise UserException(_('Not Authorized'))
+
+        def delete(self, obj):
+            raise UserException(_('Not Authorized'))
+
+        def copy(self, obj, new_obj=None):
+            raise UserException(_('Not Authorized'))
+
     Admin = not_editable_admin( Admin )
 
 
