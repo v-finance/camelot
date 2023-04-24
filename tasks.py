@@ -14,7 +14,10 @@ def test(ctx):
     env_dir = default_test_env
     ctx.run(
         '{}/bin/python -m nose.core -v -s test'.format(env_dir),
-        env = {'QT_QPA_PLATFORM': 'offscreen'}
+        env = {'QT_QPA_PLATFORM': 'offscreen',
+               # Set the XDB base directory to the current working directory to prevent
+               # profile registry intermingling between multiple jobs or test runs.
+               'XDG_CONFIG_HOME': os.getcwd()}
     )
 
 @task()

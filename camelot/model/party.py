@@ -58,26 +58,33 @@ from .authentication import end_of_times
 class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
-    
+
     code = schema.Column( Unicode( 10 ) )
     name = schema.Column( Unicode( 40 ), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
-    
+
+    @hybrid.hybrid_method
     def translation(self, language='nl_BE'):
-       translation = self.translations.filter(GeographicBoundaryTranslation.language==language).one_or_none()
-       if translation is not None:
-           return translation.name
-       return self.name
-    
-    @property
-    def name_NL(self):
-        return self.translation(language='nl_BE')
-    
-    @property
-    def name_FR(self):
-        return self.translation(language='fr_BE')
-    
+        for translation in self.translations:
+            if translation.language == language:
+                return translation.name
+        return self.name
+
+    @translation.expression
+    def translation(cls, language='nl_BE'):
+        return sql.select([GeographicBoundaryTranslation.name])\
+               .where(GeographicBoundaryTranslation.alternative_name_for_id == cls.id)\
+               .where(GeographicBoundaryTranslation.language == language).label('translation')
+
+    @hybrid.hybrid_property
+    def name_NL(cls):
+        return cls.translation(language='nl_BE')
+
+    @hybrid.hybrid_property
+    def name_FR(cls):
+        return cls.translation(language='fr_BE')
+
     __mapper_args__ = { 'polymorphic_on' : row_type }
     
     __table_args__ = (
@@ -166,9 +173,12 @@ class GeographicBoundaryAlternativeName(Entity):
         field_attributes = {
             'row_type': {
                 'name': _('Type'),
-                'editable': False,
                 'choices': [('translation', _('Translation')),
                             ('main_municipality', _('Main municipality'))]
+            },
+            'language': {
+                'nullable': lambda o: o.row_type != 'translation',
+                'editable': lambda o: o.row_type == 'translation',
             }
         }
 
@@ -218,43 +228,58 @@ class City( GeographicBoundary ):
                                    primary_key = True,
                                    autoincrement = False )
     main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
-    
-    __mapper_args__ = {'polymorphic_identity': 'city'}
-    
-    def main_municipality_name(self, language=None):
-        main_municipality = self.main_municipality_alternative_names\
-           .order_by(GeographicBoundaryMainMunicipality.language==language,
-                     GeographicBoundaryMainMunicipality.language==None).first()
-        if main_municipality is not None:
-            return main_municipality.name
-    
-    def administrative_translation(self, language):
-        translated_name = self.translation(language)
-        main_municipality = self.main_municipality_name(language)
-        main_municipality_suffix = ''
-        if main_municipality is not None:
-            main_municipality_suffix = ' ({})'.format(main_municipality)
-        return translated_name + main_municipality_suffix        
-    
-    @property
-    def main_municipality(self):
-        return self.main_municipality_name(None)
-    
-    @property
-    def administrative_name(self):
-       return self.administrative_translation(language=None)
 
-    @property
-    def administrative_name_NL(self):
-        return self.administrative_translation(language='nl_BE')
-    
-    @property    
-    def administrative_name_FR(self):
-        return self.administrative_translation(language='fr_BE')
+    __mapper_args__ = {'polymorphic_identity': 'city'}
+
+    @hybrid.hybrid_method
+    def main_municipality_name(self, language=None):
+        matched_mm = default_mm = None
+        for main_municipality in self.main_municipality_alternative_names:
+            if main_municipality.language == language:
+                matched_mm = main_municipality.name
+            elif main_municipality.language is None:
+                default_mm = main_municipality.name
+        return matched_mm or default_mm
+
+    @main_municipality_name.expression
+    def main_municipality_name(cls, language=None):
+        return sql.select([GeographicBoundaryMainMunicipality.name])\
+               .where(GeographicBoundaryMainMunicipality.alternative_name_for_id == cls.id)\
+               .order_by(GeographicBoundaryMainMunicipality.language==language,
+                         GeographicBoundaryMainMunicipality.language==None)\
+               .label('main_municipality_name')
+
+    @hybrid.hybrid_method
+    def administrative_translation(cls, language):
+        translated_name = cls.translation(language)
+        if translated_name is not None:
+            main_municipality = cls.main_municipality_name(language)
+            main_municipality_suffix = ''
+            if main_municipality is not None:
+                main_municipality_suffix = ' ({})'.format(main_municipality)
+            return translated_name + main_municipality_suffix        
+
+    @hybrid.hybrid_property
+    def main_municipality(cls):
+        return cls.main_municipality_name(None)
+
+    @hybrid.hybrid_property
+    def administrative_name(cls):
+       return cls.administrative_translation(language=None)
+
+    @hybrid.hybrid_property
+    def administrative_name_NL(cls):
+        return cls.administrative_translation(language='nl_BE')
+
+    @hybrid.hybrid_property
+    def administrative_name_FR(cls):
+        return cls.administrative_translation(language='fr_BE')
     
     def __str__(self):
-        if None not in (self.code, self.name, self.country):
-            return u'{0.code} {0.name} [{1.code}]'.format( self, self.country )
+        if None not in (self.name, self.country):
+            if self.code is not None:
+                return u'{0.code} {0.name} [{1.code}]'.format(self, self.country)
+            return u'{0.name} [{1.code}]'.format(self, self.country)
         return u''
     
     @classmethod
@@ -270,10 +295,11 @@ class City( GeographicBoundary ):
         verbose_name_plural = _('Cities')
         list_display = ['code', 'name', 'administrative_name', 'country']
         form_display = Form(
-            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
+            [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
              GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
              GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
              GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
+             GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
              'alternative_names'],
             columns=2)
         field_attributes = {k:copy.copy(v) for k,v in six.iteritems(GeographicBoundary.Admin.field_attributes)}
@@ -295,29 +321,46 @@ class Address( Entity ):
     # Way for user to overrule the zip code on the address level (e.g. when its not known or incomplete on the city).
     _zip_code = schema.Column(Unicode(10))
     
+    @hybrid.hybrid_property
+    def zip_code( self ):
+        if self.city is not None:
+            return self._zip_code or self.city.code
+        return self._zip_code
+
+    @zip_code.setter
+    def zip_code(self, value):
+        # Only allow to overrule the address' zip code if its city's code is unknown.
+        if self.city is not None and not self.city.code:
+            self._zip_code = value
+    
     def name( self ):
-        return sql.select( [self.street1 + ', ' + GeographicBoundary.full_name],
+        return sql.select( [self.street1 + ', ' + sql.func.coalesce(self._zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
                            whereclause = (GeographicBoundary.id == self.city_geographicboundary_id))
 
     name = ColumnProperty( name, deferred = True )
 
     @classmethod
-    def get_or_create( cls, street1, street2, city ):
-        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city ).first()
+    def get_or_create( cls, street1, street2, city, zip_code):
+        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city, zip_code = zip_code ).first()
         if not address:
-            address = cls( street1 = street1, street2 = street2, city = city )
+            address = cls( street1 = street1, street2 = street2, city = city, zip_code = zip_code )
             orm.object_session( address ).flush()
         return address
 
     def __str__(self):
-        return u'%s, %s' % ( self.street1 or '', self.city or '' )
+        city_name = self.city.name if self.city is not None else ''
+        return u'%s, %s %s' % ( self.street1 or '', self.zip_code or '', city_name or '' )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
         list_display = ['street1', 'street2', 'city']
+        form_display = ['street1', 'street2', 'zip_code', 'city']
         form_size = ( 700, 150 )
-        field_attributes = {'street1':{'minimal_column_width':30}}
+        field_attributes = {
+            'street1': {'minimal_column_width':30},
+            'zip_code': {'editable': lambda o: o.city is not None and not o.city.code}
+        }
         
         def get_depending_objects( self, address ):
             for party_address in address.party_addresses:
@@ -382,6 +425,20 @@ class WithAddresses(object):
     @street2.setter
     def street2( self, value ):
         return self._set_address_field( u'street2', value )
+
+    @hybrid.hybrid_property
+    def zip_code( self ):
+        return self._get_address_field( u'zip_code' )
+    
+    @zip_code.setter
+    def zip_code( self, value ):
+        return self._set_address_field( u'zip_code', value )
+
+    @zip_code.expression
+    def zip_code(cls):
+        return sql.select([Address.zip_code],
+                          whereclause=cls.first_address_filter(),
+                          limit=1).as_scalar()    
 
     @hybrid.hybrid_property
     def city( self ):
@@ -813,6 +870,18 @@ class Addressable(object):
         return Address.street2
 
     @hybrid.hybrid_property
+    def zip_code( self ):
+        return self._get_address_field( u'zip_code' )
+
+    @zip_code.setter
+    def zip_code( self, value ):
+        return self._set_address_field( u'zip_code', value )
+
+    @zip_code.expression
+    def zip_code( self ):
+        return Address.zip_code
+
+    @hybrid.hybrid_property
     def city( self ):
         return self._get_address_field( u'city' )
     
@@ -834,7 +903,8 @@ class Addressable(object):
                             minimal_column_width = 50 ),
             city = dict( editable = True, 
                          delegate = delegates.Many2OneDelegate,
-                         target = City ), 
+                         target = City ),
+            zip_code = dict( editable = lambda o: o.city is not None and not o.city.code),
             email = dict( editable = True, 
                           minimal_column_width = 20,
                           name = _('Email'),
@@ -891,11 +961,12 @@ class PartyAddress( Entity, Addressable ):
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
         list_search = ['party_name', 'street1', 'street2',]
-        list_display = ['party_name', 'street1', 'street2', 'city', 'comment']
-        form_display = [ 'party', 'street1', 'street2', 'city', 'comment', 
+        list_display = ['party_name', 'street1', 'street2', 'zip_code', 'city', 'comment']
+        form_display = [ 'party', 'street1', 'street2', 'zip_code', 'city', 'comment', 
                          'from_date', 'thru_date']
         form_size = ( 700, 200 )
-        field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30))
+        field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30),
+                                zip_code=dict(editable=lambda o: o.city is not None and not o.city.code))
         
         def get_compounding_objects( self, party_address ):
             if party_address.address!=None:
@@ -904,8 +975,8 @@ class PartyAddress( Entity, Addressable ):
 class AddressAdmin( PartyAddress.Admin ):
     """Admin with only the Address information and not the Party information"""
     verbose_name = _('Address')
-    list_display = ['street1', 'city', 'comment']
-    form_display = ['street1', 'street2', 'city', 'comment', 'from_date', 'thru_date']
+    list_display = ['street1', 'zip_code', 'city', 'comment']
+    form_display = ['street1', 'street2', 'zip_code', 'city', 'comment', 'from_date', 'thru_date']
     field_attributes = dict(street1 = dict(name=_('Street'),
                                            editable=True,
                                            nullable=False),
@@ -916,6 +987,7 @@ class AddressAdmin( PartyAddress.Admin ):
                                         nullable=False,
                                         delegate=delegates.Many2OneDelegate,
                                         target=City),
+                            zip_code = dict(editable=lambda o: o.city is not None and not o.city.code),
                             )
         
     def get_depending_objects( self, party_address ):
@@ -1113,6 +1185,7 @@ class PersonAdmin( Party.Admin ):
                                                               'fax',
                                                               'street1',
                                                               'street2',
+                                                              'zip_code'
                                                               'city',] ),
                                                             [WidgetOnlyForm('picture'),
                                                              Stretch()],

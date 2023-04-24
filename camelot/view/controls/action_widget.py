@@ -116,9 +116,16 @@ class AbstractActionWidget( object ):
                 self.setMenu(menu)
             menu.clear()
             for mode in state.modes:
-                mode_action = mode.render(menu)
-                mode_action.triggered.connect(self.action_triggered)
-                menu.addAction(mode_action)
+                if mode.modes:
+                    mode_menu = mode.render(menu)
+                    for submode in mode.modes:
+                        submode_action = submode.render(mode_menu)
+                        submode_action.triggered.connect(self.action_triggered)
+                        mode_menu.addAction(submode_action)
+                else:
+                    mode_action = mode.render(menu)
+                    mode_action.triggered.connect(self.action_triggered)
+                    menu.addAction(mode_action)
 
     # not named triggered to avoid confusion with standard Qt slot
     def action_triggered_by(self, sender):
