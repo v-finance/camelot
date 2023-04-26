@@ -56,3 +56,28 @@ def SensitiveFinancialDate(*args, **kwargs):
 
 def SensitiveHealthDate(*args, **kwargs):
     return SensitiveDate(types.sensitivity_levels.sensitive_health, *args, **kwargs)
+
+
+class SensitiveNumeric(SensitiveType, Numeric):
+    """
+    Custom SQLAlchemy Numeric type for sensitive data.
+    """
+
+    def __init__(self, sensitivity_level, *args, **kwargs):
+        SensitiveType.__init__(self, sensitivity_level)
+        Numeric.__init__(self, *args, **kwargs)
+
+def IdentifyingNumeric(*args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.identifying, *args, **kwargs)
+
+def QuasiIdentifyingNumeric(*args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.quasi_identifying, *args, **kwargs)
+
+def SensitivePersonalNumeric(*args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.sensitive_peronsal, *args, **kwargs)
+
+def SensitiveFinancialNumeric(*args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.sensitive_financial, *args, **kwargs)
+
+def SensitiveHealthNumeric(*args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.sensitive_health, *args, **kwargs)
