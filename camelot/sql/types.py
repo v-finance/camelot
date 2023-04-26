@@ -1,4 +1,4 @@
-from sqlalchemy.types import Unicode, Date
+from sqlalchemy.types import Unicode, Date, Numeric
 
 from camelot.data import types
 
