@@ -46,6 +46,73 @@ from ..core.sql import metadata
 END_OF_TIMES = datetime.date( year = 2400, month = 12, day = 31 )
 
 #
+# Enumeration for the roles in an application
+#
+roles = []
+
+
+class AuthenticationGroup(Entity):
+    """A group of users (defined by their :class:`AuthenticationMechanism`).
+    Different roles can be assigned to a group.
+    """
+    
+    __tablename__ = 'authentication_group'
+    
+    name = Column( types.Unicode(256), nullable=False )
+    
+    def __getattr__( self, name ):
+        for role_id, role_name in roles:
+            if role_name == name:
+                for role in self.roles:
+                    if role.role_id == role_id:
+                        return True
+                return False
+        raise AttributeError( name )
+                
+    def __setattr__( self, name, value ):
+        for role_id, role_name in roles:
+            if role_name == name:
+                current_value = getattr( self, name )
+                if value==True and current_value==False:
+                    group_role = AuthenticationGroupRole( role_id = role_id )
+                    self.roles.append( group_role )
+                elif value==False and current_value==True:
+                    for group_role in self.roles:
+                        if group_role.role_id == role_id:
+                            self.roles.remove( group_role )
+                            break
+                break
+        return super( AuthenticationGroup, self ).__setattr__( name, value )
+        
+    def __str__( self ):
+        return self.name or ''
+
+
+class AuthenticationGroupRole( Entity ):
+    """Table with the different roles associated with an
+    :class:`AuthenticationGroup`
+    """
+    
+    __tablename__ = 'authentication_group_role'
+    
+    role_id = Column( camelot.types.PrimaryKey(), 
+                      nullable = False,
+                      primary_key = True,
+                      autoincrement = False )
+    group_id = Column( camelot.types.PrimaryKey(), 
+                       ForeignKey( 'authentication_group.id',
+                                   onupdate = 'cascade',
+                                   ondelete = 'cascade' ),
+                       nullable = False,
+                       primary_key = True,
+                       autoincrement = False )
+
+AuthenticationGroup.roles = orm.relationship( AuthenticationGroupRole,
+                                              cascade = 'all, delete, delete-orphan')
+group_table = AuthenticationGroup.table
+group_role_table = AuthenticationGroupRole.table
+
+#
 # Enumeration of the types of authentication supported
 #
 authentication_types = [
@@ -55,13 +122,6 @@ authentication_types = [
 
 def end_of_times():
     return END_OF_TIMES
-
-
-#
-# Enumeration for the roles in an application
-#
-roles = []
-
 
 class Authentication(threading.local):
 
@@ -108,31 +168,29 @@ class AuthenticationMechanism( Entity ):
     @classmethod
     def get_current_authentication(cls) -> Authentication:
         """
-        Get the currently logged in :class:'AuthenticationMechanism', within
-        a specific session.
+        Get the currently logged in :class:'AuthenticationMechanism'
         """
         if _current_authentication_.authentication_mechanism_id is None:
             raise UserException("Current user is not authenticated")
         return _current_authentication_
 
     @classmethod
-    def authenticate(cls, session, authenication_type, username, groups):
+    def authenticate(cls, connection, authenication_type, username, groups):
         """
         Authenticate a user and set the current authentication
         """
-        assert session is not None
-        authentication_mechanism = cls.get_or_create(session, username)
+        mechanism_id = cls.get_or_create(connection, username)
         _current_authentication_.username = username
-        _current_authentication_.authentication_mechanism_id = authentication_mechanism.id
-        authentication_mechanism.last_login = sql.func.now()
-        role_ids = set()
-        for group in session.query(AuthenticationGroup).filter(AuthenticationGroup.name.in_(groups)).all():
-            for group_role in group.roles:
-                role_ids.add(group_role.role_id)
-        for role_id, role_name in roles:
-            if role_id in role_ids:
+        _current_authentication_.authentication_mechanism_id = mechanism_id
+        connection.execute(cls.table.update().values(last_login=sql.func.now()).where(cls.table.c.id==mechanism_id))
+        role_id_to_role = dict(roles)
+        for row in connection.execute(sql.select(
+            [sql.func.distinct(group_role_table.c.role_id).label('role_id')],
+            from_obj=group_role_table.join(group_table, group_table.c.id==group_role_table.c.group_id),
+            whereclause=group_table.c.name.in_(groups))):
+            role_name = role_id_to_role.get(row['role_id'])
+            if role_name is not None:
                 _current_authentication_.roles.append(role_name)
-        session.flush()
 
     @classmethod
     def clear_authentication(cls):
@@ -147,12 +205,11 @@ class AuthenticationMechanism( Entity ):
         global _current_authentication_
 
     @classmethod
-    def get_or_create(cls, session, username):
-        authentication_mechanism = session.query(cls).filter_by(username = username).first()
-        if not authentication_mechanism:
-            authentication_mechanism = cls(username = username, _session=session)
-            session.flush()
-        return authentication_mechanism
+    def get_or_create(cls, connection, username):
+        for row in connection.execute(sql.select([cls.id.label('id')]).where(cls.username==username)):
+            return row['id']
+        result = connection.execute(cls.table.insert().values(username=username, last_login=sql.func.now()))
+        return result.inserted_primary_key[0]
 
     def get_representation(self):
         """
@@ -179,44 +236,6 @@ class AuthenticationMechanism( Entity ):
         return self.username or ''
 
 
-class AuthenticationGroup( Entity ):
-    """A group of users (defined by their :class:`AuthenticationMechanism`).
-    Different roles can be assigned to a group.
-    """
-    
-    __tablename__ = 'authentication_group'
-    
-    name = Column( types.Unicode(256), nullable=False )
-    
-    def __getattr__( self, name ):
-        for role_id, role_name in roles:
-            if role_name == name:
-                for role in self.roles:
-                    if role.role_id == role_id:
-                        return True
-                return False
-        raise AttributeError( name )
-                
-    def __setattr__( self, name, value ):
-        for role_id, role_name in roles:
-            if role_name == name:
-                current_value = getattr( self, name )
-                if value==True and current_value==False:
-                    group_role = AuthenticationGroupRole( role_id = role_id )
-                    self.roles.append( group_role )
-                elif value==False and current_value==True:
-                    for group_role in self.roles:
-                        if group_role.role_id == role_id:
-                            self.roles.remove( group_role )
-                            break
-                break
-        return super( AuthenticationGroup, self ).__setattr__( name, value )
-        
-    def __str__( self ):
-        return self.name or ''
-    
-
-
 authentication_group_member_table = schema.Table('authentication_group_member', metadata,
                             schema.Column('authentication_group_id', types.Integer(),
                                           schema.ForeignKey(AuthenticationGroup.id, name='authentication_group_members_fk'),
@@ -231,24 +250,3 @@ AuthenticationGroup.members = orm.relationship(AuthenticationMechanism, backref=
                                                    authentication_group_member_table.c.authentication_group_id,
                                                    authentication_group_member_table.c.authentication_mechanism_id])
 
-class AuthenticationGroupRole( Entity ):
-    """Table with the different roles associated with an
-    :class:`AuthenticationGroup`
-    """
-    
-    __tablename__ = 'authentication_group_role'
-    
-    role_id = Column( camelot.types.PrimaryKey(), 
-                      nullable = False,
-                      primary_key = True,
-                      autoincrement = False )
-    group_id = Column( camelot.types.PrimaryKey(), 
-                       ForeignKey( 'authentication_group.id',
-                                   onupdate = 'cascade',
-                                   ondelete = 'cascade' ),
-                       nullable = False,
-                       primary_key = True,
-                       autoincrement = False )
-
-AuthenticationGroup.roles = orm.relationship( AuthenticationGroupRole,
-                                              cascade = 'all, delete, delete-orphan')

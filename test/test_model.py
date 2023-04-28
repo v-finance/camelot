@@ -91,7 +91,7 @@ class ExampleModelMixinCase(object):
         cls.session = Session()
         cls.session.expunge_all()
         AuthenticationMechanism.authenticate(
-            cls.session, 'database', 'user', ['admin']
+            metadata.bind, 'database', 'user', ['admin']
         )
 
     @classmethod
@@ -143,12 +143,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         AuthenticationMechanism.clear_authentication()
         with self.assertRaises(UserException):
             AuthenticationMechanism.get_current_authentication()
-        AuthenticationMechanism.authenticate(self.session, 'database', 'user', ['Admin'])
-        authentication = AuthenticationMechanism.get_current_authentication()
-        # current authentication cache should survive 
-        # a session expire + expunge
-        self.session.expire_all()
-        self.session.expunge_all()
+        AuthenticationMechanism.authenticate(metadata.bind, 'database', 'user', ['Admin'])
         authentication = AuthenticationMechanism.get_current_authentication()
         self.assertTrue(authentication.username)
         self.assertTrue(str(authentication))
@@ -166,7 +161,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         group.administrator = True
         self.session.flush()
         # end group definition
-        AuthenticationMechanism.authenticate(self.session, 'database', 'user', ['Admin'])
+        AuthenticationMechanism.authenticate(metadata.bind, 'database', 'user', ['Admin'])
         auth = AuthenticationMechanism.get_current_authentication()
         self.assertTrue(auth.has_role('administrator'))
         self.assertFalse(auth.has_role('movie_editor'))
