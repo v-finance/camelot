@@ -141,7 +141,8 @@ class Authentication(threading.local):
         self.authentication_type = None
         self.username = None
         self.authentication_mechanism_id = None
-        self.roles = []
+        self.roles = set()
+        self.groups = set()
 
     def __str__(self):
         if self.username is not None:
@@ -175,22 +176,29 @@ class AuthenticationMechanism( Entity ):
         return _current_authentication_
 
     @classmethod
-    def authenticate(cls, connection, authenication_type, username, groups):
+    def authenticate(cls, connection, authenication_type, username, groups) -> Authentication:
         """
         Authenticate a user and set the current authentication
         """
+        cls.clear_authentication()
         mechanism_id = cls.get_or_create(connection, username)
         _current_authentication_.username = username
         _current_authentication_.authentication_mechanism_id = mechanism_id
-        connection.execute(cls.table.update().values(last_login=sql.func.now()).where(cls.table.c.id==mechanism_id))
         role_id_to_role = dict(roles)
         for row in connection.execute(sql.select(
-            [sql.func.distinct(group_role_table.c.role_id).label('role_id')],
+            [group_role_table.c.role_id, group_table.c.name],
             from_obj=group_role_table.join(group_table, group_table.c.id==group_role_table.c.group_id),
             whereclause=group_table.c.name.in_(groups))):
+            _current_authentication_.groups.add(row['name'])
             role_name = role_id_to_role.get(row['role_id'])
             if role_name is not None:
-                _current_authentication_.roles.append(role_name)
+                _current_authentication_.roles.add(role_name)
+        return _current_authentication_
+
+    @classmethod
+    def update_last_login(cls, connection, username):
+        mechanism_id = cls.get_or_create(connection, username)
+        connection.execute(cls.table.update().values(last_login=sql.func.now()).where(cls.table.c.id==mechanism_id))
 
     @classmethod
     def clear_authentication(cls):
