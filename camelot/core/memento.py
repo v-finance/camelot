@@ -115,8 +115,9 @@ class SqlMemento( object ):
 
     def _get_authentication_id( self ):
         """:return: the id to store in the memento table"""
-        from camelot.model.authentication import get_current_authentication
-        return get_current_authentication().id
+        from camelot.model.authentication import AuthenticationMechanism
+        authentication = AuthenticationMechanism.get_current_authentication()
+        return authentication.authentication_mechanism_id
     
     def register_changes( self, 
                           memento_changes ):
