@@ -173,6 +173,25 @@ class ItemModelTests(object):
     Item model tests to be run both with a thread and with a process
     """
 
+    def setUp(self):
+        self.model_context_name = ('test_item_model_thread_model_context_{0}'.format(next(context_counter)),)
+        for step in self.gui_run(setup_proxy_name, mode=self.model_context_name):
+            if step[0] == action_steps.UpdateProgress.__name__:
+                detail = step[1]['detail']
+                self.id_collection = detail['id_collection']
+                self.created_collection = detail['created_collection']
+        self.app_admin = ApplicationAdmin()
+        self.admin = self.app_admin.get_related_admin(A)
+        self.admin_route = self.admin.get_admin_route()
+        self.qt_parent = QtCore.QObject()
+        self.item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        self.item_model.setValue(self.model_context_name)
+        self.columns = self.admin.list_display
+        self.item_model.setColumns(self.columns)
+        self.item_model.onTimeout()
+        self.process()
+        self.signal_register = ItemModelSignalRegister(self.item_model)
+
     def test_invalid_item(self):
         self.app_admin = ApplicationAdmin()
         self.admin = self.app_admin.get_related_admin(A)
@@ -187,6 +206,13 @@ class ItemModelTests(object):
         self.assertEqual(invalid_clone.data(Qt.ItemDataRole.EditRole), None)
         self.assertEqual(bool(invalid_clone.flags() & Qt.ItemFlag.ItemIsEditable), False)
         self.assertEqual(Qt.FocusPolicy(invalid_clone.data(FocusPolicyRole)), Qt.FocusPolicy.NoFocus)
+
+    def test_change_column_width(self):
+        self.item_model.onTimeout()
+        self.item_model.setHeaderData(1, Qt.Orientation.Horizontal, QtCore.QSize(140,10),
+                                 Qt.ItemDataRole.SizeHintRole)
+        size_hint = self.item_model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
+        self.assertEqual(size_hint.width(), 140)
 
 class SetupProxy(Action):
 
@@ -285,7 +311,10 @@ class RemoveElement(Action):
 remove_element_name = unit_test_context.bind(('remove_element',), RemoveElement())
 
 class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
-    pass
+
+    def setUp( self ):
+        super().setUp()
+        ItemModelTests.setUp(self)
 
 class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests, ExampleModelMixinCase):
 
@@ -296,24 +325,8 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
 
     def setUp( self ):
         super(ItemModelThreadCase, self).setUp()
+        ItemModelTests.setUp(self)
         self.A = A
-        self.model_context_name = ('test_item_model_thread_model_context_{0}'.format(next(context_counter)),)
-        for step in self.gui_run(setup_proxy_name, mode=self.model_context_name):
-            if step[0] == action_steps.UpdateProgress.__name__:
-                detail = step[1]['detail']
-                self.id_collection = detail['id_collection']
-                self.created_collection = detail['created_collection']
-        self.app_admin = ApplicationAdmin()
-        self.admin = self.app_admin.get_related_admin(A)
-        self.admin_route = self.admin.get_admin_route()
-        self.qt_parent = QtCore.QObject()
-        self.item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
-        self.item_model.setValue(self.model_context_name)
-        self.columns = self.admin.list_display
-        self.item_model.setColumns(self.columns)
-        self.item_model.onTimeout()
-        self.process()
-        self.signal_register = ItemModelSignalRegister(self.item_model)
 
     def tearDown(self):
         self.process()
@@ -497,13 +510,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         # editable and its value is changed
         self.assertEqual(self._data(0, 0, self.item_model), 20)
         self.assertEqual(self._data(0, 1, self.item_model), 15)
-
-    def test_change_column_width(self):
-        self.item_model.onTimeout()
-        self.item_model.setHeaderData(1, Qt.Orientation.Horizontal, QtCore.QSize(140,10),
-                                 Qt.ItemDataRole.SizeHintRole)
-        size_hint = self.item_model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
-        self.assertEqual(size_hint.width(), 140)
         
     def test_modify_list_while_editing( self ):
         self._load_data(self.item_model)
