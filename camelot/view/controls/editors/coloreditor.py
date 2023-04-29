@@ -96,8 +96,3 @@ class ColorEditor(CustomEditor):
             else:
                 self.set_value(qcolor.name())
         self.editingFinished.emit()
-
-
-
-
-
