@@ -771,6 +771,36 @@ class GetEntityData(Action):
 
 get_entity_data_name = unit_test_context.bind(('get_entity_data',), GetEntityData())
 
+class StartQueryCounter(Action):
+
+    @staticmethod
+    def increase_query_counter(conn, cursor, statement, parameters, context, executemany):
+        current_count = unit_test_context.resolve(('current_query_count',))
+        current_count = current_count + 1
+        LOGGER.debug('Counted query {} : {}'.format(
+            current_count, str(statement)
+        ))
+        unit_test_context.rebind(('current_query_count',), current_count)
+
+    def model_run(self, model_context, mode):
+        unit_test_context.rebind(('current_query_count',), 0)
+        event.listen(Engine, 'after_cursor_execute', self.increase_query_counter)
+        yield action_steps.UpdateProgress(text='Started query counter')
+
+unit_test_context.bind(('current_query_count',), 0)
+start_query_counter_name = unit_test_context.bind(('start_query_counter',), StartQueryCounter())
+
+class StopQueryCounter(Action):
+
+    def model_run(self, model_context, mode):
+        current_count = unit_test_context.resolve(('current_query_count',))
+        event.remove(Engine, 'after_cursor_execute', StartQueryCounter.increase_query_counter)
+        yield action_steps.UpdateProgress(
+            text='Stopped query counter', detail=current_count
+        )
+
+stop_query_counter_name = unit_test_context.bind(('stop_query_counter',), StopQueryCounter())
+
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
     methods to setup a QStandardItemModel representing a query
@@ -786,7 +816,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
 
 
 class QueryQStandardItemModelCase(
-    RunningThreadCase,
+    RunningProcessCase,
     QueryQStandardItemModelMixinCase, ExampleModelMixinCase):
     """Test the functionality of A QStandardItemModel
     representing a query
@@ -808,17 +838,6 @@ class QueryQStandardItemModelCase(
         self.admin_route = self.person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, self.person_admin.get_name())
         self.process()
-        self.query_counter = 0
-        event.listen(Engine, 'after_cursor_execute', self.increase_query_counter)
-
-    def tearDown(self):
-        event.remove(Engine, 'after_cursor_execute', self.increase_query_counter)
-
-    def increase_query_counter(self, conn, cursor, statement, parameters, context, executemany):
-        self.query_counter += 1
-        LOGGER.debug('Counted query {} : {}'.format(
-            self.query_counter, str(statement)
-        ))
 
     def get_data(self, primary_key, attribute):
         """
@@ -888,11 +907,14 @@ class QueryQStandardItemModelCase(
         # - address select in load
         # those last 2 are needed for the validation of the compounding objects
         self.gui_run(apply_filter_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        start = self.query_counter
+        self.gui_run(start_query_counter_name)
         item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         item_model.setValue(self.model_context_name)
         item_model.setColumns(self.columns)
         self._load_data(item_model)
         self.assertEqual(item_model.columnCount(), 3)
         self.assertEqual(item_model.rowCount(), 1)
-        self.assertEqual(self.query_counter, start+4)
+        for step in self.gui_run(stop_query_counter_name):
+            if step[0] == action_steps.UpdateProgress.__name__:
+                query_count = step[1]['detail']
+        self.assertEqual(query_count, 4)
