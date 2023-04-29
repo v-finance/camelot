@@ -193,12 +193,7 @@ class ItemModelTests(object):
         self.signal_register = ItemModelSignalRegister(self.item_model)
 
     def test_invalid_item(self):
-        self.app_admin = ApplicationAdmin()
-        self.admin = self.app_admin.get_related_admin(A)
-        self.admin_route = self.admin.get_admin_route()
-        qt_parent = QtCore.QObject()
-        item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), qt_parent)
-        invalid_item = item_model.invalidItem()
+        invalid_item = self.item_model.invalidItem()
         self.assertEqual(invalid_item.data(Qt.ItemDataRole.EditRole), None)
         self.assertEqual(bool(invalid_item.flags() & Qt.ItemFlag.ItemIsEditable), False)
         self.assertEqual(Qt.FocusPolicy(invalid_item.data(FocusPolicyRole)), Qt.FocusPolicy.NoFocus)
