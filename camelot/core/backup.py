@@ -206,11 +206,6 @@ class BackupMechanism(object):
             provides a connection to the database to be backed up.
         """
         #
-        # The restored database may contain different AuthenticationMechanisms
-        #
-        from camelot.model.authentication import clear_current_authentication
-        clear_current_authentication()
-        #
         # Proceed with the restore
         #
         import os

@@ -7,13 +7,15 @@ from sqlalchemy import create_engine, orm, schema, types
 
 from . import unit_test_context
 from .test_orm import TestMetaData
+
 from camelot.admin.action import Action
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.exception import UserException
 from camelot.core.orm import Entity, Session
 from camelot.core.sql import metadata
 from camelot.model import authentication, memento, party, type_and_status
-from camelot.model.authentication import (get_current_authentication, update_last_login)
+from camelot.model.authentication import AuthenticationMechanism, AuthenticationGroup
 from camelot.model.fixture import Fixture, FixtureVersion
 from camelot.model.i18n import Translation
 from camelot.model.party import Person
@@ -36,7 +38,6 @@ class LoadSampleData(Action):
         metadata.bind = model_engine
         metadata.create_all(model_engine)
         session.expunge_all()
-        update_last_login()
         if mode in (None, True):
             load_movie_fixtures(session)
             yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
@@ -89,7 +90,9 @@ class ExampleModelMixinCase(object):
         metadata.create_all(model_engine)
         cls.session = Session()
         cls.session.expunge_all()
-        update_last_login()
+        AuthenticationMechanism.authenticate(
+            metadata.bind, 'database', 'user', ['admin']
+        )
 
     @classmethod
     def tear_down_sample_model(cls):
@@ -109,11 +112,13 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         cls.tear_down_sample_model()
 
     def test_memento( self ):
-        m = memento.Memento( primary_key = 1,
-                             model = 'TestCase',
-                             authentication = get_current_authentication(),
-                             memento_type = 1,
-                             previous_attributes = {'name':u'memento'} )
+        m = memento.Memento(
+            primary_key = 1,
+            model = 'TestCase',
+            authentication_id = AuthenticationMechanism.get_current_authentication().authentication_mechanism_id,
+            memento_type = 1,
+            previous_attributes = {'name':u'memento'}
+        )
         self.assertTrue( m.previous )
         
     def test_i18n( self ):
@@ -135,29 +140,31 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
 
     def test_current_authentication( self ):
-        authentication.clear_current_authentication()
-        mechanism = authentication.get_current_authentication()
-        # current authentication cache should survive 
-        # a session expire + expunge
-        orm.object_session( mechanism ).expire_all()
-        orm.object_session( mechanism ).expunge_all()
-        mechanism = authentication.get_current_authentication()
-        self.assertTrue( mechanism.username )
-        self.assertTrue( str( mechanism ) )
+        AuthenticationMechanism.clear_authentication()
+        with self.assertRaises(UserException):
+            AuthenticationMechanism.get_current_authentication()
+        AuthenticationMechanism.authenticate(metadata.bind, 'database', 'user', ['Admin'])
+        authentication = AuthenticationMechanism.get_current_authentication()
+        self.assertTrue(authentication.username)
+        self.assertTrue(str(authentication))
         
     def test_authentication_group( self ):
         # begin roles definition
-        authentication.clear_current_authentication()
-        authentication.roles.extend( [ (1, 'administrator'),
-                                       (2, 'movie_editor') ] )
+        AuthenticationMechanism.clear_authentication()
+        authentication.roles.extend([
+            (1, 'administrator'),
+            (2, 'movie_editor'),
+        ])
         # end roles definition
-        # begin intial group creation
-        authentication.update_last_login( initial_group_name = 'Admin',
-                                          initial_group_roles = ['administrator'] )
-        # end initial group creation
-        auth = authentication.get_current_authentication()
-        self.assertTrue( auth.has_role( 'administrator' ) )
-        self.assertFalse( auth.has_role( 'movie_editor' ) )
+        # begin group definition
+        group = AuthenticationGroup(name='Admin')
+        group.administrator = True
+        self.session.flush()
+        # end group definition
+        AuthenticationMechanism.authenticate(metadata.bind, 'database', 'user', ['Admin'])
+        auth = AuthenticationMechanism.get_current_authentication()
+        self.assertTrue(auth.has_role('administrator'))
+        self.assertFalse(auth.has_role('movie_editor'))
 
 class PartyCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in party - address - contact mechanism model"""
