@@ -324,20 +324,22 @@ shortcut confusion and reduce the number of status updates.
         parent_menu.items.append(menu)
         return menu
 
-    def add_navigation_entity_table(self, entity, parent_menu, add_before=None):
+    def add_navigation_entity_table(self, entity, parent_menu, role=None, add_before=None):
         """
         Add an action to open a table view of an entity to the navigation menu
         """
         admin = self.get_related_admin(entity)
-        return self.add_navigation_admin_table(admin, parent_menu, add_before)
+        return self.add_navigation_admin_table(admin, parent_menu, role=role, add_before=add_before)
 
-    def add_navigation_admin_table(self, admin, parent_menu, add_before=None):
+    def add_navigation_admin_table(self, admin, parent_menu, role=None, add_before=None):
         """
         Add an action to open a table view for a specified admin
         """
+        assert isinstance(add_before, (type(None), MenuItem,))
+        assert isinstance(role, (type(None), str))
         action = OpenTableView(admin)
         action_route = self._register_action_route(admin._admin_route, action)
-        menu = MenuItem(action_route=action_route)
+        menu = MenuItem(action_route=action_route, role=role)
         if add_before is None:
             parent_menu.items.append(menu)
         else:
