@@ -384,25 +384,3 @@ shortcut confusion and reduce the number of status updates.
         """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""
         if self.help_url:
             return QtCore.QUrl( self.help_url )
-
-    def get_about(self):
-        """:return: the content of the About dialog, a string with html
-                    syntax"""
-        import datetime
-        from camelot.core import license
-        today = datetime.date.today()
-        return """<b>Camelot</b><br/>
-                  Building desktop applications at warp speed
-                  <p>
-                  Copyright &copy; 2007-%s Conceptive Engineering.
-                  All rights reserved.
-                  </p>
-                  <p>
-                  %s
-                  </p>
-                  <p>
-                  http://www.python-camelot.com<br/>
-                  http://www.conceptive.be
-                  </p>
-                  """%(today.year, license.license_type)
-
