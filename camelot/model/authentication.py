@@ -144,6 +144,7 @@ class Authentication(threading.local):
         self.authentication_mechanism_id = None
         self.roles = set()
         self.groups = set()
+        self.pseudonym = None
 
     def __str__(self):
         if self.username is not None:
