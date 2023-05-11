@@ -236,27 +236,6 @@ class OpenTableView( EntityAction ):
             self._entity_admin,
         )
 
-
-class ShowAbout(Action):
-    """Show the about dialog with the content returned by the
-    :meth:`ApplicationAdmin.get_about` method
-    """
-
-    name = 'about'
-    verbose_name = _('&About')
-    icon = Icon('address-card') # 'tango/16x16/mimetypes/application-certificate.png'
-    tooltip = _("Show the application's About box")
-
-    def model_run(self, model_context, mode):
-        from camelot.view.action_steps import MessageBox
-        about = str(model_context.admin.get_application_admin().get_about())
-        yield MessageBox(
-            text = about,
-            title = ugettext('About'),
-            standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok],
-            hide_progress=True
-        )
-
 class Backup( Action ):
     """
 Backup the database to disk

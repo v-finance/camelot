@@ -324,20 +324,22 @@ shortcut confusion and reduce the number of status updates.
         parent_menu.items.append(menu)
         return menu
 
-    def add_navigation_entity_table(self, entity, parent_menu, add_before=None):
+    def add_navigation_entity_table(self, entity, parent_menu, role=None, add_before=None):
         """
         Add an action to open a table view of an entity to the navigation menu
         """
         admin = self.get_related_admin(entity)
-        return self.add_navigation_admin_table(admin, parent_menu, add_before)
+        return self.add_navigation_admin_table(admin, parent_menu, role=role, add_before=add_before)
 
-    def add_navigation_admin_table(self, admin, parent_menu, add_before=None):
+    def add_navigation_admin_table(self, admin, parent_menu, role=None, add_before=None):
         """
         Add an action to open a table view for a specified admin
         """
+        assert isinstance(add_before, (type(None), MenuItem,))
+        assert isinstance(role, (type(None), str))
         action = OpenTableView(admin)
         action_route = self._register_action_route(admin._admin_route, action)
-        menu = MenuItem(action_route=action_route)
+        menu = MenuItem(action_route=action_route, role=role)
         if add_before is None:
             parent_menu.items.append(menu)
         else:
@@ -384,25 +386,3 @@ shortcut confusion and reduce the number of status updates.
         """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""
         if self.help_url:
             return QtCore.QUrl( self.help_url )
-
-    def get_about(self):
-        """:return: the content of the About dialog, a string with html
-                    syntax"""
-        import datetime
-        from camelot.core import license
-        today = datetime.date.today()
-        return """<b>Camelot</b><br/>
-                  Building desktop applications at warp speed
-                  <p>
-                  Copyright &copy; 2007-%s Conceptive Engineering.
-                  All rights reserved.
-                  </p>
-                  <p>
-                  %s
-                  </p>
-                  <p>
-                  http://www.python-camelot.com<br/>
-                  http://www.conceptive.be
-                  </p>
-                  """%(today.year, license.license_type)
-

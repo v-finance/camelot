@@ -42,6 +42,7 @@ from ..core.exception import UserException
 from ..core.qt import QtCore, QtGui
 from ..core.orm import Entity
 from ..core.sql import metadata
+from ..sql.types import IdentifyingUnicode
 
 END_OF_TIMES = datetime.date( year = 2400, month = 12, day = 31 )
 
@@ -143,6 +144,7 @@ class Authentication(threading.local):
         self.authentication_mechanism_id = None
         self.roles = set()
         self.groups = set()
+        self.pseudonym = None
 
     def __str__(self):
         if self.username is not None:
@@ -159,7 +161,7 @@ class AuthenticationMechanism( Entity ):
         camelot.types.Enumeration(authentication_types),
         nullable = False, index = True , default = authentication_types[0][1]
     )
-    username = Column( types.Unicode( 40 ), nullable = False, index = True, unique = True )
+    username = Column( IdentifyingUnicode( 40 ), nullable = False, index = True, unique = True )
     password = Column( types.Unicode( 200 ), nullable = True, index = False, default = None )
     from_date = Column( types.Date(), default = datetime.date.today, nullable = False, index = True )
     thru_date = Column( types.Date(), default = end_of_times, nullable = False, index = True )
