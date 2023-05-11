@@ -133,10 +133,10 @@ class FloatEditor(CustomEditor):
     
     def __init__(self, parent,
                        calculator = True,
-                       decimal = False, 
+                       decimal = False,
+                       action_routes = [],
                        option = None,
-                       field_name = 'float',
-                       **kwargs):
+                       field_name = 'float'):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
@@ -175,7 +175,7 @@ class FloatEditor(CustomEditor):
         layout.setSpacing(0)
         layout.addWidget(spinBox)
         layout.addWidget(self.calculatorButton)
-        self.add_actions(kwargs['action_routes'], layout)
+        self.add_actions(action_routes, layout)
         self.setFocusProxy(spinBox)
         self.setLayout(layout)
 

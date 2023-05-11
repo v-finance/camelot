@@ -5,12 +5,15 @@ logger = logging.getLogger(__name__)
 
 from ..admin.action.base import Action
 from ..admin.action.field_action import FieldActionModelContext
+from ..core.cache import ValueCache
 from ..core.item_model import VerboseIdentifierRole, ValidRole, ValidMessageRole, ObjectRole
 from ..core.exception import log_programming_error
-from ..core.naming import initial_naming_context
-from ..core.qt import Qt, QtGui, py_to_variant, variant_to_py
-from .item_model.cache import ValueCache
+from ..core.naming import initial_naming_context, NameNotFoundException
+from ..core.qt import Qt, QtGui, py_to_variant
 
+crud_action_context = initial_naming_context.bind_new_context(
+    'crud_action', immutable=True
+)
 
 def strip_data_from_object( obj, columns ):
     """For every column in columns, get the corresponding value from the
@@ -40,8 +43,7 @@ class UpdateMixin(object):
     @classmethod
     def field_action_model_context(cls, model_context, obj, field_attributes):
         field_name = field_attributes['field_name']
-        field_action_model_context = FieldActionModelContext()
-        field_action_model_context.admin = model_context.admin
+        field_action_model_context = FieldActionModelContext(model_context.admin)
         field_action_model_context.field = field_name
         field_action_model_context.value = strip_data_from_object(obj, [field_name])[0]
         field_action_model_context.field_attributes = field_attributes
@@ -56,6 +58,7 @@ class UpdateMixin(object):
         :param data: fill the data cache, otherwise only fills the header cache
         :return: the changes to the item model
         """
+        from ..view.proxy.collection_proxy import invalid_item
         admin = model_context.admin
         static_field_attributes = model_context.static_field_attributes
         column_names = [model_context.static_field_attributes[column]['field_name'] for column in columns]
@@ -63,7 +66,7 @@ class UpdateMixin(object):
         changed_ranges = []
         logger.debug('add data for row {0}'.format(row))
         # @todo static field attributes should be cached ??
-        if (not admin.is_deleted( obj ) and (data==True) and (obj is not None)):
+        if (admin.is_readable( obj ) and (data==True) and (obj is not None)):
             row_data = {column:data for column, data in zip(columns, strip_data_from_object(obj, column_names))}
             dynamic_field_attributes ={column:fa for column, fa in zip(columns, admin.get_dynamic_field_attributes(obj, column_names))}
             if admin.list_action:
@@ -82,20 +85,23 @@ class UpdateMixin(object):
             items = []
             locale = model_context.locale
             for column in changed_columns:
-                # copy to make sure the original dict can be reused in
-                # subsequent calls
-                field_attributes = dict(static_field_attributes[column])
-                # the dynamic attributes might update the static attributes,
-                # if get_dynamic_field_attributes is overwritten, like in 
-                # the case of the EntityAdmin setting the onetomany fields
-                # to not editable for objects that are not persistent
-                field_attributes.update(dynamic_field_attributes[column])
-                delegate = field_attributes['delegate']
-                field_action_model_context = self.field_action_model_context(
-                    model_context, obj, field_attributes
-                )
-                item = delegate.get_standard_item(locale, field_action_model_context)
-                items.append((column, item))
+                if action_state is not None:
+                    # copy to make sure the original dict can be reused in
+                    # subsequent calls
+                    field_attributes = dict(static_field_attributes[column])
+                    # the dynamic attributes might update the static attributes,
+                    # if get_dynamic_field_attributes is overwritten, like in
+                    # the case of the EntityAdmin setting the onetomany fields
+                    # to not editable for objects that are not persistent
+                    field_attributes.update(dynamic_field_attributes[column])
+                    delegate = field_attributes['delegate']
+                    field_action_model_context = self.field_action_model_context(
+                        model_context, obj, field_attributes
+                    )
+                    item = delegate.get_standard_item(locale, field_action_model_context)
+                    items.append((column, item))
+                else:
+                    items.append((column, invalid_item.clone()))
             try:
                 verbose_identifier = admin.get_verbose_identifier(obj)
             except (Exception, RuntimeError, TypeError, NameError) as e:
@@ -105,11 +111,12 @@ class UpdateMixin(object):
                                       exc_info=e)
                 verbose_identifier = u''
             valid = False
-            for message in model_context.validator.validate_object(obj):
-                break
-            else:
-                valid = True
-                message = None
+            message = None
+            if action_state is not None:
+                for message in model_context.validator.validate_object(obj):
+                    break
+                else:
+                    valid = True
             header_item = QtGui.QStandardItem()
             header_item.setData(py_to_variant(id(obj)), ObjectRole)
             header_item.setData(py_to_variant(verbose_identifier), VerboseIdentifierRole)
@@ -118,7 +125,12 @@ class UpdateMixin(object):
             if action_state is not None:
                 header_item.setData(py_to_variant(action_state.tooltip), Qt.ItemDataRole.ToolTipRole)
                 header_item.setData(py_to_variant(str(action_state.verbose_name)), Qt.ItemDataRole.DisplayRole)
+                # The decoration role contains the icon as a QPixmap which is used in the old table view.
                 header_item.setData(py_to_variant(action_state.icon), Qt.ItemDataRole.DecorationRole)
+                if action_state.icon is not None:
+                    # The whatsThis role contains the icon name which is used in the QML table view.
+                    # (note: user roles can't be used in a QML VerticalHeaderView)
+                    header_item.setData(py_to_variant(action_state.icon.name), Qt.ItemDataRole.WhatsThisRole)
             changed_ranges.append((row, header_item, items))
         return changed_ranges
 
@@ -127,18 +139,54 @@ class ChangeSelection(Action):
 
     name = 'change_selection'
 
-    def __init__(self, action_routes, model_context):
-        self.action_routes = action_routes
-        self.model_context = model_context
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        # validate & set current_row
+        model_context.current_row = None
+        if mode['current_row'] is not None:
+            current_obj = model_context.get_object(mode['current_row'])
+            if id(current_obj) == mode['current_row_id']:
+                model_context.current_row = mode['current_row']
+            else:
+                logger.error('Invalid current_row_id used for selection')
+        # validate & set selected rows
+        model_context.selected_rows = []
+        if len(mode['selected_rows']) == len(mode['selected_rows_ids']):
+            for i in range(len(mode['selected_rows'])):
+                row_range = mode['selected_rows'][i]
+                row_range_ids = mode['selected_rows_ids'][i]
+                # -1 is a sentinal value which can be used to construct python slice like selections.
+                begin_valid = True
+                if row_range[0] == -1:
+                    row_range[0] = 0
+                else:
+                    begin_obj = model_context.get_object(row_range[0])
+                    begin_valid = id(begin_obj) == row_range_ids[0]
+                end_valid = True
+                if row_range[1] == -1:
+                    row_range[1] = len(model_context.proxy) - 1
+                else:
+                    end_obj = model_context.get_object(row_range[1])
+                    end_valid = id(end_obj) == row_range_ids[1]
+                if begin_valid and end_valid:
+                    model_context.selected_rows.append(row_range)
+                else:
+                    logger.error('Invalid selected_rows_ids used for selection')
+
+        model_context.current_column = mode['current_column']
+        model_context.current_field_name = mode['current_field_name']
+        model_context.collection_count = len(model_context.proxy)
+        model_context.selection_count = 0
+        for row_range in model_context.selected_rows:
+            model_context.selection_count += (row_range[1] - row_range[0]) + 1
         action_states = []
-        for action_route in self.action_routes:
-            action = initial_naming_context.resolve(action_route)
-            state = action.get_state(self.model_context)
-            action_states.append(state)
-        yield action_steps.ChangeSelection(self.action_routes, action_states)
+        for action_route in mode['action_routes']:
+            action = initial_naming_context.resolve(tuple(action_route))
+            state = action.get_state(model_context)
+            action_states.append((action_route, state))
+        yield action_steps.ChangeSelection(action_states)
+
+changeselection_name = crud_action_context.bind(ChangeSelection.name, ChangeSelection(), True)
 
 class Completion(Action):
 
@@ -173,8 +221,10 @@ class Completion(Action):
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
-    
-    
+
+completion_name = crud_action_context.bind(Completion.name, Completion(), True)
+
+
 class RowCount(Action):
 
     name = 'row_count'
@@ -187,19 +237,25 @@ class RowCount(Action):
         model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
         model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
         yield action_steps.RowCount(rows)
-        
-   
+
+rowcount_name = crud_action_context.bind(RowCount.name, RowCount(), True)
+
+
 class Update(Action, UpdateMixin):
 
     name = 'update'
 
-    def __init__(self, objects):
-        self.objects = objects
-
     def model_run(self, model_context, mode):
         changed_ranges = []
         from camelot.view import action_steps
-        for obj in self.objects:
+        objects_name = tuple(mode['objects'])
+        try:
+            objects = initial_naming_context.resolve(objects_name)
+        except NameNotFoundException:
+            logger.warn('received update request for non existing objects : {}'.format(objects_name))
+            yield action_steps.UpdateProgress(text='Updating view failed')
+            return
+        for obj in objects:
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
@@ -217,9 +273,10 @@ class Update(Action, UpdateMixin):
             changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         yield action_steps.Update(changed_ranges)
 
-
     def __repr__(self):
-        return '{0.__class__.__name__}({1} objects)'.format(self, len(self.objects))
+        return '{0.__class__.__name__}'.format(self)
+
+update_name = crud_action_context.bind(Update.name, Update(), True)
 
 
 class Created(Action, UpdateMixin):
@@ -233,20 +290,13 @@ class Created(Action, UpdateMixin):
 
     name = 'created'
 
-    def __init__(self, objects):
-        self.objects = objects
-
-    def __repr__(self):
-        return '{0.__class__.__name__}({1} objects)'.format(
-            self, len(self.objects)
-        )
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         # the proxy cannot return it's length including the new object before
         # the new object has been indexed
+        objects = initial_naming_context.resolve(tuple(mode['objects']))
         changed_ranges = []
-        for obj in self.objects:
+        for obj in objects:
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
@@ -254,19 +304,16 @@ class Created(Action, UpdateMixin):
             columns = tuple(range(len(model_context.static_field_attributes)))
             changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
         yield action_steps.Created(changed_ranges) 
-        
-        
+
+    def __repr__(self):
+        return '{0.__class__.__name__}'.format(self)
+
+created_name = crud_action_context.bind(Created.name, Created(), True)
+
+
 class Deleted(RowCount, UpdateMixin):
 
     name = 'deleted'
-
-    def __init__(self, objects, rows_in_view):
-        """
-        
-        """
-        super(Deleted, self).__init__()
-        self.objects = objects
-        self.rows_in_view = rows_in_view
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
@@ -277,7 +324,8 @@ class Deleted(RowCount, UpdateMixin):
         # the object might or might not be in the proxy when the
         # deletion is handled
         #
-        for obj in self.objects:
+        objects = initial_naming_context.resolve(tuple(mode['objects']))
+        for obj in objects:
             try:
                 row = model_context.proxy.index(obj)
             except ValueError:
@@ -306,40 +354,16 @@ class Deleted(RowCount, UpdateMixin):
         # different from the one of the view
         #
         rows = len(model_context.proxy)
-        if (row is not None) or (rows != self.rows_in_view):
+        if (row is not None) or (rows != mode['rows']):
             # but updating the view is only needed if the rows changed
             yield from super(Deleted, self).model_run(model_context, mode)
 
+deleted_name = crud_action_context.bind(Deleted.name, Deleted(), True)
 
-class Filter(RowCount):
 
-    name = 'filter'
-
-    def __init__(self, action, old_value, new_value):
-        super(Filter, self).__init__()
-        self.action = action
-        self.old_value = old_value
-        self.new_value = new_value
-
-    def model_run(self, model_context, mode):
-        # comparison of old and new value can only happen in the model thread
-        if self.old_value != self.new_value:
-            model_context.proxy.filter(self.action, self.new_value)
-        yield from super(Filter, self).model_run(model_context, mode)
-
-    def __repr__(self):
-        return '{0.__class__.__name__}(action={1})'.format(
-            self,
-            type(self.action).__name__
-        )
-    
-    
 class RowData(Update):
 
     name = 'row_data'
-
-    def __init__(self):
-        super(RowData, self).__init__(None)
 
     def offset_and_limit_rows_to_get(self, rows):
         """From the current set of rows to get, find the first
@@ -371,48 +395,16 @@ class RowData(Update):
         from camelot.view import action_steps
         rows = mode["rows"]
         columns = mode["columns"]
-        changed_ranges = []
         offset, limit = self.offset_and_limit_rows_to_get(rows)
         for obj in list(model_context.proxy[offset:offset+limit]):
             row = model_context.proxy.index(obj)
-            changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        yield action_steps.Update(changed_ranges)
+            yield action_steps.Update(self.add_data(model_context, row, columns, obj, True))
 
-            
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
 
-class RunFieldAction(Action):
+rowdata_name = crud_action_context.bind(RowData.name, RowData(), True)
 
-    name = 'field_action'
-
-    def model_run(self, model_context, mode):
-        row = mode['row']
-        column = mode['column']
-        obj_id = mode['object']
-        action_route = mode['action_route']
-        action_mode = mode['action_mode']
-        object_slice = list(model_context.proxy[row:row+1])
-        if not len(object_slice):
-            logger.error('Cannot run field action : no object in row {0}'.format(row))
-            return
-        obj = object_slice[0]
-        if not (id(obj)==obj_id):
-            logger.warn('Cannot run field action : object in row {0} is inconsistent with view, {1} vs {2}'.format(row, id(obj), obj_id))
-            return
-        action = initial_naming_context.resolve(tuple(action_route))
-        static_field_attributes = model_context.static_field_attributes[column]
-        field_action_model_context = FieldActionModelContext()
-        field_action_model_context.field = static_field_attributes['field_name']
-        field_action_model_context.value = getattr(
-            obj, static_field_attributes['field_name']
-        )
-        # @todo : should include dynamic field attributes, but those are not
-        # yet used in any of the field actions
-        field_action_model_context.field_attributes = static_field_attributes
-        yield from action.model_run(field_action_model_context, action_mode)
-
-run_field_action = RunFieldAction()
 
 class SetColumns(Action):
 
@@ -435,6 +427,8 @@ class SetColumns(Action):
             #included_attrs = ['name', 'field_name', 'editable', 'nullable', 'colmn_width']
             #static_field_attributes.append({attr: fa[attr] for attr in included_attrs})
         yield action_steps.SetColumns(model_context.static_field_attributes)
+
+setcolumns_name = crud_action_context.bind(SetColumns.name, SetColumns(), True)
 
 
 class ChangedObjectMixin(object):
@@ -476,22 +470,11 @@ class SetData(Update, ChangedObjectMixin):
 
     name = 'set_data'
 
-    def __init__(self, updates):
-        super(SetData, self).__init__(None)
-        # Copy the update requests and clear the list of requests
-        self.updates = [u for u in updates]
-
-    def __repr__(self):
-        return '{0.__class__.__name__}([{1}])'.format(
-            self,
-            ', '.join(['(row={0}, column={1})'.format(row, column) for row, _o, column, _v in self.updates])
-        )
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         grouped_requests = collections.defaultdict( list )
         updated_objects, created_objects, deleted_objects = set(), set(), set()
-        for row, obj_id, column, value in self.updates:
+        for row, obj_id, column, value in mode:
             grouped_requests[(row, obj_id)].append((column, value))
         admin = model_context.admin
         for (row, obj_id), request_group in grouped_requests.items():
@@ -514,10 +497,10 @@ class SetData(Update, ChangedObjectMixin):
                 static_field_attributes = model_context.static_field_attributes[column]
                 field_name = static_field_attributes['field_name']
 
-                new_value = variant_to_py(value)
                 logger.debug( 'set data for row %s;col %s' % ( row, column ) )
 
-                old_value = getattr(obj, field_name )
+                new_value = initial_naming_context.resolve(tuple(value))
+                old_value = getattr(obj, field_name)
                 depending_objects_before_set = set(admin.get_depending_objects(obj))
                 value_changed = ( new_value != old_value )
                 #
@@ -546,9 +529,6 @@ class SetData(Update, ChangedObjectMixin):
                     continue
                 # update the model
                 try:
-                    if isinstance(new_value, (list, tuple)) and tuple(new_value) in initial_naming_context:
-                        # Handle only some values (completions) being named values that need resolving for now.
-                        new_value = initial_naming_context.resolve(tuple(new_value))
                     admin.set_field_value(obj, field_name, new_value)
                     #
                     # setting this attribute, might trigger a default function 
@@ -575,6 +555,8 @@ class SetData(Update, ChangedObjectMixin):
             objects_deleted=deleted_objects,
         )
 
+setdata_name = crud_action_context.bind(SetData.name, SetData(), True)
+
 
 class Sort(RowCount):
 
@@ -588,6 +570,8 @@ class Sort(RowCount):
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
+
+sort_name = crud_action_context.bind(Sort.name, Sort(), True)
 
 
 class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
@@ -635,4 +619,4 @@ class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
                 objects_deleted=deleted_objects,
             )
 
-run_field_action = RunFieldAction()
+runfieldaction_name = crud_action_context.bind(RunFieldAction.name, RunFieldAction(), True)

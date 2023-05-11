@@ -89,7 +89,7 @@ def load_translations(connectable):
     for source, value in connectable.execute(query):
         _translations_[source] = value
 
-def ugettext(string_to_translate):
+def ugettext(string_to_translate, msgctxt=None):
     """Translate the string_to_translate to the language of the current locale.
     This is a two step process.  First the function will try to get the
     translation out of the Translation entity, if this is not successfull, the
@@ -98,11 +98,11 @@ def ugettext(string_to_translate):
     assert isinstance(string_to_translate, str)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = qtranslate( string_to_translate )
+        result = qtranslate( string_to_translate, msgctxt=msgctxt)
         #print string_to_translate, result
         # try one more time with string_to_translate capitalized
         if result is string_to_translate:
-            result2 = qtranslate( string_to_translate.capitalize() )
+            result2 = qtranslate( string_to_translate.capitalize(), msgctxt=msgctxt)
             if result2 is not string_to_translate.capitalize():
                 result = result2
 
@@ -128,21 +128,24 @@ class ugettext_lazy(object):
     the string.
     """
 
-    def __init__(self, string_to_translate):
+    def __init__(self, string_to_translate, *args, **kwargs):
         assert isinstance(string_to_translate, str)
         self._string_to_translate = string_to_translate
+        self._args = args
+        self._kwargs = kwargs
 
     def __str__(self):
-        return ugettext(self._string_to_translate)
+        return ugettext(self._string_to_translate).format(*self._args, **self._kwargs)
 
     def __unicode__(self):
-        return ugettext(self._string_to_translate)
+        return ugettext(self._string_to_translate).format(*self._args, **self._kwargs)
     
     def __eq__(self, other_string):
         if isinstance(other_string, str):
-            return other_string == self._string_to_translate
+            return other_string == self._string_to_translate.format(*self._args, **self._kwargs)
         if isinstance(other_string, ugettext_lazy):
-            return other_string._string_to_translate == self._string_to_translate
+            return other_string._string_to_translate == self._string_to_translate and \
+                   other_string._args == self._args and other_string._kwargs == self._kwargs
         return False
     
     def __ne__(self, other_string):

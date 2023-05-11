@@ -6,18 +6,19 @@ from unittest.mock import Mock, patch
 from sqlalchemy import create_engine, orm, schema, types
 
 from .test_orm import TestMetaData
+from camelot.admin.action import Action
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.orm import Entity, Session
 from camelot.core.sql import metadata
 from camelot.model import authentication, memento, party, type_and_status
 from camelot.model.authentication import (get_current_authentication, update_last_login)
-from camelot.model.batch_job import BatchJob, BatchJobType
 from camelot.model.fixture import Fixture, FixtureVersion
-from camelot.model.i18n import ExportAsPO, Translation
+from camelot.model.i18n import Translation
 from camelot.model.party import Person
 from camelot.test.action import MockModelContext
 from camelot.view.import_utils import XlsReader
+from camelot.view import action_steps
 from camelot_example.fixtures import load_movie_fixtures
 from camelot_example.view import setup_views
 
@@ -27,6 +28,55 @@ app_admin = ApplicationAdmin()
 # This creates an in memory database per thread
 #
 model_engine = create_engine('sqlite://')
+
+class LoadSampleData(Action):
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        setup_views()
+        metadata.bind = model_engine
+        metadata.create_all(model_engine)
+        session.expunge_all()
+        update_last_login()
+        if mode in (None, True):
+            load_movie_fixtures()
+            yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
+                session.query(Person).count(), id(session)
+            ))
+
+
+class SetupSession(Action):
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        session.close()
+        yield action_steps.UpdateProgress(detail='Session closed')
+
+
+class DirtySession(Action):
+    
+    def model_run(self, model_context, mode):
+        session = Session()
+        session.expunge_all()
+        # create objects in various states
+        #
+        p2 = Person(first_name = u'p2', last_name = u'dirty' )
+        p3 = Person(first_name = u'p3', last_name = u'deleted' )
+        p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
+        p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
+        session.flush()
+        p3.delete()
+        session.flush()
+        p4.delete()
+        p2.last_name = u'clean'
+        #
+        # delete p6 without the session being aware
+        #
+        person_table = Person.table
+        session.execute(
+            person_table.delete().where( person_table.c.party_id == p6.id )
+        )
+        yield action_steps.UpdateProgress(detail='Session dirty')
 
 class ExampleModelMixinCase(object):
 
@@ -43,39 +93,6 @@ class ExampleModelMixinCase(object):
     def tear_down_sample_model(cls):
         cls.session.expunge_all()
         metadata.bind = None
-
-    @classmethod
-    def load_example_data(cls):
-        """
-        set cls.first_person_id, to have the id of a person available in the gui
-        """
-        load_movie_fixtures()
-        cls.first_person_id = cls.session.query(Person).first().id
-
-    @classmethod
-    def dirty_session(cls):
-        """
-        Create objects in various states to make the session dirty
-        """
-        cls.session.expunge_all()
-        # create objects in various states
-        #
-        p2 = Person(first_name = u'p2', last_name = u'dirty' )
-        p3 = Person(first_name = u'p3', last_name = u'deleted' )
-        p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
-        p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
-        cls.session.flush()
-        p3.delete()
-        cls.session.flush()
-        p4.delete()
-        p2.last_name = u'clean'
-        #
-        # delete p6 without the session being aware
-        #
-        person_table = Person.table
-        cls.session.execute(
-            person_table.delete().where( person_table.c.party_id == p6.id )
-        )
 
 
 class ModelCase(unittest.TestCase, ExampleModelMixinCase):
@@ -114,45 +131,7 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
                                    value = 'emmer' )
         orm.object_session( translation ).flush()
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
-        export_action = ExportAsPO()
-        model_context = MockModelContext()
-        model_context.obj = translation
-        try:
-            generator = export_action.model_run(model_context, None)
-            next( generator )
-            generator.send('/tmp/test.po')
-        except StopIteration:
-            pass
-        
-    def test_batch_job_example( self ):
-        # begin batch job example
-        synchronize = BatchJobType.get_or_create( u'Synchronize' )
-        with BatchJob.create( synchronize ) as batch_job:
-            batch_job.add_strings_to_message( [ u'Synchronize part A',
-                                                u'Synchronize part B' ] )
-            batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
-        # end batch job example
-            
-    def test_batch_job( self ):
-        batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        self.assertTrue( str( batch_job_type ) )
-        batch_job = BatchJob.create( batch_job_type )
-        self.assertTrue( orm.object_session( batch_job ) )
-        self.assertFalse( batch_job.is_canceled() )
-        batch_job.change_status( 'canceled' )
-        self.assertTrue( batch_job.is_canceled() )
-        # run batch job without exception
-        with batch_job:
-            batch_job.add_strings_to_message( [ u'Doing something' ] )
-            batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
-        self.assertEqual( batch_job.current_status, 'success' )
-        # run batch job with exception
-        batch_job = BatchJob.create( batch_job_type )
-        with batch_job:
-            batch_job.add_strings_to_message( [ u'Doing something' ] )
-            raise Exception('Something went wrong')
-        self.assertEqual( batch_job.current_status, 'errors' )
-    
+
     def test_current_authentication( self ):
         authentication.clear_current_authentication()
         mechanism = authentication.get_current_authentication()

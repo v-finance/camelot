@@ -36,9 +36,7 @@ in the development cycle.
 
 from camelot.core.orm import Entity, Session
 from camelot.core.utils import ugettext_lazy as _
-from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.icon import Icon
 from camelot.view.utils import default_language
 import camelot.types
 
@@ -51,21 +49,7 @@ from sqlalchemy.types import Unicode
 import logging
 logger = logging.getLogger( 'camelot.model.i18n' )
 
-class ExportAsPO( Action ):
 
-    verbose_name = _('PO Export')
-    name = 'export_as_po'
-    icon = Icon('save') # 'tango/16x16/actions/document-save.png'
-
-    def model_run( self, model_context, mode ):
-        from camelot.view.action_steps import SaveFile
-        filename = yield SaveFile()
-        file = open(filename, 'w')
-        for translation in model_context.get_collection():
-                file.write( u'msgid  "%s"\n'%translation.source )
-                file.write( u'msgstr "%s"\n\n'%translation.value )
-                
-        
 class Translation( Entity ):
     """Table to store user generated translations or customization.
     """
@@ -130,7 +114,6 @@ class TranslationAdmin( EntityAdmin ):
     form_size = ( 700, 150 )
     list_display = ['source', 'language', 'value']#, 'uid']
     list_filter = [Translation.language]
-    list_actions = [ExportAsPO()]
     field_attributes = { 'language':{ 'default':default_language } }
 
 Translation.Admin = TranslationAdmin

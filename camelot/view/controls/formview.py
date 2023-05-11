@@ -30,21 +30,20 @@
 """form view"""
 import json
 import logging
-
-from ...core.serializable import NamedDataclassSerializable
+import typing
 
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
-from ...core.qt import (QtCore, QtWidgets, Qt, py_to_variant, is_deleted,
-                        variant_to_py)
+from ...admin.action import RenderHint
+from ...core.qt import QtCore, QtWidgets, Qt,is_deleted, variant_to_py
+from ...core.serializable import NamedDataclassSerializable
 
 from ...core.item_model import ActionModeRole
-from camelot.admin.action.base import State
-from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.core.naming import initial_naming_context
+from .. import gui_naming_context
+from ..action_runner import action_runner
+from camelot.admin.action.base import GuiContext
 from camelot.view.crud_action import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
-from camelot.view.controls.action_widget import AbstractActionWidget
 from camelot.view.controls.busy_widget import BusyWidget
 from .delegates.delegatemanager import DelegateManager
 
@@ -53,7 +52,7 @@ class FormEditors(QtCore.QObject):
     option = None
     bold_font = None
 
-    def __init__(self, parent, columns):
+    def __init__(self, parent, fields: typing.Dict[str, dict]):
         """
         A class that holds the editors used on a form
 
@@ -69,11 +68,10 @@ class FormEditors(QtCore.QObject):
             # a form view and not on a table view
             self.option.version = 5
 
-        self._field_attributes = dict()
-        self._index = dict()
-        for i, (field_name, field_attributes ) in enumerate( columns):
-            self._field_attributes[field_name] = field_attributes
-            self._index[field_name] = i
+        self._fields = fields
+        self._index = dict(
+            (field_name, i) for i, field_name in enumerate(fields.keys())
+        )
 
     def create_editor( self, field_name, parent ):
         """
@@ -91,8 +89,6 @@ class FormEditors(QtCore.QObject):
             model_index
         )
         widget_editor.setObjectName('%s_editor'%field_name)
-        stretch = self._field_attributes[field_name].get('stretch', 1)
-        widget_editor.setProperty('stretch', py_to_variant(stretch))
         delegate.setEditorData( widget_editor, model_index )
         widget_mapper.addMapping( widget_editor, index )
         return widget_editor
@@ -100,13 +96,10 @@ class FormEditors(QtCore.QObject):
     def create_label( self, field_name, editor, parent ):
         from camelot.view.controls.field_label import FieldLabel
         from camelot.view.controls.editors.wideeditor import WideEditor
-        field_attributes = self._field_attributes[field_name]
-        hide_title = field_attributes.get( 'hide_title', False )
         widget_label = None
-        if not hide_title:
+        if self._fields[field_name]['hide_title'] == False:
             widget_label = FieldLabel(
-                field_attributes['name'],
-                parent,
+                self._fields[field_name]['verbose_name'], parent,
             )
             widget_label.setObjectName('%s_label'%field_name)
             if not isinstance(editor, WideEditor):
@@ -143,9 +136,9 @@ class FormWidget(QtWidgets.QWidget):
 
     changed_signal = QtCore.qt_signal( int )
 
-    def __init__(self, admin_route, model, form_display, columns, parent):
+    def __init__(self, admin_route, model, form_display, fields, parent):
         QtWidgets.QWidget.__init__(self, parent)
-        self.columns, self.form_display, self.admin_route = columns, form_display, admin_route
+        self.fields, self.form_display, self.admin_route = fields, form_display, admin_route
         widget_mapper = FormDataWidgetMapper(self)
         widget_mapper.setObjectName('widget_mapper')
         widget_mapper.setItemDelegate(DelegateManager(parent=self))
@@ -203,7 +196,7 @@ class FormWidget(QtWidgets.QWidget):
                 # when the columns are available in the model
                 self.create_widgets(
                     widget_mapper,
-                    self.columns,
+                    self.fields,
                     # Serialize the admin's form display again when the layout has changed, e.g. to pick up different tab labels with different locales.
                     self.form_display,
                     #self.admin.get_form_display()._to_bytes(),
@@ -234,10 +227,10 @@ class FormWidget(QtWidgets.QWidget):
         if widget_mapper:
             widget_mapper.submit()
 
-    def create_widgets(self, widget_mapper, columns, form_display):
+    def create_widgets(self, widget_mapper, fields, form_display):
         """Create value and label widgets"""
         LOGGER.debug( 'begin creating widgets' )
-        widgets = FormEditors(self, columns)
+        widgets = FormEditors(self, fields)
         widget_mapper.setCurrentIndex( self._index )
         LOGGER.debug( 'put widgets on form' )
         if isinstance(form_display, bytes):
@@ -261,7 +254,7 @@ class FormWidget(QtWidgets.QWidget):
                 #break
         LOGGER.debug( 'done' )
 
-class FormView(AbstractView):
+class FormView(AbstractView, GuiContext):
     """A FormView is the combination of a FormWidget, possible actions and menu
     items
 
@@ -271,8 +264,8 @@ class FormView(AbstractView):
     form_widget = FormWidget
 
     def __init__(
-        self, title, admin_route, form_close_route, model, form_display,
-        columns, index, parent = None):
+        self, title, admin_route, close_route, model, form_display,
+        fields, index, parent = None):
         AbstractView.__init__( self, parent )
 
         layout = QtWidgets.QVBoxLayout()
@@ -286,34 +279,34 @@ class FormView(AbstractView):
         self.model = model
         self.admin_route = admin_route
         self.title_prefix = title
-        self.form_close_route = form_close_route
+        self.close_route = close_route
+        self.action_routes = dict()
 
         form = FormWidget(
             admin_route=admin_route, model=model, form_display=form_display,
-            columns=columns, parent=self
+            fields=fields, parent=self
         )
         form.setObjectName( 'form' )
         form.changed_signal.connect( self.update_title )
         form.set_index(index)
         form_and_actions_layout.addWidget(form)
-
-        self.gui_context = FormActionGuiContext()
-        self.gui_context.workspace = self
-        self.gui_context.admin_route = admin_route
-        self.gui_context.view = self
-        self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
-                                                         'widget_mapper' )
         self.setLayout( layout )
         self.change_title(title)
 
-        model.action_state_changed_signal.connect(self.action_state_changed)
-        self.gui_context.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
-        self.gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
-
-        #if hasattr(admin, 'form_size') and admin.form_size:
-            #self.setMinimumSize(admin.form_size[0], admin.form_size[1])
-
+        model.action_state_changed_cpp_signal.connect(self.action_state_changed)
+        self.widget_mapper.model().headerDataChanged.connect(self.header_data_changed)
+        self.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
+        self.gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self))), self
+        )
         self.accept_close_event = False
+
+    @property
+    def widget_mapper(self):
+        return self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
+
+    def get_window(self):
+        return self.window()
 
     @QtCore.qt_slot()
     def refresh(self):
@@ -326,78 +319,69 @@ class FormView(AbstractView):
             current_index, Qt.Orientation.Vertical, VerboseIdentifierRole
         ))
         if verbose_identifier is not None:
-            self.change_title(u'%s %s'%(self.title_prefix,verbose_identifier))
+            self.change_title(u'%s'%verbose_identifier)
         else:
             self.change_title(u'')
 
     @QtCore.qt_slot(list)
-    def set_actions(self, action_routes, action_states):
+    def set_actions(self, actions):
         form = self.findChild(QtWidgets.QWidget, 'form' )
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
-        if action_routes and form and layout:
-            route2state = {}
-            for action_state in action_states:
-                route2state[tuple(action_state[0])] = action_state[1]
-            side_panel_layout = QtWidgets.QVBoxLayout()
-            from camelot.view.controls.actionsbox import ActionsBox
-            LOGGER.debug('setting Actions for formview')
-            actions_widget = ActionsBox(parent=self)
-            actions_widget.setObjectName('actions')
-            for action_route in action_routes:
-                action = initial_naming_context.resolve(tuple(action_route))
-                action_widget = self.render_action(action, actions_widget)
-                self.model.add_action_route(tuple(action_route))
-                state = route2state.get(tuple(action_route))
-                if state is not None:
-                    action_widget.set_state(state)
-                actions_widget.layout().addWidget(action_widget)
-            side_panel_layout.addWidget(actions_widget)
-            side_panel_layout.addStretch()
-            layout.addLayout(side_panel_layout)
-
-    @QtCore.qt_slot(list)
-    def set_toolbar_actions(self, action_routes, action_states):
-        layout = self.findChild( QtWidgets.QLayout, 'layout' )
-        if layout and action_routes:
-            route2state = {}
-            for action_state in action_states:
-                route2state[tuple(action_state[0])] = action_state[1]
+        if actions and form and layout:
             toolbar = QtWidgets.QToolBar()
             toolbar.setIconSize(QtCore.QSize(16,16))
-            for action_route in action_routes:
-                action = initial_naming_context.resolve(tuple(action_route))
-                action_widget = self.render_action(action, toolbar)
+            side_panel_layout = QtWidgets.QVBoxLayout()
+            LOGGER.debug('setting Actions for formview')
+            for action_route, render_hint in actions:
+                action_widget = self.render_action(
+                    render_hint, tuple(action_route),
+                    self, self
+                )
                 self.model.add_action_route(tuple(action_route))
-                state = route2state.get(tuple(action_route))
-                if state is not None:
-                    action_widget.set_state(state)
-                toolbar.addWidget(action_widget)
+                if render_hint == RenderHint.TOOL_BUTTON:
+                    toolbar.addWidget(action_widget)
+                else:
+                    side_panel_layout.addWidget(action_widget)
+            side_panel_layout.addStretch()
+            layout.addLayout(side_panel_layout)
             toolbar.addWidget( BusyWidget() )
-            layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
+            top_layout = self.findChild( QtWidgets.QLayout, 'layout' )
+            top_layout.insertWidget( 0, toolbar, 0, Qt.AlignmentFlag.AlignTop )
 
-    @QtCore.qt_slot(tuple, State)
-    def action_state_changed(self, route, state):
-        action = initial_naming_context.resolve(route)
-        action_name = self.gui_context.action_routes[action]
-        action_widget = self.findChild(AbstractActionWidget, action_name)
-        action_widget.set_state(state)
+    @QtCore.qt_slot('QStringList', QtCore.QByteArray)
+    def action_state_changed(self, action_route, serialized_state):
+        state = json.loads(serialized_state.data())
+        self.set_action_state(self, tuple(action_route), state)
 
+    @QtCore.qt_slot(bool)
+    def button_clicked(self, checked):
+        self.run_action(self.sender(), self.gui_context_name, self.model.get_value(), None)
+
+    @QtCore.qt_slot()
+    def menu_triggered(self):
+        qaction = self.sender()
+        self.run_action(qaction, self.gui_context_name, self.model.get_value(), qaction.data())
+        
     def current_row_changed( self, current=None, previous=None ):
-        current_index = self.gui_context.widget_mapper.currentIndex()
-        self.model.change_selection(None, current_index)
+        if self.widget_mapper is not None:
+            current_index = self.widget_mapper.currentIndex()
+            self.model.change_selection(None, current_index)
 
     def header_data_changed(self, orientation, first, last):
         if orientation==Qt.Orientation.Horizontal:
             return
         # the model might emit a dataChanged signal, while the widget mapper
         # has been deleted
-        if not is_deleted(self.gui_context.widget_mapper):
+        if (self.widget_mapper is not None) and (not is_deleted(self.widget_mapper)):
             self.current_row_changed(first)
 
     @QtCore.qt_slot()
     def validate_close( self ):
-        action = initial_naming_context.resolve(self.form_close_route)
-        action.gui_run(self.gui_context)
+        # widget_mapper.submit() ??
+        action_runner.run_action(
+            self.close_route, self.gui_context_name,
+            self.model.get_value(), None
+        )
 
     def close_view( self, accept ):
         self.accept_close_event = accept

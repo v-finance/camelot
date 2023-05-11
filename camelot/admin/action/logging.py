@@ -22,6 +22,7 @@ class ChangeLoggingOptions( object ):
         
     class Admin( DataclassAdmin ):
         list_display = ['level', 'queries', 'pool']
+        form_display = list_display
         field_attributes = { 'level':{ 'choices':[(l,logging.getLevelName(l)) for l in [logging.DEBUG, 
                                                                                         logging.INFO, 
                                                                                         logging.WARNING,

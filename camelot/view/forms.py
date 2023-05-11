@@ -41,7 +41,7 @@ from ..core.serializable import NamedDataclassSerializable
 
 logger = logging.getLogger('camelot.view.forms')
 
-from ..core.qt import QtCore, QtWidgets, variant_to_py
+from ..core.qt import QtCore, QtWidgets
 from ..core.exception import log_programming_error
 
 class AbstractFormElement(NamedDataclassSerializable):
@@ -186,9 +186,6 @@ class AbstractForm(AbstractFormElement):
                             form_layout.addWidget(label, c.row, c.col, row_span, col_span)
                             c.next_row()
                         form_layout.addWidget(editor, c.row, c.col, row_span, col_span)
-                        stretch = variant_to_py(editor.property('stretch'))
-                        if stretch is not None:
-                            form_layout.setRowStretch(c.row, stretch)
                         c.next_row()
                     else:
                         col_span = 1

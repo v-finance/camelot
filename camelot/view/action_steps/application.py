@@ -33,6 +33,7 @@ import logging
 import typing
 
 from ...admin.action.base import ActionStep, State, ModelContext
+from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
@@ -40,7 +41,8 @@ from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import get_current_authentication
-from camelot.view.qml_view import qml_action_step, get_qml_window, qml_action_dispatch, get_qml_root_backend
+from .. import gui_naming_context
+from camelot.view.qml_view import qml_action_step, get_qml_window, is_cpp_gui_context_name
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,6 +53,7 @@ class Exit(ActionStep, DataclassSerializable):
     """
 
     return_code: int = 0
+    blocking: bool = False
 
     @classmethod
     def gui_run(self, gui_context, serialized_step):
@@ -60,6 +63,23 @@ class Exit(ActionStep, DataclassSerializable):
             model_thread.stop()
         qml_action_step(gui_context, 'Exit', serialized_step)
 
+
+@dataclass
+class SetThemeColors(ActionStep, DataclassSerializable):
+    """
+    This action step sets the theme colors.
+    """
+
+    primary_color: str
+    accent_color: str
+    blocking: bool = False
+
+
+@dataclass
+class Authenticate(ActionStep, DataclassSerializable):
+    """
+    Request client side credentials
+    """
 
 @dataclass
 class MainWindow(ActionStep, DataclassSerializable):
@@ -85,7 +105,7 @@ class MainWindow(ActionStep, DataclassSerializable):
 
     admin: InitVar[ApplicationAdmin]
     window_title: str = field(init=False)
-
+    blocking: bool = False
     admin_route: Route = field(init=False)
 
     def __post_init__(self, admin):
@@ -117,12 +137,15 @@ class NavigationPanel(ActionStep, DataclassSerializable):
     # this could be non-blocking, but that causes unittest segmentation
     # fault issues which are not worth investigating
     menu: MenuItem
+    model_context_name: Route = field(default_factory=list)
     action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
     model_context: InitVar(ModelContext) = None
+    blocking: bool = False
 
     # noinspection PyDataclass
     def __post_init__(self, model_context):
         self.menu = self._filter_items(self.menu, get_current_authentication())
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.menu.items, self.action_states)
 
     @classmethod
@@ -157,10 +180,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
                 state = action.get_state(model_context)
                 action_states.append((action_route, state))
 
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        qml_action_step(gui_context, 'NavigationPanel', serialized_step)
-
 
 @dataclass
 class MainMenu(ActionStep, DataclassSerializable):
@@ -173,10 +192,12 @@ class MainMenu(ActionStep, DataclassSerializable):
 
     blocking = False
     menu: MenuItem
+    model_context_name: Route = field(default_factory=list)
     action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
     model_context: InitVar(ModelContext) = None
 
     def __post_init__(self, model_context):
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.menu.items, self.action_states)
 
     @classmethod
@@ -192,9 +213,6 @@ class MainMenu(ActionStep, DataclassSerializable):
                 state = action.get_state(model_context)
                 action_states.append((action_route, state))
 
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        qml_action_step(gui_context, 'MainMenu', serialized_step)
 
 @dataclass
 class InstallTranslator(ActionStep, DataclassSerializable):
@@ -207,9 +225,6 @@ class InstallTranslator(ActionStep, DataclassSerializable):
 
     language: str
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        qml_action_step(gui_context, 'InstallTranslator', serialized_step)
 
 @dataclass
 class RemoveTranslators(ActionStep, DataclassSerializable):
@@ -225,10 +240,6 @@ class RemoveTranslators(ActionStep, DataclassSerializable):
 
     def __post_init__(self, admin):
         self.admin_route = admin.get_admin_route()
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        qml_action_step(gui_context, 'RemoveTranslators', serialized_step)
 
 @dataclass
 class UpdateActionsState(ActionStep, DataclassSerializable):
@@ -254,12 +265,10 @@ class UpdateActionsState(ActionStep, DataclassSerializable):
                 self.action_states.append((action_route, state._to_dict()))
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        if qml_action_dispatch.has_context(gui_context):
-            root_backend = get_qml_root_backend()
-            root_backend.updateActionsState(gui_context.context_id, serialized_step)
-            return
-
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            return qml_action_step(gui_context_name, 'UpdateActionsState', serialized_step)
+        gui_context = gui_naming_context.resolve(gui_context_name)
         step = json.loads(serialized_step)
         for action_route, action_state in step['action_states']:
             action = initial_naming_context.resolve(tuple(action_route))

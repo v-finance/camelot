@@ -1,5 +1,4 @@
 import datetime
-import gc
 import io
 import logging
 import os
@@ -8,38 +7,37 @@ import openpyxl
 
 import camelot.types
 
+from camelot.core.dataclasses import dataclass
 from camelot.core.exception import UserException
-from camelot.core.item_model import ListModelProxy, ObjectRole
-from camelot.admin.action import Action, ActionStep, State
+from camelot.core.naming import initial_naming_context
+from camelot.core.item_model import ObjectRole
+from camelot.admin.action import Action, ActionStep, State, GuiContext
 from camelot.admin.action import (
-    list_action, application_action, form_action, list_filter,
-    ApplicationActionGuiContext, Mode
+    list_action, application_action, form_action, list_filter, Mode
 )
-from camelot.admin.action.application import Application
 from camelot.admin.action import export_mapping
 from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFile, add_existing_object
-from camelot.admin.action.list_action import SetFilters, ListActionModelContext
+from camelot.admin.action.list_action import SetFilters
+from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.admin.validator.entity_validator import EntityValidator
-from camelot.bin.meta import NewProjectOptions
-from camelot.core.qt import QtGui, QtWidgets, Qt
-from camelot.core.exception import CancelRequest
+from camelot.core.qt import QtGui, QtWidgets, Qt, delete
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model import party
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
-from camelot.test.action import MockListActionGuiContext, MockModelContext
-from camelot.view import action_steps, import_utils, utils
+from camelot.test.action import MockModelContext
+from camelot.view import action_steps, import_utils, utils, gui_naming_context
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
-from camelot.view.action_steps.change_object import ChangeObject, ChangeField
-from camelot.view.action_steps.profile import EditProfiles
-from camelot.view.controls import actionsbox, delegates, tableview
-from camelot.view.controls.action_widget import ActionPushButton
-from camelot.view.controls.view import AbstractView
+from camelot.view.action_steps.change_object import ChangeObject
+from camelot.view.controls.action_widget import AbstractActionWidget
+from camelot.view.controls import delegates
+from camelot.view.controls.formview import FormView
+from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
+from camelot.view.forms import Form
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.view.qml_view import get_qml_root_backend
@@ -50,9 +48,9 @@ from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
 from . import app_admin, test_core, test_view
-from .test_item_model import QueryQStandardItemModelMixinCase
+from .test_item_model import QueryQStandardItemModelMixinCase, SetupQueryProxy
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData, SetupSession, DirtySession
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -75,15 +73,18 @@ class SerializableMixinCase(object):
 
 class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
 
+    model_context_name = ('constant', 'null')
+
     def setUp(self):
         super().setUp()
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin_route = self.admin_route
+        self.gui_context_obj = GuiContext()
+        self.gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        )
 
     def test_action_step(self):
-        step = ActionStep()
-        step.gui_run(self.gui_context)
+        ActionStep()
 
     def test_action(self):
 
@@ -96,8 +97,8 @@ class ActionBaseCase(RunningThreadCase, SerializableMixinCase):
             ]
 
         action = CustomAction()
-        list(self.gui_run(action, self.gui_context))
-        state = self.get_state(action, self.gui_context)
+        self.gui_run(action, self.gui_context_name, 'mode_1')
+        state = self.get_state(action, self.gui_context_name)
         self.assertTrue(state.verbose_name)
         # serialize the state of an action
         deserialized_state = self._write_read(state)
@@ -111,12 +112,17 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     images_path = test_view.static_images_path
 
+    @classmethod
+    def setUpClass(cls):
+        cls.action = ImportCovers()
+        cls.action_name = initial_naming_context.bind(('import_covers',), cls.action)
+
     def setUp(self):
         get_qml_root_backend().setVisible(True, False)
-        self.action = ImportCovers()
-        self.admin_route = app_admin.get_admin_route()
-        self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin_route = app_admin.get_admin_route()
+        self.gui_context_obj = GuiContext()
+        self.gui_context = gui_naming_context.bind(
+            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
+        )
         self.parent = QtWidgets.QWidget()
         enabled = State()
         disabled = State()
@@ -129,18 +135,18 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     def grab_widget_states( self, widget, suffix ):
         for state_name, state in self.states:
-            widget.set_state( state )
+            AbstractActionWidget.set_pushbutton_state(
+                widget, state._to_dict(), None, None
+            )
             self.grab_widget( widget, suffix='%s_%s'%( suffix,
                                                        state_name ) )
 
     def test_action_push_botton( self ):
-        widget = ActionPushButton( self.action,
-                                   self.gui_context,
-                                   self.parent )
+        widget = QtWidgets.QPushButton()
         self.grab_widget_states( widget, 'application' )
 
     def test_hide_progress_dialog( self ):
-        dialog = self.gui_context.get_progress_dialog()
+        dialog = self.gui_context_obj.get_progress_dialog()
         dialog.show()
         with hide_progress_dialog(self.gui_context):
             self.assertTrue( dialog.isHidden() )
@@ -151,37 +157,33 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     action.
     """
 
+    model_context_name = ('constant', 'null')
     images_path = test_view.static_images_path
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), mode=True)
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
         get_qml_root_backend().setVisible(True, False)
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin_route = self.admin_route
+        self.gui_context = ('cpp_gui_context', 'root_backend')
 
-    def test_change_object( self ):
-        admin = app_admin.get_related_admin(NewProjectOptions)
-        options = NewProjectOptions()
-        options.name = 'Videostore'
-        options.module = 'videostore'
-        options.domain = 'example.com'
+    def test_change_object(self):
+
+        @dataclass
+        class Options(object):
+            name: str
+
+        admin = app_admin.get_related_admin(Options)
+        options = Options('Videostore')
         change_object = ChangeObject(options, admin)
-        dialog = change_object.render(self.gui_context)
-        self.grab_widget( dialog )
+        dialog = change_object.render(
+            self.gui_context, change_object._to_dict()
+        )
+        self.grab_widget(dialog)
 
     def test_select_file( self ):
         action_steps.SelectFile('Image Files (*.png *.jpg);;All Files (*)')
@@ -192,27 +194,32 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         class SendDocumentAction( Action ):
 
             def model_run( self, model_context, mode ):
-                methods = [ ('email', 'By E-mail'),
-                            ('fax',   'By Fax'),
-                            ('post',  'By postal mail') ]
-                method = yield SelectItem( methods, value='email' )
+                methods = [
+                    CompletionValue(
+                        initial_naming_context._bind_object('email'),
+                        'By E-mail'),
+                    CompletionValue(
+                        initial_naming_context._bind_object('email'),
+                        'By Fax'),
+                    CompletionValue(
+                        initial_naming_context._bind_object('email'),
+                        'By postal mail')
+                ]
+                method = yield SelectItem(
+                    methods,
+                    value=initial_naming_context._bind_object('email')
+                )
                 # handle sending of the document
                 LOGGER.info('selected {}'.format(method))
 
         # end select item
 
         action = SendDocumentAction()
-        for step in self.gui_run(action, self.gui_context):
-            if isinstance(step, ActionStep):
-                dialog = step.render()
-                self.grab_widget(dialog)
-        self.assertTrue(dialog)
-
-    def test_edit_profile(self):
-        step = yield EditProfiles([], '')
-        dialog = EditProfiles.render(self.gui_context, step)
-        dialog.show()
+        step = self.gui_run(action, self.gui_context, model_context_name=self.model_context_name)[-2]
+        self.assertEqual(step[0], SelectItem.__name__)
+        dialog = SelectItem.render(step[1])
         self.grab_widget(dialog)
+        self.assertTrue(dialog)
 
     def test_open_file( self ):
         stream = io.BytesIO(b'1, 2, 3, 4')
@@ -229,13 +236,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         )
         self.assertTrue( str( update_progress ) )
         update_progress = self._write_read(update_progress)
-        # give the gui context a progress dialog, so it can be updated
-        progress_dialog = self.gui_context.get_progress_dialog()
         update_progress.gui_run(self.gui_context, update_progress._to_bytes())
-        # now press the cancel button
-        progress_dialog.cancel()
-        with self.assertRaises( CancelRequest ):
-            update_progress.gui_run(self.gui_context, update_progress._to_bytes())
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')
@@ -243,11 +244,6 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
         dialog = step.render(serialized_step)
         dialog.show()
         self.grab_widget(dialog)
-
-    #def test_main_menu(self):
-        #main_menu = action_steps.MainMenu(app_admin.get_main_menu())
-        #main_menu = self._write_read(main_menu)
-        #main_menu.gui_run(self.gui_context)
 
 
 class ListActionsCase(
@@ -257,82 +253,70 @@ class ListActionsCase(
     """
 
     images_path = test_view.static_images_path
+    model_context_name = ('test_list_actions_model_context',)
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
+        cls.gui_run(LoadSampleData(), mode=True)
         cls.group_box_filter = list_filter.GroupBoxFilter(Person.last_name, exclusive=True)
         cls.combo_box_filter = list_filter.ComboBoxFilter(Person.last_name)
-        cls.process()
-        gc.disable()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
-        gc.enable()
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
-        self.thread.post(self.session.close)
-        self.process()
+        self.gui_run(SetupSession(), mode=True)
+        self.gui_run(SetupQueryProxy(self.model_context_name))
         self.admin = app_admin.get_related_admin(Person)
-        self.thread.post(self.setup_proxy)
-        self.process()
         self.admin_route = self.admin.get_admin_route()
+        self.combo_box_filter_route = self.admin._register_action_route(
+            self.admin_route, self.combo_box_filter
+        )
         self.setup_item_model(self.admin_route, self.admin.get_name())
         self.movie_admin = app_admin.get_related_admin(Movie)
         # make sure the model has rows and header data
         self._load_data(self.item_model)
-        table_view = tableview.TableWidget()
+        self.view = One2ManyEditor(admin_route=self.admin_route)
+        table_view = self.view.item_view
         table_view.setModel(self.item_model)
+        self.gui_context = self.view.list_gui_context_name
+        
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
-        self.gui_context = list_action.ListActionGuiContext()
-        self.gui_context.item_view = table_view
-        self.gui_context.view = AbstractView()
-        self.gui_context.admin_route = self.admin_route
-        self.gui_context.view.gui_context = self.gui_context
-        self.model_context = self.gui_context.create_model_context()
+        # Make sure to ChangeSelection action step is executed
+        self.item_model.timeout_slot()
         # create a model context
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
 
     def tearDown( self ):
         Session().expunge_all()
+        delete(self.item_model)
+        self.item_model = None
 
-    def test_gui_context( self ):
-        self.assertTrue( isinstance( self.gui_context.copy(),
-                                     list_action.ListActionGuiContext ) )
-        model_context = self.gui_context.create_model_context()
-        self.assertTrue( isinstance( model_context,
-                                     list_action.ListActionModelContext ) )
-        list( model_context.get_collection() )
-        list( model_context.get_selection() )
+    def test_model_context(self):
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        list(model_context.get_collection())
+        list(model_context.get_selection())
         model_context.get_object()
 
     def test_change_row_actions( self ):
         # FIXME: this unit test does not work with the new ToFirstRow/ToNextRow action steps...
         return
 
-        gui_context = MockListActionGuiContext()
         to_first = list_action.ToFirstRow()
         to_last = list_action.ToLastRow()
 
         # the state does not change when the current row changes,
         # to make the actions usable in the main window toolbar
-        to_last.gui_run( gui_context )
+        list(self.gui_run(to_last.gui_run, self.gui_context, None, model_context_name=self.model_context_name))
         #self.assertFalse( get_state( to_last ).enabled )
         #self.assertFalse( get_state( to_next ).enabled )
-        to_first.gui_run( gui_context )
+        list(self.gui_run(to_first.gui_run, self.gui_context, None, model_context_name=self.model_context_name))
         #self.assertFalse( get_state( to_first ).enabled )
         #self.assertFalse( get_state( to_previous ).enabled )
 
     def test_export_spreadsheet( self ):
         action = list_action.ExportSpreadsheet()
-        for step in self.gui_run(action, self.gui_context):
+        for step in self.gui_run(action, self.gui_context, None, model_context_name=self.model_context_name):
             if isinstance(step, tuple) and step[0] == 'OpenFile':
                 filename = step[1]["path"]
         self.assertTrue(filename)
@@ -379,7 +363,7 @@ class ListActionsCase(
         generator = restore_export_mapping.model_run(model_context, None)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
-                generator.send('mapping 1')
+                generator.send(step.items[1].value)
 
         self.assertEqual(model_context.selection[0].field, 'field_1')
 
@@ -403,9 +387,10 @@ class ListActionsCase(
         self.assertEqual(mapping.field, 'first_name')
 
     def test_import_from_xls_file( self ):
-        with self.assertRaises(Exception) as ec:
-            self.test_import_from_file('import_example.xls')
-        self.assertIn('xls is not a supported', str(ec.exception))
+        exception_step, pop_progress_step = self.test_import_from_file('import_example.xls')[-2:]
+        self.assertEqual(exception_step[0], action_steps.MessageBox.__name__)
+        self.assertIn('xls is not a supported', exception_step[1]['text'])
+        self.assertEqual(pop_progress_step[0], action_steps.PopProgressLevel.__name__)
 
     def test_import_from_xlsx_file( self ):
         self.test_import_from_file( 'import_example.xlsx' )
@@ -427,10 +412,11 @@ class ListActionsCase(
 
     def test_import_from_file(self, filename='import_example.csv'):
         action = list_action.ImportFromFile()
-        generator = self.gui_run(action, self.gui_context)
-        for step in generator:
-            if isinstance(step, tuple) and step[0] == 'SelectFile':
-                generator.send([os.path.join(self.example_folder, filename)])
+        replies = {
+            action_steps.SelectFile: [os.path.join(self.example_folder, filename)]
+        }
+        steps = self.gui_run(action, self.gui_context, None, replies, model_context_name=self.model_context_name)
+        for step in steps:
             if isinstance(step, action_steps.ChangeObject):
                 dialog = step.render(self.gui_context)
                 dialog.show()
@@ -443,22 +429,20 @@ class ListActionsCase(
                 dialog = step.render()
                 dialog.show()
                 self.grab_widget(dialog, suffix='confirmation')
+        return steps
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        steps = action.model_run(self.gui_context.create_model_context(), None)
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        steps = action.model_run(model_context, 'first_name')
         for step in steps:
-            if isinstance(step, ChangeField):
-                dialog = step.render()
-                field_editor = dialog.findChild(QtWidgets.QWidget, 'field_choice')
-                field_editor.set_value('first_name')
-                dialog.show()
-                self.grab_widget( dialog )
-                steps.send(('first_name', 'known'))
+            if isinstance(step, ChangeObject):
+                field_value = step.get_object()
+                field_value.value = 'known'
 
     def test_open_form_view( self ):
         # sort and filter the original model
-        item_view = self.gui_context.item_view
+        item_view = self.view.item_view
         list_model = item_view.model()
         list_model.sort(1, Qt.SortOrder.DescendingOrder)
         list_model.timeout_slot()
@@ -467,97 +451,30 @@ class ListActionsCase(
         list_model.data(list_model.index(0, 0), Qt.ItemDataRole.DisplayRole)
         list_model.timeout_slot()
         self.process()
-        self.gui_context.item_view.setCurrentIndex(list_model.index(0, 0))
-        model_context = self.gui_context.create_model_context()
+        self.view.item_view.setCurrentIndex(list_model.index(0, 0))
+        model_context = initial_naming_context.resolve(self.model_context_name)
         open_form_view_action = list_action.OpenFormView()
         for step in open_form_view_action.model_run(model_context, None):
-            form = step.render(self.gui_context)
+            form = step.render(self.gui_context, step._to_dict())
             form_value = form.model.get_value()
-        self.assertTrue(isinstance(form_value, ListModelProxy))
+        self.assertTrue(isinstance(form_value, (tuple,)))
 
     @staticmethod
     def track_crud_steps(action, model_context):
-        created = updated = None
+        created, updated = [], []
         steps = []
         for step in action.model_run(model_context, None):
             steps.append(type(step))
             if isinstance(step, action_steps.CreateObjects):
-                created = step.objects_created if created is None else created.extend(step.objects_created)
+                created.extend(initial_naming_context.resolve(step.created) if step.created else [])
             elif isinstance(step, action_steps.UpdateObjects):
-                updated = step.objects_updated if updated is None else updated.extend(step.objects_updated)
+                updated.extend(initial_naming_context.resolve(step.updated) if step.updated else [])
         return steps, created, updated
-
-    def test_duplicate_selection( self ):
-        initial_row_count = self._row_count(self.item_model)
-        action = list_action.DuplicateSelection()
-        action.gui_run(self.gui_context)
-        self.process()
-        new_row_count = self._row_count(self.item_model)
-        self.assertEqual(new_row_count, initial_row_count+1)
-        person = Person(first_name='test', last_name='person')
-        self.session.flush()
-        model_context = MockModelContext(self.session)
-        model_context.admin = self.admin
-        model_context.proxy = self.admin.get_proxy([])
-
-        # The action should only be applicable for a single selection.
-        # So verify a UserException is raised when selecting multiple ...
-        model_context.selection = [None, None]
-        model_context.selection_count = 2
-        with self.assertRaises(UserException) as exc:
-            list(action.model_run(model_context, None))
-        self.assertEqual(exc.exception.text, action.Message.no_single_selection.value) 
-        # ...and selecting None has no side-effects.
-        model_context.selection = []
-        model_context.selection_count = 0
-        steps, created, updated = self.track_crud_steps(action, model_context)
-        self.assertIsNone(created)
-        self.assertIsNone(updated)
-        self.assertNotIn(action_steps.FlushSession, steps)
-
-        # Verify the valid duplication of a single selection.
-        model_context.selection = [person]
-        model_context.selection_count = 1
-        steps, created, updated = self.track_crud_steps(action, model_context)
-        self.assertEqual(len(created), 1)
-        self.assertEqual(len(updated), 0)
-        self.assertIn(action_steps.FlushSession, steps)
-        copied_obj = created[0]
-        self.assertEqual(copied_obj.first_name, person.first_name)
-        self.assertEqual(copied_obj.last_name, person.last_name)
-
-        # Verify in the case wherein the duplicated instance is invalid, its is not flushed yet and opened within its form.
-        # Set custom validator that always fails to make sure duplicated instance is found to be invalid/
-        validator = self.admin.validator
-        class CustomValidator(EntityValidator):
-
-            def validate_object(self, p):
-                return ['some validation error']
-
-        self.admin.validator = CustomValidator
-        model_context.selection = [person]
-        steps, created, updated = self.track_crud_steps(action, model_context)
-        self.assertEqual(len(created), 1)
-        self.assertIsNone(updated)
-        self.assertIn(action_steps.OpenFormView, steps)
-        self.assertNotIn(action_steps.FlushSession, steps)
-        copied_obj = created[0]
-        self.assertEqual(copied_obj.first_name, person.first_name)
-        self.assertEqual(copied_obj.last_name, person.last_name)
-        # Reinstated original validator to prevent intermingling with other test (cases).
-        self.admin.validator = validator
-
-    def test_delete_selection(self):
-        selected_object = self.model_context.get_object()
-        self.assertTrue(selected_object in self.session)
-        delete_selection_action = list_action.DeleteSelection()
-        delete_selection_action.gui_run( self.gui_context )
-        self.process()
-        self.assertFalse(selected_object in self.session)
 
     def test_remove_selection(self):
         remove_selection_action = list_action.RemoveSelection()
-        list( remove_selection_action.model_run( self.gui_context.create_model_context(), None ) )
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        list(remove_selection_action.model_run(model_context, None))
 
     def test_move_rank_up_down(self):
         metadata = MetaData()
@@ -583,18 +500,17 @@ class ListActionsCase(
                 pass
 
         metadata.create_all()
-        selected_object = self.model_context.get_object()
-        self.assertTrue(selected_object in self.session)
+        model_context = initial_naming_context.resolve(self.model_context_name)
 
         # The actions should not be present in the related toolbar actions of the entity if its not rank-based.
-        related_toolbar_actions = [action.route[-1] for action in self.model_context.admin.get_related_toolbar_actions('onetomany')]
+        related_toolbar_actions = [action.route[-1] for action in model_context.admin.get_related_toolbar_actions('onetomany')]
         self.assertNotIn(list_action.move_rank_up.name, related_toolbar_actions)
         self.assertNotIn(list_action.move_rank_down.name, related_toolbar_actions)
         # If the action is run on a non rank-based entity anyways, an assertion should block it.
         for action in (list_action.move_rank_up, list_action.move_rank_down):
             with self.assertRaises(AssertionError) as exc:
-                list(action.model_run(self.model_context, None))
-            self.assertEqual(str(exc.exception), action.Message.entity_not_rank_based.value.format(self.model_context.admin.entity))
+                list(action.model_run(model_context, None))
+            self.assertEqual(str(exc.exception), action.Message.entity_not_rank_based.value.format(model_context.admin.entity))
 
         # The action should be present on a rank-based entity:
         admin = app_admin.get_related_admin(A)
@@ -608,10 +524,10 @@ class ListActionsCase(
         ax3 = A(type='x', rank=3)
         ay1 = A(type='y', rank=1)
         session.flush()
-        model_context = list_action.ListActionModelContext()
-        model_context.proxy = admin.get_proxy([ax1, ax2, ay1, ax3])
+        model_context = ObjectsModelContext(
+            admin, admin.get_proxy([ax1, ax2, ay1, ax3]), None
+        )
         model_context.collection_count = 4
-        model_context.admin = admin
         for action in (list_action.move_rank_up, list_action.move_rank_down):
             with self.assertRaises(UserException) as exc:
                 list(action.model_run(model_context, None))
@@ -662,10 +578,6 @@ class ListActionsCase(
         metadata.drop_all()
         metadata.clear()
 
-    def test_add_new_object(self):
-        add_new_object_action = list_action.AddNewObject()
-        add_new_object_action.gui_run( self.gui_context )
-
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
         state = self.get_state(set_filters_step, self.gui_context)
@@ -673,7 +585,7 @@ class ListActionsCase(
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
         self.assertNotIn('note', mode_names)
-        SetFilters.gui_run(self.gui_context, set_filters_step[1])
+        self.gui_run(SetFilters, self.gui_context, set_filters_step[1], model_context_name=self.model_context_name)
         #steps = self.gui_run(set_filters, self.gui_context)
         #for step in steps:
             #if isinstance(step, action_steps.ChangeField):
@@ -682,109 +594,20 @@ class ListActionsCase(
     def test_group_box_filter(self):
         state = self.get_state(self.group_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        widget = self.gui_context.view.render_action(self.group_box_filter, None)
-        widget.set_state(state)
-        self.assertTrue(len(widget.get_value()))
-        widget.run_action()
-        self.grab_widget(widget)
+        self.gui_run(self.group_box_filter, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
 
     def test_combo_box_filter(self):
         state = self.get_state(self.combo_box_filter, self.gui_context)
         self.assertTrue(len(state.modes))
-        widget = self.gui_context.view.render_action(self.combo_box_filter, None)
-        widget.set_state(state)
-        self.assertTrue(len(widget.get_value()))
-        widget.run_action()
+        widget = self.view.render_action(
+            self.combo_box_filter.render_hint, self.combo_box_filter_route,
+            self.view, None
+        )
+        AbstractActionWidget.set_combobox_state(widget, state._to_dict())
+        self.assertTrue(widget.count())
+        self.gui_run(self.combo_box_filter, self.gui_context, state.modes[0].value, model_context_name=self.model_context_name)
         self.grab_widget(widget)
 
-    def test_filter_list(self):
-        action_box = actionsbox.ActionsBox(None)
-        for action in [self.group_box_filter,
-                       self.combo_box_filter]:
-            action_widget = self.gui_context.view.render_action(action, None)
-            action_box.layout().addWidget(action_widget)
-        self.grab_widget(action_box)
-        return action_box
-
-    def test_orm( self ):
-
-        class UpdatePerson( Action ):
-
-            verbose_name = _('Update person')
-
-            def model_run( self, model_context, mode ):
-                for person in model_context.get_selection():
-                    soc_number = person.social_security_number
-                    if soc_number:
-                        # assume the social sec number contains the birth date
-                        person.birth_date = datetime.date( int(soc_number[0:4]),
-                                                           int(soc_number[4:6]),
-                                                           int(soc_number[6:8])
-                                                           )
-                    # delete the email of the person
-                    for contact_mechanism in person.contact_mechanisms:
-                        model_context.session.delete( contact_mechanism )
-                        yield action_steps.DeleteObjects((contact_mechanism,))
-                    # add a new email
-                    m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                        person.last_name ) )
-                    cm = party.ContactMechanism( mechanism = m )
-                    pcm = party.PartyContactMechanism( party = person,
-                                                       contact_mechanism = cm )
-                    
-                    # immediately update the GUI
-                    yield action_steps.CreateObjects((cm,))
-                    yield action_steps.CreateObjects((pcm,))
-                    yield action_steps.UpdateObjects((person,))
-                # flush the session on finish
-                model_context.session.flush()
-
-        # end manual update
-
-        action_step = None
-        update_person = UpdatePerson()
-        for step in self.gui_run(update_person, self.gui_context):
-            if isinstance(step, ActionStep):
-                action_step = step
-                action_step.gui_run(self.gui_context)
-        self.assertTrue(action_step)
-
-        # begin auto update
-
-        class UpdatePerson( Action ):
-
-            verbose_name = _('Update person')
-
-            def model_run( self, model_context, mode ):
-                for person in model_context.get_selection():
-                    soc_number = person.social_security_number
-                    if soc_number:
-                        # assume the social sec number contains the birth date
-                        person.birth_date = datetime.date( int(soc_number[0:4]),
-                                                           int(soc_number[4:6]),
-                                                           int(soc_number[6:8])
-                                                           )
-                    # delete the email of the person
-                    for contact_mechanism in person.contact_mechanisms:
-                        model_context.session.delete( contact_mechanism )
-                    # add a new email
-                    m = ('email', '%s.%s@example.com'%( person.first_name,
-                                                        person.last_name ) )
-                    cm = party.ContactMechanism( mechanism = m )
-                    party.PartyContactMechanism( party = person,
-                                                contact_mechanism = cm )
-                # flush the session on finish and update the GUI
-                yield action_steps.FlushSession( model_context.session )
-
-        # end auto update
-
-        action_step = None
-        update_person = UpdatePerson()
-        for step in self.gui_run(update_person, self.gui_context):
-            if isinstance(step, ActionStep):
-                action_step = step
-                action_step.gui_run(self.gui_context)
-        self.assertTrue(action_step)
 
 
 class FormActionsCase(
@@ -793,102 +616,40 @@ class FormActionsCase(
     """Test the standard list actions.
     """
 
+    model_context_name = ('test_form_actions_model_context',)
     images_path = test_view.static_images_path
 
     @classmethod
     def setUpClass(cls):
         super(FormActionsCase, cls).setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
-        self.thread.post(self.setup_proxy)
-        self.process()
+        self.gui_run(SetupQueryProxy(self.model_context_name))
         person_admin = app_admin.get_related_admin(Person)
         self.admin_route = person_admin.get_admin_route()
         self.setup_item_model(self.admin_route, person_admin.get_name())
-        self.gui_context = form_action.FormActionGuiContext()
-        self.gui_context._model = self.item_model
-        self.gui_context.widget_mapper = QtWidgets.QDataWidgetMapper()
-        self.gui_context.widget_mapper.setModel(self.item_model)
-        self.gui_context.admin_route = self.admin_route
-        self.gui_context.admin = person_admin
-
-    def tearDown(self):
-        super().tearDown()
-
-    def test_gui_context( self ):
-        self.assertTrue( isinstance( self.gui_context.copy(),
-                                     form_action.FormActionGuiContext ) )
-        self.assertTrue( isinstance( self.gui_context.create_model_context(),
-                                     form_action.FormActionModelContext ) )
+        self.form_view = FormView(
+            'Test form', self.admin_route, tuple(), self.item_model,
+            Form([])._to_dict(), {}, 0
+        )
+        self.gui_context_name = self.form_view.gui_context_name
 
     def test_previous_next( self ):
         previous_action = form_action.ToPreviousForm()
-        list(self.gui_run(previous_action, self.gui_context))
+        list(self.gui_run(previous_action, self.gui_context_name, None))
         next_action = form_action.ToNextForm()
-        list(self.gui_run(next_action, self.gui_context))
+        list(self.gui_run(next_action, self.gui_context_name, None))
         first_action = form_action.ToFirstForm()
-        list(self.gui_run(first_action, self.gui_context))
+        list(self.gui_run(first_action, self.gui_context_name, None))
         last_action = form_action.ToLastForm()
-        list(self.gui_run(last_action, self.gui_context))
-
-    def test_show_history( self ):
-        show_history_action = form_action.ShowHistory()
-        list(self.gui_run(show_history_action, self.gui_context))
+        list(self.gui_run(last_action, self.gui_context_name, None))
 
     def test_close_form( self ):
         close_form_action = form_action.CloseForm()
-        list(self.gui_run(close_form_action, self.gui_context))
+        list(self.gui_run(close_form_action, self.gui_context_name, None))
 
-class ApplicationCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
-
-    def setUp(self):
-        super().setUp()
-        self.gui_context = ApplicationActionGuiContext()
-        self.admin_route = app_admin.get_admin_route()
-        self.gui_context.admin_route = self.admin_route
-
-    def tearDown(self):
-        super().tearDown()
-
-    def test_application(self):
-        app = Application(app_admin)
-        list(self.gui_run(app, self.gui_context))
-
-    def test_custom_application(self):
-
-        # begin custom application
-        class CustomApplication(Application):
-        
-            def model_run( self, model_context, mode ):
-                from camelot.view import action_steps
-                yield action_steps.UpdateProgress(text='Starting up')
-        # end custom application
-
-        application = CustomApplication(app_admin)
-        list(self.gui_run(application, self.gui_context))
 
 class ApplicationActionsCase(
     RunningThreadCase, GrabMixinCase, ExampleModelMixinCase
@@ -897,75 +658,60 @@ class ApplicationActionsCase(
     """
 
     images_path = test_view.static_images_path
+    model_context_name = ('constant', 'null')
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.thread.post(cls.setup_sample_model)
-        cls.thread.post(cls.load_example_data)
-        cls.process()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.thread.post(cls.tear_down_sample_model)
-        cls.process()
-        super().tearDownClass()
+        cls.gui_run(LoadSampleData(), ('constant', 'null'), mode=True)
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
-        self.context = MockModelContext(session=self.session)
+        self.context = MockModelContext(session=Session())
         self.context.admin = app_admin
-        self.admin_route = app_admin.get_admin_route()
-        self.gui_context = application_action.ApplicationActionGuiContext()
-        self.gui_context.admin_route = self.admin_route
+        self.gui_context = ('cpp_gui_context', 'root_backend')
 
     def test_refresh(self):
+        self.gui_run(DirtySession(), ('constant', 'null'), mode=True)
         refresh_action = application_action.Refresh()
-        self.thread.post(self.dirty_session)
-        self.process()
         #
         # refresh the session through the action
         #
-        generator = self.gui_run(refresh_action, self.gui_context)
+        generator = self.gui_run(refresh_action, self.gui_context, None)
         for step in generator:
-            if isinstance(step, action_steps.UpdateObjects):
-                updates = step.get_objects()
+            if isinstance(step, tuple) and step[0] == 'UpdateObjects':
+                updates = step[1]['updated']
         self.assertTrue(len(updates))
 
     def test_select_profile(self):
         profile_case = test_core.ProfileCase('setUp')
         profile_case.setUp()
         profile_store = profile_case.test_profile_store()
-        action = application_action.SelectProfileMixin(profile_store)
-        generator = action.select_profile()
+        action = application_action.SelectProfileMixin()
+        generator = action.select_profile(profile_store, app_admin)
         for step in generator:
             if isinstance(step, action_steps.SelectItem):
-                generator.send(profile_store.get_last_profile())
+                generator.send(step.items[1].value)
                 profile_selected = True
         self.assertTrue(profile_selected)
 
     def test_backup_and_restore( self ):
         backup_action = application_action.Backup()
-        generator = self.gui_run(backup_action, self.gui_context)
+        replies = {action_steps.SaveFile: 'unittest-backup.db'}
+        generator = self.gui_run(backup_action, self.gui_context, None, replies)
         file_saved = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SaveFile':
-                generator.send('unittest-backup.db')
                 file_saved = True
         self.assertTrue(file_saved)
         restore_action = application_action.Restore()
-        generator = self.gui_run(restore_action, self.gui_context)
+        replies = {action_steps.SelectFile: ['unittest-backup.db']}
+        generator = self.gui_run(restore_action, self.gui_context, None, replies)
         file_selected = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SelectFile':
-                generator.send(['unittest-backup.db'])
                 file_selected = True
         self.assertTrue(file_selected)
-
-    def test_open_new_view( self ):
-        person_admin = app_admin.get_related_admin(Person)
-        open_new_view_action = application_action.OpenNewView(person_admin)
-        list(self.gui_run(open_new_view_action, self.gui_context))
 
     def test_change_logging( self ):
         change_logging_action = ChangeLogging()
@@ -975,7 +721,7 @@ class ApplicationActionsCase(
 
     def test_segmentation_fault( self ):
         segmentation_fault = application_action.SegmentationFault()
-        list(self.gui_run(segmentation_fault, self.gui_context))
+        list(self.gui_run(segmentation_fault, self.gui_context, None))
 
 
 class FieldActionCase(TestMetaData, ExampleModelMixinCase):
@@ -985,10 +731,11 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         super().setUpClass()
         movie_admin = app_admin.get_related_admin(Movie)
         cls.setup_sample_model()
-        cls.load_example_data()
+        list(LoadSampleData().model_run(None, None))
         cls.movie = cls.session.query(Movie).offset(1).first()
-        movie_list_model_context = ListActionModelContext()
-        movie_list_model_context.admin = movie_admin
+        movie_list_model_context = ObjectsModelContext(
+            movie_admin, movie_admin.get_proxy([cls.movie]), None
+        )
         # a model context for the director attribute
         director_attributes = list(movie_admin.get_static_field_attributes(
             ['director']
@@ -1123,7 +870,6 @@ class ListFilterCase(TestMetaData):
             ([A.text_col,   A.text_col_nullable],   list_filter.StringFilter,   'test',       'test'),
             ([A.bool_col,   A.bool_col_nullable],   list_filter.BoolFilter,     'True',        True),
             ([A.date_col,   A.date_col_nullable],   list_filter.DateFilter,     '01-01-2020',  datetime.date(2020,1,1), datetime.date(2022,1,1)),
-            ([A.time_col,   A.time_col_nullable],   list_filter.TimeFilter,     '10:00',       datetime.time(10,0), datetime.time(12,30)),
             ([A.int_col,    A.int_col_nullable],    list_filter.IntFilter,      '1000',        1000, 5000),
             ([A.months_col, A.months_col_nullable], list_filter.MonthsFilter,   '12',          12, 24),
             ([A.enum_col,   A.enum_col_nullable],   list_filter.ChoicesFilter,  'Test',       'Test'),

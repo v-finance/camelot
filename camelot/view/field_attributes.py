@@ -41,11 +41,10 @@ import datetime
 from .controls import delegates
 from ..admin.action import list_filter, field_action
 from camelot.core import constants
-from camelot.types.typing import Note, Directory, File, Months
+from camelot.types.typing import Color, Note, Directory, File, Months
 from camelot.view.utils import (
     bool_from_string,
     date_from_string,
-    time_from_string,
     datetime_from_string,
     int_from_string,
     float_from_string,
@@ -77,19 +76,6 @@ _sqlalchemy_to_python_type_ = {
         'from_string': date_from_string,
         'search_strategy': list_filter.DateFilter,
         'filter_strategy': list_filter.DateFilter,
-    },
-
-    sqlalchemy.types.Time : lambda f: {
-        'python_type': datetime.time,
-        'editable': True,
-        'nullable': True,
-        'widget': 'time',
-        'delegate': delegates.TimeDelegate,
-        'format': constants.camelot_time_format,
-        'nullable': True,
-        'from_string': time_from_string,
-        'search_strategy': list_filter.TimeFilter,
-        'filter_strategy': list_filter.TimeFilter,
     },
 
     sqlalchemy.types.DateTime : lambda f: {
@@ -130,6 +116,17 @@ _sqlalchemy_to_python_type_ = {
         'decimal':True,
         'search_strategy': list_filter.DecimalFilter,
         'filter_strategy': list_filter.DecimalFilter,
+    },
+
+    camelot.types.Months: lambda f: {
+        'python_type': int,
+        'delegate': delegates.MonthsDelegate,
+        'editable': True,
+        'nullable': True,
+        'from_string': int_from_string,
+        'to_string': str,
+        'search_strategy': list_filter.MonthsFilter,
+        'filter_strategy': list_filter.MonthsFilter,
     },
 
     sqlalchemy.types.Integer: lambda f: {
@@ -294,51 +291,12 @@ _typing_to_python_type = {
         'python_type': int,
         'delegate': delegates.MonthsDelegate,
     },
+
+    Color: {
+        'python_type': str,
+        'delegate': delegates.ColorDelegate,
+        'from_string': string_from_string,
+    },
+
 }
-
-#
-# Generate a restructured text table out of the previous data structure
-#
-
-class DummyField(object):
-    def __init__(self):
-        self.length = 20
-        self.parts = ['AAA', '99']
-        self.choices = ['planned', 'canceled']
-        self.precision = 2
-        self.scale = 2
-        self.storage = None
-        self.separator = u'.'
-
-row_separator = '+' + '-'*50 + '+' + '-'*100 + '+' + '-'*70 + '+'
-row_format = """| %-48s | %-98s | %-68s |"""
-
-doc = """Field types handled through introspection :
-
-""" + row_separator + """
-""" + row_format%('**Field type**', '**Default delegate**', '**Default editor**') + """
-""" + row_separator + """
-"""
-
-field_types = sorted( _sqlalchemy_to_python_type_.keys(),
-                      key = lambda ft:ft.__name__ )
-
-for field_type in field_types:
-    field_attributes = _sqlalchemy_to_python_type_[field_type](DummyField())
-    delegate = field_attributes['delegate']
-    row = row_format%( ':class:`' + field_type.__module__ + '.' + field_type.__name__ + '`',
-                       ':class:`' + delegate.__module__ + '.' + delegate.__name__ + '`',
-                       '.. image:: /_static/editors/%s_editable.png'%(delegate.editor.__name__))
-    doc += row + """
-""" + row_separator + """
-"""
-
-doc += """
-"""
-
-__doc__ = doc
-
-
-
-
 

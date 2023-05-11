@@ -72,8 +72,7 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def __init__(self,
                  parent = None,
-                 field_name = 'richtext',
-                 **kwargs):
+                 field_name = 'richtext'):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
         self.layout = QtWidgets.QVBoxLayout(self)

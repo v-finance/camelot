@@ -10,6 +10,7 @@ import decimal
 import functools
 import logging
 import typing
+import weakref
 
 from enum import Enum
 
@@ -335,6 +336,127 @@ class AbstractNamingContext(object):
         for name in self.list():
             LOGGER.info(self.verbose_name(*self._name, name))
 
+class AbstractBindingStorage(object):
+    """
+    Abstract interface for name-to-object binding storage.
+    """
+
+    def add(self, name, obj, immutable=False):
+        """
+        Store a binding for the given name and object with the given mutability.
+        If a binding already exists, an exception will be raised if it concerns an immutable binding,
+        otherwise the binding will be replaced by the new one.
+
+        :param name: name under which to bind the object.
+        :param obj: The object to bind with the given name
+        :param immutable: flag that indicates whether the created binding should be immutable.
+
+        :raises:
+            ImmutableBindingException NamingException.Message.binding_immutable: when an immutable binding already exists under the given name.
+        """
+        raise NotImplementedError
+
+    def remove(self, name):
+        """
+        Remove the binding under the given name and return the bound object.
+
+        :param name: name under which the object should have been bound.
+
+        :raises:
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+            ImmutableBindingException NamingException.Message.binding_immutable: when trying to remove an immutable binding.
+        """
+        raise NotImplementedError
+
+    def get(self, name):
+        """
+        Retrieve the object bound under the given name.
+
+        :param name: name under which the object should have been bound.
+
+        :raises:
+            NameNotFoundException NamingException.Message.name_not_found: if no binding was found for the given name.
+        """
+        raise NotImplementedError
+
+    def copy(self):
+        """
+        Return a copy of this binding storage.
+        """
+        raise NotImplementedError
+
+    def list(self):
+        raise NotImplementedError
+
+    def __contains__(self, name):
+        raise NotImplementedError
+
+    def __len__(self):
+        raise NotImplementedError
+
+class BindingStorage(AbstractBindingStorage):
+    """
+    Default binding storage implementation that stores the bindings in a
+    name-to-object dictionary.
+    """
+
+    def __init__(self, binding_type):
+        self.binding_type = binding_type
+        self._bindings = {}
+        self._immutable = []
+
+    def add(self, name, obj, immutable=False):
+        if name in self._bindings and name in self._immutable:
+            raise ImmutableBindingException(self.binding_type, name)
+        self._bindings[name] = obj
+        if immutable:
+            self._immutable.append(name)
+
+    def remove(self, name):
+        if name not in self._bindings:
+            raise NameNotFoundException(name, self.binding_type)
+        if name in self._immutable:
+            raise ImmutableBindingException(self.binding_type, name)
+        return self._bindings.pop(name)
+
+    def get(self, name):
+        if name not in self._bindings:
+            raise NameNotFoundException(name, self.binding_type)
+        return self._bindings[name]
+
+    def copy(self):
+        duplicate = self.__class__(self.binding_type)
+        for name, obj in self._bindings.items():
+            duplicate.add(name, obj, immutable=name in self._immutable)
+        return duplicate
+
+    def list(self):
+        """
+        Return the names of the bindings as valid names (tuples)
+        """
+        for key in self._bindings.keys():
+            yield (key,)
+
+    def __contains__(self, name):
+        return name in self._bindings
+
+    def __len__(self):
+        return len(self._bindings)
+
+class WeakValueBindingStorage(BindingStorage):
+    """
+    Binding storage implementation that stores the bindings in a name-to-object ´weakref.WeakValueDictionary´.
+    Those weak references to objects are not enough to keep them alive: when the only remaining references to a referent are weak references,
+    garbage collection is free to destroy the referent and reuse its memory for something else, and corresponding entries in weak mappings simply get deleted.
+
+    This means that object bindings can be removed in two ways, either explicitly using the remove functionality, or implicitly by the garbage collection.
+    Additionally, this also means that with this storage backend, immutable bindings can get removed by the latter process.
+    """
+
+    def __init__(self, binding_type):
+        super().__init__(binding_type)
+        self._bindings = weakref.WeakValueDictionary()
+
 class NamingContext(AbstractNamingContext):
     """
     Represents a naming context, which consists of a set of name-to-object bindings.
@@ -344,7 +466,7 @@ class NamingContext(AbstractNamingContext):
 
     def __init__(self):
         super().__init__()
-        self._bindings = {btype: dict() for btype in BindingType}
+        self._bindings = {btype: BindingStorage(btype) for btype in BindingType}
 
     @AbstractNamingContext.check_bounded
     def bind(self, name: Name, obj: object, immutable=False) -> CompositeName:
@@ -503,16 +625,10 @@ class NamingContext(AbstractNamingContext):
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
             # If binding, check if their exists one already
-            if name[0] in self._bindings[binding_type]:
-                if not rebind:
-                    raise AlreadyBoundException(name[0], binding_type)
-                else:
-                    _, binding_immutable = self._bindings[binding_type][name[0]]
-                    if binding_immutable:
-                        raise ImmutableBindingException(binding_type, name[0])
-
+            if name[0] in self._bindings[binding_type] and not rebind:
+                raise AlreadyBoundException(name[0], binding_type)
             # Add the object and its mutability to the registry for the given binding_type.
-            self._bindings[binding_type][name[0]] = (obj, immutable)
+            self._bindings[binding_type].add(name[0], obj, immutable)
             # Determine the full qualified named of the bound object (extending that of this NamingContext).
             qual_name = self.get_qual_name(name[0])
             # If the object is a NamingContext, assign the qualified name.
@@ -522,9 +638,7 @@ class NamingContext(AbstractNamingContext):
                 obj._name = qual_name
             return qual_name
         else:
-            if name[0] not in self._bindings[BindingType.named_context]:
-                raise NameNotFoundException(name[0], BindingType.named_context)
-            context, _ = self._bindings[BindingType.named_context][name[0]]
+            context = self._bindings[BindingType.named_context].get(name[0])
             if binding_type == BindingType.named_context:
                 if rebind:
                     return context.rebind_context(name[1:], obj)
@@ -593,18 +707,11 @@ class NamingContext(AbstractNamingContext):
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
-            if name[0] not in self._bindings[binding_type]:
-                raise NameNotFoundException(name[0], binding_type)
-            obj, immutable = self._bindings[binding_type][name[0]]
-            if immutable:
-                raise ImmutableBindingException(binding_type, name[0])
-            self._bindings[binding_type].pop(name[0])
+            obj = self._bindings[binding_type].remove(name[0])
             if binding_type == BindingType.named_context:
                 obj._name = None
         else:
-            if name[0] not in self._bindings[BindingType.named_context]:
-                raise NameNotFoundException(name[0], BindingType.named_context)
-            context, _ = self._bindings[BindingType.named_context][name[0]]
+            context = self._bindings[BindingType.named_context].get(name[0])
             if binding_type == BindingType.named_context:
                 context.unbind_context(name[1:])
             elif binding_type == BindingType.named_object:
@@ -663,20 +770,23 @@ class NamingContext(AbstractNamingContext):
         if binding_type not in BindingType:
             raise NamingException(NamingException.Message.invalid_binding_type)
         if len(name) == 1:
-            if name[0] not in self._bindings[binding_type]:
-                raise NameNotFoundException(name[0], binding_type)
-            return self._bindings[binding_type][name[0]][0]
+            return self._bindings[binding_type].get(name[0])
         else:
-            if name[0] not in self._bindings[BindingType.named_context]:
-                raise NameNotFoundException(name[0], BindingType.named_context)
-            context, _ = self._bindings[BindingType.named_context][name[0]]
+            context = self._bindings[BindingType.named_context].get(name[0])
             if binding_type == BindingType.named_context:
                 return context.resolve_context(name[1:])
             elif binding_type == BindingType.named_object:
                 return context.resolve(name[1:])
 
     def list(self):
-        return self._bindings[BindingType.named_object].keys()
+        yield from self._bindings[BindingType.named_object].list()
+        for name_of_named_context in self._bindings[BindingType.named_context].list():
+            named_context = self.resolve_context(name_of_named_context)
+            for name_in_named_context in named_context.list():
+                yield (*name_of_named_context, *name_in_named_context)
+
+    def __len__(self):
+        return len(self._bindings[BindingType.named_object])
 
 class EndpointNamingContext(AbstractNamingContext):
     """
@@ -824,6 +934,13 @@ class ConstantNamingContext(EndpointNamingContext):
                 raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.singular_name_expected)
             raise NamingException(NamingException.Message.invalid_name, reason=NamingException.Message.invalid_composite_name_length, length=self.constant_type.arity.minimum)
 
+    def list(self):
+        """
+        Since an infinite amount of objects are bound to this context, the only reasonable result
+        of listing it is an empty list.
+        """
+        return []
+
 class EntityNamingContext(EndpointNamingContext):
     """
     Represents a stateless endpoint naming context, which handles resolving instances of a ´camelot.core.orm.entity.Entity´ class.
@@ -901,6 +1018,27 @@ class EntityNamingContext(EndpointNamingContext):
             raise NameNotFoundException(name[0], BindingType.named_object)
         return instance
 
+    def list(self):
+        """
+        The database might contain a very large number of entities, to avoid looping over all entities in the
+        database, this method will return an empty list.
+        """
+        return []
+
+class WeakRefNamingContext(NamingContext):
+    """
+    Specialized naming context that stores it set of name-to-object bindings using weak references in a `weakref.WeakValueDictionary`.
+    Those weak references to objects are not enough to keep them alive: when the only remaining references to a referent are weak references,
+    garbage collection is free to destroy the referent and reuse its memory for something else, and corresponding entries in weak mappings simply get deleted.
+
+    This means that named object bindings in this context can get unbound in two ways, either explicitly using the unbind functionality, or implicitly by the garbage collection.
+    A primary use case for this weak reference naming context is the caching of large objects, that should not be kept alive only because it appears in the cache.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._bindings[BindingType.named_object] = WeakValueBindingStorage(BindingType.named_object)
+
 class InitialNamingContext(NamingContext, metaclass=Singleton):
     """
     Singleton class that is the starting context for performing naming operations.
@@ -924,6 +1062,8 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
         constants.bind('false', False, immutable=True)
         self.bind_new_context('entity', immutable=True)
         self.bind_new_context('object', immutable=True)
+        self.bind_new_context('leases', immutable=True)
+        self.bind_context('transient', WeakRefNamingContext(), immutable=True)
 
     def new_context(self) -> NamingContext:
         """
@@ -962,6 +1102,9 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
                     return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day, obj.hour, obj.minute, obj.second]])
                 if isinstance(obj, Constant.date.composite_type):
                     return (*base_name, *[str(atomic_name) for atomic_name in [obj.year, obj.month, obj.day]])
+                if isinstance(obj, Constant.decimal.composite_type):
+                    # Normalize decimals to remove trailing zeros, to allow equality comparisons between named bindings.
+                    return (*base_name, str(obj.normalize()))
                 return (*base_name, str(obj))
         if isinstance(obj, Entity):
             primary_key = orm.object_mapper(obj).primary_key_from_instance(obj)

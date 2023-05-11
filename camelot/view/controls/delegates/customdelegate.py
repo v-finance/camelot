@@ -34,14 +34,20 @@ import dataclasses
 
 from camelot.core.naming import initial_naming_context
 
+from ....admin.icon import CompletionValue
 from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
                          py_to_variant, variant_to_py)
-from ....core.serializable import json_encoder
+from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
     ChoicesRole, FieldAttributesRole, ProxyDict
 )
-from ..action_widget import ActionToolbutton
+from ..action_widget import AbstractActionWidget
+from camelot.view.controls import editors
+from dataclasses import dataclass, InitVar
+from typing import Any, ClassVar
+
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -116,7 +122,11 @@ def DocumentationMetaclass(name, bases, dct):
 color_groups = {True: QtGui.QPalette.ColorGroup.Inactive,
                 False: QtGui.QPalette.ColorGroup.Disabled}
 
-class CustomDelegate(QtWidgets.QItemDelegate):
+class CustomDelegateMeta(type(NamedDataclassSerializable), type(QtWidgets.QItemDelegate)):
+    pass
+
+@dataclass
+class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metaclass=CustomDelegateMeta):
     """Base class for implementing custom delegates.
 
     .. attribute:: editor
@@ -125,21 +135,24 @@ class CustomDelegate(QtWidgets.QItemDelegate):
 
     """
 
-    editor = None
-    horizontal_align = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+    _parent: InitVar[QtCore.QObject] = None
 
-    def __init__(self, parent=None, editable=True, **kwargs):
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+
+    def __post_init__(self, parent):
         """:param parent: the parent object for the delegate
         :param editable: a boolean indicating if the field associated to the delegate
         is editable
-
         """
-        super( CustomDelegate, self ).__init__(parent)
-        self.editable = editable
-        self.kwargs = kwargs
+        super().__init__(parent)
         self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
+
+    @classmethod
+    def get_editor_class(cls):
+        """Get the editor class for this delegate."""
+        raise NotImplementedError
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
@@ -188,7 +201,10 @@ class CustomDelegate(QtWidgets.QItemDelegate):
                      Qt.ItemDataRole.BackgroundRole)
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
-            choices = [(initial_naming_context._bind_object(obj), verbose_name) for obj, verbose_name in choices]
+            choices = [CompletionValue(
+                value=initial_naming_context._bind_object(obj),
+                verbose_name=verbose_name
+                )._to_dict() for obj, verbose_name in choices]
         item.setData(py_to_variant(choices), ChoicesRole)
         return item
 
@@ -197,8 +213,37 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         :param option: use an option with version 5 to indicate the widget
         will be put onto a form
         """
-
-        editor = self.editor(parent, editable = self.editable, option = option, **self.kwargs)
+        editor_cls = self.get_editor_class()
+        if issubclass(editor_cls, (editors.BoolEditor, editors.ColorEditor, editors.LanguageEditor,
+                                   editors.NoteEditor, editors.RichTextEditor)):
+            editor = editor_cls(parent)
+        elif issubclass(editor_cls, (editors.ChoicesEditor, editors.Many2OneEditor,
+                                     editors.FileEditor)):
+            editor = editor_cls(parent, self.action_routes)
+        elif issubclass(editor_cls, editors.DateEditor):
+            editor = editor_cls(parent, self.nullable)
+        elif issubclass(editor_cls, editors.DateTimeEditor):
+            editor = editor_cls(parent, self.editable, self.nullable)
+        elif issubclass(editor_cls, editors.DbImageEditor):
+            editor = editor_cls(parent, self.preview_width, self.preview_height, self.max_size)
+        elif issubclass(editor_cls, editors.FloatEditor):
+            editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)
+        elif issubclass(editor_cls, editors.IntegerEditor):
+            editor = editor_cls(parent, self.calculator, self.decimal, option)
+        elif issubclass(editor_cls, editors.LabelEditor):
+            editor = editor_cls(parent, self.text, option)
+        elif issubclass(editor_cls, editors.LocalFileEditor):
+            editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
+        elif issubclass(editor_cls, editors.MonthsEditor):
+            editor = editor_cls(parent, self.minimum, self.maximum)
+        elif issubclass(editor_cls, editors.TextLineEditor):
+            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes)
+        elif issubclass(editor_cls, editors.TextEditEditor):
+            editor = editor_cls(parent, self.length, self.editable)
+        elif issubclass(editor_cls, editors.VirtualAddressEditor):
+            editor = editor_cls(parent, self.address_type)
+        else:
+            raise NotImplementedError()
         assert editor != None
         assert isinstance(editor, QtWidgets.QWidget)
         if option.version != 5:
@@ -249,24 +294,20 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         action_routes = json.loads(index.model().data(index, ActionRoutesRole))
         if len(action_routes) == 0:
             return
-        for action_widget in editor.findChildren(QtWidgets.QToolButton):
-            action_route = action_widget.property('action_route')
-            if not action_route:
-                continue
-            try:
-                action_index = action_routes.index(list(action_route))
-            except ValueError:
-                LOGGER.error('action route not found {}, available routes'.format(
-                    action_widget.action_route
+        for action_route, action_state in zip(action_routes, action_states):
+            for action_widget in editor.findChildren(QtWidgets.QToolButton):
+                action_route_of_widget = action_widget.property('action_route')
+                if action_route_of_widget is None:
+                    continue
+                if list(action_route_of_widget)==action_route:
+                    AbstractActionWidget.set_toolbutton_state(
+                        action_widget, action_state, editor.action_menu_triggered
+                    )
+                    break
+            else:
+                LOGGER.error('action route not found {} in editor'.format(
+                    action_route
                 ))
-                for route in action_routes:
-                    LOGGER.error(route)
-                continue
-            state = action_states[action_index]
-            if state is not None:
-                ActionToolbutton.set_toolbutton_state(
-                    action_widget, state, editor.action_menu_triggered
-                )
 
     def setModelData(self, editor, model, index):
         model.setData(index, py_to_variant(editor.get_value()))

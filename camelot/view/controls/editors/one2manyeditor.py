@@ -30,27 +30,22 @@
 import json
 import logging
 
-from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.core.naming import initial_naming_context
 from camelot.view.proxy.collection_proxy import CollectionProxy
-from ....admin.action.base import RenderHint
+from ....admin.action.base import GuiContext
 from ....core.qt import Qt, QtCore, QtWidgets, variant_to_py
-from ....core.item_model import ListModelProxy, ProxyRegistry
-from ..action_widget import AbstractActionWidget, ActionToolbutton, ActionPushButton
-from ..filter_widget import ComboBoxFilterWidget
+from ... import gui_naming_context
+from ..view import ViewWithActionsMixin
+from ..tableview import TableWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
 
 
-class One2ManyEditor(CustomEditor, WideEditor):
+class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext):
     """
     :param admin: the Admin interface for the objects on the one side of the
     relation
-
-    :param create_inline: if False, then a new entity will be created within a
-    new window, if True, it will be created inline
 
     :param column_width: the width of the editor in number of characters
 
@@ -61,27 +56,25 @@ class One2ManyEditor(CustomEditor, WideEditor):
     """
 
     def __init__(self,
-                 admin_route=None,
                  parent=None,
-                 create_inline=False,
-                 direction='onetomany',
-                 field_name='onetomany',
+                 admin_route=None,
                  column_width=None,
                  columns=[],
                  rows=5,
                  action_routes=[],
                  list_actions=[],
-                 **kw):
+                 list_action=None,
+                 field_name='onetomany'):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setObjectName(field_name)
+        self.setProperty('action_route', list_action)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         #
         # Setup table
         #
-        from camelot.view.controls.tableview import AdminTableWidget
         # parent set by layout manager
-        table = AdminTableWidget(self)
+        table = TableWidget(parent=self)
         table.setObjectName('table')
         layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
@@ -90,13 +83,12 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
+        self.action_routes = dict()
         model = CollectionProxy(admin_route)
         model.action_state_changed_cpp_signal.connect(self.action_state_changed)
         model.setParent(self)
         table.setModel(model)
         self.admin_route = admin_route
-        self.direction = direction
-        self.create_inline = create_inline
         layout.addWidget(table)
         toolbar = QtWidgets.QToolBar(self)
         toolbar.setIconSize(QtCore.QSize(16, 16))
@@ -104,10 +96,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         layout.addWidget(toolbar)
         self.setLayout(layout)
         self._new_message = None
-        self.list_gui_context = ListActionGuiContext()
-        self.list_gui_context.view = self
-        self.list_gui_context.admin_route = self.admin_route
-        self.list_gui_context.item_view = table
+        self.list_gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self))), self
+        )
         self.add_actions(action_routes, toolbar)
         self.set_right_toolbar_actions(list_actions, toolbar)
         self.set_columns(columns)
@@ -121,27 +112,47 @@ class One2ManyEditor(CustomEditor, WideEditor):
                 self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
-    def render_action(self, render_hint, action_route, parent):
-        action = initial_naming_context.resolve(action_route)
-        if render_hint == RenderHint.TOOL_BUTTON:
-            # Use tool button, because this one sets the popup mode
-            # to instant if there are modes in the state
-            qobject = ActionToolbutton(action, self.list_gui_context, parent)
-        elif render_hint == RenderHint.PUSH_BUTTON:
-            qobject = ActionPushButton(action, self.list_gui_context, parent)
-        elif render_hint == RenderHint.COMBO_BOX:
-            qobject = ComboBoxFilterWidget(action, self.list_gui_context, parent)
-        else:
-            raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
-        return qobject
+    @property
+    def item_view(self):
+        return self.findChild(QtWidgets.QWidget, 'table')
+
+    @property
+    def view(self):
+        return self
+
+    def get_window(self):
+        return self.window()
+
+    def _run_list_context_action(self, action_widget, mode):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        model = table.model()
+        self.run_action(
+            action_widget, self.list_gui_context_name, model.get_value(), mode
+        )
+
+    @QtCore.qt_slot(int)
+    def combobox_activated(self, index):
+        combobox = self.sender()
+        mode = [combobox.itemData(index)]
+        self._run_list_context_action(combobox, mode)
+
+    @QtCore.qt_slot(bool)
+    def button_clicked(self, checked):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        # close the editor to prevent certain Qt crashes
+        table.close_editor()
+        self._run_list_context_action(self.sender(), None)
 
     @QtCore.qt_slot(object)
     def set_right_toolbar_actions(self, action_routes, toolbar):
         if action_routes is not None:
             for route_with_render_hint in action_routes:
                 action_route = route_with_render_hint.route
-                self.list_gui_context.item_view.model().add_action_route(action_route)
-                qaction = self.render_action(route_with_render_hint.render_hint, action_route, toolbar)
+                self.item_view.model().add_action_route(action_route)
+                qaction = self.render_action(
+                    route_with_render_hint.render_hint, action_route,
+                    self, toolbar
+                )
                 qaction.action_route = action_route
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
@@ -153,11 +164,11 @@ class One2ManyEditor(CustomEditor, WideEditor):
 
     def set_field_attributes(self, **kwargs):
         super(One2ManyEditor, self).set_field_attributes(**kwargs)
-        self.list_gui_context.field_attributes = kwargs
+        self.field_attributes = kwargs
         self.update_list_action_states()
 
     def update_list_action_states(self):
-        table = self.list_gui_context.item_view
+        table = self.item_view
         selection_model = table.selectionModel()
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)
@@ -165,14 +176,10 @@ class One2ManyEditor(CustomEditor, WideEditor):
     def current_row_changed(self, current=None, previous=None):
         self.update_list_action_states()
 
-    @QtCore.qt_slot(str, QtCore.QByteArray)
-    def action_state_changed(self, route, serialized_state):
-        route = tuple(route.split('/'))
-        for action_widget in self.findChildren(AbstractActionWidget):
-            if action_widget.action_route == route:
-                state = json.loads(serialized_state.data())
-                action_widget.set_state_v2(state)
-                break
+    @QtCore.qt_slot('QStringList', QtCore.QByteArray)
+    def action_state_changed(self, action_route, serialized_state):
+        action_state = json.loads(serialized_state.data())
+        self.set_action_state(self, tuple(action_route), action_state)
 
     def get_model(self):
         """
@@ -200,16 +207,16 @@ class One2ManyEditor(CustomEditor, WideEditor):
                     ).width()
                     table.setColumnWidth(i, txtwidth)
 
-    def set_value(self, collection):
-        collection = CustomEditor.set_value(self, collection)
-        if collection is None:
-            collection = ListModelProxy([])
+    def set_value(self, value):
+        value = CustomEditor.set_value(self, value)
+        #if collection is None:
+            #collection = ListModelProxy([])
         model = self.get_model()
         if model is not None:
             # even if the collection 'is' the same object as the current
             # one, still need to set it, since the content of the collection
             # might have changed.
-            model.set_value(ProxyRegistry.register(collection))
+            model.set_value(value)
             self.update_list_action_states()
 
     def get_value(self):
@@ -222,7 +229,9 @@ class One2ManyEditor(CustomEditor, WideEditor):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        admin = initial_naming_context.resolve(self.admin_route)
-        if admin.list_action:
-            admin.list_action.gui_run(self.list_gui_context)
+        self._run_list_context_action(self, None)
 
+    @QtCore.qt_slot()
+    def menu_triggered(self):
+        qaction = self.sender()
+        self._run_list_context_action(qaction, qaction.data())
