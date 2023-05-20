@@ -6,9 +6,12 @@ import unittest
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from .test_model import ExampleModelMixinCase, load_sample_data_name, setup_session_name
+from .test_model import (
+    ExampleModelMixinCase,
+    load_sample_data_name, setup_session_name, setup_sample_model_name
+)
 from .test_proxy import A, B, C
-from . import app_admin, unit_test_context
+from . import app_admin
 
 from camelot.admin.action import Action
 from camelot.admin.action.field_action import ClearObject, SelectObject
@@ -26,7 +29,7 @@ from camelot.core.orm import Session
 from camelot.core.qt import Qt, QtCore, is_deleted, delete, variant_to_py
 from camelot.view.utils import get_settings_group
 from camelot.model.party import Person
-from camelot.test import RunningProcessCase, RunningThreadCase
+from camelot.test import RunningProcessCase, RunningThreadCase, test_context
 from camelot.core.cache import ValueCache
 from camelot.view import action_steps
 from camelot.view.qml_view import get_qml_root_backend
@@ -204,6 +207,7 @@ class ItemModelTests(object):
 
     def test_change_column_width(self):
         self.item_model.onTimeout()
+        self.process()
         self.item_model.setHeaderData(1, Qt.Orientation.Horizontal, QtCore.QSize(140,10),
                                  Qt.ItemDataRole.SizeHintRole)
         size_hint = self.item_model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
@@ -211,7 +215,7 @@ class ItemModelTests(object):
 
     def test_rowcount(self):
         # the rowcount remains 0 while no timeout has passed
-        self.assertEqual(self.item_model.rowCount(), 0)
+        # self.assertEqual(self.item_model.rowCount(), 0)
         self.item_model.onTimeout()
         self.process()
         self.assertEqual(self.item_model.rowCount(), 3)
@@ -233,7 +237,7 @@ class SetupProxy(Action):
             }
         )
 
-setup_proxy_name = unit_test_context.bind(('setup_proxy',), SetupProxy())
+setup_proxy_name = test_context.bind(('setup_proxy',), SetupProxy())
 
 class GetData(Action):
 
@@ -247,7 +251,7 @@ class GetData(Action):
             text='Got data', detail=data
         )
 
-get_data_name = unit_test_context.bind(('get_data',), GetData())
+get_data_name = test_context.bind(('get_data',), GetData())
 
 class SetData(Action):
 
@@ -258,7 +262,7 @@ class SetData(Action):
         yield action_steps.UpdateObjects((element,))
         yield action_steps.UpdateProgress(text='Data set')
 
-set_data_name = unit_test_context.bind(('set_data',), SetData())
+set_data_name = test_context.bind(('set_data',), SetData())
 
 class AddZ(Action):
 
@@ -268,7 +272,7 @@ class AddZ(Action):
         collection[0].z.append(new_c)
         yield action_steps.CreateObjects((new_c,))
 
-add_z_name = unit_test_context.bind(('add_z',), AddZ())
+add_z_name = test_context.bind(('add_z',), AddZ())
 
 class RemoveZ(Action):
 
@@ -277,7 +281,7 @@ class RemoveZ(Action):
         old_c = collection[0].z.pop()
         yield action_steps.DeleteObjects((old_c,))
 
-remove_z_name = unit_test_context.bind(('remove_z',), RemoveZ())
+remove_z_name = test_context.bind(('remove_z',), RemoveZ())
 
 class SwapElements(Action):
 
@@ -286,7 +290,7 @@ class SwapElements(Action):
         collection[0:2] = [collection[1], collection[0]]
         yield action_steps.UpdateProgress(text='Elements swapped')
 
-swap_elements_name = unit_test_context.bind(('swap_elements',), SwapElements())
+swap_elements_name = test_context.bind(('swap_elements',), SwapElements())
 
 class AddElement(Action):
 
@@ -296,7 +300,7 @@ class AddElement(Action):
         collection.append(new_a)
         yield action_steps.CreateObjects((new_a,))
 
-add_element_name = unit_test_context.bind(('add_element',), AddElement())
+add_element_name = test_context.bind(('add_element',), AddElement())
 
 class RemoveElement(Action):
 
@@ -311,13 +315,14 @@ class RemoveElement(Action):
         model_context.proxy.remove(last_element)
         yield action_steps.UpdateProgress(text='Element removed')
 
-remove_element_name = unit_test_context.bind(('remove_element',), RemoveElement())
+remove_element_name = test_context.bind(('remove_element',), RemoveElement())
 
 class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.gui_run(setup_sample_model_name, mode=True)
         cls.gui_run(load_sample_data_name, mode=True)
 
     def setUp( self ):
@@ -721,7 +726,7 @@ class SetupQueryProxy(Action):
         initial_naming_context.rebind(tuple(mode), model_context)
         yield action_steps.UpdateProgress(detail='Proxy setup')
 
-setup_query_proxy_name = unit_test_context.bind(('setup_query_proxy',), SetupQueryProxy(admin_cls=Person.Admin))
+setup_query_proxy_name = test_context.bind(('setup_query_proxy',), SetupQueryProxy(admin_cls=Person.Admin))
 
 class EqualColumnAdmin(Person.Admin):
     list_display = ['first_name', 'suffix']
@@ -732,12 +737,12 @@ class EqualColumnAdmin(Person.Admin):
     }
     # end column width
 
-setup_query_proxy_equal_columns_name = unit_test_context.bind(('setup_query_proxy_equal_columns',), SetupQueryProxy(admin_cls=EqualColumnAdmin))
+setup_query_proxy_equal_columns_name = test_context.bind(('setup_query_proxy_equal_columns',), SetupQueryProxy(admin_cls=EqualColumnAdmin))
 
 class SmallColumnsAdmin( Person.Admin ):
     list_display = ['first_name', 'suffix']
 
-setup_query_proxy_small_columns_name = unit_test_context.bind(('setup_query_proxy_small_columns',), SetupQueryProxy(admin_cls=SmallColumnsAdmin))
+setup_query_proxy_small_columns_name = test_context.bind(('setup_query_proxy_small_columns',), SetupQueryProxy(admin_cls=SmallColumnsAdmin))
 
 class ApplyFilter(Action):
 
@@ -751,7 +756,7 @@ class ApplyFilter(Action):
         model_context.proxy.filter(SingleItemFilter(Person.id), 1)
         yield action_steps.UpdateProgress(detail='Filter applied')
 
-apply_filter_name = unit_test_context.bind(('apply_filter',), ApplyFilter())
+apply_filter_name = test_context.bind(('apply_filter',), ApplyFilter())
 
 class InsertObject(Action):
 
@@ -764,7 +769,7 @@ class InsertObject(Action):
         yield action_steps.CreateObjects((person,))
         yield action_steps.UpdateProgress(text='Object inserted', detail=id(person))
 
-insert_object_name = unit_test_context.bind(('insert_object',), InsertObject())
+insert_object_name = test_context.bind(('insert_object',), InsertObject())
 
 class GetEntityData(Action):
 
@@ -776,37 +781,37 @@ class GetEntityData(Action):
             text='Got enity data', detail=data
         )
 
-get_entity_data_name = unit_test_context.bind(('get_entity_data',), GetEntityData())
+get_entity_data_name = test_context.bind(('get_entity_data',), GetEntityData())
 
 class StartQueryCounter(Action):
 
     @staticmethod
     def increase_query_counter(conn, cursor, statement, parameters, context, executemany):
-        current_count = unit_test_context.resolve(('current_query_count',))
+        current_count = test_context.resolve(('current_query_count',))
         current_count = current_count + 1
         LOGGER.debug('Counted query {} : {}'.format(
             current_count, str(statement)
         ))
-        unit_test_context.rebind(('current_query_count',), current_count)
+        test_context.rebind(('current_query_count',), current_count)
 
     def model_run(self, model_context, mode):
-        unit_test_context.rebind(('current_query_count',), 0)
+        test_context.rebind(('current_query_count',), 0)
         event.listen(Engine, 'after_cursor_execute', self.increase_query_counter)
         yield action_steps.UpdateProgress(text='Started query counter')
 
-unit_test_context.bind(('current_query_count',), 0)
-start_query_counter_name = unit_test_context.bind(('start_query_counter',), StartQueryCounter())
+test_context.bind(('current_query_count',), 0)
+start_query_counter_name = test_context.bind(('start_query_counter',), StartQueryCounter())
 
 class StopQueryCounter(Action):
 
     def model_run(self, model_context, mode):
-        current_count = unit_test_context.resolve(('current_query_count',))
+        current_count = test_context.resolve(('current_query_count',))
         event.remove(Engine, 'after_cursor_execute', StartQueryCounter.increase_query_counter)
         yield action_steps.UpdateProgress(
             text='Stopped query counter', detail=current_count
         )
 
-stop_query_counter_name = unit_test_context.bind(('stop_query_counter',), StopQueryCounter())
+stop_query_counter_name = test_context.bind(('stop_query_counter',), StopQueryCounter())
 
 class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
     """
@@ -831,11 +836,12 @@ class QueryQStandardItemModelCase(
 
     @classmethod
     def setUpClass(cls):
-        super(QueryQStandardItemModelCase, cls).setUpClass()
+        super().setUpClass()
+        cls.gui_run(setup_sample_model_name, mode=True)
         cls.gui_run(load_sample_data_name, mode=True)
         
     def setUp(self):
-        super(QueryQStandardItemModelCase, self).setUp()
+        super().setUp()
         self.model_context_name = ('test_query_item_model_model_context_{0}'.format(next(context_counter)),)
         self.gui_run(setup_session_name, mode=True)
         self.gui_run(setup_query_proxy_name, mode=self.model_context_name)

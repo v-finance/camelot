@@ -55,7 +55,7 @@ class SetupSession(Action):
         session.close()
         yield action_steps.UpdateProgress(detail='Session closed')
 
-setup_session_name = unit_test_context.bind(('setup_session',), LoadSampleData())
+setup_session_name = unit_test_context.bind(('setup_session',), SetupSession())
 
 class DirtySession(Action):
     
@@ -89,6 +89,7 @@ class ExampleModelMixinCase(object):
     @classmethod
     def setup_sample_model(cls):
         metadata.bind = model_engine
+        metadata.drop_all(model_engine)
         metadata.create_all(model_engine)
         cls.session = Session()
         cls.session.expunge_all()

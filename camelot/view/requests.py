@@ -148,9 +148,9 @@ class InitiateAction(AbstractRequest):
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))
         except (NamingException, NameNotFoundException) as e:
             if isinstance(e, NamingException):
-                LOGGER.error('Could resolve initate action, invalid name: {}'.format(e.message_text))
+                LOGGER.error('Could not resolve initate action, invalid name: {}'.format(e.message_text))
             else:
-                LOGGER.error('Could resolve initate action, no binding for name: {}'.format(e.name))
+                LOGGER.error('Could not resolve initate action, no binding for name: {}'.format(e.name))
             response_handler.send_response(ActionStopped(
                 run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=None
             ))
