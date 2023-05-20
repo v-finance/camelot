@@ -8,7 +8,6 @@ from ..core.naming import (
     CompositeName, NamingException, NameNotFoundException, initial_naming_context
 )
 from ..core.serializable import NamedDataclassSerializable, Serializable
-from ..admin.action import ActionStep
 
 LOGGER = logging.getLogger('camelot.view.requests')
 
@@ -86,6 +85,7 @@ class AbstractRequest(NamedDataclassSerializable):
         :param generator_method: the method of the generator to be called
         :param *args: the arguments to use when calling the generator method.
         """
+        from ..admin.action import ActionStep
         from .responses import ActionStepped
         try:
             run_name = tuple(request_data['run_name'])

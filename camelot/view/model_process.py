@@ -1,16 +1,19 @@
 import json
 import logging
-import multiprocessing
+import multiprocessing as _mp
 
 from ..core.qt import QtCore
 from ..core.serializable import NamedDataclassSerializable, DataclassSerializable
-from .requests import StopProcess
+from ..core.naming import initial_naming_context
 from .responses import AbstractResponse, ActionStepped, Busy
+from .requests import StopProcess
 
 LOGGER = logging.getLogger(__name__)
 
 stop_request = StopProcess()
-
+# force spawn based multiprocessing to enforce no implicit state at the
+# moment the process forks
+spawned_mp = _mp.get_context('spawn')
 
 class PipeResponseHandler(object):
     """
@@ -29,12 +32,14 @@ class PipeResponseHandler(object):
         return False
 
 
-class ModelProcess(multiprocessing.Process):
+class ModelProcess(spawned_mp.Process):
 
-    def __init__(self):
+    def __init__(self, context_name, context):
         super().__init__()
-        self._request_queue = multiprocessing.JoinableQueue()
-        self._response_receiver, self._response_sender = multiprocessing.Pipe(duplex=False)
+        self._request_queue = spawned_mp.JoinableQueue()
+        self._response_receiver, self._response_sender = spawned_mp.Pipe(duplex=False)
+        self._context_name = context_name
+        self._context = context
         self.socket_notifier = QtCore.QSocketNotifier(
             self._response_receiver.fileno(), QtCore.QSocketNotifier.Type.Read
         )
@@ -44,9 +49,16 @@ class ModelProcess(multiprocessing.Process):
         if self._response_receiver.poll():
             serialized_response = self._response_receiver.recv_bytes()
             AbstractResponse.handle_serialized_response(serialized_response, self.post)
-    
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('socket_notifier')
+        state.pop('_response_receiver')
+        return state
+
     def run(self):
         LOGGER = logging.getLogger("model_process")
+        initial_naming_context.bind(self._context_name, self._context)
         response_handler = PipeResponseHandler(self._response_sender)
         while True:
             response_handler.send_response(Busy(False))

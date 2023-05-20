@@ -1079,7 +1079,7 @@ class AbstractEntityNamingContextCase(AbstractNamingContextCase, ExampleModelMix
     def setUpClass(cls):
         super(AbstractEntityNamingContextCase, cls).setUpClass()
         cls.setup_sample_model()
-        LoadSampleData().model_run(None, None)
+        list(LoadSampleData().model_run(None, None))
         cls.session = Session()
 
     @classmethod

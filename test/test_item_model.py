@@ -209,6 +209,14 @@ class ItemModelTests(object):
         size_hint = self.item_model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole)
         self.assertEqual(size_hint.width(), 140)
 
+    def test_rowcount(self):
+        # the rowcount remains 0 while no timeout has passed
+        self.assertEqual(self.item_model.rowCount(), 0)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self.item_model.rowCount(), 3)
+
+
 class SetupProxy(Action):
 
     def model_run(self, model_context, mode):
@@ -307,6 +315,11 @@ remove_element_name = unit_test_context.bind(('remove_element',), RemoveElement(
 
 class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.gui_run(load_sample_data_name, mode=True)
+
     def setUp( self ):
         super().setUp()
         ItemModelTests.setUp(self)
@@ -343,13 +356,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
             model_context_name=self.model_context_name):
             if step[0] == action_steps.UpdateProgress.__name__:
                 return step[1]['detail']
-
-    def test_rowcount(self):
-        # the rowcount remains 0 while no timeout has passed
-        self.assertEqual(self.item_model.rowCount(), 0)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self.item_model.rowCount(), 3)
 
     def test_data(self):
         # the data remains None and not editable while no timeout has passed
