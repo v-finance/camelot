@@ -17,7 +17,9 @@ from .test_item_model import (
     setup_query_proxy_name, setup_query_proxy_small_columns_name,
     setup_query_proxy_equal_columns_name
 )
-from .test_model import ExampleModelMixinCase, load_sample_data_name
+from .test_model import (
+    ExampleModelMixinCase, load_sample_data_name, setup_sample_model_name
+)
 from camelot.admin.action import GuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
@@ -472,6 +474,7 @@ class FormTest(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
         cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
 
     def setUp(self):
@@ -827,7 +830,8 @@ class ControlsTest(
 
     @classmethod
     def setUpClass(cls):
-        super(ControlsTest, cls).setUpClass()
+        super().setUpClass()
+        cls.gui_run(setup_sample_model_name, mode=True)
         cls.gui_run(load_sample_data_name, mode=True)
         cls.app_admin = MyApplicationAdmin()
         cls.process()
@@ -914,6 +918,7 @@ class SnippetsTest(RunningThreadCase,
     @classmethod
     def setUpClass(cls):
         super(SnippetsTest, cls).setUpClass()
+        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
         cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
         cls.gui_run(setup_query_proxy_name, mode=cls.model_context_name)
         cls.app_admin = ApplicationAdmin()
