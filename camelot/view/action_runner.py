@@ -151,12 +151,16 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         self.response.connect(self._handle_response)
 
     @classmethod
-    def wait_for_completion(cls, max_wait=5):
+    def wait_for_completion(cls, max_wait=15):
         """
         Wait until all actions are completed
 
         :param max_wait: maximum time to wait for an action to complete
         """
+        # @todo : max_wait should be high enough to ensure completion when
+        # actions_running is flooded with actions during unit testing, this
+        # is probably caused by either item_models not being garbage collected,
+        # or actions not properly terminated when their initiation fails
         actions_running = True
         while actions_running:
             run_names = list(gui_run_names.list())
