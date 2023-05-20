@@ -27,7 +27,7 @@ from camelot.core.exception import UserException
 from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole, ChoicesRole
 from camelot.core.naming import initial_naming_context
-from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string
+from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import forms
@@ -341,8 +341,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
-        self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
-        self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
+        self.assertEqual(spinbox.validate(str('prefix 0 suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
+        self.assertEqual(spinbox.validate(str('prefix  suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
         # verify if the calculator button is turned off
         editor = editors.FloatEditor(parent=None, calculator=False)
         editor.set_editable(True)
