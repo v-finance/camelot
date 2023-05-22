@@ -1077,9 +1077,9 @@ class AbstractEntityNamingContextCase(AbstractNamingContextCase, ExampleModelMix
 
     @classmethod
     def setUpClass(cls):
-        super(AbstractEntityNamingContextCase, cls).setUpClass()
+        super().setUpClass()
         cls.setup_sample_model()
-        LoadSampleData().model_run(None, None)
+        list(LoadSampleData().model_run(None, None))
         cls.session = Session()
 
     @classmethod
@@ -1098,7 +1098,7 @@ class OrganizationEntityNamingContextCase(AbstractEntityNamingContextCase, Entit
 
     @classmethod
     def setUpClass(cls):
-        AbstractEntityNamingContextCase.setUpClass()
+        super().setUpClass()
         # Make sure at least 2 organization exist.
         org1 = party.Organization( name = 'Test1' )
         org2 = party.Organization( name = 'Test2' )

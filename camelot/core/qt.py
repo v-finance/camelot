@@ -87,62 +87,16 @@ QtModel = DelayedModule('QtGui')
 QtWidgets = DelayedModule('QtGui')
 QtPrintSupport = DelayedModule('QtGui')
 
-if qt_api in ('', 'PyQt4'):
-    try:
-        qt_api = 'PyQt4'
-        # as of pyqt 5.11, qt should be imported before sip
-        from PyQt4 import QtCore
-        import sip
-        QtCore.qt_slot = QtCore.pyqtSlot
-        QtCore.qt_signal = QtCore.pyqtSignal
-        QtCore.qt_property = QtCore.pyqtProperty
-        # the api version is only available after importing QtCore
-        variant_api = sip.getapi('QVariant')
-        string_api = sip.getapi('QString')
-        is_deleted = sip.isdeleted
-        delete = sip.delete
-    except ImportError:
-        LOGGER.warn('Could not load PyQt4')
-        qt_api = ''
-
 if qt_api in ('', 'PySide'):
     try:
         qt_api = 'PySide'
         QtCore.qt_slot = QtCore.Slot
         QtCore.qt_signal = QtCore.Signal
         QtCore.qt_property = QtCore.Property
-        variant_api = 2
-        string_api = 2
         is_deleted = lambda _qobj:False
         delete = lambda _qobj:True
     except ImportError:
         LOGGER.warn('Could not load PySide')
-        qt_api = ''
-
-if qt_api in ('', 'PyQt5'):
-    try:
-        qt_api = 'PyQt5'
-        # as of pyqt 5.11, qt should be imported before sip
-        from PyQt5 import QtCore
-        import sip
-        QtCore.qt_slot = QtCore.pyqtSlot
-        QtCore.qt_signal = QtCore.pyqtSignal
-        QtCore.qt_property = QtCore.pyqtProperty
-        variant_api = 2
-        string_api = 2
-        QtModel = DelayedModule('QtCore')
-        QtWidgets = DelayedModule('QtWidgets')
-        QtPrintSupport = DelayedModule('QtPrintSupport')
-        QtQml = DelayedModule('QtQml')
-        QtQuick = DelayedModule('QtQuick')
-        #QtWebKit = DelayedQtWebEngineWidgets('QtWebEngineWidgets')
-        QtWebKit = DelayedModule('QtWebKitWidgets')
-        QtQuickWidgets = DelayedModule('QtQuickWidgets')
-        is_deleted = sip.isdeleted
-        delete = sip.delete
-        transferto = sip.transferto
-    except ImportError:
-        LOGGER.warn('Could not load PyQt5')
         qt_api = ''
 
 if qt_api in ('', 'PyQt6'):
@@ -154,8 +108,6 @@ if qt_api in ('', 'PyQt6'):
         QtCore.qt_slot = QtCore.pyqtSlot
         QtCore.qt_signal = QtCore.pyqtSignal
         QtCore.qt_property = QtCore.pyqtProperty
-        variant_api = 2
-        string_api = 2
         QtModel = DelayedModule('QtCore')
         QtWidgets = DelayedModule('QtWidgets')
         QtPrintSupport = DelayedModule('QtPrintSupport')
@@ -178,63 +130,11 @@ else:
 
 Qt = getattr(__import__(qt_api+'.QtCore', globals(), locals(), ['Qt']), 'Qt')
 
-assert variant_api
-assert string_api
-
-def _py_to_variant_1( obj=None ):
-    """Convert a Python object to a :class:`QtCore.QVariant` object
-    """
-    if obj is None:
-        return QtCore.QVariant()
-    return QtCore.QVariant(obj)
-
 def _py_to_variant_2( obj=None ):
     return obj
 
-def _valid_variant_1( variant ):
-    return variant.isValid()
-
 def _valid_variant_2( variant ):
     return variant!=None
-
-def _variant_to_py_1(qvariant=None):
-    """Try to convert a QVariant to a python object as good as possible"""
-    if not qvariant:
-        return None
-    if qvariant.isNull():
-        return None
-    type = qvariant.type()
-    if type == QtCore.QVariant.String:
-        value = str(qvariant.toString())
-    elif type == QtCore.QVariant.Date:
-        value = qvariant.toDate()
-        value = datetime.date( year=value.year(),
-                               month=value.month(),
-                               day=value.day() )
-    elif type == QtCore.QVariant.Int:
-        value = int(qvariant.toInt()[0])
-    elif type == QtCore.QVariant.LongLong:
-        value = int(qvariant.toLongLong()[0])
-    elif type == QtCore.QVariant.Double:
-        value = float(qvariant.toDouble()[0])
-    elif type == QtCore.QVariant.Bool:
-        value = bool(qvariant.toBool())
-    elif type == QtCore.QVariant.Time:
-        value = qvariant.toTime()
-        value = datetime.time( hour = value.hour(),
-                               minute = value.minute(),
-                               second = value.second() )
-    elif type == QtCore.QVariant.DateTime:
-        value = qvariant.toDateTime()
-        value = value.toPyDateTime()
-    elif type == QtCore.QVariant.Color:
-        value = QtGui.QColor(qvariant)
-    elif type == QtCore.QVariant.ByteArray:
-        value = qvariant.toByteArray()
-    else:
-        value = qvariant.toPyObject()
-
-    return value
 
 def _variant_to_py_2(value=None):
     if isinstance( value, QtCore.QDate ):
@@ -257,36 +157,11 @@ def _variant_to_py_2(value=None):
                                    )
     return value
 
-if variant_api==2:
-    py_to_variant = _py_to_variant_2
-    valid_variant = _valid_variant_2
-    variant_to_py = _variant_to_py_2
-elif variant_api==1:
-    py_to_variant = _py_to_variant_1
-    valid_variant = _valid_variant_1
-    variant_to_py = _variant_to_py_1
-else:
-    raise Exception('Unsupported QVariant API')
+py_to_variant = _py_to_variant_2
+valid_variant = _valid_variant_2
+variant_to_py = _variant_to_py_2
 
-def _q_string_2(arg=None):
-    return arg
-
-if string_api==2:
-    q_string = _q_string_2
-    q_string_type = str
-    q_string_size = len
-    q_string_startswith = str.startswith
-    q_string_endswith = str.endswith
-elif string_api==1:
-    q_string = QtCore.QString
-    q_string_type = QtCore.QString
-    q_string_size = QtCore.QString.size
-    q_string_startswith = QtCore.QString.startsWith
-    q_string_endswith = QtCore.QString.endsWith
-else:
-    raise Exception('Unsupported QString API')
-
-if qt_api in ('PyQt4', 'PySide'):
+if qt_api in ('PySide'):
 
     #
     # Encoding used when transferring translation strings from

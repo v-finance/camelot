@@ -17,7 +17,9 @@ from .test_item_model import (
     setup_query_proxy_name, setup_query_proxy_small_columns_name,
     setup_query_proxy_equal_columns_name
 )
-from .test_model import ExampleModelMixinCase, load_sample_data_name
+from .test_model import (
+    ExampleModelMixinCase, load_sample_data_name, setup_sample_model_name
+)
 from camelot.admin.action import GuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
@@ -27,7 +29,7 @@ from camelot.core.exception import UserException
 from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole, ChoicesRole
 from camelot.core.naming import initial_naming_context
-from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets, q_string
+from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningThreadCase
 from camelot.view import forms
@@ -341,8 +343,8 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         spinbox = editor.findChild(QtWidgets.QWidget, 'spinbox')
         spinbox.setValue( 0.0 )
         self.assertTrue( editor.get_value() != None )
-        self.assertEqual(spinbox.validate(q_string('prefix 0 suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
-        self.assertEqual(spinbox.validate(q_string('prefix  suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
+        self.assertEqual(spinbox.validate(str('prefix 0 suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
+        self.assertEqual(spinbox.validate(str('prefix  suffix'), 1)[0], QtGui.QValidator.State.Acceptable)
         # verify if the calculator button is turned off
         editor = editors.FloatEditor(parent=None, calculator=False)
         editor.set_editable(True)
@@ -472,6 +474,7 @@ class FormTest(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
         cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
 
     def setUp(self):
@@ -827,7 +830,8 @@ class ControlsTest(
 
     @classmethod
     def setUpClass(cls):
-        super(ControlsTest, cls).setUpClass()
+        super().setUpClass()
+        cls.gui_run(setup_sample_model_name, mode=True)
         cls.gui_run(load_sample_data_name, mode=True)
         cls.app_admin = MyApplicationAdmin()
         cls.process()
@@ -914,6 +918,7 @@ class SnippetsTest(RunningThreadCase,
     @classmethod
     def setUpClass(cls):
         super(SnippetsTest, cls).setUpClass()
+        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
         cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
         cls.gui_run(setup_query_proxy_name, mode=cls.model_context_name)
         cls.app_admin = ApplicationAdmin()

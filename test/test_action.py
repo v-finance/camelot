@@ -28,7 +28,9 @@ from camelot.core.qt import QtGui, QtWidgets, Qt, delete, is_deleted
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
-from camelot.test import GrabMixinCase, RunningThreadCase, RunningProcessCase
+from camelot.test import (
+    GrabMixinCase, RunningThreadCase, RunningProcessCase, test_context,
+)
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils, utils, gui_naming_context
 from camelot.view.action_runner import hide_progress_dialog
@@ -51,7 +53,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from . import app_admin, test_core, test_view, unit_test_context
 from .test_item_model import QueryQStandardItemModelMixinCase, setup_query_proxy_name
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import ExampleModelMixinCase, LoadSampleData, load_sample_data_name, setup_session_name, dirty_session_action_name
+from .test_model import (
+    ExampleModelMixinCase, LoadSampleData,
+    load_sample_data_name, setup_session_name, dirty_session_action_name,
+    setup_sample_model_name
+)
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
 
@@ -82,7 +88,7 @@ class CustomAction(Action):
     ]
 
 
-custom_action_name = initial_naming_context.bind((CustomAction.name,), CustomAction())
+custom_action_name = test_context.bind((CustomAction.name,), CustomAction())
 
 
 class ActionBaseCase(RunningProcessCase, SerializableMixinCase):
@@ -269,6 +275,7 @@ class ListActionsCase(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
         cls.gui_run(load_sample_data_name, mode=True)
 
     def setUp( self ):
@@ -628,6 +635,7 @@ class FormActionsCase(
     @classmethod
     def setUpClass(cls):
         super(FormActionsCase, cls).setUpClass()
+        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
         cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
 
     def setUp( self ):
@@ -672,6 +680,7 @@ class ApplicationActionsCase(
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
         cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
 
     def setUp(self):

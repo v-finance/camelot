@@ -52,6 +52,8 @@ has_programming_error = False
 
 LOGGER = logging.getLogger('camelot.test')
 
+test_context = initial_naming_context.bind_new_context('test', immutable=True)
+
 class GrabMixinCase(object):
     """
     Methods to grab views to pixmaps during unittests
@@ -102,7 +104,7 @@ class GrabMixinCase(object):
         outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
 # make sure the name is reserved, so we can unbind it without exception
-test_action_name = initial_naming_context.bind(('test_action',), object())
+test_action_name = test_context.bind(('test_action',), object())
 
 class GetActionState(Action):
 
@@ -112,7 +114,7 @@ class GetActionState(Action):
             'Got state', detail=action.get_state(model_context),
         )
 
-get_action_state_name = initial_naming_context.bind(('get_action_state',), GetActionState())
+get_action_state_name = test_context.bind(('get_action_state',), GetActionState())
 
 class ActionMixinCase(object):
     """
@@ -195,7 +197,7 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.thread = ModelProcess()
+        cls.thread = ModelProcess('test', test_context)
         model_thread._model_thread_.insert(0, cls.thread)
         cls.thread.start()
 

@@ -31,18 +31,20 @@ app_admin = ApplicationAdmin()
 #
 model_engine = create_engine('sqlite://')
 
+class SetupSampleModel(Action):
+
+    def model_run(self, model_context, mode):
+        ExampleModelMixinCase.setup_sample_model()
+        yield action_steps.UpdateProgress(detail='Model set up')
+
+setup_sample_model_name = unit_test_context.bind(('setup_sample_model',), SetupSampleModel())
+
 class LoadSampleData(Action):
 
     def model_run(self, model_context, mode):
-        session = Session()
-        metadata.bind = model_engine
-        metadata.create_all(model_engine)
-        session.expunge_all()
         if mode in (None, True):
-            load_movie_fixtures(session)
-            yield action_steps.UpdateProgress(detail='{} sample persons loaded in session {}'.format(
-                session.query(Person).count(), id(session)
-            ))
+            load_movie_fixtures(model_engine)
+            yield action_steps.UpdateProgress(detail="samples loaded")
 
 load_sample_data_name = unit_test_context.bind(('load_sample_data',), LoadSampleData())
 
@@ -53,7 +55,7 @@ class SetupSession(Action):
         session.close()
         yield action_steps.UpdateProgress(detail='Session closed')
 
-setup_session_name = unit_test_context.bind(('setup_session',), LoadSampleData())
+setup_session_name = unit_test_context.bind(('setup_session',), SetupSession())
 
 class DirtySession(Action):
     
@@ -87,6 +89,7 @@ class ExampleModelMixinCase(object):
     @classmethod
     def setup_sample_model(cls):
         metadata.bind = model_engine
+        metadata.drop_all(model_engine)
         metadata.create_all(model_engine)
         cls.session = Session()
         cls.session.expunge_all()
