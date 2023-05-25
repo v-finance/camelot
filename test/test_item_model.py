@@ -10,7 +10,7 @@ from .test_model import (
     ExampleModelMixinCase,
     load_sample_data_name, setup_session_name, setup_sample_model_name
 )
-from .test_proxy import A, B, C
+from .test_proxy import A, C
 from . import app_admin
 
 from camelot.admin.action import Action
@@ -26,10 +26,10 @@ from camelot.core.item_model import (
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
-from camelot.core.qt import Qt, QtCore, is_deleted, delete, variant_to_py
+from camelot.core.qt import Qt, QtCore, delete, variant_to_py
 from camelot.view.utils import get_settings_group
 from camelot.model.party import Person
-from camelot.test import RunningProcessCase, RunningThreadCase, test_context
+from camelot.test import RunningProcessCase, test_context
 from camelot.core.cache import ValueCache
 from camelot.view import action_steps
 from camelot.view.qml_view import get_qml_root_backend
@@ -171,12 +171,19 @@ class ItemModelCaseMixin(object):
         return item_model.rowCount()
 
 
-class ItemModelTests(object):
+class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
     """
     Item model tests to be run both with a thread and with a process
     """
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.gui_run(setup_sample_model_name, mode=True)
+        cls.gui_run(load_sample_data_name, mode=True)
+
     def setUp(self):
+        super().setUp()
         self.model_context_name = ('test_item_model_thread_model_context_{0}'.format(next(context_counter)),)
         for step in self.gui_run(setup_proxy_name, mode=self.model_context_name):
             if step[0] == action_steps.UpdateProgress.__name__:
@@ -205,6 +212,17 @@ class ItemModelTests(object):
             model_context_name=self.model_context_name):
             if step[0] == action_steps.UpdateProgress.__name__:
                 return step[1]['detail']
+
+    def get_collection(self):
+        """
+        Create a collection in the remote process and return the bound
+        name of that collection.
+        """
+        for step in self.gui_run(
+            get_collection_name,
+            model_context_name=self.model_context_name):
+            if step[0] == action_steps.UpdateProgress.__name__:
+                return tuple(step[1]['detail'])
 
     def test_invalid_item(self):
         invalid_item = self.item_model.invalidItem()
@@ -514,7 +532,7 @@ class ItemModelTests(object):
         self._load_data(self.item_model)
         row_count = self.item_model.rowCount()
         self.signal_register.clear()
-        self.gui_run(add_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        self.gui_run(add_element_name, model_context_name=self.model_context_name, mode=43, handle_action_steps=True)
         self.item_model.onTimeout()
         self.process()
         self.assertEqual(len(self.signal_register.header_changes), 1)
@@ -539,6 +557,45 @@ class ItemModelTests(object):
         self.process()
         self.assertEqual(self._data(0, 0, self.item_model), 0)
 
+    def test_no_objects_updated(self):
+        self._load_data(self.item_model)
+        self.signal_register.clear()
+        self.item_model.objectsUpdated(list(self.get_collection()))
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 0 )
+        self.assertEqual( len(self.signal_register.header_changes), 0 )
+        self.assertEqual( self.signal_register.layout_changes, 0 )
+
+    def test_no_objects_created(self):
+        self._load_data(self.item_model)
+        self.signal_register.clear()
+        self.item_model.objectsCreated(list(self.get_collection()))
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 0 )
+        self.assertEqual( len(self.signal_register.header_changes), 0 )
+        self.assertEqual( self.signal_register.layout_changes, 0 )
+
+    def test_no_objects_deleted(self):
+        self._load_data(self.item_model)
+        self.signal_register.clear()
+        self.item_model.objectsDeleted(list(self.get_collection()))
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 0 )
+        self.assertEqual( len(self.signal_register.header_changes), 0 )
+        self.assertEqual( self.signal_register.layout_changes, 0 )
+
+    def test_completion(self):
+        self._load_data(self.item_model)
+        name = self._data(0, 4, self.item_model, role=Qt.ItemDataRole.EditRole)
+        # the edit role should be a name
+        self.assertIsInstance(name, list)
+        self.assertTrue(len(name) > 1)
+        self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
+        self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
+        self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
 
 class SetupProxy(Action):
 
@@ -636,80 +693,15 @@ class RemoveElement(Action):
 
 remove_element_name = test_context.bind(('remove_element',), RemoveElement())
 
-class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
+class GetCollection(Action):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name, mode=True)
-        cls.gui_run(load_sample_data_name, mode=True)
-
-    def setUp( self ):
-        super().setUp()
-        ItemModelTests.setUp(self)
-
-class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests, ExampleModelMixinCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ItemModelThreadCase, cls).setUpClass()
-        cls.gui_run(load_sample_data_name, mode=True)
-
-    def setUp( self ):
-        super(ItemModelThreadCase, self).setUp()
-        ItemModelTests.setUp(self)
-        self.A = A
-
-    def tearDown(self):
-        self.process()
-        # since multiple tests share the same model context name, avoid
-        # interaction between tests by deleting item_models holding a reference
-        # to that name
-        if not is_deleted(self.qt_parent):
-            delete(self.qt_parent)
-        self.qt_parent = None
-        self.item_model = None
-
-    def test_no_objects_updated(self):
-        self._load_data(self.item_model)
-        self.signal_register.clear()
+    def model_run(self, model_context, mode):
         name = initial_naming_context._bind_object((object(),))
-        self.item_model.objectsUpdated(list(name))
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 0 )
-        self.assertEqual( len(self.signal_register.header_changes), 0 )
-        self.assertEqual( self.signal_register.layout_changes, 0 )
+        yield action_steps.UpdateProgress(
+            text='Got data', detail=name
+        )
 
-    def test_no_objects_created(self):
-        self._load_data(self.item_model)
-        self.signal_register.clear()
-        name = initial_naming_context._bind_object((object(),))
-        self.item_model.objectsCreated(list(name))
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 0 )
-        self.assertEqual( len(self.signal_register.header_changes), 0 )
-        self.assertEqual( self.signal_register.layout_changes, 0 )
-
-    def test_no_objects_deleted(self):
-        self._load_data(self.item_model)
-        self.signal_register.clear()
-        name = initial_naming_context._bind_object((object(),))
-        self.item_model.objectsDeleted(list(name))
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 0 )
-        self.assertEqual( len(self.signal_register.header_changes), 0 )
-        self.assertEqual( self.signal_register.layout_changes, 0 )
-
-    def test_completion(self):
-        self._load_data(self.item_model)
-        name = self._data(0, 4, self.item_model, role=Qt.ItemDataRole.EditRole)
-        self.assertIsInstance(initial_naming_context.resolve(tuple(name)), B)
-        self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
-        self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
-        self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
+get_collection_name = test_context.bind(('get_collection',), GetCollection())
 
 
 class SetupQueryProxy(Action):
