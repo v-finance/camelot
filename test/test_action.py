@@ -12,6 +12,7 @@ from camelot.core.dataclasses import dataclass
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.item_model import ObjectRole
+from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.admin.action import Action, ActionStep, State, GuiContext
 from camelot.admin.action import (
     list_action, application_action, form_action, list_filter, Mode
@@ -24,7 +25,7 @@ from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.qt import QtGui, QtWidgets, Qt, delete, is_deleted
+from camelot.core.qt import QtCore, QtGui, QtWidgets, Qt, delete, is_deleted
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
@@ -185,7 +186,7 @@ class SendDocumentAction( Action ):
 
 send_document_action_name = unit_test_context.bind(('send_document_action',), SendDocumentAction())
 
-class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, SerializableMixinCase):
+class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, SerializableMixinCase):
     """Test the various steps that can be executed during an
     action.
     """
@@ -196,6 +197,7 @@ class ActionStepsCase(RunningThreadCase, GrabMixinCase, ExampleModelMixinCase, S
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.gui_run(setup_sample_model_name)
         cls.gui_run(load_sample_data_name, mode=True)
 
     def setUp(self):
@@ -263,9 +265,27 @@ to_last_row_name = unit_test_context.bind(('to_last_row',), list_action.ToLastRo
 export_spreadsheet_name = unit_test_context.bind(('export_spreadsheet',), list_action.ExportSpreadsheet())
 import_from_file_name = unit_test_context.bind(('import_from_file',), list_action.ImportFromFile())
 set_filters_name = unit_test_context.bind(('set_filters',), list_action.SetFilters())
+open_form_view_name = unit_test_context.bind(('open_form_view',), list_action.OpenFormView())
+remove_selection_name = unit_test_context.bind(('remove_selection',), list_action.RemoveSelection())
+
+
+class ModelContextAction(Action):
+    name = 'model_context_action'
+    verbose_name = 'Model context methods'
+
+    def model_run(model_context, mode):
+        for obj in model_context.get_collection():
+            yield action_steps.UpdateProgress('obj in collection {}'.format(obj))
+        for obj in model_context.get_selection():
+            yield action_steps.UpdateProgress('obj in selection {}'.format(obj))
+        model_context.get_object()
+
+model_context_action_name = test_context.bind((ModelContextAction.name,), ModelContextAction())
+
+
 
 class ListActionsCase(
-    RunningThreadCase,
+    RunningProcessCase,
     GrabMixinCase, ExampleModelMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
@@ -309,10 +329,7 @@ class ListActionsCase(
         self.item_model = None
 
     def test_model_context(self):
-        model_context = initial_naming_context.resolve(self.model_context_name)
-        list(model_context.get_collection())
-        list(model_context.get_selection())
-        model_context.get_object()
+        list(self.gui_run(model_context_action_name, self.gui_context, None, model_context_name=self.model_context_name))
 
     def test_change_row_actions( self ):
         # FIXME: this unit test does not work with the new ToFirstRow/ToNextRow action steps...
@@ -442,8 +459,11 @@ class ListActionsCase(
 
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
-        model_context = initial_naming_context.resolve(self.model_context_name)
-        steps = action.model_run(model_context, 'first_name')
+        proxy = QueryModelProxy(Session().query(Person))
+        person_model_context = ObjectsModelContext(
+            app_admin.get_related_admin(Person), proxy, QtCore.QLocale()
+        )
+        steps = action.model_run(person_model_context, 'first_name')
         for step in steps:
             if isinstance(step, ChangeObject):
                 field_value = step.get_object()
@@ -461,11 +481,10 @@ class ListActionsCase(
         list_model.onTimeout()
         self.process()
         self.view.item_view.setCurrentIndex(list_model.index(0, 0))
-        model_context = initial_naming_context.resolve(self.model_context_name)
-        open_form_view_action = list_action.OpenFormView()
-        for step in open_form_view_action.model_run(model_context, None):
-            form = step.render(self.gui_context, step._to_dict())
-            form_value = form.model.value()
+        for step_name, step in self.gui_run(open_form_view_name, self.gui_context,None, model_context_name=self.model_context_name):
+            if step_name == action_steps.OpenFormView.__name__:
+                form = action_steps.OpenFormView.render(self.gui_context, step)
+                form_value = form.model.value()
         self.assertTrue(isinstance(form_value, list))
 
     @staticmethod
@@ -481,9 +500,10 @@ class ListActionsCase(
         return steps, created, updated
 
     def test_remove_selection(self):
-        remove_selection_action = list_action.RemoveSelection()
-        model_context = initial_naming_context.resolve(self.model_context_name)
-        list(remove_selection_action.model_run(model_context, None))
+        list(self.gui_run(
+            remove_selection_name, self.gui_context,
+            None, model_context_name=self.model_context_name
+        ))
 
     def test_move_rank_up_down(self):
         metadata = MetaData()
@@ -509,17 +529,21 @@ class ListActionsCase(
                 pass
 
         metadata.create_all()
-        model_context = initial_naming_context.resolve(self.model_context_name)
+
+        proxy = QueryModelProxy(session.query(Person))
+        person_model_context = ObjectsModelContext(
+            app_admin.get_related_admin(Person), proxy, QtCore.QLocale()
+        )
 
         # The actions should not be present in the related toolbar actions of the entity if its not rank-based.
-        related_toolbar_actions = [action.route[-1] for action in model_context.admin.get_related_toolbar_actions('onetomany')]
+        related_toolbar_actions = [action.route[-1] for action in person_model_context.admin.get_related_toolbar_actions('onetomany')]
         self.assertNotIn(list_action.move_rank_up.name, related_toolbar_actions)
         self.assertNotIn(list_action.move_rank_down.name, related_toolbar_actions)
         # If the action is run on a non rank-based entity anyways, an assertion should block it.
         for action in (list_action.move_rank_up, list_action.move_rank_down):
             with self.assertRaises(AssertionError) as exc:
-                list(action.model_run(model_context, None))
-            self.assertEqual(str(exc.exception), action.Message.entity_not_rank_based.value.format(model_context.admin.entity))
+                list(action.model_run(person_model_context, None))
+            self.assertEqual(str(exc.exception), action.Message.entity_not_rank_based.value.format(person_model_context.admin.entity))
 
         # The action should be present on a rank-based entity:
         admin = app_admin.get_related_admin(A)
