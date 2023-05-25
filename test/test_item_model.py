@@ -388,6 +388,157 @@ class ItemModelTests(object):
         #         rowCount increased, which seems not really the desired effect
         self.assertEqual(attribute_item_model.rowCount(), 3)
 
+    def test_set_data(self):
+        # the set data is done after the timeout has passed
+        # and happens in the requested order
+        self._load_data(self.item_model)
+        self._set_data(0, 0, 20, self.item_model)
+        self._set_data(0, 1, 10, self.item_model)
+        # x is set first, so y becomes not
+        # editable and remains at its value
+        self.assertEqual(self._data(0, 0, self.item_model), 20)
+        self.assertEqual(self._data(0, 1, self.item_model),  0)
+        self._set_data(0, 0, 5, self.item_model)
+        self._set_data(0, 1, 10, self.item_model)
+        # x is set first, so y becomes
+        # editable and its value is changed
+        self.assertEqual(self._data(0, 0, self.item_model), 5)
+        self.assertEqual(self._data(0, 1, self.item_model), 10)
+        self._set_data(0, 1, 15, self.item_model)
+        self._set_data(0, 0, 20, self.item_model)
+        # x is set last, so y stays
+        # editable and its value is changed
+        self.assertEqual(self._data(0, 0, self.item_model), 20)
+        self.assertEqual(self._data(0, 1, self.item_model), 15)
+
+    def test_dynamic_editable(self):
+        # If the editable field attribute of one field depends on the value
+        # of another field, 'editable' should be reevaluated after the
+        # other field is set
+        # get the data once, to fill the cached values of the field attributes
+        # so changes get passed the first check
+        self._load_data(self.item_model)
+        self.assertEqual(self.get_data(0, 'y', False), 0)
+        self.assertEqual(self._data(0, 1, self.item_model), 0)
+        # initialy, field is editable
+        self._set_data(0, 1, 1, self.item_model)
+        self.assertEqual(self.get_data(0, 'y', False), 1)
+        self._set_data(0, 0, 11, self.item_model)
+        self._set_data(0, 1, 0, self.item_model)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self.get_data(0, 'y', False), 1)
+
+    def test_modify_list_while_editing( self ):
+        self._load_data(self.item_model)
+        self.assertEqual(self.get_data(0, 'x', False), 0)
+        self.assertEqual(self._data( 0, 0, self.item_model), 0)
+        # switch first and second person in collection without informing
+        # the item_model
+        self.gui_run(swap_elements_name, model_context_name=self.model_context_name)
+        self.assertEqual(self.get_data(0, 'x', False), 1)
+        self.assertEqual(self.get_data(1, 'x', False), 0)
+        self.assertEqual(self._data( 0, 0, self.item_model), 0)
+        self.assertEqual(self._data( 1, 0, self.item_model), 1)
+        # now change the data
+        self._set_data(0, 0, 7, self.item_model)
+        self.assertEqual(self._data(0, 0, self.item_model), 7)
+        self.assertEqual(self.get_data(1, 'x', False), 7)
+
+    def test_delete_after_set_data( self ):
+        # the item  model is deleted after data has been set,
+        # like in closing a form immediately after changing a field
+        self.assertEqual(self.get_data(0, 'x', False), 0)
+        self._load_data(self.item_model)
+        self.assertEqual(self._data(0, 0, self.item_model), 0)
+        self._set_data(0, 0, 10, self.item_model)
+        delete(self.qt_parent)
+        self.assertEqual(self.get_data(0, 'x', False), 10)
+
+    def test_data_changed( self ):
+        # verify the data changed signal is only received for changed
+        # index ranges
+        self._load_data(self.item_model)
+        self.assertEqual(self.item_model.rowCount(), 3)
+        self.assertEqual(self._data(0, 0, self.item_model), 0)
+        self.assertEqual(self._data(1, 0, self.item_model), 1)
+        self.assertEqual(self._data(2, 0, self.item_model), 2)
+        self.signal_register.clear()
+        self._set_data( 0, 0, 8, self.item_model )
+        self.assertEqual( len(self.signal_register.data_changes), 1 )
+        for changed_range in self.signal_register.data_changes:
+            for index in changed_range:
+                row, col = index
+                self.assertEqual( row, 0 )
+                self.assertEqual( col, 0 )
+
+    def test_objects_updated(self):
+        # modify only one column to test if only one change is emitted
+        self._load_data(self.item_model)
+        self.signal_register.clear()
+        self.gui_run(
+            set_data_name, mode=(0, 'y', 10),
+            model_context_name=self.model_context_name, handle_action_steps=True
+        )
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 1 )
+        self.assertEqual( self.signal_register.data_changes[0],
+                          ((0, 1), (0, 1)) )
+
+    def test_unloaded_objects_updated(self):
+        # only load data for a single column
+        self.assertTrue(self._row_count(self.item_model) > 1)
+        self._data(0, 1, self.item_model)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(0, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
+        # modify two columns to test if only a change for the loaded
+        # column is emitted
+        self.signal_register.clear()
+        self.gui_run(
+            set_data_name, mode=(0, 'x', 9),
+            model_context_name=self.model_context_name, handle_action_steps=True
+        )
+        self.gui_run(
+            set_data_name, mode=(0, 'y', 10),
+            model_context_name=self.model_context_name, handle_action_steps=True
+        )
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 1 )
+        self.assertEqual( self.signal_register.data_changes[0],
+                          ((0, 1), (0, 1)) )
+
+    def test_objects_created(self):
+        self._load_data(self.item_model)
+        row_count = self.item_model.rowCount()
+        self.signal_register.clear()
+        self.gui_run(add_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(len(self.signal_register.header_changes), 1)
+        new_row_count = self.item_model.rowCount()
+        self.assertEqual(new_row_count, row_count+1)
+
+    def test_objects_deleted(self):
+        self._load_data(self.item_model)
+        row_count = self.item_model.rowCount()
+        self.assertEqual(self._data(0, 0, self.item_model), 0)
+        self.signal_register.clear()
+        self.gui_run(remove_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        # but the timeout might be after the object was deleted
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self.signal_register.layout_changes, 1)
+        new_row_count = self.item_model.rowCount()
+        self.assertEqual(new_row_count, row_count-1)
+        # after the delete, all data is cleared
+        self.assertEqual(self._data(0, 0, self.item_model), None)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(0, 0, self.item_model), 0)
+
 
 class SetupProxy(Action):
 
@@ -519,110 +670,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.qt_parent = None
         self.item_model = None
 
-    def test_set_data(self):
-        # the set data is done after the timeout has passed
-        # and happens in the requested order
-        self._load_data(self.item_model)
-        self._set_data(0, 0, 20, self.item_model)
-        self._set_data(0, 1, 10, self.item_model)
-        # x is set first, so y becomes not
-        # editable and remains at its value
-        self.assertEqual(self._data(0, 0, self.item_model), 20)
-        self.assertEqual(self._data(0, 1, self.item_model),  0)
-        self._set_data(0, 0, 5, self.item_model)
-        self._set_data(0, 1, 10, self.item_model)
-        # x is set first, so y becomes
-        # editable and its value is changed
-        self.assertEqual(self._data(0, 0, self.item_model), 5)
-        self.assertEqual(self._data(0, 1, self.item_model), 10)
-        self._set_data(0, 1, 15, self.item_model)
-        self._set_data(0, 0, 20, self.item_model)
-        # x is set last, so y stays
-        # editable and its value is changed
-        self.assertEqual(self._data(0, 0, self.item_model), 20)
-        self.assertEqual(self._data(0, 1, self.item_model), 15)
-        
-    def test_modify_list_while_editing( self ):
-        self._load_data(self.item_model)
-        self.assertEqual(self.get_data(0, 'x', False), 0)
-        self.assertEqual(self._data( 0, 0, self.item_model), 0)
-        # switch first and second person in collection without informing
-        # the item_model
-        self.gui_run(swap_elements_name, model_context_name=self.model_context_name)
-        self.assertEqual(self.get_data(0, 'x', False), 1)
-        self.assertEqual(self.get_data(1, 'x', False), 0)
-        self.assertEqual(self._data( 0, 0, self.item_model), 0)
-        self.assertEqual(self._data( 1, 0, self.item_model), 1)
-        # now change the data
-        self._set_data(0, 0, 7, self.item_model)
-        self.assertEqual(self._data(0, 0, self.item_model), 7)
-        self.assertEqual(self.get_data(1, 'x', False), 7)
-
-    def test_delete_after_set_data( self ):
-        # the item  model is deleted after data has been set,
-        # like in closing a form immediately after changing a field
-        self.assertEqual(self.get_data(0, 'x', False), 0)
-        self._load_data(self.item_model)
-        self.assertEqual(self._data(0, 0, self.item_model), 0)
-        self._set_data(0, 0, 10, self.item_model)
-        delete(self.qt_parent)
-        self.assertEqual(self.get_data(0, 'x', False), 10)
-
-    def test_data_changed( self ):
-        # verify the data changed signal is only received for changed
-        # index ranges
-        self._load_data(self.item_model)
-        self.assertEqual(self.item_model.rowCount(), 3)
-        self.assertEqual(self._data(0, 0, self.item_model), 0)
-        self.assertEqual(self._data(1, 0, self.item_model), 1)
-        self.assertEqual(self._data(2, 0, self.item_model), 2)
-        self.signal_register.clear()
-        self._set_data( 0, 0, 8, self.item_model )
-        self.assertEqual( len(self.signal_register.data_changes), 1 )
-        for changed_range in self.signal_register.data_changes:
-            for index in changed_range:
-                row, col = index
-                self.assertEqual( row, 0 )
-                self.assertEqual( col, 0 )
-
-    def test_objects_updated(self):
-        # modify only one column to test if only one change is emitted
-        self._load_data(self.item_model)
-        self.signal_register.clear()
-        self.gui_run(
-            set_data_name, mode=(0, 'y', 10),
-            model_context_name=self.model_context_name, handle_action_steps=True
-        )
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 1 )
-        self.assertEqual( self.signal_register.data_changes[0],
-                          ((0, 1), (0, 1)) )
-
-    def test_unloaded_objects_updated(self):
-        # only load data for a single column
-        self.assertTrue(self._row_count(self.item_model) > 1)
-        self._data(0, 1, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(0, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
-        # modify two columns to test if only a change for the loaded
-        # column is emitted
-        self.signal_register.clear()
-        self.gui_run(
-            set_data_name, mode=(0, 'x', 9),
-            model_context_name=self.model_context_name, handle_action_steps=True
-        )
-        self.gui_run(
-            set_data_name, mode=(0, 'y', 10),
-            model_context_name=self.model_context_name, handle_action_steps=True
-        )
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 1 )
-        self.assertEqual( self.signal_register.data_changes[0],
-                          ((0, 1), (0, 1)) )
-
     def test_no_objects_updated(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
@@ -633,17 +680,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual( len(self.signal_register.data_changes), 0 )
         self.assertEqual( len(self.signal_register.header_changes), 0 )
         self.assertEqual( self.signal_register.layout_changes, 0 )
-
-    def test_objects_created(self):
-        self._load_data(self.item_model)
-        row_count = self.item_model.rowCount()
-        self.signal_register.clear()
-        self.gui_run(add_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(len(self.signal_register.header_changes), 1)
-        new_row_count = self.item_model.rowCount()
-        self.assertEqual(new_row_count, row_count+1)
 
     def test_no_objects_created(self):
         self._load_data(self.item_model)
@@ -656,24 +692,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual( len(self.signal_register.header_changes), 0 )
         self.assertEqual( self.signal_register.layout_changes, 0 )
 
-    def test_objects_deleted(self):
-        self._load_data(self.item_model)
-        row_count = self.item_model.rowCount()
-        self.assertEqual(self._data(0, 0, self.item_model), 0)
-        self.signal_register.clear()
-        self.gui_run(remove_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        # but the timeout might be after the object was deleted
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self.signal_register.layout_changes, 1)
-        new_row_count = self.item_model.rowCount()
-        self.assertEqual(new_row_count, row_count-1)
-        # after the delete, all data is cleared
-        self.assertEqual(self._data(0, 0, self.item_model), None)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(0, 0, self.item_model), 0)
-
     def test_no_objects_deleted(self):
         self._load_data(self.item_model)
         self.signal_register.clear()
@@ -684,24 +702,6 @@ class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests,
         self.assertEqual( len(self.signal_register.data_changes), 0 )
         self.assertEqual( len(self.signal_register.header_changes), 0 )
         self.assertEqual( self.signal_register.layout_changes, 0 )
-
-    def test_dynamic_editable(self):
-        # If the editable field attribute of one field depends on the value
-        # of another field, 'editable' should be reevaluated after the
-        # other field is set
-        # get the data once, to fill the cached values of the field attributes
-        # so changes get passed the first check
-        self._load_data(self.item_model)
-        self.assertEqual(self.get_data(0, 'y', False), 0)
-        self.assertEqual(self._data(0, 1, self.item_model), 0)
-        # initialy, field is editable
-        self._set_data(0, 1, 1, self.item_model)
-        self.assertEqual(self.get_data(0, 'y', False), 1)
-        self._set_data(0, 0, 11, self.item_model)
-        self._set_data(0, 1, 0, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self.get_data(0, 'y', False), 1)
 
     def test_completion(self):
         self._load_data(self.item_model)
