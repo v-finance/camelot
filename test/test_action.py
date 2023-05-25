@@ -29,9 +29,7 @@ from camelot.core.qt import QtCore, QtGui, QtWidgets, Qt, delete, is_deleted
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
-from camelot.test import (
-    GrabMixinCase, RunningThreadCase, RunningProcessCase, test_context,
-)
+from camelot.test import GrabMixinCase, RunningProcessCase, test_context
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils, utils, gui_naming_context
 from camelot.view.action_runner import hide_progress_dialog
@@ -649,7 +647,7 @@ to_first_form_name = unit_test_context.bind(('to_first_form',), form_action.ToFi
 to_last_form_name = unit_test_context.bind(('to_last_form',), form_action.ToLastForm())
 
 class FormActionsCase(
-    RunningThreadCase,
+    RunningProcessCase,
     ExampleModelMixinCase, GrabMixinCase, QueryQStandardItemModelMixinCase):
     """Test the standard list actions.
     """
