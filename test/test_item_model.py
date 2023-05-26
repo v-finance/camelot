@@ -26,7 +26,7 @@ from camelot.core.item_model import (
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
-from camelot.core.qt import Qt, QtCore, delete, variant_to_py
+from camelot.core.qt import Qt, QtCore, delete, variant_to_py, is_deleted
 from camelot.view.utils import get_settings_group
 from camelot.model.party import Person
 from camelot.test import RunningProcessCase, test_context
@@ -201,6 +201,11 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.item_model.onTimeout()
         self.process()
         self.signal_register = ItemModelSignalRegister(self.item_model)
+
+    def tearDown(self):
+        if not is_deleted(self.qt_parent):
+            delete(self.qt_parent)
+        super().tearDown()
 
     def get_data(self, index_in_collection, attribute, data_is_collection):
         """
