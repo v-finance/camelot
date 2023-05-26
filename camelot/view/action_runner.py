@@ -93,6 +93,9 @@ class GuiRun(object):
         model_context_name: CompositeName,
         mode
         ):
+        gui_naming_context.validate_composite_name(gui_context_name)
+        gui_naming_context.validate_composite_name(action_name)
+        gui_naming_context.validate_composite_name(model_context_name)
         self.gui_context_name = gui_context_name
         self.action_name = action_name
         self.model_context_name = model_context_name
@@ -183,11 +186,12 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         model_context: CompositeName,
         mode: typing.Union[str, dict, list, int]
     ):
-        gui_run = GuiRun(gui_context, action_name, model_context, mode)
+        gui_run = GuiRun(
+            tuple(gui_context), tuple(action_name), tuple(model_context), mode
+        )
         self.run_gui_run(gui_run)
 
     def run_gui_run(self, gui_run):
-        gui_naming_context.validate_composite_name(gui_run.gui_context_name)
         post(InitiateAction(
             gui_run_name = gui_run_names.bind(str(id(gui_run)), gui_run),
             action_name = gui_run.action_name,
@@ -200,7 +204,10 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
 
     @QtCore.qt_slot(bytes)
     def _handle_response(self, serialized_response):
-        AbstractResponse.handle_serialized_response(serialized_response, post)
+        try:
+            AbstractResponse.handle_serialized_response(serialized_response, post)
+        except e:
+            LOGGER.error('Unhandled exception while handling response {}'.format(serialized_response), exc_info=e)
 
 
 action_runner = ActionRunner()
