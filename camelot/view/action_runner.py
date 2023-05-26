@@ -206,7 +206,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     def _handle_response(self, serialized_response):
         try:
             AbstractResponse.handle_serialized_response(serialized_response, post)
-        except e:
+        except Exception as e:
             LOGGER.error('Unhandled exception while handling response {}'.format(serialized_response), exc_info=e)
 
 
