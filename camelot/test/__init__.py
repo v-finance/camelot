@@ -181,8 +181,14 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
 
     @classmethod
     def tearDownClass(cls):
-        model_thread._model_thread_.remove(cls.thread)
-        cls.thread.stop()
+        try:
+            cls.process()
+        finally:
+            model_thread._model_thread_.remove(cls.thread)
+            cls.thread.stop()
+
+    def tearDown(self):
+        self.process()
 
     @classmethod
     def process(cls):

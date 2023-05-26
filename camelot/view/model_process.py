@@ -91,3 +91,5 @@ class ModelProcess(spawned_mp.Process):
         """
         self.post(stop_request)
         self.join()
+        # as per Qt documentation, explicit disabling of the notifier is advised
+        self.socket_notifier.setEnabled(False)
