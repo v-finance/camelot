@@ -674,6 +674,10 @@ class FormActionsCase(
         )
         self.gui_context_name = self.form_view.gui_context_name
 
+    def tearDown(self):
+        self.tear_down_item_model()
+        super().tearDown()
+
     def test_previous_next( self ):
         list(self.gui_run(to_previous_form_name, self.gui_context_name, model_context_name=self.model_context_name))
         list(self.gui_run(to_next_form_name, self.gui_context_name, model_context_name=self.model_context_name))

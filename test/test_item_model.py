@@ -170,6 +170,10 @@ class ItemModelCaseMixin(object):
         self.process()
         return item_model.rowCount()
 
+    def tear_down_item_model(self):
+        if not is_deleted(self.qt_parent):
+            delete(self.qt_parent)
+
 
 class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
     """
@@ -203,8 +207,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.signal_register = ItemModelSignalRegister(self.item_model)
 
     def tearDown(self):
-        if not is_deleted(self.qt_parent):
-            delete(self.qt_parent)
+        self.tear_down_item_model()
         super().tearDown()
 
     def get_data(self, index_in_collection, attribute, data_is_collection):
