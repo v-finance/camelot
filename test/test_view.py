@@ -31,7 +31,7 @@ from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole, Choic
 from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets
 from camelot.model.party import Person
-from camelot.test import GrabMixinCase, RunningThreadCase
+from camelot.test import GrabMixinCase, RunningProcessCase
 from camelot.view import forms
 from camelot.view.action_steps import OpenFormView, MessageBox
 from camelot.view.art import ColorScheme
@@ -464,7 +464,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
 
 class FormTest(
-    RunningThreadCase,
+    RunningProcessCase,
     GrabMixinCase, QueryQStandardItemModelMixinCase, ExampleModelMixinCase
     ):
 
@@ -820,7 +820,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
 
 class ControlsTest(
-    RunningThreadCase,
+    RunningProcessCase,
     QueryQStandardItemModelMixinCase, ExampleModelMixinCase, GrabMixinCase
     ):
     """Test some basic controls"""
@@ -908,7 +908,7 @@ class ControlsTest(
         self.grab_widget( dialog )
 
 
-class SnippetsTest(RunningThreadCase,
+class SnippetsTest(RunningProcessCase,
     ExampleModelMixinCase, QueryQStandardItemModelMixinCase, GrabMixinCase
     ):
 
