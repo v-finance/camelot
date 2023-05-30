@@ -10,7 +10,7 @@ from .test_model import (
     ExampleModelMixinCase,
     load_sample_data_name, setup_session_name, setup_sample_model_name
 )
-from .test_proxy import A, B, C
+from .test_proxy import A, C
 from . import app_admin
 
 from camelot.admin.action import Action
@@ -26,10 +26,10 @@ from camelot.core.item_model import (
 from camelot.core.item_model.query_proxy import QueryModelProxy
 from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Session
-from camelot.core.qt import Qt, QtCore, is_deleted, delete, variant_to_py
+from camelot.core.qt import Qt, QtCore, delete, variant_to_py, is_deleted
 from camelot.view.utils import get_settings_group
 from camelot.model.party import Person
-from camelot.test import RunningProcessCase, RunningThreadCase, test_context
+from camelot.test import RunningProcessCase, test_context
 from camelot.core.cache import ValueCache
 from camelot.view import action_steps
 from camelot.view.qml_view import get_qml_root_backend
@@ -170,13 +170,24 @@ class ItemModelCaseMixin(object):
         self.process()
         return item_model.rowCount()
 
+    def tear_down_item_model(self):
+        if not is_deleted(self.qt_parent):
+            delete(self.qt_parent)
 
-class ItemModelTests(object):
+
+class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
     """
     Item model tests to be run both with a thread and with a process
     """
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.gui_run(setup_sample_model_name, mode=True)
+        cls.gui_run(load_sample_data_name, mode=True)
+
     def setUp(self):
+        super().setUp()
         self.model_context_name = ('test_item_model_thread_model_context_{0}'.format(next(context_counter)),)
         for step in self.gui_run(setup_proxy_name, mode=self.model_context_name):
             if step[0] == action_steps.UpdateProgress.__name__:
@@ -194,6 +205,32 @@ class ItemModelTests(object):
         self.item_model.onTimeout()
         self.process()
         self.signal_register = ItemModelSignalRegister(self.item_model)
+
+    def tearDown(self):
+        self.tear_down_item_model()
+        super().tearDown()
+
+    def get_data(self, index_in_collection, attribute, data_is_collection):
+        """
+        Get the data from the collection without going through the item model
+        """
+        for step in self.gui_run(
+            get_data_name,
+            mode=(index_in_collection, attribute, data_is_collection),
+            model_context_name=self.model_context_name):
+            if step[0] == action_steps.UpdateProgress.__name__:
+                return step[1]['detail']
+
+    def get_collection(self):
+        """
+        Create a collection in the remote process and return the bound
+        name of that collection.
+        """
+        for step in self.gui_run(
+            get_collection_name,
+            model_context_name=self.model_context_name):
+            if step[0] == action_steps.UpdateProgress.__name__:
+                return tuple(step[1]['detail'])
 
     def test_invalid_item(self):
         invalid_item = self.item_model.invalidItem()
@@ -220,6 +257,353 @@ class ItemModelTests(object):
         self.process()
         self.assertEqual(self.item_model.rowCount(), 3)
 
+    def test_first_columns(self):
+        # when data is loaded for column 0, it remains loading for column 1
+        self.assertTrue(self._row_count(self.item_model) > 1)
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
+        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), None)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
+        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
+
+    def test_last_columns(self):
+        # when data is loaded for column 1, it remains loading for column 0
+        self.assertTrue(self._row_count(self.item_model) > 1)
+        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), None)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
+
+    def test_flags(self):
+        self._load_data(self.item_model)
+        flags = self._flags(1, 1, self.item_model)
+        self.assertTrue(flags & Qt.ItemFlag.ItemIsEditable)
+        self.assertTrue(flags & Qt.ItemFlag.ItemIsEnabled)
+        self.assertTrue(flags & Qt.ItemFlag.ItemIsSelectable)
+
+    def test_sort( self ):
+        self.item_model.sort( 0, Qt.SortOrder.AscendingOrder )
+        # check the sorting
+        self._load_data(self.item_model)
+        row_0 = self._data( 0, 0, self.item_model )
+        row_1 = self._data( 1, 0, self.item_model )
+        LOGGER.debug('row 0 : {0}, row 1 : {1}'.format(row_0, row_1))
+        self.assertTrue( row_1 > row_0 )
+        self.item_model.sort( 0, Qt.SortOrder.DescendingOrder )
+        # check the sorting
+        self._load_data(self.item_model)
+        row_0 = self._data( 0, 0, self.item_model )
+        row_1 = self._data( 1, 0, self.item_model )
+        LOGGER.debug('row 0 : {0}, row 1 : {1}'.format(row_0, row_1))
+        self.assertTrue( row_1 < row_0 )
+
+    def test_vertical_header_data(self):
+        row_count = self._row_count(self.item_model)
+        # before the data is loaded, nothing is available, except the sizehint
+        self.assertTrue(row_count)
+        for row in range(row_count):
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.ToolTipRole, self.item_model), None)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ObjectRole, self.item_model), None)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole, self.item_model), None)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DecorationRole, self.item_model), None)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, VerboseIdentifierRole, self.item_model), None)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.verticalHeaderSize())
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidRole, self.item_model), None)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), None)
+            # Make sure to also request at least one column
+            self._data(row, 0, self.item_model)
+        self.item_model.onTimeout()
+        self.process()
+        # after the timeout, the data is available
+        for row in range(row_count):
+            self.assertIn('Open', self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.ToolTipRole, self.item_model))
+            # dont display any data if there is a decoration, otherwise
+            # both are displayed mixed
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole, self.item_model), '')
+            self.assertTrue(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DecorationRole, self.item_model))
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ObjectRole, self.item_model), self.id_collection[row])
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, VerboseIdentifierRole, self.item_model), 'A : {0}'.format(row))
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.verticalHeaderSize())
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidRole, self.item_model), True)
+            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), None)
+        # when changing an object, it might become invalid after a timeout
+        self.signal_register.clear()
+        self.gui_run(
+            set_data_name, mode=(1, 'y', None),
+            model_context_name=self.model_context_name, handle_action_steps=True
+        )
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidRole, self.item_model), False)
+        self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), 'Y is a required field')
+        self.assertEqual(len(self.signal_register.header_changes), 1)
+
+    def test_data(self):
+        # the data remains None and not editable while no timeout has passed
+        self.assertTrue(self._row_count(self.item_model) > 1)
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.DisplayRole), None)
+        self.assertEqual(self._data(1, 0, self.item_model, role=ObjectRole), None)
+        self.assertEqual(bool(self._flags(1, 0, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
+        # why would there be a need to get static fa before the timout has passed ?
+        #self.assertEqual(self._data(1, 0, role=FieldAttributesRole)['static'], 'static')
+        self.assertEqual(self._data(1, 0, self.item_model, role=PrefixRole), None)
+        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole), "[]")
+        self._data(1, 2, self.item_model)
+        self._data(1, 3, self.item_model)
+        self._data(1, 4, self.item_model)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
+        # the prefix is prepended to the display role
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.DisplayRole), 'pre 1')
+        self.assertEqual(self._data(1, 0, self.item_model, role=ObjectRole), self.id_collection[1])
+        self.assertEqual(bool(self._flags(1, 0, self.item_model) & Qt.ItemFlag.ItemIsEditable), True)
+        #self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['static'], 'static')
+        self.assertEqual(self._data(1, 0, self.item_model, role=PrefixRole), 'pre')
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.ToolTipRole), 'Hint')
+        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.BackgroundRole).name(), '#ff0000')
+        self.assertEqual(len(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))), 2)
+        self._data(1, 4, self.item_model, role=ActionRoutesRole)
+        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['tooltip'], SelectObject.tooltip)
+        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['icon']['name'], SelectObject.icon.name)
+        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['tooltip'], ClearObject.tooltip)
+        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['icon']['name'], ClearObject.icon.name)
+        self.assertTrue(isinstance(self._data(1, 2, self.item_model), list))
+        self.assertEqual(self._data(1, 2, self.item_model)[0], 'model_context')
+        self.assertEqual(variant_to_py(self._data(1, 3, self.item_model)).second, self.created_collection[1])
+        
+        self.assertEqual(self._data(-1, -1, self.item_model, role=ObjectRole, validate_index=False), None)
+        self.assertEqual(self._data(100, 100, self.item_model, role=ObjectRole, validate_index=False), None)
+        self.assertEqual(bool(self._flags(-1, -1, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
+        self.assertEqual(bool(self._flags(100, 100, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
+        self.assertEqual(Qt.FocusPolicy(self._data(-1, -1, self.item_model, role=FocusPolicyRole, validate_index=False)), Qt.FocusPolicy.NoFocus)
+        self.assertEqual(Qt.FocusPolicy(self._data(100, 100, self.item_model, role=FocusPolicyRole, validate_index=False)), Qt.FocusPolicy.NoFocus)
+
+    def test_list_attribute(self):
+        # when the data method of a CrudItemModel returns a list, manipulations
+        # on this list should be reflected in the original list
+        self._load_data(self.item_model)
+        attribute_model_context_name = self._data(0, 2, self.item_model)
+        attribute_item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        attribute_item_model.setValue(attribute_model_context_name)
+        attribute_item_model.setColumns(['value'])
+        self._load_data(attribute_item_model)
+        self.assertEqual(attribute_item_model.rowCount(), 2)
+        self.assertNotIn(1, self.get_data(0, 'z', True))
+        # manipulate the returned list, and see if the original is manipulated
+        # as well
+        self.gui_run(add_z_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        attribute_item_model.onTimeout()
+        self.process()
+        self.assertEqual(attribute_item_model.rowCount(), 3)
+        self._load_data(attribute_item_model)
+        self.assertIn(1, self.get_data(0, 'z', True))
+        self.gui_run(remove_z_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        self.assertNotIn(1, self.get_data(0, 'z', True))
+        # @todo : this only works when a load data has happend after the
+        #         rowCount increased, which seems not really the desired effect
+        self.assertEqual(attribute_item_model.rowCount(), 3)
+
+    def test_set_data(self):
+        # the set data is done after the timeout has passed
+        # and happens in the requested order
+        self._load_data(self.item_model)
+        self._set_data(0, 0, 20, self.item_model)
+        self._set_data(0, 1, 10, self.item_model)
+        # x is set first, so y becomes not
+        # editable and remains at its value
+        self.assertEqual(self._data(0, 0, self.item_model), 20)
+        self.assertEqual(self._data(0, 1, self.item_model),  0)
+        self._set_data(0, 0, 5, self.item_model)
+        self._set_data(0, 1, 10, self.item_model)
+        # x is set first, so y becomes
+        # editable and its value is changed
+        self.assertEqual(self._data(0, 0, self.item_model), 5)
+        self.assertEqual(self._data(0, 1, self.item_model), 10)
+        self._set_data(0, 1, 15, self.item_model)
+        self._set_data(0, 0, 20, self.item_model)
+        # x is set last, so y stays
+        # editable and its value is changed
+        self.assertEqual(self._data(0, 0, self.item_model), 20)
+        self.assertEqual(self._data(0, 1, self.item_model), 15)
+
+    def test_dynamic_editable(self):
+        # If the editable field attribute of one field depends on the value
+        # of another field, 'editable' should be reevaluated after the
+        # other field is set
+        # get the data once, to fill the cached values of the field attributes
+        # so changes get passed the first check
+        self._load_data(self.item_model)
+        self.assertEqual(self.get_data(0, 'y', False), 0)
+        self.assertEqual(self._data(0, 1, self.item_model), 0)
+        # initialy, field is editable
+        self._set_data(0, 1, 1, self.item_model)
+        self.assertEqual(self.get_data(0, 'y', False), 1)
+        self._set_data(0, 0, 11, self.item_model)
+        self._set_data(0, 1, 0, self.item_model)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self.get_data(0, 'y', False), 1)
+
+    def test_modify_list_while_editing( self ):
+        self._load_data(self.item_model)
+        self.assertEqual(self.get_data(0, 'x', False), 0)
+        self.assertEqual(self._data( 0, 0, self.item_model), 0)
+        # switch first and second person in collection without informing
+        # the item_model
+        self.gui_run(swap_elements_name, model_context_name=self.model_context_name)
+        self.assertEqual(self.get_data(0, 'x', False), 1)
+        self.assertEqual(self.get_data(1, 'x', False), 0)
+        self.assertEqual(self._data( 0, 0, self.item_model), 0)
+        self.assertEqual(self._data( 1, 0, self.item_model), 1)
+        # now change the data
+        self._set_data(0, 0, 7, self.item_model)
+        self.assertEqual(self._data(0, 0, self.item_model), 7)
+        self.assertEqual(self.get_data(1, 'x', False), 7)
+
+    def test_delete_after_set_data( self ):
+        # the item  model is deleted after data has been set,
+        # like in closing a form immediately after changing a field
+        self.assertEqual(self.get_data(0, 'x', False), 0)
+        self._load_data(self.item_model)
+        self.assertEqual(self._data(0, 0, self.item_model), 0)
+        self._set_data(0, 0, 10, self.item_model)
+        delete(self.qt_parent)
+        self.assertEqual(self.get_data(0, 'x', False), 10)
+
+    def test_data_changed( self ):
+        # verify the data changed signal is only received for changed
+        # index ranges
+        self._load_data(self.item_model)
+        self.assertEqual(self.item_model.rowCount(), 3)
+        self.assertEqual(self._data(0, 0, self.item_model), 0)
+        self.assertEqual(self._data(1, 0, self.item_model), 1)
+        self.assertEqual(self._data(2, 0, self.item_model), 2)
+        self.signal_register.clear()
+        self._set_data( 0, 0, 8, self.item_model )
+        self.assertEqual( len(self.signal_register.data_changes), 1 )
+        for changed_range in self.signal_register.data_changes:
+            for index in changed_range:
+                row, col = index
+                self.assertEqual( row, 0 )
+                self.assertEqual( col, 0 )
+
+    def test_objects_updated(self):
+        # modify only one column to test if only one change is emitted
+        self._load_data(self.item_model)
+        self.signal_register.clear()
+        self.gui_run(
+            set_data_name, mode=(0, 'y', 10),
+            model_context_name=self.model_context_name, handle_action_steps=True
+        )
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 1 )
+        self.assertEqual( self.signal_register.data_changes[0],
+                          ((0, 1), (0, 1)) )
+
+    def test_unloaded_objects_updated(self):
+        # only load data for a single column
+        self.assertTrue(self._row_count(self.item_model) > 1)
+        self._data(0, 1, self.item_model)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(0, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
+        # modify two columns to test if only a change for the loaded
+        # column is emitted
+        self.signal_register.clear()
+        self.gui_run(
+            set_data_name, mode=(0, 'x', 9),
+            model_context_name=self.model_context_name, handle_action_steps=True
+        )
+        self.gui_run(
+            set_data_name, mode=(0, 'y', 10),
+            model_context_name=self.model_context_name, handle_action_steps=True
+        )
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 1 )
+        self.assertEqual( self.signal_register.data_changes[0],
+                          ((0, 1), (0, 1)) )
+
+    def test_objects_created(self):
+        self._load_data(self.item_model)
+        row_count = self.item_model.rowCount()
+        self.signal_register.clear()
+        self.gui_run(add_element_name, model_context_name=self.model_context_name, mode=43, handle_action_steps=True)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(len(self.signal_register.header_changes), 1)
+        new_row_count = self.item_model.rowCount()
+        self.assertEqual(new_row_count, row_count+1)
+
+    def test_objects_deleted(self):
+        self._load_data(self.item_model)
+        row_count = self.item_model.rowCount()
+        self.assertEqual(self._data(0, 0, self.item_model), 0)
+        self.signal_register.clear()
+        self.gui_run(remove_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        # but the timeout might be after the object was deleted
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self.signal_register.layout_changes, 1)
+        new_row_count = self.item_model.rowCount()
+        self.assertEqual(new_row_count, row_count-1)
+        # after the delete, all data is cleared
+        self.assertEqual(self._data(0, 0, self.item_model), None)
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual(self._data(0, 0, self.item_model), 0)
+
+    def test_no_objects_updated(self):
+        self._load_data(self.item_model)
+        self.signal_register.clear()
+        self.item_model.objectsUpdated(list(self.get_collection()))
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 0 )
+        self.assertEqual( len(self.signal_register.header_changes), 0 )
+        self.assertEqual( self.signal_register.layout_changes, 0 )
+
+    def test_no_objects_created(self):
+        self._load_data(self.item_model)
+        self.signal_register.clear()
+        self.item_model.objectsCreated(list(self.get_collection()))
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 0 )
+        self.assertEqual( len(self.signal_register.header_changes), 0 )
+        self.assertEqual( self.signal_register.layout_changes, 0 )
+
+    def test_no_objects_deleted(self):
+        self._load_data(self.item_model)
+        self.signal_register.clear()
+        self.item_model.objectsDeleted(list(self.get_collection()))
+        self.item_model.onTimeout()
+        self.process()
+        self.assertEqual( len(self.signal_register.data_changes), 0 )
+        self.assertEqual( len(self.signal_register.header_changes), 0 )
+        self.assertEqual( self.signal_register.layout_changes, 0 )
+
+    def test_completion(self):
+        self._load_data(self.item_model)
+        name = self._data(0, 4, self.item_model, role=Qt.ItemDataRole.EditRole)
+        # the edit role should be a name
+        self.assertIsInstance(name, list)
+        self.assertTrue(len(name) > 1)
+        self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
+        self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
+        self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
 
 class SetupProxy(Action):
 
@@ -317,400 +701,15 @@ class RemoveElement(Action):
 
 remove_element_name = test_context.bind(('remove_element',), RemoveElement())
 
-class ItemModelProcessCase(RunningProcessCase, ItemModelCaseMixin, ItemModelTests):
+class GetCollection(Action):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name, mode=True)
-        cls.gui_run(load_sample_data_name, mode=True)
-
-    def setUp( self ):
-        super().setUp()
-        ItemModelTests.setUp(self)
-
-class ItemModelThreadCase(RunningThreadCase, ItemModelCaseMixin, ItemModelTests, ExampleModelMixinCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ItemModelThreadCase, cls).setUpClass()
-        cls.gui_run(load_sample_data_name, mode=True)
-
-    def setUp( self ):
-        super(ItemModelThreadCase, self).setUp()
-        ItemModelTests.setUp(self)
-        self.A = A
-
-    def tearDown(self):
-        self.process()
-        # since multiple tests share the same model context name, avoid
-        # interaction between tests by deleting item_models holding a reference
-        # to that name
-        if not is_deleted(self.qt_parent):
-            delete(self.qt_parent)
-        self.qt_parent = None
-        self.item_model = None
-
-    def get_data(self, index_in_collection, attribute, data_is_collection):
-        """
-        Get the data from the collection without going through the item model
-        """
-        for step in self.gui_run(
-            get_data_name,
-            mode=(index_in_collection, attribute, data_is_collection),
-            model_context_name=self.model_context_name):
-            if step[0] == action_steps.UpdateProgress.__name__:
-                return step[1]['detail']
-
-    def test_data(self):
-        # the data remains None and not editable while no timeout has passed
-        self.assertTrue(self._row_count(self.item_model) > 1)
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.DisplayRole), None)
-        self.assertEqual(self._data(1, 0, self.item_model, role=ObjectRole), None)
-        self.assertEqual(bool(self._flags(1, 0, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
-        # why would there be a need to get static fa before the timout has passed ?
-        #self.assertEqual(self._data(1, 0, role=FieldAttributesRole)['static'], 'static')
-        self.assertEqual(self._data(1, 0, self.item_model, role=PrefixRole), None)
-        self.assertEqual(self._data(1, 4, self.item_model, role=ActionStatesRole), "[]")
-        self._data(1, 2, self.item_model)
-        self._data(1, 3, self.item_model)
-        self._data(1, 4, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
-        # the prefix is prepended to the display role
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.DisplayRole), 'pre 1')
-        self.assertEqual(self._data(1, 0, self.item_model, role=ObjectRole), self.id_collection[1])
-        self.assertEqual(bool(self._flags(1, 0, self.item_model) & Qt.ItemFlag.ItemIsEditable), True)
-        #self.assertEqual(self._data(1, 0, self.item_model, role=FieldAttributesRole)['static'], 'static')
-        self.assertEqual(self._data(1, 0, self.item_model, role=PrefixRole), 'pre')
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.ToolTipRole), 'Hint')
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.BackgroundRole).name(), '#ff0000')
-        self.assertEqual(len(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))), 2)
-        self._data(1, 4, self.item_model, role=ActionRoutesRole)
-        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['tooltip'], SelectObject.tooltip)
-        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[0]['icon']['name'], SelectObject.icon.name)
-        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['tooltip'], ClearObject.tooltip)
-        self.assertEqual(json.loads(self._data(1, 4, self.item_model, role=ActionStatesRole))[1]['icon']['name'], ClearObject.icon.name)
-        self.assertTrue(isinstance(self._data(1, 2, self.item_model), list))
-        self.assertEqual(self._data(1, 2, self.item_model)[0], 'model_context')
-        self.assertEqual(variant_to_py(self._data(1, 3, self.item_model)).second, self.created_collection[1])
-        
-        self.assertEqual(self._data(-1, -1, self.item_model, role=ObjectRole, validate_index=False), None)
-        self.assertEqual(self._data(100, 100, self.item_model, role=ObjectRole, validate_index=False), None)
-        self.assertEqual(bool(self._flags(-1, -1, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
-        self.assertEqual(bool(self._flags(100, 100, self.item_model) & Qt.ItemFlag.ItemIsEditable), False)
-        self.assertEqual(Qt.FocusPolicy(self._data(-1, -1, self.item_model, role=FocusPolicyRole, validate_index=False)), Qt.FocusPolicy.NoFocus)
-        self.assertEqual(Qt.FocusPolicy(self._data(100, 100, self.item_model, role=FocusPolicyRole, validate_index=False)), Qt.FocusPolicy.NoFocus)
-
-    def test_first_columns(self):
-        # when data is loaded for column 0, it remains loading for column 1
-        self.assertTrue(self._row_count(self.item_model) > 1)
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
-        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
-        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
-
-    def test_last_columns(self):
-        # when data is loaded for column 1, it remains loading for column 0
-        self.assertTrue(self._row_count(self.item_model) > 1)
-        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), None)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(1, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
-        self.assertEqual(self._data(1, 0, self.item_model, role=Qt.ItemDataRole.EditRole), 1)
-
-    def test_flags(self):
-        self._load_data(self.item_model)
-        flags = self._flags(1, 1, self.item_model)
-        self.assertTrue(flags & Qt.ItemFlag.ItemIsEditable)
-        self.assertTrue(flags & Qt.ItemFlag.ItemIsEnabled)
-        self.assertTrue(flags & Qt.ItemFlag.ItemIsSelectable)
-
-    def test_sort( self ):
-        self.item_model.sort( 0, Qt.SortOrder.AscendingOrder )
-        # check the sorting
-        self._load_data(self.item_model)
-        row_0 = self._data( 0, 0, self.item_model )
-        row_1 = self._data( 1, 0, self.item_model )
-        LOGGER.debug('row 0 : {0}, row 1 : {1}'.format(row_0, row_1))
-        self.assertTrue( row_1 > row_0 )
-        self.item_model.sort( 0, Qt.SortOrder.DescendingOrder )
-        # check the sorting
-        self._load_data(self.item_model)
-        row_0 = self._data( 0, 0, self.item_model )
-        row_1 = self._data( 1, 0, self.item_model )
-        LOGGER.debug('row 0 : {0}, row 1 : {1}'.format(row_0, row_1))
-        self.assertTrue( row_1 < row_0 )
-
-    def test_vertical_header_data(self):
-        row_count = self._row_count(self.item_model)
-        # before the data is loaded, nothing is available, except the sizehint
-        self.assertTrue(row_count)
-        for row in range(row_count):
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.ToolTipRole, self.item_model), None)
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ObjectRole, self.item_model), None)
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole, self.item_model), None)
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DecorationRole, self.item_model), None)
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, VerboseIdentifierRole, self.item_model), None)
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.verticalHeaderSize())
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidRole, self.item_model), None)
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), None)
-            # Make sure to also request at least one column
-            self._data(row, 0, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        # after the timeout, the data is available
-        for row in range(row_count):
-            self.assertIn('Open', self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.ToolTipRole, self.item_model))
-            # dont display any data if there is a decoration, otherwise
-            # both are displayed mixed
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DisplayRole, self.item_model), '')
-            self.assertTrue(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.DecorationRole, self.item_model))
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ObjectRole, self.item_model), self.id_collection[row])
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, VerboseIdentifierRole, self.item_model), 'A : {0}'.format(row))
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, Qt.ItemDataRole.SizeHintRole, self.item_model), self.item_model.verticalHeaderSize())
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidRole, self.item_model), True)
-            self.assertEqual(self._header_data(row, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), None)
-        # when changing an object, it might become invalid after a timeout
-        self.signal_register.clear()
-        self.gui_run(
-            set_data_name, mode=(1, 'y', None),
-            model_context_name=self.model_context_name, handle_action_steps=True
-        )
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidRole, self.item_model), False)
-        self.assertEqual(self._header_data(1, Qt.Orientation.Vertical, ValidMessageRole, self.item_model), 'Y is a required field')
-        self.assertEqual(len(self.signal_register.header_changes), 1)
-
-    def test_set_data(self):
-        # the set data is done after the timeout has passed
-        # and happens in the requested order
-        self._load_data(self.item_model)
-        self._set_data(0, 0, 20, self.item_model)
-        self._set_data(0, 1, 10, self.item_model)
-        # x is set first, so y becomes not
-        # editable and remains at its value
-        self.assertEqual(self._data(0, 0, self.item_model), 20)
-        self.assertEqual(self._data(0, 1, self.item_model),  0)
-        self._set_data(0, 0, 5, self.item_model)
-        self._set_data(0, 1, 10, self.item_model)
-        # x is set first, so y becomes
-        # editable and its value is changed
-        self.assertEqual(self._data(0, 0, self.item_model), 5)
-        self.assertEqual(self._data(0, 1, self.item_model), 10)
-        self._set_data(0, 1, 15, self.item_model)
-        self._set_data(0, 0, 20, self.item_model)
-        # x is set last, so y stays
-        # editable and its value is changed
-        self.assertEqual(self._data(0, 0, self.item_model), 20)
-        self.assertEqual(self._data(0, 1, self.item_model), 15)
-        
-    def test_modify_list_while_editing( self ):
-        self._load_data(self.item_model)
-        self.assertEqual(self.get_data(0, 'x', False), 0)
-        self.assertEqual(self._data( 0, 0, self.item_model), 0)
-        # switch first and second person in collection without informing
-        # the item_model
-        self.gui_run(swap_elements_name, model_context_name=self.model_context_name)
-        self.assertEqual(self.get_data(0, 'x', False), 1)
-        self.assertEqual(self.get_data(1, 'x', False), 0)
-        self.assertEqual(self._data( 0, 0, self.item_model), 0)
-        self.assertEqual(self._data( 1, 0, self.item_model), 1)
-        # now change the data
-        self._set_data(0, 0, 7, self.item_model)
-        self.assertEqual(self._data(0, 0, self.item_model), 7)
-        self.assertEqual(self.get_data(1, 'x', False), 7)
-
-    def test_delete_after_set_data( self ):
-        # the item  model is deleted after data has been set,
-        # like in closing a form immediately after changing a field
-        self.assertEqual(self.get_data(0, 'x', False), 0)
-        self._load_data(self.item_model)
-        self.assertEqual(self._data(0, 0, self.item_model), 0)
-        self._set_data(0, 0, 10, self.item_model)
-        delete(self.qt_parent)
-        self.assertEqual(self.get_data(0, 'x', False), 10)
-
-    def test_data_changed( self ):
-        # verify the data changed signal is only received for changed
-        # index ranges
-        self._load_data(self.item_model)
-        self.assertEqual(self.item_model.rowCount(), 3)
-        self.assertEqual(self._data(0, 0, self.item_model), 0)
-        self.assertEqual(self._data(1, 0, self.item_model), 1)
-        self.assertEqual(self._data(2, 0, self.item_model), 2)
-        self.signal_register.clear()
-        self._set_data( 0, 0, 8, self.item_model )
-        self.assertEqual( len(self.signal_register.data_changes), 1 )
-        for changed_range in self.signal_register.data_changes:
-            for index in changed_range:
-                row, col = index
-                self.assertEqual( row, 0 )
-                self.assertEqual( col, 0 )
-
-    def test_objects_updated(self):
-        # modify only one column to test if only one change is emitted
-        self._load_data(self.item_model)
-        self.signal_register.clear()
-        self.gui_run(
-            set_data_name, mode=(0, 'y', 10),
-            model_context_name=self.model_context_name, handle_action_steps=True
-        )
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 1 )
-        self.assertEqual( self.signal_register.data_changes[0],
-                          ((0, 1), (0, 1)) )
-
-    def test_unloaded_objects_updated(self):
-        # only load data for a single column
-        self.assertTrue(self._row_count(self.item_model) > 1)
-        self._data(0, 1, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(0, 1, self.item_model, role=Qt.ItemDataRole.EditRole), 0)
-        # modify two columns to test if only a change for the loaded
-        # column is emitted
-        self.signal_register.clear()
-        self.gui_run(
-            set_data_name, mode=(0, 'x', 9),
-            model_context_name=self.model_context_name, handle_action_steps=True
-        )
-        self.gui_run(
-            set_data_name, mode=(0, 'y', 10),
-            model_context_name=self.model_context_name, handle_action_steps=True
-        )
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 1 )
-        self.assertEqual( self.signal_register.data_changes[0],
-                          ((0, 1), (0, 1)) )
-
-    def test_no_objects_updated(self):
-        self._load_data(self.item_model)
-        self.signal_register.clear()
+    def model_run(self, model_context, mode):
         name = initial_naming_context._bind_object((object(),))
-        self.item_model.objectsUpdated(list(name))
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 0 )
-        self.assertEqual( len(self.signal_register.header_changes), 0 )
-        self.assertEqual( self.signal_register.layout_changes, 0 )
+        yield action_steps.UpdateProgress(
+            text='Got data', detail=name
+        )
 
-    def test_objects_created(self):
-        self._load_data(self.item_model)
-        row_count = self.item_model.rowCount()
-        self.signal_register.clear()
-        self.gui_run(add_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(len(self.signal_register.header_changes), 1)
-        new_row_count = self.item_model.rowCount()
-        self.assertEqual(new_row_count, row_count+1)
-
-    def test_no_objects_created(self):
-        self._load_data(self.item_model)
-        self.signal_register.clear()
-        name = initial_naming_context._bind_object((object(),))
-        self.item_model.objectsCreated(list(name))
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 0 )
-        self.assertEqual( len(self.signal_register.header_changes), 0 )
-        self.assertEqual( self.signal_register.layout_changes, 0 )
-
-    def test_objects_deleted(self):
-        self._load_data(self.item_model)
-        row_count = self.item_model.rowCount()
-        self.assertEqual(self._data(0, 0, self.item_model), 0)
-        self.signal_register.clear()
-        self.gui_run(remove_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        # but the timeout might be after the object was deleted
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self.signal_register.layout_changes, 1)
-        new_row_count = self.item_model.rowCount()
-        self.assertEqual(new_row_count, row_count-1)
-        # after the delete, all data is cleared
-        self.assertEqual(self._data(0, 0, self.item_model), None)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self._data(0, 0, self.item_model), 0)
-
-    def test_no_objects_deleted(self):
-        self._load_data(self.item_model)
-        self.signal_register.clear()
-        name = initial_naming_context._bind_object((object(),))
-        self.item_model.objectsDeleted(list(name))
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual( len(self.signal_register.data_changes), 0 )
-        self.assertEqual( len(self.signal_register.header_changes), 0 )
-        self.assertEqual( self.signal_register.layout_changes, 0 )
-
-    def test_dynamic_editable(self):
-        # If the editable field attribute of one field depends on the value
-        # of another field, 'editable' should be reevaluated after the
-        # other field is set
-        # get the data once, to fill the cached values of the field attributes
-        # so changes get passed the first check
-        self._load_data(self.item_model)
-        self.assertEqual(self.get_data(0, 'y', False), 0)
-        self.assertEqual(self._data(0, 1, self.item_model), 0)
-        # initialy, field is editable
-        self._set_data(0, 1, 1, self.item_model)
-        self.assertEqual(self.get_data(0, 'y', False), 1)
-        self._set_data(0, 0, 11, self.item_model)
-        self._set_data(0, 1, 0, self.item_model)
-        self.item_model.onTimeout()
-        self.process()
-        self.assertEqual(self.get_data(0, 'y', False), 1)
-
-    def test_list_attribute(self):
-        # when the data method of a CrudItemModel returns a list, manipulations
-        # on this list should be reflected in the original list
-        self._load_data(self.item_model)
-        attribute_model_context_name = self._data(0, 2, self.item_model)
-        attribute_item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
-        attribute_item_model.setValue(attribute_model_context_name)
-        attribute_item_model.setColumns(['value'])
-        self._load_data(attribute_item_model)
-        self.assertEqual(attribute_item_model.rowCount(), 2)
-        self.assertNotIn(1, self.get_data(0, 'z', True))
-        # manipulate the returned list, and see if the original is manipulated
-        # as well
-        self.gui_run(add_z_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        attribute_item_model.onTimeout()
-        self.process()
-        self.assertEqual(attribute_item_model.rowCount(), 3)
-        self._load_data(attribute_item_model)
-        self.assertIn(1, self.get_data(0, 'z', True))
-        self.gui_run(remove_z_name, model_context_name=self.model_context_name, handle_action_steps=True)
-        self.assertNotIn(1, self.get_data(0, 'z', True))
-        # @todo : this only works when a load data has happend after the
-        #         rowCount increased, which seems not really the desired effect
-        self.assertEqual(attribute_item_model.rowCount(), 3)
-
-
-    def test_completion(self):
-        self._load_data(self.item_model)
-        name = self._data(0, 4, self.item_model, role=Qt.ItemDataRole.EditRole)
-        self.assertIsInstance(initial_naming_context.resolve(tuple(name)), B)
-        self.assertIsNone(self._data(0, 4, self.item_model, role=CompletionsRole))
-        self._set_data(0, 4, 'v', self.item_model, role=CompletionPrefixRole)
-        self.assertIsNotNone(self._data(0, 4, self.item_model, role=CompletionsRole))
+get_collection_name = test_context.bind(('get_collection',), GetCollection())
 
 
 class SetupQueryProxy(Action):

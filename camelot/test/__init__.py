@@ -46,7 +46,6 @@ from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..view.action_runner import action_runner, GuiRun
 from ..view.model_process import ModelProcess
 from ..view import model_thread, action_steps
-from ..view.model_thread.signal_slot_model_thread import SignalSlotModelThread
 
 has_programming_error = False
 
@@ -169,27 +168,6 @@ class ActionMixinCase(object):
         return gui_run.steps
 
 
-class RunningThreadCase(unittest.TestCase, ActionMixinCase):
-    """
-    Test case that starts a model thread when setting up the case class
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.thread = SignalSlotModelThread()
-        model_thread._model_thread_.insert(0, cls.thread)
-        cls.thread.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        model_thread._model_thread_.remove(cls.thread)
-        cls.thread.stop()
-
-    @classmethod
-    def process(cls):
-        """Wait until all events are processed and the queues of the model thread are empty"""
-        action_runner.wait_for_completion()
-
 class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     """
     Test case that starts a model thread when setting up the case class
@@ -203,8 +181,14 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
 
     @classmethod
     def tearDownClass(cls):
-        model_thread._model_thread_.remove(cls.thread)
-        cls.thread.stop()
+        try:
+            cls.process()
+        finally:
+            model_thread._model_thread_.remove(cls.thread)
+            cls.thread.stop()
+
+    def tearDown(self):
+        self.process()
 
     @classmethod
     def process(cls):
