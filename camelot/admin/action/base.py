@@ -307,6 +307,7 @@ class RenderHint(Enum):
     NON_EXCLUSIVE_GROUP_BOX = 'non_exclusive_group_box'
     COMBO_BOX = 'combo_box'
     LABEL = 'label'
+    STRETCH = 'stretch'
 
 
 class Action( ActionStep ):
