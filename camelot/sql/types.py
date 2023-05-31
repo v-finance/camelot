@@ -47,20 +47,20 @@ class SensitiveDate(SensitiveType, Date):
         SensitiveType.__init__(self, sensitivity_level, transform)
         Date.__init__(self, *args, **kwargs)
 
-def IdentifyingDate(*args, **kwargs):
-    return SensitiveDate(types.sensitivity_levels.identifying, *args, **kwargs)
+def IdentifyingDate(transform=None, *args, **kwargs):
+    return SensitiveDate(types.sensitivity_levels.identifying, transform, *args, **kwargs)
 
-def QuasiIdentifyingDate(*args, **kwargs):
-    return SensitiveDate(types.sensitivity_levels.quasi_identifying, *args, **kwargs)
+def QuasiIdentifyingDate(transform=None, *args, **kwargs):
+    return SensitiveDate(types.sensitivity_levels.quasi_identifying, transform, *args, **kwargs)
 
-def SensitivePersonalDate(*args, **kwargs):
-    return SensitiveDate(types.sensitivity_levels.sensitive_peronsal, *args, **kwargs)
+def SensitivePersonalDate(transform=None, *args, **kwargs):
+    return SensitiveDate(types.sensitivity_levels.sensitive_peronsal, transform, *args, **kwargs)
 
-def SensitiveFinancialDate(*args, **kwargs):
-    return SensitiveDate(types.sensitivity_levels.sensitive_financial, *args, **kwargs)
+def SensitiveFinancialDate(transform=None, *args, **kwargs):
+    return SensitiveDate(types.sensitivity_levels.sensitive_financial, transform, *args, **kwargs)
 
-def SensitiveHealthDate(*args, **kwargs):
-    return SensitiveDate(types.sensitivity_levels.sensitive_health, *args, **kwargs)
+def SensitiveHealthDate(transform=None, *args, **kwargs):
+    return SensitiveDate(types.sensitivity_levels.sensitive_health, transform, *args, **kwargs)
 
 
 class SensitiveNumeric(SensitiveType, Numeric):
@@ -72,17 +72,17 @@ class SensitiveNumeric(SensitiveType, Numeric):
         SensitiveType.__init__(self, sensitivity_level, transform)
         Numeric.__init__(self, *args, **kwargs)
 
-def IdentifyingNumeric(*args, **kwargs):
-    return SensitiveNumeric(types.sensitivity_levels.identifying, *args, **kwargs)
+def IdentifyingNumeric(transform=None, *args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.identifying, transform, *args, **kwargs)
 
-def QuasiIdentifyingNumeric(*args, **kwargs):
-    return SensitiveNumeric(types.sensitivity_levels.quasi_identifying, *args, **kwargs)
+def QuasiIdentifyingNumeric(transform=None, *args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.quasi_identifying, transform, *args, **kwargs)
 
-def SensitivePersonalNumeric(*args, **kwargs):
-    return SensitiveNumeric(types.sensitivity_levels.sensitive_peronsal, *args, **kwargs)
+def SensitivePersonalNumeric(transform=None, *args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.sensitive_peronsal, transform, *args, **kwargs)
 
-def SensitiveFinancialNumeric(*args, **kwargs):
-    return SensitiveNumeric(types.sensitivity_levels.sensitive_financial, *args, **kwargs)
+def SensitiveFinancialNumeric(transform=None, *args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.sensitive_financial, transform, *args, **kwargs)
 
-def SensitiveHealthNumeric(*args, **kwargs):
-    return SensitiveNumeric(types.sensitivity_levels.sensitive_health, *args, **kwargs)
+def SensitiveHealthNumeric(transform=None, *args, **kwargs):
+    return SensitiveNumeric(types.sensitivity_levels.sensitive_health, transform, *args, **kwargs)
