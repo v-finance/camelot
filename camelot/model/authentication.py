@@ -161,7 +161,7 @@ class AuthenticationMechanism( Entity ):
         camelot.types.Enumeration(authentication_types),
         nullable = False, index = True , default = authentication_types[0][1]
     )
-    username = Column( IdentifyingUnicode( 40 ), nullable = False, index = True, unique = True )
+    username = Column( IdentifyingUnicode(length=40), nullable = False, index = True, unique = True )
     password = Column( types.Unicode( 200 ), nullable = True, index = False, default = None )
     from_date = Column( types.Date(), default = datetime.date.today, nullable = False, index = True )
     thru_date = Column( types.Date(), default = end_of_times, nullable = False, index = True )
