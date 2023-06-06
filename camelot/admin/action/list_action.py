@@ -1169,3 +1169,10 @@ class EditProfile(Action, EditProfileMixin):
         return state
 
 edit_profile = EditProfile()
+
+class Stretch(Action):
+
+    render_hint = RenderHint.STRETCH
+    name = 'stretch'
+
+stretch = Stretch()

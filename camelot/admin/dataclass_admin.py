@@ -1,7 +1,8 @@
 import dataclasses
 from enum import Enum
 
-from camelot.admin.object_admin import ObjectAdmin
+from camelot.admin.object_admin import ObjectAdmin, register_list_actions
+from camelot.admin.action import list_action
 from camelot.core.serializable import DataclassSerializable
 
 
@@ -44,3 +45,6 @@ class DataclassAdmin(ObjectAdmin):
         new_entity_instance = entity_instance.__class__(**fields)
         return new_entity_instance
 
+    @register_list_actions('_admin_route', '_toolbar_actions')
+    def get_list_toolbar_actions(self):
+        return super().get_list_toolbar_actions() + [list_action.stretch]
