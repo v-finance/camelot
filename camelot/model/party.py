@@ -54,7 +54,7 @@ from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.types.typing import Note
-from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
+from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, mask_first_name, mask_last_name
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
@@ -761,8 +761,8 @@ class Person( Party ):
     __tablename__ = 'person'
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'person'}
-    first_name = schema.Column( QuasiIdentifyingUnicode(transform=first_letter_transform, length=40), nullable = False )
-    last_name = schema.Column( QuasiIdentifyingUnicode(transform=first_letter_transform, length=40), nullable = False )
+    first_name = schema.Column( QuasiIdentifyingUnicode(transform=mask_first_name, length=40), nullable = False )
+    last_name = schema.Column( QuasiIdentifyingUnicode(transform=mask_last_name, length=40), nullable = False )
 # end short person definition
     middle_name = schema.Column( Unicode( 40 ) )
     personal_title = schema.Column( Unicode( 10 ) )
