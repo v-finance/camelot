@@ -586,13 +586,23 @@ class WithAddresses(object):
                               ),
                           limit=1).as_scalar()
 
-    @property
+    @hybrid.hybrid_property
     def administrative_division(self):
         return self._get_address_field('administrative_division')
 
     @administrative_division.setter
     def administrative_division( self, value ):
         return self._set_address_field('administrative_division', value)
+
+    @administrative_division.expression
+    def administrative_division(cls):
+        GB = orm.aliased(GeographicBoundary)
+        return sql.select([GB.code + ' ' + GB.name],
+                          whereclause=sql.and_(
+                              GB.id==Address.administrative_division_id,
+                              cls.first_address_filter()
+                              ),
+                          limit=1).as_scalar()
 
     def get_first_address(self):
         raise NotImplementedError()
