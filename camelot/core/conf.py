@@ -133,4 +133,8 @@ class SimpleSettings( object ):
         return create_engine(u'sqlite:///%s/%s'%( self.data_folder,
                                                   self.data ) )
 
+class SerializableSettings(object):
 
+    def __init__(self, **args):
+        for k,v in args.items():
+            setattr(self, k, v)
