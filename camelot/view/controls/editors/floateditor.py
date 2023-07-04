@@ -71,7 +71,7 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         if key_event.key() == Qt.Key.Key_Period and decimal_point_in_unicode != Qt.Key.Key_Period:
             # Dynamically build a 'new' event that holds this locales decimal separator
             new_key_event = QtGui.QKeyEvent(
-                key_event.type(),
+                QtGui.QKeyEvent.Type(key_event.type()),
                 decimal_point_in_unicode,
                 key_event.modifiers(),
                 decimal_point_string
