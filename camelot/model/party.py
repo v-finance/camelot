@@ -54,6 +54,7 @@ from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 import camelot.types
 from camelot.types.typing import Note
+from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 
@@ -66,8 +67,8 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
 
-    code = schema.Column( Unicode( 10 ) )
-    name = schema.Column( Unicode( 40 ), nullable = False )
+    code = schema.Column( QuasiIdentifyingUnicode(length=10) )
+    name = schema.Column( QuasiIdentifyingUnicode(length=40), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
 
@@ -401,8 +402,8 @@ class City(GeographicBoundary, WithCountry):
 class Address( Entity ):
     """The Address to be given to a Party (a Person or an Organization)"""
     __tablename__ = 'address'
-    street1 = schema.Column( Unicode( 128 ), nullable = False )
-    street2 = schema.Column( Unicode( 128 ) )
+    street1 = schema.Column( IdentifyingUnicode(length=128), nullable = False )
+    street2 = schema.Column( IdentifyingUnicode(length=128) )
 
     city_geographicboundary_id = schema.Column(sqlalchemy.types.Integer(),
                                                schema.ForeignKey(City.geographicboundary_id, ondelete='cascade', onupdate='cascade'),
@@ -585,13 +586,23 @@ class WithAddresses(object):
                               ),
                           limit=1).as_scalar()
 
-    @property
+    @hybrid.hybrid_property
     def administrative_division(self):
         return self._get_address_field('administrative_division')
 
     @administrative_division.setter
     def administrative_division( self, value ):
         return self._set_address_field('administrative_division', value)
+
+    @administrative_division.expression
+    def administrative_division(cls):
+        GB = orm.aliased(GeographicBoundary)
+        return sql.select([GB.code + ' ' + GB.name],
+                          whereclause=sql.and_(
+                              GB.id==Address.administrative_division_id,
+                              cls.first_address_filter()
+                              ),
+                          limit=1).as_scalar()
 
     def get_first_address(self):
         raise NotImplementedError()
@@ -760,8 +771,8 @@ class Person( Party ):
     __tablename__ = 'person'
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'person'}
-    first_name = schema.Column( Unicode( 40 ), nullable = False )
-    last_name = schema.Column( Unicode( 40 ), nullable = False )
+    first_name = schema.Column( QuasiIdentifyingUnicode(transform=first_letter_transform, length=40), nullable = False )
+    last_name = schema.Column( QuasiIdentifyingUnicode(transform=first_letter_transform, length=40), nullable = False )
 # end short person definition
     middle_name = schema.Column( Unicode( 40 ) )
     personal_title = schema.Column( Unicode( 10 ) )
@@ -769,8 +780,8 @@ class Person( Party ):
     sex = schema.Column( Unicode( 1 ), default = u'M' )
     birthdate = schema.Column( Date() )
     martial_status = schema.Column( Unicode( 1 ) )
-    social_security_number = schema.Column( Unicode( 12 ) )
-    passport_number = schema.Column( Unicode( 20 ) )
+    social_security_number = schema.Column( IdentifyingUnicode(length=12) )
+    passport_number = schema.Column( IdentifyingUnicode(length=20) )
     passport_expiry_date = schema.Column( Date() )
     picture = schema.Column( camelot.types.File( upload_to = 'person-pictures' ))
     comment = schema.Column( camelot.types.RichText() )

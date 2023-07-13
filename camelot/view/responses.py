@@ -113,10 +113,14 @@ class ActionStopped(AbstractResponse):
         try:
             gui_run = gui_naming_context.resolve(gui_run_name)
             gui_naming_context.unbind(gui_run_name)
+            action_name = gui_run.action_name
+            time_running = gui_run.time_running()
         except NameNotFoundException:
             LOGGER.error('Could not unbind gui_run {}'.format(gui_run_name))
+            action_name = 'unknown action'
+            time_running = 'unknown'
         exception = response_data.get('exception')
         if exception:
-            LOGGER.error('Stop {0.action_name} with exception {1}'.format(gui_run, exception))
+            LOGGER.error('Stop {0} with exception {1}'.format(action_name, exception))
         else:
-            LOGGER.debug('Stop {0.action_name}, took {1}'.format(gui_run, gui_run.time_running()))
+            LOGGER.debug('Stop {0}, took {1}'.format(action_name, time_running))

@@ -29,8 +29,7 @@
 
 
 
-from ....core.qt import (QtGui, QtWidgets, QtCore, Qt,
-                         q_string_size, q_string_startswith, q_string_endswith)
+from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 from ...art import FontIcon
 
@@ -72,7 +71,7 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         if key_event.key() == Qt.Key.Key_Period and decimal_point_in_unicode != Qt.Key.Key_Period:
             # Dynamically build a 'new' event that holds this locales decimal separator
             new_key_event = QtGui.QKeyEvent(
-                key_event.type(),
+                QtGui.QKeyEvent.Type(key_event.type()),
                 decimal_point_in_unicode,
                 key_event.modifiers(),
                 decimal_point_string
@@ -95,13 +94,13 @@ class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         """
         # this code is based on QAbstractSpinBoxPrivate::stripped
         copy_from = 0
-        copy_to = q_string_size(qinput)
-        if q_string_size(self.prefix()):
-            if q_string_startswith(qinput, self.prefix()):
-                copy_from += q_string_size(self.prefix())
-        if q_string_size(self.suffix()):
-            if q_string_endswith(qinput, self.suffix()):
-                copy_to = -1*q_string_size(self.suffix())
+        copy_to = len(qinput)
+        if len(self.prefix()):
+            if qinput.startswith(self.prefix()):
+                copy_from += len(self.prefix())
+        if len(self.suffix()):
+            if qinput.endswith(self.suffix()):
+                copy_to = -1*len(self.suffix())
         partial_input = str(qinput)[copy_from:copy_to]
         return partial_input.strip()
     

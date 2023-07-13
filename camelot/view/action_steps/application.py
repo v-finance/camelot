@@ -42,7 +42,7 @@ from ...admin.menu import MenuItem
 from ...core.naming import initial_naming_context
 from ...core.qt import QtCore, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
-from ...model.authentication import get_current_authentication
+from ...model.authentication import AuthenticationMechanism
 from .. import gui_naming_context
 from camelot.view.qml_view import qml_action_step, get_qml_window, is_cpp_gui_context_name
 from .open_file import OpenFile
@@ -147,7 +147,7 @@ class NavigationPanel(ActionStep, DataclassSerializable):
 
     # noinspection PyDataclass
     def __post_init__(self, model_context):
-        self.menu = self._filter_items(self.menu, get_current_authentication())
+        self.menu = self._filter_items(self.menu, AuthenticationMechanism.get_current_authentication())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.menu.items, self.action_states)
 

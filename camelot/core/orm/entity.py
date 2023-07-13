@@ -492,8 +492,10 @@ class EntityMeta( DeclarativeMeta ):
                     secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
 
     def get_secondary_discriminator_types(cls):
-        (_, *secondary_discriminators) = cls.get_cls_discriminator()
-        return [secondary_discriminator.prop.entity.entity for secondary_discriminator in secondary_discriminators]
+        if cls.get_cls_discriminator() is not None:
+            (_, *secondary_discriminators) = cls.get_cls_discriminator()
+            return [secondary_discriminator.prop.entity.entity for secondary_discriminator in secondary_discriminators]
+        return []
 
     def get_ranked_by(cls):
         ranked_by = cls._get_entity_arg('ranked_by')
