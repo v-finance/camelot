@@ -30,6 +30,7 @@
 import logging
 
 from ...core.qt import QtCore
+from ..requests import AbstractRequest
 
 logger = logging.getLogger('camelot.view.model_thread')
 
@@ -78,18 +79,9 @@ class AbstractModelThread(QtCore.QThread):
     The Model thread class provides a number of signals :
     
     *thread_busy_signal*
-    
-    indicates if the model thread is working in the background
-    
-    *setup_exception_signal*
-    
-    this signal is emitted when there was an exception setting up the model
-    thread, eg no connection to the database could be made.  this exception
-    is mostly fatal for the application.
     """
 
     thread_busy_signal = QtCore.qt_signal(bool)
-    setup_exception_signal = QtCore.qt_signal(object)
 
     def __init__(self):
         super(AbstractModelThread, self).__init__()
@@ -101,19 +93,9 @@ class AbstractModelThread(QtCore.QThread):
     def run(self):
         pass
 
-    def traceback(self):
-        """The formatted traceback of the last exception in the model thread"""
-        return self._traceback
-
-    def wait_on_work(self):
-        """Wait for all work to be finished, this function should only be used
-    to do unit testing and such, since it will block the calling thread until
-    all work is done"""
-        pass
-
-    def post(self, request, response=None, exception=None, args=()):
+    def post(self, request, args=()):
         """Post a request to the model thread, request should be a function
-        that takes no arguments. The request function will be called within the
+        that takes args as arguments. The request function will be called within the
         model thread. When the request is finished, on first occasion, the
         response function will be called within the gui thread. The response
         function takes as arguments, the results of the request function.
@@ -121,8 +103,6 @@ class AbstractModelThread(QtCore.QThread):
         :param request: function to be called within the model thread
         :param response: a slot that will be called with the result of the
         request function
-        :param exception: a slot that will be called in case request throws an
-        exception
         :param args: arguments with which the request function will be called        
         """
         raise NotImplementedError
@@ -149,10 +129,11 @@ def get_model_thread():
         _model_thread_[0].start()
         return _model_thread_[0]
 
-def post(request, response=None, exception=None, args=()):
+def post(request):
     """Post a request and a response to the default model thread"""
+    assert isinstance(request, AbstractRequest)
     mt = get_model_thread()
-    mt.post(request, response, exception, args)
+    mt.post(request)
 
 
 

@@ -27,17 +27,19 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
 
 from .texteditdelegate import TextEditDelegate, DocumentationMetaclass
 from camelot.view.controls.editors.noteeditor import NoteEditor
 
-@six.add_metaclass(DocumentationMetaclass)
-class NoteDelegate(TextEditDelegate):
+@dataclass
+class NoteDelegate(TextEditDelegate, metaclass=DocumentationMetaclass):
     
-    editor = NoteEditor
+    @classmethod
+    def get_editor_class(cls):
+        return NoteEditor
 
-
-
-
-
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        return item

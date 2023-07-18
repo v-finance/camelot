@@ -1,8 +1,7 @@
-import logging
 import faulthandler
+import logging
 import sys
-
-#warnings.filterwarnings( 'error' )
+import traceback
 
 from camelot.core.conf import settings
 
@@ -10,39 +9,35 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 faulthandler.enable()
-# import here because mac osx causes crashes with imports later on
+from camelot.core.naming import initial_naming_context
 from camelot.core.qt import QtCore
 from camelot.core.qt import QtGui
 from camelot.core.qt import QtWidgets
 from camelot.core.qt import QtNetwork
+from camelot.admin.application_admin import ApplicationAdmin
 
-# a QApplication is needed to be able to construct other
-# objects.
-_application_ = []
-if QtWidgets.QApplication.instance() is None:
-    # set up a test application
-    _application_.append(QtWidgets.QApplication([a for a in sys.argv if a]))
-    # set up a specific locale to test import of files
-    QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
-    # to generate consistent screenshots
-    _application_[0].setStyle('fusion')
+from sqlalchemy.pool import StaticPool
+from sqlalchemy import create_engine
+
+# set up a specific locale to test import of files
+QtCore.QLocale.setDefault(QtCore.QLocale('nl_BE'))
 
 getattr(QtCore, 'QObject')
 getattr(QtGui, 'QColor')
 getattr(QtWidgets, 'QWidget')
 getattr(QtNetwork, 'QNetworkAccessManager')
 
-from camelot.admin.application_admin import ApplicationAdmin
-
 app_admin = ApplicationAdmin()
+
+unit_test_context = initial_naming_context.bind_new_context(
+    'unit_test', immutable=True
+)
 
 class TestSettings( object ):
 
     CAMELOT_MEDIA_ROOT = 'media'
 
-    def __init__( self ): 
-        from sqlalchemy.pool import StaticPool
-        from sqlalchemy import create_engine
+    def __init__( self ):
         # static pool to preserve tables and data accross threads
         self.engine = create_engine('sqlite:///', poolclass = StaticPool)
 
@@ -53,3 +48,10 @@ class TestSettings( object ):
         return self.engine
    
 settings.append( TestSettings() )
+
+def excepthook(type, value, tb):
+    print('Camelot Unit Test Excepthook')
+    for line in traceback.format_exception(type, value, tb):
+        print(line)
+
+sys.excepthook = excepthook

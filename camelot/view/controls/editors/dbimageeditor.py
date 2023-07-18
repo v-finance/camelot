@@ -1,5 +1,6 @@
 import os
 
+from ....admin.icon import Icon
 from ....view.art import FontIcon
 from ....view.action import ActionFactory
 from ....core.qt import QtCore, QtWidgets, Qt, QtGui
@@ -16,11 +17,10 @@ class DbImageEditor(CustomEditor):
 
     def __init__(self,
                  parent,
-                 field_name='db_image',
                  preview_width=100,
                  preview_height=100,
                  max_size=50000,
-                 **kwargs):
+                 field_name='db_image'):
         self.preview_width = preview_width
         self.preview_height = preview_height
         self.max_size = max_size
@@ -33,7 +33,7 @@ class DbImageEditor(CustomEditor):
         #
         self.label = QtWidgets.QLabel(self)
         self.label.installEventFilter(self)
-        self.label.setAlignment( Qt.AlignHCenter|Qt.AlignVCenter )
+        self.label.setAlignment( Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter )
         layout.addWidget(self.label) 
                 
         # Setup buttons
@@ -43,34 +43,34 @@ class DbImageEditor(CustomEditor):
     
         open_button = QtWidgets.QToolButton()
         open_button.setAutoRaise(True)
-        open_button.setFocusPolicy(Qt.ClickFocus)
+        open_button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         open_button.setDefaultAction( ActionFactory.create_action(text=_('Open'),
                                                                       slot=self.open,
                                                                       parent=self,
-                                                                      actionicon=FontIcon('plus'), # 'tango/16x16/actions/list-add.png'
+                                                                      actionicon=Icon('plus'), # 'tango/16x16/actions/list-add.png'
                                                                       tip=_('Attach file')))        
     
         clear_button = QtWidgets.QToolButton()
         clear_button.setAutoRaise(True)
         clear_button.setObjectName('clear')
-        clear_button.setFocusPolicy(Qt.ClickFocus)
+        clear_button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         clear_button.setDefaultAction( ActionFactory.create_action(text=_('Clear'),
                                                                    slot=self.clear,
                                                                    parent=self,
-                                                                   actionicon=FontIcon('trash'), # 'tango/16x16/actions/edit-clear.png'
+                                                                   actionicon=Icon('trash'), # 'tango/16x16/actions/edit-clear.png'
                                                                    tip=_('clear')))
     
         copy_button = QtWidgets.QToolButton()
         copy_button.setDefaultAction( ActionFactory.copy(self, self.copy_to_clipboard ) )
         copy_button.setAutoRaise(True)
         copy_button.setObjectName('copy')
-        copy_button.setFocusPolicy(Qt.ClickFocus)
+        copy_button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
     
         paste_button = QtWidgets.QToolButton()
         paste_button.setDefaultAction( ActionFactory.paste(self, self.paste_from_clipboard ) )
         paste_button.setAutoRaise(True)
         paste_button.setObjectName('paste')
-        paste_button.setFocusPolicy(Qt.ClickFocus)
+        paste_button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
     
         button_layout.addWidget(open_button)
         button_layout.addWidget(clear_button)
@@ -90,9 +90,9 @@ class DbImageEditor(CustomEditor):
             self.label.setMinimumWidth(self.preview_width)
         if self.preview_height != 0:
             self.label.setFixedHeight(self.preview_height)
-            vertical_size_policy = QtWidgets.QSizePolicy.Fixed
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, vertical_size_policy)
-        self.label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, vertical_size_policy)
+            vertical_size_policy = QtWidgets.QSizePolicy.Policy.Fixed
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, vertical_size_policy)
+        self.label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, vertical_size_policy)
    
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
@@ -105,11 +105,10 @@ class DbImageEditor(CustomEditor):
             image = QtGui.QImage()
             byte_array = QtCore.QByteArray.fromBase64( value.encode() )
             image.loadFromData( byte_array )
-            thumbnail = image.scaled(self.preview_width, self.preview_height, Qt.KeepAspectRatio)
+            thumbnail = image.scaled(self.preview_width, self.preview_height, Qt.AspectRatioMode.KeepAspectRatio)
             self.set_image(thumbnail)
         else:
             self.clear_image()               
-        self.update_actions()       
         return value
     
     def get_value(self):
@@ -128,7 +127,7 @@ class DbImageEditor(CustomEditor):
             image = QtGui.QImage( mime_data.imageData())
             ba = QtCore.QByteArray()
             buffer = QtCore.QBuffer(ba)
-            buffer.open(QtCore.QIODevice.WriteOnly)
+            buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
             image.save(buffer, 'PNG')
             image_data = ba.toBase64().data().decode()
             self.set_value(image_data)
@@ -153,8 +152,7 @@ class DbImageEditor(CustomEditor):
     
     @QtCore.qt_slot()
     def open(self):
-        options = QtWidgets.QFileDialog.Options()
-        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "", self.image_filter, options=options)
+        file_name, _filter = QtWidgets.QFileDialog.getOpenFileName(self,_('New image'), "", self.image_filter)
         if file_name:
             statinfo = os.stat(file_name)
             image_size = statinfo.st_size         
@@ -167,7 +165,7 @@ class DbImageEditor(CustomEditor):
                 if not image.isNull():
                     ba = QtCore.QByteArray()
                     buffer = QtCore.QBuffer(ba)
-                    buffer.open(QtCore.QIODevice.WriteOnly)
+                    buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
                     image.save(buffer, 'PNG')
                     image_data = ba.toBase64().data().decode()
                     self.set_value(image_data)
@@ -181,9 +179,6 @@ class DbImageEditor(CustomEditor):
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setImage( image )
 
-    def set_field_attributes(self, **kwargs):
-        super(DbImageEditor, self).set_field_attributes(**kwargs)
-
     def clear_image(self):
         dummy_image = FontIcon('image') # 'tango/32x32/mimetypes/image-x-generic.png'
         self.set_pixmap(dummy_image.getQPixmap())
@@ -193,8 +188,8 @@ class DbImageEditor(CustomEditor):
         self.draw_border()
     
     def draw_border(self):
-        self.label.setFrameShape(QtWidgets.QFrame.Box)
-        self.label.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.label.setFrameShape(QtWidgets.QFrame.Shape.Box)
+        self.label.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
         self.label.setLineWidth(1)   
     
     def set_image(self, image):
@@ -203,8 +198,8 @@ class DbImageEditor(CustomEditor):
     def eventFilter(self, object, event):
         if not object.isWidgetType():
             return False
-        if event.type() != QtCore.QEvent.MouseButtonPress:
+        if event.type() != QtCore.QEvent.Type.MouseButtonPress:
             return False
-        if event.modifiers() != QtCore.Qt.NoModifier:
+        if event.modifiers() != QtCore.Qt.KeyboardModifier.NoModifier:
             return False
         return False    

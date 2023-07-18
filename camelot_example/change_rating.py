@@ -64,6 +64,7 @@ class ChangeRatingAction( Action ):
     """Action to print a list of movies"""
     
     verbose_name = _('Change Rating')
+    name = 'change_rating'
     
     def model_run( self, model_context ):
         #
@@ -76,7 +77,7 @@ class ChangeRatingAction( Action ):
         else:
             iterator = model_context.get_collection()
         for movie in iterator:
-            yield UpdateProgress( text = u'Change %s'%unicode( movie ) )
+            yield UpdateProgress( text = u'Change %s'% str( movie ) )
             movie.rating = min( 5, max( 0, (movie.rating or 0 ) + options.change ) )
         #
         # FlushSession will write the changes to the database and inform

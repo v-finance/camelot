@@ -28,26 +28,42 @@
 #  ============================================================================
 
 import contextlib
-import functools
 import logging
+import time
+import typing
 
-import six
-
-from ..core.qt import QtCore, is_deleted
-from camelot.admin.action import ActionStep
-from camelot.core.exception import GuiException, CancelRequest
-from camelot.view.controls.exception import ExceptionDialog
+from ..core.naming import CompositeName
+from ..core.qt import QtCore, QtGui, is_deleted
+from . import gui_naming_context
+from camelot.admin.action.base import MetaActionStep
+from camelot.core.singleton import QSingleton
 from camelot.view.model_thread import post
+from .requests import InitiateAction
+from .responses import AbstractResponse
 
-LOGGER = logging.getLogger( 'camelot.view.action_runner' )
+LOGGER = logging.getLogger('camelot.view.action_runner')
 
 @contextlib.contextmanager
-def hide_progress_dialog( gui_context ):
+def hide_progress_dialog(gui_context_name):
     """A context manager to hide the progress dialog of the gui context when
     the context is entered, and restore the original state at exit"""
-    progress_dialog = gui_context.get_progress_dialog()
+    from .qml_view import is_cpp_gui_context_name, qml_action_step
+    progress_dialog = None
+    if not is_cpp_gui_context_name(gui_context_name):
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        if gui_context is not None:
+            progress_dialog = gui_context.get_progress_dialog()
     if progress_dialog is None:
+        is_hidden = None
+        if is_cpp_gui_context_name(gui_context_name):
+            response = qml_action_step(gui_context_name, 'GetProgressState')
+            is_hidden = response["is_hidden"]
+            if not is_hidden:
+                qml_action_step(gui_context_name, 'HideProgress')
         yield
+        if is_cpp_gui_context_name(gui_context_name):
+            if not is_hidden:
+                qml_action_step(gui_context_name, 'ShowProgress')
         return
     original_state, original_minimum_duration = None, None
     original_state = progress_dialog.isHidden()
@@ -63,7 +79,65 @@ def hide_progress_dialog( gui_context ):
             if original_state == False:
                 progress_dialog.show()
 
-class ActionRunner( QtCore.QEventLoop ):
+gui_run_names = gui_naming_context.bind_new_context('gui_run')
+
+class GuiRun(object):
+    """
+    Client side information and statistics of an ongoing action run
+    """
+
+    def __init__(
+        self,
+        gui_context_name: CompositeName,
+        action_name: CompositeName,
+        model_context_name: CompositeName,
+        mode
+        ):
+        gui_naming_context.validate_composite_name(gui_context_name)
+        gui_naming_context.validate_composite_name(action_name)
+        gui_naming_context.validate_composite_name(model_context_name)
+        self.gui_context_name = gui_context_name
+        self.action_name = action_name
+        self.model_context_name = model_context_name
+        self.mode = mode
+        self.started_at = time.time()
+        self.steps = []
+
+    @property
+    def step_count(self):
+        return len(self.steps)
+
+    def time_running(self):
+        """
+        :return: the time the action has been running
+        """
+        return time.time() - self.started_at
+
+    def handle_action_step(self, action_step):
+        self.steps.append(type(action_step).__name__)
+        return action_step.gui_run(self.gui_context_name)
+
+    def handle_serialized_action_step(self, step_type, serialized_step):
+        self.steps.append(step_type)
+        cls = MetaActionStep.action_steps[step_type]
+        if cls.blocking==True:
+            app = QtGui.QGuiApplication.instance()
+            if app.platformName() == "offscreen":
+                # When running tests in offscreen mode, print the exception and exit with -1 status
+                print("Blocking action step occurred while executing an action:")
+                print()
+                print("======================================================================")
+                print()
+                print("Type: {}".format(step_type))
+                print("Detail: {}".format(serialized_step))
+                print()
+                print("======================================================================")
+                print()
+                app.exit(-1)
+        return cls.gui_run(self.gui_context_name, serialized_step)
+
+
+class ActionRunner(QtCore.QObject, metaclass=QSingleton):
     """Helper class for handling the signals and slots when an action
     is running.  This class takes a generator and iterates it within the
     model thread while taking care of Exceptions raised and ActionSteps
@@ -71,168 +145,69 @@ class ActionRunner( QtCore.QEventLoop ):
     
     This is class is intended for internal Camelot use only.
     """
-    
-    non_blocking_action_step_signal = QtCore.qt_signal(object)
-    
-    def __init__( self, generator_function, gui_context ):
+
+    response = QtCore.qt_signal(bytes)
+    busy = QtCore.qt_signal(bool)
+
+    def __init__(self):
+        super().__init__()
+        self.response.connect(self._handle_response)
+
+    @classmethod
+    def wait_for_completion(cls, max_wait=15):
         """
-        :param generator_function: function to be called in the model thread,
-            that will return the generator
-        :param gui_context: the GUI context of the generator
+        Wait until all actions are completed
+
+        :param max_wait: maximum time to wait for an action to complete
         """
-        super( ActionRunner, self ).__init__()
-        self._return_code = None
-        self._generator_function = generator_function
-        self._generator = None
-        self._gui_context = gui_context
-        self._model_context = gui_context.create_model_context()
-        self._non_blocking_cancel_request = False
-        self.non_blocking_action_step_signal.connect( self.non_blocking_action_step )
-        post( self._initiate_generator, self.generator, self.exception )
-    
-    def exit( self, return_code = 0 ):
-        """Reimplementation of exit to store the return code"""
-        self._return_code = return_code
-        return super( ActionRunner, self ).exit( return_code )
-    
-    def exec_( self, flags = QtCore.QEventLoop.AllEvents ):
-        """Reimplementation of exec_ to prevent the event loop being started
-        when exit has been called prior to calling exec_.
-        
-        This can be the case when running in single threaded mode.
-        """
-        if self._return_code == None:
-            return super( ActionRunner, self ).exec_( flags )
-        return self._return_code
-        
-    def _initiate_generator( self ):
-        """Create the model context and start the generator"""
-        return self._generator_function( self._model_context )
-            
-    def _iterate_until_blocking( self, generator_method, *args ):
-        """Helper calling for generator methods.  The decorated method iterates
-        the generator until the generator yields an :class:`ActionStep` object that
-        is blocking.  If a non blocking :class:`ActionStep` object is yielded, then
-        send it to the GUI thread for execution through the signal slot mechanism.
-        
-        :param generator_method: the method of the generator to be called
-        :param *args: the arguments to use when calling the generator method.
-        """
+        # @todo : max_wait should be high enough to ensure completion when
+        # actions_running is flooded with actions during unit testing, this
+        # is probably caused by either item_models not being garbage collected,
+        # or actions not properly terminated when their initiation fails
+        actions_running = True
+        while actions_running:
+            run_names = list(gui_run_names.list())
+            actions_running = len(run_names) > 0
+            if actions_running:
+                LOGGER.info('{} actions running'.format(len(run_names)))
+                for run_name in run_names:
+                    run = gui_run_names.resolve(run_name)
+                    LOGGER.info('{} : {}'.format(run_name, run.action_name))
+                    LOGGER.info('  Generated {} steps during {} seconds'.format(run.step_count, run.time_running()))
+                    LOGGER.info('  Steps : {}'.format(run.steps))
+                    if run.time_running() >= max_wait:
+                        raise Exception('Action running for more then {} seconds'.format(max_wait))
+            QtCore.QCoreApplication.instance().processEvents()
+            time.sleep(0.05)
+
+    def run_action(self,
+        action_name: CompositeName,
+        gui_context: CompositeName,
+        model_context: CompositeName,
+        mode: typing.Union[str, dict, list, int]
+    ):
+        gui_run = GuiRun(
+            tuple(gui_context), tuple(action_name), tuple(model_context), mode
+        )
+        self.run_gui_run(gui_run)
+
+    def run_gui_run(self, gui_run):
+        post(InitiateAction(
+            gui_run_name = gui_run_names.bind(str(id(gui_run)), gui_run),
+            action_name = gui_run.action_name,
+            model_context = gui_run.model_context_name,
+            mode = gui_run.mode,
+        ))
+
+    def send_response(self, response):
+        self.response.emit(response._to_bytes())
+
+    @QtCore.qt_slot(bytes)
+    def _handle_response(self, serialized_response):
         try:
-            result = generator_method( *args )
-            while True:
-                if isinstance(result, ActionStep):
-                    if result.blocking:
-                        LOGGER.debug( 'blocking step, yield it' )
-                        return result
-                    else:
-                        LOGGER.debug( 'non blocking step, use signal slot' )
-                        self.non_blocking_action_step_signal.emit( result )
-                #
-                # Cancel requests can arrive asynchronously through non 
-                # blocking ActionSteps such as UpdateProgress
-                #
-                if self._non_blocking_cancel_request == True:
-                    LOGGER.debug( 'asynchronous cancel, raise request' )
-                    result = self._generator.throw( CancelRequest() )
-                else:
-                    LOGGER.debug( 'move iterator forward' )
-                    result = six.advance_iterator( self._generator )
-        except CancelRequest as e:
-            LOGGER.debug( 'iterator raised cancel request, pass it' )
-            return e
-        except StopIteration as e:
-            LOGGER.debug( 'iterator raised stop, pass it' )
-            return e
-
-    @QtCore.qt_slot( object )
-    def non_blocking_action_step( self, action_step ):
-        try:
-            self._was_canceled( self._gui_context )
-            action_step.gui_run( self._gui_context )
-        except CancelRequest:
-            LOGGER.debug( 'non blocking action step requests cancel, set flag' )
-            self._non_blocking_cancel_request = True
-        
-    @QtCore.qt_slot( object )
-    def exception( self, exception_info ):
-        """Handle an exception raised by the generator"""
-        dialog = ExceptionDialog( exception_info )
-        dialog.exec_()
-        self.exit()
-        
-    @QtCore.qt_slot( object )
-    def generator( self, generator ):
-        """Handle the creation of the generator"""
-        self._generator = generator
-        #
-        # when model_run is not a generator, but a normal function it returns
-        # no generator, and as such we can exit the event loop
-        #
-        if self._generator != None:
-            post( self._iterate_until_blocking, 
-                  self.__next__, 
-                  self.exception,
-                  args = ( functools.partial( six.advance_iterator,
-                                              self._generator ), ) )
-        else:
-            self.exit()
-        
-    def _was_canceled( self, gui_context ):
-        """raise a :class:`camelot.core.exception.CancelRequest` if the
-        user pressed the cancel button of the progress dialog in the
-        gui_context.
-        """
-        progress_dialog = gui_context.get_progress_dialog()
-        if (progress_dialog is not None) and (progress_dialog.wasCanceled()):
-            LOGGER.debug( 'progress dialog was canceled, raise request' )
-            raise CancelRequest()
-
-    @QtCore.qt_slot( object )
-    def __next__( self, yielded ):
-        """Handle the result of the __next__ call of the generator
-        
-        :param yielded: the object that was yielded by the generator in the
-            *model thread*
-        """
-        if isinstance( yielded, ActionStep ):
-            try:
-                self._was_canceled( self._gui_context )
-                to_send = yielded.gui_run( self._gui_context )
-                self._was_canceled( self._gui_context )
-                post( self._iterate_until_blocking, 
-                      self.__next__, 
-                      self.exception, 
-                      args = ( self._generator.send, to_send,) )
-            except CancelRequest as exc:
-                post( self._iterate_until_blocking,
-                      self.__next__,
-                      self.exception,
-                      args = ( self._generator.throw, exc,) )
-            except Exception as exc:
-                LOGGER.error( 'gui exception while executing action', 
-                              exc_info=exc)
-                #
-                # In case of an exception in the GUI thread, propagate an
-                # exception to make sure the generator ends.  Don't propagate
-                # the very same exception, because no references from the GUI
-                # should be past to the model.
-                #
-                post( self._iterate_until_blocking,
-                      self.__next__,
-                      self.exception,
-                      args = ( self._generator.throw, GuiException(), ) )
-        elif isinstance( yielded, (StopIteration, CancelRequest) ):
-            #
-            # Process the events before exiting, as there might be exceptions
-            # left in the signal slot queue
-            #
-            self.processEvents()
-            self.exit()
-        else:
-            LOGGER.error( '__next__ call of generator returned an unexpected object of type %s'%( yielded.__class__.__name__ ) ) 
-            LOGGER.error( six.text_type( yielded ) )
-            raise Exception( 'this should not happen' )
+            AbstractResponse.handle_serialized_response(serialized_response, post)
+        except Exception as e:
+            LOGGER.error('Unhandled exception while handling response {}'.format(serialized_response), exc_info=e)
 
 
-
+action_runner = ActionRunner()

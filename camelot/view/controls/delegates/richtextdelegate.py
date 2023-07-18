@@ -27,34 +27,35 @@
 #
 #  ============================================================================
 
-from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant
+from dataclasses import dataclass
 
-import six
+from ....core.item_model import PreviewRole
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
 from ...utils import text_from_richtext
 
-@six.add_metaclass(DocumentationMetaclass)
-class RichTextDelegate(CustomDelegate):
+@dataclass
+class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for rich text (HTML) string values
   """
     
-    editor = editors.RichTextEditor
-    
-    def __init__(self, parent=None, editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable)
-        self.editable = editable
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         self._height = self._height * 10
         self._width = self._width * 3
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(RichTextDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            value_str = u' '.join(text_from_richtext(value))[:256]
-            item.setData(py_to_variant(six.text_type(value_str)), PreviewRole)
+    def get_editor_class(cls):
+        return editors.RichTextEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        if model_context.value is not None:
+            value_str = u' '.join(text_from_richtext(model_context.value))[:256]
+            item.roles[PreviewRole] = str(value_str)
         return item
 
 

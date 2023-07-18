@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from .wideeditor import WideEditor
@@ -72,15 +72,14 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def __init__(self,
                  parent = None,
-                 field_name = 'richtext',
-                 **kwargs):
+                 field_name = 'richtext'):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins( 0, 0, 0, 0)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Expanding,
-                            QtWidgets.QSizePolicy.Expanding )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding,
+                            QtWidgets.QSizePolicy.Policy.Expanding )
 
         self.textedit = CustomTextEdit(self)
 
@@ -97,7 +96,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.setLayout(self.layout)
 
         # Format
-        self.textedit.setFontWeight(QtGui.QFont.Normal)
+        self.textedit.setFontWeight(QtGui.QFont.Weight.Normal)
         self.textedit.setFontItalic(False)
         self.textedit.setFontUnderline(False)
 
@@ -114,10 +113,6 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setEnabled(editable)
         self.textedit.setReadOnly( not editable )
 
-    def set_field_attributes(self, **kwargs):
-        super(RichTextEditor, self).set_field_attributes(**kwargs)
-        self.set_editable(kwargs.get('editable', False))
-
     def set_toolbar_hidden( self, hidden ):
         """Show or hide the toolbar, by default the toolbar is hidden until
         the user starts editing.
@@ -130,7 +125,7 @@ class RichTextEditor(CustomEditor, WideEditor):
     def initToolbar(self):
         toolbar = QtWidgets.QToolBar(self)
         toolbar.setObjectName( 'toolbar' )
-        toolbar.setOrientation(Qt.Horizontal)
+        toolbar.setOrientation(Qt.Orientation.Horizontal)
         toolbar.setContentsMargins(0, 0, 0, 0)
 
         bold_button = QtWidgets.QToolButton(self)
@@ -245,9 +240,9 @@ class RichTextEditor(CustomEditor, WideEditor):
     def set_bold(self):
         font = self.textedit.currentFont()
         if not font.bold():
-            self.textedit.setFontWeight(QtGui.QFont.Bold)
+            self.textedit.setFontWeight(QtGui.QFont.Weight.Bold)
         else:
-            self.textedit.setFontWeight(QtGui.QFont.Normal)
+            self.textedit.setFontWeight(QtGui.QFont.Weight.Normal)
 
     def set_italic(self, bool):
         font = self.textedit.currentFont()
@@ -264,13 +259,13 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.zoomOut()
 
     def set_alignleft(self, bool):
-        self.textedit.setAlignment(Qt.AlignLeft)
+        self.textedit.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
     def set_aligncenter(self, bool):
-        self.textedit.setAlignment(Qt.AlignCenter)
+        self.textedit.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def set_alignright(self, bool):
-        self.textedit.setAlignment(Qt.AlignRight)
+        self.textedit.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     def set_color(self):
         color = QtWidgets.QColorDialog.getColor(self.textedit.textColor())
@@ -279,7 +274,7 @@ class RichTextEditor(CustomEditor, WideEditor):
 
     def get_value(self):
         from xml.dom import minidom
-        tree = minidom.parseString(six.text_type(self.textedit.toHtml()).encode('utf-8'))
+        tree = minidom.parseString(str(self.textedit.toHtml()).encode('utf-8'))
         value = u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
         return CustomEditor.get_value(self) or value
 
@@ -292,7 +287,7 @@ class RichTextEditor(CustomEditor, WideEditor):
     def set_value( self, value ):
         value = CustomEditor.set_value(self, value)
         if value!=None:
-            if six.text_type(self.textedit.toHtml())!=value:
+            if str(self.textedit.toHtml())!=value:
                 self.textedit.setHtml(value)
         else:
             self.textedit.clear()

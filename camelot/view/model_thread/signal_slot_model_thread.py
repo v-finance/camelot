@@ -31,74 +31,20 @@ Created on Sep 9, 2009
 
 @author: tw55413
 '''
+import json
 import logging
-import sys
-import time
 
 logger = logging.getLogger('camelot.view.model_thread.signal_slot_model_thread')
+REQUEST_LOGGER = logging.getLogger('request')
 
-import six
-import sip
-
-from ...core.qt import QtCore
+from ..action_runner import action_runner
+from ..requests import CancelAction
+from ...core.qt import QtCore, is_deleted
+from ...core.serializable import NamedDataclassSerializable
 from ...core.threading import synchronized
-from ...view.model_thread import AbstractModelThread, object_thread
-from ...view.controls.exception import register_exception
+from ...view.model_thread import AbstractModelThread
 
-
-class Task(QtCore.QObject):
-
-    finished = QtCore.qt_signal(object)
-    exception = QtCore.qt_signal(object)
-
-    def __init__(self, request, name='', args=()):
-        """A task to be executed in a different thread
-        :param request: the function to execture
-        :param name: a string with the name of the task to be used in the gui
-        :param args: a tuple with the arguments to be passed to the request
-        """
-        QtCore.QObject.__init__(self)
-        self._request = request
-        self._name = name
-        self._args = args
-
-    def clear(self):
-        """clear this tasks references to other objects"""
-        self._request = None
-        self._name = None
-        self._args = None
-
-    def execute(self):
-        logger.debug('executing %s' % (self._name))
-        try:
-            result = self._request( *self._args )
-            self.finished.emit( result )
-        #
-        # don't handle StopIteration as a normal exception, but return a new
-        # instance of StopIteration (in order to not keep alive a stack trace),
-        # and to signal to the caller that an iterator has ended
-        #
-        except StopIteration:
-            self.finished.emit( StopIteration() )
-        except Exception as e:
-            exc_info = register_exception(logger, 'exception caught in model thread while executing %s'%self._name, e)
-            self.exception.emit( exc_info )
-            self.clear_exception_info()
-        except:
-            logger.error( 'unhandled exception in model thread' )
-            exc_info = ( 'Unhandled exception', 
-                         sys.exc_info()[0], 
-                         None, 
-                         'Please contact the application developer', '')
-            # still emit the exception signal, to allow the gui to clean up things (such as closing dialogs)
-            self.exception.emit( exc_info )
-            self.clear_exception_info()
-            
-    def clear_exception_info( self ):
-        # the exception info contains a stack that might contain references to 
-        # Qt objects which could be kept alive this way
-        if not six.PY3:
-            sys.exc_clear()
+cancel_action_prefix = CancelAction(run_name=[])._to_bytes()[:13]
 
 class TaskHandler(QtCore.QObject):
     """A task handler is an object that handles tasks that appear in a queue,
@@ -106,45 +52,37 @@ class TaskHandler(QtCore.QObject):
     that are in the queue.
     """
 
-    task_handler_busy_signal = QtCore.qt_signal(bool)
-
     def __init__(self, queue):
         """:param queue: the queue from which to pop a task when handle_task
         is called"""
         QtCore.QObject.__init__(self)
         self._mutex = QtCore.QMutex()
         self._queue = queue
-        self._tasks_done = []
-        self._busy = False
         logger.debug("TaskHandler created.")
 
-    def busy(self):
-        """:return True/False: indicating if this task handler is busy"""
-        return self._busy
+    def has_cancel_request(self):
+        for request in self._queue._request_queue:
+            if request == request.startswith(cancel_action_prefix):
+                return True
+        return False
 
     @QtCore.qt_slot()
     def handle_task(self):
         """Handle all tasks that are in the queue"""
-        self._busy = True
-        self.task_handler_busy_signal.emit( True )
-        task = self._queue.pop()
-        while task:
-            task.execute()
-            # we keep track of the tasks done to prevent them being garbage collected
-            # apparently when they are garbage collected, they are recycled, but their
-            # signal slot connections seem to survive this recycling.
-            # @todo: this should be investigated in more detail, since we are causing
-            #        a deliberate memory leak here
-            #
-            # not keeping track of the tasks might result in corruption
-            #
-            # see : http://www.riverbankcomputing.com/pipermail/pyqt/2011-August/030452.html
-            #
-            task.clear()
-            self._tasks_done.append(task)
-            task = self._queue.pop()
-        self.task_handler_busy_signal.emit( False )
-        self._busy = False
+        request = self._queue.pop()
+        while request:
+            try:
+                assert isinstance(request, bytes)
+                request_type_name, request_data = json.loads(request)
+                request_type = NamedDataclassSerializable.get_cls_by_name(
+                    request_type_name
+                )
+                request_type.execute(request_data, action_runner, self)
+            except Exception as e:
+                logger.fatal('Unhandled exception in model thread', exc_info=e)
+            except:
+                logger.fatal('Unhandled something in model thread')
+            request = self._queue.pop()
 
 class SignalSlotModelThread( AbstractModelThread ):
     """A model thread implementation that uses signals and slots
@@ -168,7 +106,6 @@ class SignalSlotModelThread( AbstractModelThread ):
         Initialize the objects that live in the model thread
         """
         self._task_handler = TaskHandler(self)
-        self._task_handler.task_handler_busy_signal.connect(self._thread_busy, QtCore.Qt.QueuedConnection)
 
     def run( self ):
         self.logger.debug( 'model thread started' )
@@ -176,37 +113,20 @@ class SignalSlotModelThread( AbstractModelThread ):
         # Some tasks might have been posted before the signals were connected
         # to the task handler, so once force the handling of tasks
         self._task_handler.handle_task()
-        self.exec_()
+        self.exec()
         self.logger.debug('model thread stopped')
 
-    @QtCore.qt_slot( bool )
-    def _thread_busy(self, busy_state):
-        self.thread_busy_signal.emit( busy_state )
-
     @synchronized
-    def post( self, request, response = None, exception = None, args = () ):
+    def post(self, request):
         if not self._connected and self._task_handler:
             # creating this connection in the model thread throws QT exceptions
-            self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.QueuedConnection )
+            self.task_available.connect( self._task_handler.handle_task, QtCore.Qt.ConnectionType.QueuedConnection )
             self._connected = True
-        # response should be a slot method of a QObject
-        name = request.__name__
-        task = Task(request, name = name, args = args)
-        # QObject::connect is a thread safe function
-        if response:
-            assert getattr( response, six._meth_self ) != None
-            assert isinstance( getattr( response, six._meth_self ), 
-                               QtCore.QObject )
-            # verify if the response has been defined as a slot
-            #assert hasattr(response, '__pyqtSignature__')
-            task.finished.connect(response, QtCore.Qt.QueuedConnection)
-        if exception:
-            task.exception.connect( exception, QtCore.Qt.QueuedConnection )
-        # task.moveToThread(self)
-        # only put the task in the queue when it is completely set up
-        self._request_queue.append(task)
-        #print 'task created --->', id(task)
-        if not sip.isdeleted(self):
+        serialized_request = request._to_bytes()
+        if REQUEST_LOGGER.isEnabledFor(logging.DEBUG):
+            REQUEST_LOGGER.debug(serialized_request)
+        self._request_queue.append(serialized_request)
+        if not is_deleted(self):
             self.task_available.emit()
 
     @synchronized
@@ -220,23 +140,3 @@ class SignalSlotModelThread( AbstractModelThread ):
         if len(self._request_queue):
             task = self._request_queue.pop(0)
             return task
-
-    @synchronized
-    def busy( self ):
-        """Return True or False indicating wether either the model or the
-        gui thread is doing something"""
-        while not self._task_handler:
-            time.sleep(0.1)
-        return len(self._request_queue) or self._task_handler.busy()
-
-    def wait_on_work(self):
-        """Wait for all work to be finished, this function should only be used
-        to do unit testing and such, since it will block the calling thread until
-        all work is done"""
-        assert object_thread( self )
-        while self.busy():
-            time.sleep(0.1)
-
-
-
-

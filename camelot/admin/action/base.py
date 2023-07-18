@@ -26,13 +26,20 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from __future__ import annotations
+
+import logging
+import typing
 
 from enum import Enum
-import logging
+from dataclasses import dataclass, field
+from typing import Any
 
-from ...core.qt import QtWidgets, QtGui, Qt
-
-import six
+from ...admin.icon import Icon
+from ...core.qt import QtWidgets, QtGui, transferto
+from ...core.serializable import DataclassSerializable
+from ...core.utils import ugettext_lazy
+from ...view.art import from_admin_icon
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -41,36 +48,19 @@ class ModelContext( object ):
 The Model context in which an action is running.  The model context can contain
 reference to database sessions or other model related data. This object can not 
 contain references to widgets as those belong strictly to the :class:`GuiContext`.
-
-.. attribute:: mode_name
-
-    the name of the mode in which the action was triggered
     """
-          
+
     def __init__( self ):
-        self.mode_name = None
-        
+        pass
+
+
 class GuiContext( object ):
     """
 The GUI context in which an action is running.  This object can contain
 references to widgets and other useful information.  This object cannot
 contain reference to anything database or model related, as those belong
 strictly to the :class:`ModelContext`
-
-.. attribute:: mode_name
-
-    the name of the mode in which the action was triggered
-    
-.. attribute:: model_context
-
-    a subclass of :class:`ModelContext` to be used in :meth:`create_model_context`
-    as the type of object to return.
     """
-    
-    model_context = ModelContext
-    
-    def __init__( self ):
-        self.mode_name = None
 
     def get_progress_dialog(self):
         """
@@ -78,16 +68,17 @@ strictly to the :class:`ModelContext`
                  or :keyword:`None`
         """
         from camelot.view.controls.progress_dialog import ProgressDialog
-        window = self.get_window()
-        if window is not None:
-            progress_dialog = window.findChild(
-                QtWidgets.QProgressDialog, 'application_progress',
-                Qt.FindDirectChildrenOnly
-            )
-            if progress_dialog is None:
-                progress_dialog = ProgressDialog(parent=window)
-                progress_dialog.setObjectName('application_progress')
-            return progress_dialog
+        from camelot.view.qml_view import get_qml_root_backend
+        root_backend = get_qml_root_backend()
+        if not root_backend.isVisible():
+            return None
+        app = QtWidgets.QApplication.instance()
+        progress_dialog = app.property('application_progress')
+        if progress_dialog is None:
+            progress_dialog = ProgressDialog(None) #(parent=window) FIXME
+            transferto(progress_dialog, progress_dialog) # FIXME -> replace with qml
+            app.setProperty('application_progress', progress_dialog)
+        return progress_dialog
 
     def get_window(self):
         """
@@ -98,19 +89,6 @@ strictly to the :class:`ModelContext`
         """
         return None
 
-    def create_model_context( self ):
-        """Create a :class:`ModelContext` filled with base information, 
-        extracted from this GuiContext.  This function will be called in the
-        GUI thread, so it should not access the model directly, but rather
-        extract all information needed from te GUI to be available in the
-        model.
-        
-        :return: a :class:`ModelContext`
-        """
-        context = self.model_context()
-        context.mode_name = self.mode_name
-        return context
-        
     def copy( self, base_class = None ):
         """Create a copy of the GuiContext, this function is used
         to create new GuiContext's that are more specialized without
@@ -120,10 +98,71 @@ strictly to the :class:`ModelContext`
             if the new context should be of the same type as the copied context.
         """
         new_context = (base_class or self.__class__)()
-        new_context.mode_name = self.mode_name
         return new_context
 
-class State( object ):
+
+@dataclass
+class Mode(DataclassSerializable):
+    """A mode is a way in which an action can be triggered, a print action could
+be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
+the default mode.
+    
+.. attribute:: value
+
+    a value representing the mode to the developer and the authentication
+    system.  this name will be used in the :class:`GuiContext`
+    
+.. attribute:: verbose_name
+
+    The name shown to the user
+    
+.. attribute:: icon
+
+    The icon of the mode
+    
+.. attribute:: modes: 
+
+    Optionally, a list of sub modes.
+    """
+
+    value: Any
+    verbose_name: typing.Union[str, ugettext_lazy]
+    icon: typing.Union[Icon, None] = None
+    modes: typing.List[Mode] = field(default_factory=list)
+
+    def __post_init__(self):
+        for mode in self.modes:
+            assert isinstance(mode, type(self))
+
+    def render( self, parent ):
+        """
+        In case this mode is a leaf (no containing sub modes), a :class:`QtWidgets.QAction`
+        will be created (or `QtWidgets.QMenu` in case this modes has sub modes defined)
+        that can be used to enable the widget to trigger the action in a specific mode.
+        The data attribute of the action will contain the value of the mode.
+        In case has underlying sub modes, a `QtWidgets.QMenu` will be created to which
+        the rendered sub modes can be attached.
+        :return: a :class:`QtWidgets.QAction` or :class:`QtWidgets.QMenu` to use this mode
+        """
+        if self.modes:
+            menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
+            if self.icon is not None:
+                menu.setIcon(from_admin_icon(self.icon).getQIcon())
+            parent.addMenu(menu)
+            return menu
+        else:
+            action = QtGui.QAction( parent )
+            action.setData( self.value )
+            action.setText( str(self.verbose_name) )
+            if self.icon is None:
+                action.setIconVisibleInMenu(False)
+            else:
+                action.setIcon(from_admin_icon(self.icon).getQIcon())
+                action.setIconVisibleInMenu(True)
+            return action
+
+@dataclass
+class State(DataclassSerializable):
     """A state represents the appearance and behavior of the widget that
 triggers the action.  When the objects in the model change, the 
 :meth:`Action.get_state` method will be called, which should return the
@@ -137,7 +176,7 @@ updated state for the widget.
 .. attribute:: icon
 
     The icon that represents the action, of type 
-    :class:`camelot.view.art.Icon`, this defaults to the icon of the action.
+    :class:`camelot.admin.icon.Icon`, this defaults to the icon of the action.
 
 .. attribute:: tooltip
 
@@ -165,81 +204,28 @@ updated state for the widget.
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
     """
-    
-    def __init__( self ):
-        self.verbose_name = None
-        self.icon = None
-        self.tooltip = None
-        self.enabled = True
-        self.visible = True
-        self.notification = False
-        self.modes = []
 
-class Mode( object ):
-    """A mode is a way in which an action can be triggered, a print action could
-be triggered as 'Export to PDF' or 'Export to Word'.  None always represents
-the default mode.
-    
-.. attribute:: name
+    verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    icon: typing.Union[Icon, None] = None
+    tooltip: typing.Union[str, ugettext_lazy, None] = None
+    enabled: bool = True
+    visible: bool = True
+    notification: bool = False
+    modes: typing.List[Mode] = field(default_factory=list)
+    shortcut: typing.Optional[str] = None
 
-    a string representing the mode to the developer and the authentication
-    system.  this name will be used in the :class:`GuiContext`
-    
-.. attribute:: verbose_name
+# TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
+#       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
+class MetaActionStep(type):
 
-    The name shown to the user
-    
-.. attribute:: icon
+    action_steps = dict()
 
-    The icon of the mode
-    """
-    
-    def __init__( self, name, verbose_name=None, icon=None, modes=[]):
-        """
-        :param name: the name of the mode, as it will be passed to the
-            gui_run and model_run method
-        :param verbose_name: the name shown to the user
-        :param icon: the icon of the mode
-        :param modes: optionally, a list of sub modes. If defined, this mode will be rendered as a sub menu.
-        """
-        self.name = name
-        if verbose_name is None:
-            verbose_name = name.capitalize()
-        self.verbose_name = verbose_name
-        self.icon = icon
-        self.modes = modes
-        
-    def render( self, parent ):
-        """
-        In case this mode is a leaf (no containing sub modes), a :class:`QtWidgets.QAction`
-        will be created (or `QtWidgets.QMenu` in case this modes has sub modes defined)
-        that can be used to enable the widget to trigger the action in a specific mode.
-        The data attribute of the action will contain the name of the mode.
-        In case has underlying sub modes, a `QtWidgets.QMenu` will be created to which
-        the rendered sub modes can be attached.
-        :return: a :class:`QtWidgets.QAction` or :class:`QtWidgets.QMenu` to use this mode
-        """
-        if self.modes:
-            menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
-            if self.icon is not None:
-                #menu.setIcon(from_admin_icon(self.icon).getQIcon())
-                # For now work work the old way until master can be merged into
-                # FF
-                menu.setIcon(self.icon.getQIcon())
-            parent.addMenu(menu)
-            return menu
-        else:
-            action = QtWidgets.QAction( parent )
-            action.setData( self.name )
-            action.setText( six.text_type(self.verbose_name) )
-            if self.icon is None:
-                action.setIconVisibleInMenu(False)
-            else:
-                action.setIcon(self.icon.getQIcon())
-                action.setIconVisibleInMenu(True)
-            return action
-        
-class ActionStep( object ):
+    def __new__(cls, clsname, bases, attrs):
+        newclass = super().__new__(cls, clsname, bases, attrs)
+        cls.action_steps[clsname] = newclass
+        return newclass
+
+class ActionStep(metaclass=MetaActionStep):
     """A reusable part of an action.  Action step object can be yielded inside
 the :meth:`model_run`.  When this happens, their :meth:`gui_run` method will
 be called inside the *GUI thread*.  The :meth:`gui_run` can pop up a dialog
@@ -266,56 +252,46 @@ return immediately and the :meth:`model_run` will not be blocked.
 
     blocking = True
     cancelable = True
-            
-    def gui_run( self, gui_context ):
+
+    @classmethod
+    def gui_run( cls, gui_context_name, serialized_step=b'' ):
         """This method is called in the *GUI thread* upon execution of the
         action step.  The return value of this method is the result of the
         :keyword:`yield` statement in the *model thread*.
         
-        The default behavior of this method is to call the model_run generator
-        in the *model thread* until it is finished.
+        The default behavior of this method is to call the qml_action_step
+        function.
         
         :param gui_context:  An object of type 
             :class:`camelot.admin.action.GuiContext`, which is the context 
             of this action available in the *GUI thread*.  What is in the 
             context depends on how the action was called.
+        :param serialized_step: The serialized action step.
             
         this method will raise a :class:`camelot.core.exception.CancelRequest`
         exception, if the user canceled the operation.
         """
-        from camelot.view.action_runner import ActionRunner
-        runner = ActionRunner( self.model_run, gui_context )
-        runner.exec_()
-        
-    def model_run( self, model_context = None ):
-        """A generator that yields :class:`camelot.admin.action.ActionStep`
-        objects.  This generator can be called in the *model thread*.
-        
-        :param context:  An object of type
-            :class:`camelot.admin.action.ModelContext`, which is context 
-            of this action available in the model_thread.  What is in the 
-            context depends on how the action was called.
+        from camelot.view.qml_view import qml_action_step
+        return qml_action_step(gui_context_name, cls.__name__, serialized_step)
+
+    def model_run( self, model_context, mode ):
+        raise Exception('This should not happen')
+
+    @classmethod
+    def deserialize_result(cls, gui_context, serialized_result):
         """
-        yield
+        :param gui_context:  An object of type
+            :class:`camelot.admin.action.GuiContext`, which is the context
+            of this action available in the *GUI thread*.  What is in the
+            context depends on how the action was called.
 
-class ProgressLevel(object):
+        :param serialized_result: The serialized result comming from the client.
 
-    def __init__(self, gui_context, verbose_name):
-        self.verbose_name = verbose_name
-        self.gui_context = gui_context
-        self.progress_dialog = None
-
-    def __enter__(self):
-        self.progress_dialog = self.gui_context.get_progress_dialog()
-        if self.progress_dialog is not None:
-            self.progress_dialog.push_level(self.verbose_name)
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if self.progress_dialog is not None:
-            self.progress_dialog.pop_level()
-        self.progress_dialog = None
-        return False
+        :return: The deserialized result. The default implementation returns the
+            serialized result as is. This function can be reimplemented to change
+            this behavior.
+        """
+        return serialized_result
 
 
 class RenderHint(Enum):
@@ -325,10 +301,13 @@ class RenderHint(Enum):
 
     PUSH_BUTTON = 'push_button'
     TOOL_BUTTON = 'tool_button'
+    CLOSE_BUTTON = 'close_button'
     SEARCH_BUTTON = 'search_button'
-    GROUP_BOX = 'group_box'
+    EXCLUSIVE_GROUP_BOX = 'exclusive_group_box'
+    NON_EXCLUSIVE_GROUP_BOX = 'non_exclusive_group_box'
     COMBO_BOX = 'combo_box'
     LABEL = 'label'
+    STRETCH = 'stretch'
 
 
 class Action( ActionStep ):
@@ -359,7 +338,7 @@ method.
 .. attribute:: icon
 
     The icon that represents the action, of type 
-    :class:`camelot.view.art.Icon`
+    :class:`camelot.admin.icon.Icon`
 
 .. attribute:: tooltip
 
@@ -427,35 +406,33 @@ with a view.
         tooltip = None
 
         if self.tooltip is not None:
-            tooltip = six.text_type(self.tooltip)
+            tooltip = str(self.tooltip)
 
         if isinstance(self.shortcut, QtGui.QKeySequence):
-            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.NativeText)
+            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
         elif isinstance(self.shortcut, QtGui.QKeySequence.StandardKey):
             for shortcut in QtGui.QKeySequence.keyBindings(self.shortcut):
-                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.NativeText)
+                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
                 break
         elif self.shortcut is not None:
-            tooltip = (tooltip or u'') + '\n' + six.text_type(self.shortcut)
+            tooltip = (tooltip or u'') + '\n' + str(self.shortcut)
 
         return tooltip
 
-
-    def gui_run( self, gui_context ):
-        """This method is called inside the GUI thread, by default it
-        executes the :meth:`model_run` in the Model thread.
+    def model_run( self, model_context, mode ):
+        """A generator that yields :class:`camelot.admin.action.ActionStep`
+        objects.  This generator can be called in the *model thread*.
         
-        :param gui_context: the context available in the *GUI thread*,
-            of type :class:`GuiContext`
-            
+        :param context:  An object of type
+            :class:`camelot.admin.action.ModelContext`, which is context 
+            of this action available in the model_thread.  What is in the 
+            context depends on how the action was called.
         """
-        # only create a progress dialog if there is none yet, or if the
-        # existing dialog was canceled
-        LOGGER.debug( 'action gui run started' )
-        with ProgressLevel(gui_context, str(self.verbose_name)):
-            super(Action, self).gui_run(gui_context)
-        LOGGER.debug( 'gui run finished' )
-        
+        yield
+
+    def gui_run( self, gui_context_name ):
+        raise Exception('This should not happen')
+
     def get_state( self, model_context ):
         """
         This method is called inside the Model thread to verify if
@@ -469,6 +446,7 @@ with a view.
         state.icon = self.icon
         state.tooltip = self.get_tooltip()
         state.modes = self.modes
+        state.shortcut = self.shortcut
         return state
 
 
