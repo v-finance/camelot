@@ -28,7 +28,7 @@
 #  ============================================================================
 import logging
 
-import six
+
 from camelot.types import PrimaryKey
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
@@ -62,7 +62,7 @@ class BackupMechanism(object):
             this defaults to the `metadata` object of :module:`camelot.core.sql`.
             This metadata object should not contain any dialect specific constructs.
         """
-        self.filename = six.text_type(filename)
+        self.filename = str(filename)
         self.storage = storage
         self.metadata = metadata or default_metadata
 
@@ -88,7 +88,7 @@ class BackupMechanism(object):
         By default, this will return a Storage that puts the backup files
         in the DataLocation as specified by the QDesktopServices
         """
-        apps_folder = six.text_type(
+        apps_folder = str(
             QtCore.QStandardPaths.writableLocation(
                 QtCore.QStandardPaths.DataLocation
             )
@@ -205,11 +205,6 @@ class BackupMechanism(object):
         :param to_engine: a :class:`sqlalchemy.engine.Engine` object that
             provides a connection to the database to be backed up.
         """
-        #
-        # The restored database may contain different AuthenticationMechanisms
-        #
-        from camelot.model.authentication import clear_current_authentication
-        clear_current_authentication()
         #
         # Proceed with the restore
         #

@@ -48,11 +48,10 @@ import logging
 LOGGER = logging.getLogger('camelot.core.orm')
 
 from camelot.core.sql import metadata
-from sqlalchemy import orm, event
+from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.declarative.clsregistry import ( _ModuleMarker,
-                                                     _MultipleClassMarker )
-from sqlalchemy.orm import scoped_session, sessionmaker, mapper
+
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 #
 # Singleton session factory, to be used when a session is needed
@@ -60,13 +59,6 @@ from sqlalchemy.orm import scoped_session, sessionmaker, mapper
 Session = scoped_session( sessionmaker( autoflush = False,
                                         autocommit = True,
                                         expire_on_commit = False ) )
-
-from . options import using_options
-from . fields import has_field, Field
-from . relationships import ( belongs_to, has_one, has_many,
-                              has_and_belongs_to_many, 
-                              ManyToOne, OneToOne, OneToMany, ManyToMany )
-from . properties import has_property, GenericProperty, ColumnProperty
 
 #
 # Default registry for subclasses of Entity that have been mapped
@@ -88,47 +80,17 @@ entities = EntityCollection()
 #   before and after mapper and table creation.
 #
 
-import six
+
 
 from . entity import EntityBase, EntityMeta
-
-@event.listens_for( mapper, 'after_configured' )
-def process_deferred_properties( class_registry = entities ):
-    """After all mappers have been configured, process the Deferred Properties.
-    This function is called automatically for the default class_registry.
-    """
-    LOGGER.debug( 'process deferred properties' )
-    descriptors = list()
-    for cls in six.itervalues(class_registry):
-        if isinstance( cls, ( _ModuleMarker, _MultipleClassMarker ) ):
-            continue
-        descriptor = getattr(cls, '_descriptor')
-        if descriptor.processed == True:
-            # because orm.class_mapper will trigger the 'after_configured' event,
-            # there might be a recursive call of this function, if this function
-            # was called by the application code, and not by the event.
-            continue
-        descriptors.append( (descriptor.counter, descriptor) )
-        descriptor.processed = True
-    descriptors.sort()
-
-    for method_name in ( 'create_non_pk_cols',
-                         'create_tables',
-                         'append_constraints',
-                         'create_properties',
-                         'finalize', ):
-        for counter, descriptor in descriptors:
-            method = getattr(descriptor, method_name)
-            method()
 
 
 def setup_all( create_tables=False, *args, **kwargs ):
     """Create all tables that are registered in the metadata
     """
-    process_deferred_properties()
     if create_tables:
         metadata.create_all( *args, **kwargs )
-        
+
 Entity = declarative_base( cls = EntityBase, 
                            metadata = metadata,
                            metaclass = EntityMeta,
@@ -148,13 +110,7 @@ def transaction( original_function ):
     
     return decorated_function
 
-__all__ = [ obj.__name__  for obj in [ Entity, EntityBase, EntityMeta, 
-            EntityCollection, Field, has_field,
-            has_property, GenericProperty, ColumnProperty,
-            belongs_to, has_one, has_many, has_and_belongs_to_many,
-            ManyToOne, OneToOne, OneToMany, ManyToMany,
-            using_options,
-            setup_all, transaction
-            ] ] + ['Session', 'entities']
 
-
+__all__ = [obj.__name__ for obj in [Entity, EntityBase, EntityMeta,
+                                    EntityCollection, setup_all, transaction
+                                    ]] + ['Session', 'entities']

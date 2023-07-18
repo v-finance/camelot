@@ -30,73 +30,12 @@
 """ Tableview """
 
 import logging
-import six
 
-from sqlalchemy.ext.hybrid import hybrid_property
-
-from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.core.utils import ugettext as _
-from camelot.view.controls.view import AbstractView
 from camelot.view.model_thread import object_thread
-from ...core.qt import QtCore, QtGui, QtModel, QtWidgets, Qt, variant_to_py
-from ..proxy.collection_proxy import CollectionProxy
-from .actionsbox import ActionsBox
-from .delegates.delegatemanager import DelegateManager
+from ...core.qt import QtCore, QtGui, QtWidgets, Qt
+
 
 logger = logging.getLogger('camelot.view.controls.tableview')
-
-
-class ColumnGroupsWidget(QtWidgets.QTabBar):
-    """
-    A tabbar the user can use to select a group of columns within an
-    item view.
-
-    :param table: a :class:`camelot.admin.table.Table` object, describing the
-        column groups.
-    :param table_widget: a :class:`QtWidgets.QTableView` widget of which
-        columns will be hidden and shown depending on the selected tab.
-    :param parent: a :class:`QtWidgets.QWidget`
-    """
-
-    def __init__(self, table, table_widget, parent=None):
-        from camelot.admin.table import ColumnGroup
-        super(ColumnGroupsWidget, self).__init__(parent)
-        assert object_thread(self)
-        self.setShape(QtWidgets.QTabBar.RoundedSouth)
-        self.groups = dict()
-        self.table_widget = table_widget
-        column_index = 0
-        tab_index = 0
-        for column in table.columns:
-            if isinstance(column, ColumnGroup):
-                self.addTab(six.text_type(column.verbose_name))
-                previous_column_index = column_index
-                column_index = column_index + len(column.get_fields())
-                self.groups[tab_index] = (previous_column_index,
-                                          column_index)
-                tab_index += 1
-            else:
-                column_index += 1
-        self.currentChanged.connect(self._current_index_changed)
-
-    @QtCore.qt_slot(QtCore.QModelIndex, int, int)
-    def columns_changed(self, index, first_column, last_column):
-        assert object_thread(self)
-        self._current_index_changed(self.currentIndex())
-
-    @QtCore.qt_slot()
-    def model_reset(self):
-        assert object_thread(self)
-        self._current_index_changed(self.currentIndex())
-
-    @QtCore.qt_slot(int)
-    def _current_index_changed(self, current_index):
-        assert object_thread(self)
-        for tab_index, (first_column,
-                        last_column) in six.iteritems(self.groups):
-            for column_index in range(first_column, last_column):
-                self.table_widget.setColumnHidden(column_index,
-                                                  tab_index != current_index)
 
 
 class TableWidget(QtWidgets.QTableView):
@@ -122,12 +61,12 @@ class TableWidget(QtWidgets.QTableView):
         logger.debug('create TableWidget')
         assert object_thread(self)
         self._columns_changed = dict()
-        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.setEditTriggers(QtWidgets.QAbstractItemView.SelectedClicked |
-                             QtWidgets.QAbstractItemView.DoubleClicked |
-                             QtWidgets.QAbstractItemView.CurrentChanged)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                           QtWidgets.QSizePolicy.Expanding)
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.SelectedClicked |
+                             QtWidgets.QAbstractItemView.EditTrigger.DoubleClicked |
+                             QtWidgets.QAbstractItemView.EditTrigger.CurrentChanged)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                           QtWidgets.QSizePolicy.Policy.Expanding)
         try:
             self.horizontalHeader().setClickable(True)
         except AttributeError:
@@ -139,8 +78,8 @@ class TableWidget(QtWidgets.QTableView):
         self._minimal_row_height = line_height * lines_per_row + 2*self.margin
         self.verticalHeader().setDefaultSectionSize(self._minimal_row_height)
         self.setHorizontalScrollMode(
-            QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+            QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.horizontalHeader().sectionClicked.connect(
             self.horizontal_section_clicked)
         self.horizontalHeader().sectionResized.connect(
@@ -164,22 +103,22 @@ class TableWidget(QtWidgets.QTableView):
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
         assert object_thread(self)
-        for logical_index, new_width in six.iteritems(self._columns_changed):
+        for logical_index, new_width in self._columns_changed.items():
             if self.horizontalHeader().isSectionHidden(logical_index):
                 # don't save the width of a hidden section, since this will
                 # result in setting the width to 0
                 continue
-            old_size = variant_to_py(self.model().headerData(logical_index,
-                                                             Qt.Horizontal,
-                                                             Qt.SizeHintRole))
+            old_size = self.model().headerData(logical_index,
+                                               Qt.Orientation.Horizontal,
+                                               Qt.ItemDataRole.SizeHintRole)
             # when the size is different from the one from the model, the
             # user changed it
             if (old_size is not None) and (old_size.width() != new_width):
                 new_size = QtCore.QSize(new_width, old_size.height())
                 self.model().setHeaderData(logical_index,
-                                           Qt.Horizontal,
+                                           Qt.Orientation.Horizontal,
                                            new_size,
-                                           Qt.SizeHintRole)
+                                           Qt.ItemDataRole.SizeHintRole)
         self._columns_changed = dict()
         super(TableWidget, self).timerEvent(event)
 
@@ -210,7 +149,7 @@ class TableWidget(QtWidgets.QTableView):
         """Update the sorting of the model and the header"""
         assert object_thread(self)
         header = self.horizontalHeader()
-        order = Qt.AscendingOrder
+        order = Qt.SortOrder.AscendingOrder
         if not header.isSortIndicatorShown():
             header.setSortIndicatorShown(True)
         elif header.sortIndicatorSection() == logical_index:
@@ -246,12 +185,15 @@ class TableWidget(QtWidgets.QTableView):
         # Editor, closed. it should be safe to change the model
         #
         QtWidgets.QTableView.setModel(self, model)
-        model.setParent(self)
+        # not required/allowed for CrudItemModel
+        #model.setParent(self)
         # assign selection model to local variable to keep it alive during
         # method call, or PySide segfaults
         selection_model = self.selectionModel()
         selection_model.currentChanged.connect(self._current_changed)
         model.modelReset.connect(self.update_headers)
+        if hasattr(model, 'updateHeaders'):
+            model.updateHeaders.connect(self.update_headers)
         self.update_headers()
 
     @QtCore.qt_slot()
@@ -262,9 +204,9 @@ class TableWidget(QtWidgets.QTableView):
         """
         model = self.model()
         for i in range(model.columnCount()):
-            size_hint = variant_to_py(model.headerData(i,
-                                                       Qt.Horizontal,
-                                                       Qt.SizeHintRole))
+            size_hint = model.headerData(i,
+                                         Qt.Orientation.Horizontal,
+                                         Qt.ItemDataRole.SizeHintRole)
             if size_hint is not None:
                 self.setColumnWidth(i, size_hint.width())
         # dont save these changes, since they are the defaults
@@ -278,12 +220,12 @@ class TableWidget(QtWidgets.QTableView):
         # if there is an editor in the current cell, change the column and
         # row width to the size hint of the editor
         if editor is not None:
-            column_size_hint = variant_to_py(header_data(current.column(),
-                                                         Qt.Horizontal,
-                                                         Qt.SizeHintRole))
-            row_size_hint = variant_to_py(header_data(current.row(),
-                                                      Qt.Vertical,
-                                                      Qt.SizeHintRole))
+            column_size_hint = header_data(current.column(),
+                                           Qt.Orientation.Horizontal,
+                                           Qt.ItemDataRole.SizeHintRole)
+            row_size_hint = header_data(current.row(),
+                                        Qt.Orientation.Vertical,
+                                        Qt.ItemDataRole.SizeHintRole)
             editor_size_hint = editor.sizeHint()
             self.setRowHeight(current.row(), max(row_size_hint.height(),
                                                  editor_size_hint.height()))
@@ -292,374 +234,27 @@ class TableWidget(QtWidgets.QTableView):
                                     editor_size_hint.width()))
         if current.row() != previous.row():
             if previous.row() >= 0:
-                row_size_hint = variant_to_py(header_data(previous.row(),
-                                                          Qt.Vertical,
-                                                          Qt.SizeHintRole))
+                row_size_hint = header_data(previous.row(),
+                                            Qt.Orientation.Vertical,
+                                            Qt.ItemDataRole.SizeHintRole)
                 self.setRowHeight(previous.row(), row_size_hint.height())
         if current.column() != previous.column():
             if previous.column() >= 0:
-                column_size_hint = variant_to_py(header_data(previous.column(),
-                                                             Qt.Horizontal,
-                                                             Qt.SizeHintRole))
+                column_size_hint = header_data(previous.column(),
+                                               Qt.Orientation.Horizontal,
+                                               Qt.ItemDataRole.SizeHintRole)
                 self.setColumnWidth(previous.column(),
                                     column_size_hint.width())
         # whenever we change the size, sectionsResized is called, but these
         # changes should not be saved.
         self._columns_changed = dict()
 
+        self.model().changeSelection([current.row(), current.row()], current.row(), current.column())
+
     def keyPressEvent(self, e):
         assert object_thread(self)
-        if self.hasFocus() and e.key() in (QtCore.Qt.Key_Enter,
-                                           QtCore.Qt.Key_Return):
+        if self.hasFocus() and e.key() in (QtCore.Qt.Key.Key_Enter,
+                                           QtCore.Qt.Key.Key_Return):
             self.keyboard_selection_signal.emit()
         else:
             super(TableWidget, self).keyPressEvent(e)
-
-
-class AdminTableWidget(QtWidgets.QWidget):
-    """
-    A table widget that inspects the admin class and changes the behavior
-    of the table as specified in the admin class
-    """
-
-    def __init__(self, parent=None):
-        super(AdminTableWidget, self).__init__(parent)
-        assert object_thread(self)
-        table_widget = TableWidget(parent=self)
-        table_widget.setObjectName('table_widget')
-        layout = QtWidgets.QVBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(table_widget)
-        self.setLayout(layout)
-
-    def __getattr__(self, name):
-        table_widget = self.findChild(QtWidgets.QWidget, 'table_widget')
-        if table_widget is not None:
-            return getattr(table_widget, name)
-
-    def setModel(self, model):
-        assert object_thread(self)
-        table_widget = self.findChild(QtWidgets.QWidget, 'table_widget')
-        if table_widget is not None:
-            table_widget.setModel(model)
-
-
-class RowsWidget(QtWidgets.QLabel):
-    """
-    Widget that is part of the header widget, displaying the number of rows in
-    the table view
-    """
-
-    def __init__(self, gui_context, parent=None):
-        QtWidgets.QLabel.__init__(self, parent)
-        assert object_thread(self)
-        self.gui_context = gui_context
-        self.setFont(self._number_of_rows_font)
-        self.selected_count = 0
-        self.set_item_view(gui_context.item_view)
-
-    @hybrid_property
-    def _number_of_rows_font(cls):
-        return QtWidgets.QApplication.font()
-
-    def set_item_view(self,item_view):
-        model = item_view.model()
-        model.layoutChanged.connect(self.update_rows)
-        model.modelReset.connect(self.update_rows)
-        model.rowsInserted.connect(self.update_rows)
-        model.rowsRemoved.connect(self.update_rows)
-        selection_model = item_view.selectionModel()
-        selection_model.selectionChanged.connect(self.selection_changed)
-        self.update_rows_from_model(model)
-
-    # Using QtModel because QItemSelection resides in QtGui in Qt4 and in
-    # QtCore in Qt5
-    @QtCore.qt_slot(QtModel.QItemSelection, QtModel.QItemSelection)
-    def selection_changed(self, selected, deselected):
-        def count(selection):
-            selection_count = 0
-            for i in range(len(selection)):
-                selection_range = selection[i]
-                rows_range = (selection_range.top(), selection_range.bottom())
-                selection_count += (rows_range[1] - rows_range[0]) + 1
-            return selection_count
-        self.selected_count += count(selected) - count(deselected)
-        self.update_rows_from_model(self.gui_context.view.get_model())
-
-    def update_rows_from_model(self, model):
-        rows = model.rowCount()
-        if self.selected_count == 0:
-            self.setText(_('(%i rows)') % rows)
-        else:
-            self.setText(_('(%i rows, %i selected)') % (rows,
-                                                        self.selected_count))
-
-    @QtCore.qt_slot()
-    def update_rows(self, *args):
-        assert object_thread(self)
-        model = self.sender()
-        self.update_rows_from_model(model)
-
-
-class HeaderWidget(QtWidgets.QWidget):
-    """
-    HeaderWidget for a tableview, containing the title, the search widget, and
-    the number of rows in the table
-    """
-
-    rows_widget = RowsWidget
-
-    def __init__(self, gui_context, parent):
-        QtWidgets.QWidget.__init__(self, parent)
-        assert object_thread(self)
-        self.gui_context = gui_context
-        layout = QtWidgets.QVBoxLayout()
-        widget_layout = QtWidgets.QHBoxLayout()
-        actions_toolbar = QtWidgets.QToolBar()
-        actions_toolbar.setObjectName('actions_toolbar')
-        actions_toolbar.setIconSize(QtCore.QSize(16, 16))
-        widget_layout.addWidget(actions_toolbar)
-        number_of_rows = self.rows_widget(gui_context, parent=self)
-        number_of_rows.setObjectName('number_of_rows')
-        widget_layout.addWidget(number_of_rows)
-        layout.addLayout(widget_layout, 0)
-        self.setLayout(layout)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-
-
-class TableView(AbstractView):
-    """
-    :param gui_context: a :class:`camelot.admin.action.application_action.ApplicationActionGuiContext` object.
-    :param admin: an :class:`camelot.admin.entity_admin.EntityAdmin` object
-    :param proxy: a class implementing :class:`QtCore.QAbstractTableModel` that
-      will be used as a model for the table view.
-    :param parent: a :class:`QtWidgets.QWidget` object
-
-    A generic tableview widget that puts together some other widgets. The
-    behaviour of this class and the resulting interface can be tuned by
-    specifying specific class attributes which define the underlying widgets
-    used ::
-
-    class MovieRentalTableView(TableView):
-      title_format = 'Grand overview of recent movie rentals'
-
-    The attributes that can be specified are :
-
-    .. attribute:: header_widget
-
-    The widget class to be used as a header in the table view::
-
-    header_widget = HeaderWidget
-
-    .. attribute:: table_widget
-
-    The widget class used to display a table within the table view ::
-
-    table_widget = TableWidget
-
-    .. attribute:: title_format
-
-    A string used to format the title of the view ::
-
-    title_format = '%(verbose_name_plural)s'
-
-    - emits the row_selected signal when a row has been selected
-    """
-
-    header_widget = HeaderWidget
-    AdminTableWidget = AdminTableWidget
-
-    def __init__(
-        self, gui_context, admin_route, parent=None, list_action=None
-        ):
-        super(TableView, self).__init__(parent)
-        assert object_thread(self)
-        assert isinstance(admin_route, tuple)
-        self.admin_route = admin_route
-        self.application_gui_context = gui_context
-        self.gui_context = gui_context
-        widget_layout = QtWidgets.QVBoxLayout()
-        widget_layout.setSpacing(0)
-        widget_layout.setContentsMargins(0, 0, 0, 0)
-        splitter = QtWidgets.QSplitter(self)
-        splitter.setObjectName('splitter')
-        widget_layout.addWidget(splitter)
-        table_widget = QtWidgets.QWidget(self)
-        # make sure the table itself takes expands to fill the available
-        # width of the view
-        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                            QtWidgets.QSizePolicy.Expanding)
-        size_policy.setHorizontalStretch(1)
-        table_widget.setSizePolicy(size_policy)
-        filters_widget = QtWidgets.QWidget(self)
-        self.table_layout = QtWidgets.QVBoxLayout()
-        self.table_layout.setSpacing(0)
-        self.table_layout.setContentsMargins(0, 0, 0, 0)
-        self.table = None
-        self.filters_layout = QtWidgets.QVBoxLayout()
-        self.filters_layout.setSpacing(0)
-        self.filters_layout.setContentsMargins(0, 0, 0, 0)
-        self.actions = None
-        table_widget.setLayout(self.table_layout)
-        filters_widget.setLayout(self.filters_layout)
-        splitter = self.findChild(QtWidgets.QWidget, 'splitter')
-        splitter.addWidget(table_widget)
-        splitter.addWidget(filters_widget)
-        self.setLayout(widget_layout)
-        self.widget_layout = widget_layout
-        self.list_action = list_action
-
-    def close_view(self, accept):
-        self.close_clicked_signal.emit()
-
-    @QtCore.qt_slot(int)
-    def sectionClicked(self, section):
-        """emits a row_selected signal"""
-        assert object_thread(self)
-        #
-        # close the table editor before opening a form or such
-        #
-        # Qt seems to crash in certain cases when the editor is open and the
-        # underlying model is changed
-        #
-        if self.table:
-            self.table.close_editor()
-        if self.list_action is not None:
-            self.list_action.gui_run(self.gui_context)
-
-    def get_admin(self):
-        return self.admin
-
-    def get_model(self):
-        return self.table.model()
-
-    def set_value(self, value):
-        model = self.get_model()
-        if model is not None:
-            model.set_value(value)
-
-    @QtCore.qt_slot(object)
-    def set_admin(self):
-        """
-        Switch to a different subclass, where admin is the admin object of the
-        subclass
-        """
-        assert object_thread(self)
-        logger.debug('set_admin called')
-        if self.table:
-            self.table_layout.removeWidget(self.table)
-            self.table.deleteLater()
-            if self.table.model() is not None:
-                self.table.model().deleteLater()
-        splitter = self.findChild(QtWidgets.QWidget, 'splitter')
-        self.table = self.AdminTableWidget(splitter)
-        self.table.setObjectName('AdminTableWidget')
-        new_model = CollectionProxy(self.admin_route)
-        self.table.setModel(new_model)
-        self.table.verticalHeader().sectionClicked.connect(self.sectionClicked)
-        self.table.keyboard_selection_signal.connect(
-            self.on_keyboard_selection_signal)
-        self.table_layout.insertWidget(self.table_layout.count(), self.table)
-        self.gui_context = self.application_gui_context.copy(
-            ListActionGuiContext)
-        self.gui_context.view = self
-        self.gui_context.item_view = self.table
-        self.gui_context.admin_route = self.admin_route
-        header = self.findChild(QtWidgets.QWidget, 'header_widget')
-        if header is not None:
-            header.deleteLater()
-        header = self.header_widget(self.gui_context, self)
-        header.setObjectName('header_widget')
-        self.widget_layout.insertWidget(0, header)
-        self.setFocusProxy(header)
-
-    @QtCore.qt_slot()
-    def on_keyboard_selection_signal(self):
-        assert object_thread(self)
-        self.sectionClicked(self.table.currentIndex().row())
-
-    def closeEvent(self, event):
-        """reimplements close event"""
-        assert object_thread(self)
-        logger.debug('tableview closed')
-        event.accept()
-
-    @QtCore.qt_slot()
-    def refresh(self):
-        """Refresh the whole view"""
-        assert object_thread(self)
-        model = self.get_model()
-        if model is not None:
-            model.refresh()
-
-    def set_columns(self, columns):
-        delegate = DelegateManager(columns, parent=self)
-        table = self.table
-        table.setItemDelegate(delegate)
-
-    def set_filters(self, filters):
-        logger.debug('setting filters for tableview')
-        filters_widget = self.findChild(ActionsBox, 'filters')
-        while True:
-            item = self.filters_layout.takeAt(0)
-            if item is None:
-                break
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-        if filters:
-            filters_widget = ActionsBox(parent=self)
-            filters_widget.setObjectName('filters')
-            self.filters_layout.addWidget(filters_widget)
-            for action in filters:
-                action_widget = self.render_action(action, filters_widget)
-                filters_widget.layout().addWidget(action_widget)
-        self.filters_layout.addStretch(1)
-
-    def set_list_actions(self, actions):
-        """sets filters for the tableview"""
-        assert object_thread(self)
-        actions_widget = self.findChild(ActionsBox, 'actions')
-        if actions:
-            actions_widget = ActionsBox(parent=self)
-            actions_widget.setObjectName('actions')
-            for action in actions:
-                actions_widget.layout().addWidget(
-                    self.render_action(action, actions_widget)
-                )
-            self.filters_layout.addWidget(actions_widget)
-
-    @QtCore.qt_slot( object, object )
-    def set_toolbar_actions( self, toolbar_area, toolbar_actions ):
-        """Set the toolbar for a specific area
-        :param toolbar_area: the area on which to put the toolbar, from
-            :class:`Qt.LeftToolBarArea` through :class:`Qt.BottomToolBarArea`
-        :param toolbar_actions: a list of :class:`camelot.admin.action..base.Action` objects,
-            as returned by the :meth:`camelot.admin.application_admin.ApplicationAdmin.get_toolbar_actions`
-            method.
-        """
-        if toolbar_actions != None:
-            toolbar = self.findChild(QtWidgets.QToolBar, 'actions_toolbar')
-            assert toolbar
-            for action in toolbar_actions:
-                rendered = self.render_action(action, toolbar)
-                # both QWidgets and QActions can be put in a toolbar
-                if isinstance(rendered, QtWidgets.QWidget):
-                    toolbar.addWidget(rendered)
-                elif isinstance(rendered, QtWidgets.QAction):
-                    toolbar.addAction( rendered )
-
-    @QtCore.qt_slot(bool)
-    def action_triggered(self, _checked = False):
-        """Execute an action that was triggered somewhere in the main window,
-        such as the toolbar or the main menu"""
-        action_action = self.sender()
-        action_action.action.gui_run(self.gui_context)
-
-    @QtCore.qt_slot()
-    def focusTable(self):
-        assert object_thread(self)
-        if self.table and self.table.model().rowCount() > 0:
-            self.table.setFocus()
-            self.table.selectRow(0)

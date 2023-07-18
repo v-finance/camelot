@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtGui, QtCore, QtWidgets
 from camelot.view.art import ColorScheme
@@ -43,24 +43,24 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
     """
     
     editingFinished = QtCore.qt_signal()
+    actionTriggered = QtCore.qt_signal(list, object)
     
     def __init__( self, 
                   parent = None,
-                  field_name = 'note',
-                  **kwargs ):
+                  field_name = 'note'):
         QtWidgets.QLabel.__init__( self, parent )
         AbstractCustomEditor.__init__( self )
         self.setObjectName( field_name )
-        self.setTextFormat( QtCore.Qt.RichText )
-        self.setSizePolicy( QtWidgets.QSizePolicy.Expanding,
-                            QtWidgets.QSizePolicy.Minimum )
+        self.setTextFormat( QtCore.Qt.TextFormat.RichText )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding,
+                            QtWidgets.QSizePolicy.Policy.Minimum )
         self.setContentsMargins(0, 0, 0, 0)
-        self.setFrameStyle(QtWidgets.QFrame.Box)
+        self.setFrameStyle(QtWidgets.QFrame.Shape.Box)
         self.setLineWidth(2)
         palette = self.palette()
         palette.setColor(self.backgroundRole(), color)
-        palette.setColor(QtGui.QPalette.Shadow, QtGui.QColor('black'))
-        palette.setColor(QtGui.QPalette.Dark, QtGui.QColor('black'))
+        palette.setColor(QtGui.QPalette.ColorRole.Shadow, QtGui.QColor('black'))
+        palette.setColor(QtGui.QPalette.ColorRole.Dark, QtGui.QColor('black'))
         self.setPalette(palette)
         self.setAutoFillBackground(True)
 
@@ -68,10 +68,7 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
         value = super( NoteEditor, self ).set_value( value )
         self.setVisible( value != None )
         if value:
-            self.setText( six.text_type( value ) )
-    
-    def set_field_attributes(self, **kwargs):
-        kwargs['background_color'] = kwargs.get('background_color') or color
-        super(NoteEditor, self).set_field_attributes(**kwargs)
+            self.setText( str( value ) )
 
-
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color or color)

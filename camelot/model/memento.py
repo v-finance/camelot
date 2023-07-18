@@ -38,7 +38,7 @@ the custom `ApplicationAdmin`.
 
 import datetime
 
-import six
+
 
 from sqlalchemy import schema, orm
 from sqlalchemy.types import Unicode, Integer, DateTime, PickleType
@@ -48,7 +48,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.not_editable_admin import not_editable_admin
 from camelot.core.exception import UserException
-from camelot.core.orm import Entity, ManyToOne
+from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import delegates
 from camelot.types import PrimaryKey
@@ -62,7 +62,7 @@ class PreviousAttribute( object ):
 
     def __init__( self, attribute, previous_value ):
         self.attribute = attribute
-        self.previous_value = six.text_type( previous_value )
+        self.previous_value = str( previous_value )
         
     class Admin( ObjectAdmin ):
         list_display = ['attribute', 'previous_value']
@@ -77,20 +77,23 @@ class Memento( Entity ):
     model = schema.Column( Unicode( 256 ), index = True, nullable = False )
     primary_key = schema.Column(PrimaryKey(), index=True, nullable=False)
     creation_date = schema.Column( DateTime(), default = datetime.datetime.now )
-    authentication = ManyToOne( AuthenticationMechanism,
-                                required = True,
-                                ondelete = 'restrict',
-                                onupdate = 'cascade' )
+    authentication_id = schema.Column(Integer(), schema.ForeignKey(AuthenticationMechanism.id, ondelete='restrict', onupdate='cascade'),
+                                      nullable=False, index=True)
+    authentication = orm.relationship(AuthenticationMechanism)
     memento_type = schema.Column( Integer, 
                                   nullable = False,
                                   index = True )    
     previous_attributes = orm.deferred( schema.Column( PickleType() ) )
+
+    __entity_args__ = {
+        'editable': False
+    }
     
     @property
     def previous( self ):
         previous = self.previous_attributes
         if previous:
-            return [PreviousAttribute(k,v) for k,v in six.iteritems(previous)]
+            return [PreviousAttribute(k,v) for k,v in previous.items()]
         return []
 
     def __str__(self):
@@ -98,28 +101,28 @@ class Memento( Entity ):
             return self.model
         return ''
 
-    class Admin( EntityAdmin ):
-        verbose_name = _( 'History' )
-        verbose_name_plural = _( 'History' )
-        list_display = ['creation_date', 'authentication', 'model',
-                        'primary_key', ]
-        form_display = list_display + ['previous']
-        list_filter = [list_filter.ComboBoxFilter('model')]
-        field_attributes = {'previous':{'target':PreviousAttribute,
-                                        'delegate':delegates.One2ManyDelegate,
-                                        'actions': [],
-                                        'python_type':list}
-                            }
+class MementoAdmin( EntityAdmin ):
 
-        def add(self, obj):
-            raise UserException(_('Not Authorized'))
+    verbose_name = _( 'History' )
+    verbose_name_plural = _( 'History' )
 
-        def delete(self, obj):
-            raise UserException(_('Not Authorized'))
+    list_display = ['creation_date', 'authentication', 'model',
+                    'primary_key', ]
+    form_display = list_display + ['previous']
+    list_filter = [list_filter.ComboBoxFilter(Memento.model)]
+    field_attributes = {'previous':{'target':PreviousAttribute,
+                                    'delegate':delegates.One2ManyDelegate,
+                                    'actions': [],
+                                    'python_type':list}
+                        }
 
-        def copy(self, obj, new_obj=None):
-            raise UserException(_('Not Authorized'))
+    def add(self, obj):
+        raise UserException(_('Not Authorized'))
 
-    Admin = not_editable_admin( Admin )
+    def delete(self, obj):
+        raise UserException(_('Not Authorized'))
 
+    def copy(self, obj, new_obj=None):
+        raise UserException(_('Not Authorized'))
 
+Memento.Admin = not_editable_admin(MementoAdmin)

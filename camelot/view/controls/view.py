@@ -30,14 +30,81 @@
 """Functionality common to TableViews and FormViews"""
 
 import itertools
+import logging
 
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
-from .action_widget import ActionToolbutton, ActionPushButton, ActionLabel
-from .filter_widget import ComboBoxFilterWidget, GroupBoxFilterWidget
-from .search import SimpleSearchControl
+from ..action_runner import action_runner
+from .action_widget import AbstractActionWidget
 
-class AbstractView(QtWidgets.QWidget):
+LOGGER = logging.getLogger(__name__)
+
+class ViewWithActionsMixin(object):
+
+    _rendered_action_counter = itertools.count()
+
+    @classmethod
+    def _register_rendered_action(cls, qobject):
+        next_rendered_action = cls._rendered_action_counter.__next__()
+        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
+        qobject.setObjectName(rendered_action_name)
+        return rendered_action_name
+
+    def render_action(self, render_hint, action_route, gui_context, parent):
+        if render_hint in (RenderHint.TOOL_BUTTON, RenderHint.CLOSE_BUTTON):
+            qobject = QtWidgets.QToolButton(parent)
+            if render_hint == RenderHint.TOOL_BUTTON:
+                qobject.clicked.connect(self.button_clicked)
+            else:
+                qobject.clicked.connect(self.validate_close)
+        elif render_hint == RenderHint.COMBO_BOX:
+            qobject = QtWidgets.QComboBox(parent)
+            qobject.activated.connect(self.combobox_activated)
+        elif render_hint == RenderHint.PUSH_BUTTON:
+            qobject = QtWidgets.QPushButton(parent)
+            qobject.clicked.connect(self.button_clicked)
+        elif render_hint == RenderHint.LABEL:
+            qobject = QtWidgets.QLabel(parent)
+        else:
+            raise Exception('Unhandled render hint {} for {}'.format(
+                render_hint, action_route
+            ))
+        qobject.setProperty('action_route', action_route)
+        rendered_action_name = self._register_rendered_action(qobject)
+        gui_context.action_routes[action_route] = rendered_action_name
+        return qobject
+
+    def set_action_state(self, parent, action_route, action_state):
+        for action_widget in parent.findChildren(QtWidgets.QPushButton):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_pushbutton_state(
+                    action_widget, action_state, parent, self.menu_triggered
+                )
+                return
+        for action_widget in parent.findChildren(QtWidgets.QToolButton):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_toolbutton_state(
+                    action_widget, action_state, self.menu_triggered
+                )
+                return
+        for action_widget in parent.findChildren(QtWidgets.QLabel):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_label_state(action_widget, action_state)
+                return
+        for action_widget in parent.findChildren(QtWidgets.QComboBox):
+            if action_widget.property('action_route') == action_route:
+                AbstractActionWidget.set_combobox_state(action_widget, action_state)
+                return
+        LOGGER.warn('No widget found with action route {}'.format(action_route))
+
+    def run_action(self, action_widget, gui_context_name, model_context_name, mode):
+        action_name = tuple(action_widget.property('action_route') or [])
+        if len(action_name):
+            action_runner.run_action(
+                action_name, gui_context_name, model_context_name, mode
+            )
+
+class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
     """A string used to format the title of the view ::
     title_format = 'Movie rental overview'
 
@@ -48,14 +115,16 @@ class AbstractView(QtWidgets.QWidget):
     header_widget = None
     """
 
-    _rendered_action_counter = itertools.count()
-
     title_format = ''
     header_widget = None
 
     title_changed_signal = QtCore.qt_signal(str)
     icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
     close_clicked_signal = QtCore.qt_signal()
+
+    @property
+    def view(self):
+        return self
 
     @QtCore.qt_slot()
     def validate_close(self):
@@ -76,32 +145,3 @@ class AbstractView(QtWidgets.QWidget):
     @QtCore.qt_slot(object)
     def change_icon(self, new_icon):
         self.icon_changed_signal.emit(new_icon)
-
-
-    @classmethod
-    def _register_rendered_action(cls, qobject):
-        next_rendered_action = cls._rendered_action_counter.__next__()
-        rendered_action_name = 'rendered_action_{}'.format(next_rendered_action)
-        qobject.setObjectName(rendered_action_name)
-        return rendered_action_name
-
-    def render_action(self, action, parent):
-        if action.render_hint == RenderHint.TOOL_BUTTON:
-            qobject = ActionToolbutton(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.COMBO_BOX:
-            qobject = ComboBoxFilterWidget(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.GROUP_BOX:
-            qobject = GroupBoxFilterWidget(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.SEARCH_BUTTON:
-            qobject = SimpleSearchControl(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.PUSH_BUTTON:
-            qobject = ActionPushButton(action, self.gui_context, parent)
-        elif action.render_hint == RenderHint.LABEL:
-            qobject = ActionLabel(action, self.gui_context, parent)
-        else:
-            raise Exception('Unhandled render hint {} for {}'.format(
-                action.render_hint, type(action)
-            ))
-        rendered_action_name = self._register_rendered_action(qobject)
-        self.gui_context.action_routes[action] = rendered_action_name
-        return qobject

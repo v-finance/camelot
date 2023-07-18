@@ -54,22 +54,21 @@ statuses as needed.
 """
 import datetime
 
-import six
-
-from sqlalchemy import orm, sql, schema, types, inspection
+from sqlalchemy import inspection, orm, schema, sql, types, util
 from sqlalchemy.ext import hybrid
+from sqlalchemy.ext.declarative import declared_attr
 
-from camelot.admin.action import list_filter
-from camelot.model.authentication import end_of_times
-from camelot.admin.action import Action
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.types import Enumeration, PrimaryKey
-from camelot.core.orm.properties import EntityBuilder
-from camelot.core.orm import Entity
-from camelot.core.item_model.proxy import AbstractModelFilter
-from camelot.core.exception import UserException
-from camelot.core.utils import ugettext, ugettext_lazy as _
-from camelot.view import action_steps
+from ..admin.admin_route import register_list_actions
+from ..admin.action import Action, list_filter
+from ..admin.entity_admin import EntityAdmin
+from ..core.exception import UserException
+from ..core.item_model.proxy import AbstractModelFilter
+from ..core.orm import Entity
+from ..core.utils import ugettext, ugettext_lazy as _
+from ..model.authentication import end_of_times
+from ..types import Enumeration, PrimaryKey
+from ..view import action_steps
+
 
 class TypeMixin(object):
     """Mixin class to describe the different types of objects
@@ -123,7 +122,7 @@ class StatusHistory( object ):
 
 
     def __str__( self ):
-        return six.text_type(self.classified_by or u'')
+        return str(self.classified_by or u'')
 
     def sort_key(self):
         """Key to be used to sort the status histories to get a single
@@ -160,128 +159,53 @@ class StatusHistoryAdmin( EntityAdmin ):
         if obj.status_for is not None:
             yield obj.status_for
     
-    def get_related_toolbar_actions(self, toolbar_area, direction):
+    @register_list_actions('_admin_route')
+    def get_related_toolbar_actions(self, direction):
         return []
 
-class Status( EntityBuilder ):
-    """EntityBuilder that adds a related status table(s) to an `Entity`.
-
-    These additional entities are created :
-
-     * a `StatusType` this is the list of possible statuses an entity can have.
-       If the `enumeration` parameter is used at construction, no such entity is
-       created, and the list of possible statuses is limited to this enumeration.
-
-     * a `StatusHistory` is the history of statusses an object has had.  The Status
-       History refers to which `StatusType` was valid at a certain point in time.
-
-    :param enumeration: if this parameter is used, no `StatusType` entity is created, 
-        but the status type is described by the enumeration.  This parameter should
-    be a list of all possible statuses the entity can have ::
-
-    enumeration = [(1, 'draft'), (2,'ready')]
-
-    :param status_history_table: the tablename to use to store the status
-        history
-
-    :param status_type_table: the tablename to use to store the status types
+class WithStatus(object):
     """
+    creates related Table/class: ls.__name__ + 'StatusHistory', this table has a column classified_by, that holds the status types.
+    this table has a relationship with cls. The table has a primary key column: status_for_id, and the relationship is stored in status for.
+    This relationship also defines a backref(on cls) named 'status'
 
-    def __init__( self, enumeration = None, 
-                  status_history_table = None, status_type_table=None ):
-        super( Status, self ).__init__()
-        self.property = None
-        self.enumeration = enumeration
-        self.status_history_table = status_history_table
-        self.status_type_table = status_type_table
+    cls var 'status_types': Required, sets the status types for the classified_by column
+    cls var  'status_history_table': Optional, sets the tablename for the history_table
+    """
+    
+    status_types = None
+    status_history_table = None
 
-    def attach( self, entity, name ):
-        super( Status, self ).attach( entity, name )
-        assert entity != Entity
+    @declared_attr
+    def _status_history(cls):
+        assert isinstance(cls.status_types, (util.OrderedProperties, list)), "This class '{}', should define its status_types enumeration types.".format(cls.__name__)
+        assert hasattr(cls, 'id'), "This class '{}' hasn't got an id set. Make sure the id is defined and the name of the id is 'id'".format(cls.__name__)
+        status_history_table = cls.__name__.lower() + '_status' if cls.status_history_table is None else cls.status_history_table
+        status_history_admin = type(cls.__name__ + 'StatusHistoryAdmin', (StatusHistoryAdmin,),
+                                    {'verbose_name': _(cls.__name__ + ' Status'),
+                                     'verbose_name_plural': _(cls.__name__ + ' Statuses')})
+        # the status types need to be a list of tuples (with strings) so we convert the OrderedProperties
+        status_types = cls.status_types
+        if isinstance(status_types, util.OrderedProperties):
+            status_types = [(member.id, name) for name, member in cls.status_types.__members__.items()]
+        status_history = type(cls.__name__ + 'StatusHistory', (Entity, StatusHistory),
+                              {'__tablename__': status_history_table,
+                               'classified_by': schema.Column(Enumeration(status_types), nullable=False, index=True ),
+                               'Admin': status_history_admin})
 
-        if self.status_history_table==None:
-            self.status_history_table = entity.__name__.lower() + '_status'
-        if self.status_type_table==None:
-            self.status_type_table = entity.__name__.lower() + '_status_type'
+        if hasattr(cls, '__table_args__'):
+            table_args = cls.__table_args__
+            if not isinstance(cls.__table_args__, dict):
+                table_args = cls.__table_args__[-1]
+            table_info = table_args.get('info')
+            status_history.__table__.info = table_info.copy()
+    
+        status_history.status_for_id = schema.Column(PrimaryKey(), schema.ForeignKey(cls.id, ondelete='cascade', onupdate='cascade'),
+                                                     nullable=False, index=True)
 
-        status_history_admin = type( entity.__name__ + 'StatusHistoryAdmin',
-                                     ( StatusHistoryAdmin, ),
-                                     { 'verbose_name':_(entity.__name__ + ' Status'),
-                                       'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
+        status_history.status_for = orm.relationship(cls, backref=orm.backref('status', cascade='all, delete, delete-orphan'), enable_typechecks=False)
+        return status_history
 
-        # use `type` instead of `class`, to give status type and history
-        # classes a specific name, so these classes can be used whithin the
-        # memento and the fixture module
-        if self.enumeration is None:
-
-            status_type_admin = type( entity.__name__ + 'StatusType',
-                                      ( StatusTypeAdmin, ),
-                                      { 'verbose_name':_(entity.__name__ + ' Status'),
-                                        'verbose_name_plural':_(entity.__name__ + ' Statuses'), } )
-
-            status_type = type( entity.__name__ + 'StatusType', 
-                                (StatusTypeMixin, entity._descriptor.get_top_entity_base(),),
-                                { '__tablename__':self.status_type_table,
-                                  'Admin':status_type_admin } )
-
-            foreign_key = schema.ForeignKey( status_type.id,
-                                             ondelete = 'cascade', 
-                                             onupdate = 'cascade')
-
-            status_history = type( entity.__name__ + 'StatusHistory',
-                                   ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
-                                   {'__tablename__':self.status_history_table,
-                                    'classified_by_id':schema.Column(
-                                        PrimaryKey(),
-                                        foreign_key,
-                                        nullable=False,
-                                        index=True),
-                                    'classified_by':orm.relationship( status_type ),
-                                    'Admin':status_history_admin, } )
-        else:
-            status_type = None
-            status_history = type( entity.__name__ + 'StatusHistory',
-                                   ( StatusHistory, entity._descriptor.get_top_entity_base(), ),
-                                   {'__tablename__':self.status_history_table,
-                                    'classified_by':schema.Column(
-                                        Enumeration( self.enumeration ), 
-                                        nullable=False,
-                                        index=True
-                                        ),
-                                    'Admin':status_history_admin,} )
-            setattr( entity, '_%s_enumeration'%name, self.enumeration )
-
-        self.status_type = status_type
-        self.status_history = status_history
-        setattr( entity, '_%s_type'%name, status_type )
-        setattr( entity, '_%s_history'%name, self.status_history )
-
-    def create_tables(self):
-        self.status_history.__table__.schema = self.entity.__table__.schema
-        self.status_history.__table__.info = self.entity.__table__.info.copy()
-        if self.status_type is not None:
-            self.status_type.__table__.schema = self.entity.__table__.schema
-            self.status_type.__table__.info = self.entity.__table__.info.copy()
-
-    def create_non_pk_cols( self ):
-        table = orm.class_mapper( self.entity ).local_table
-        for col in table.primary_key.columns:
-            col_name = u'status_for_%s'%col.name
-            if not hasattr( self.status_history, col_name ):
-                constraint = schema.ForeignKey(col,
-                                               ondelete = 'cascade', 
-                                               onupdate = 'cascade')
-                column = schema.Column(PrimaryKey(),
-                                       constraint,
-                                       nullable=False,
-                                       index=True)
-                setattr( self.status_history, col_name, column )
-
-    def create_properties( self ):
-        if not self.property:
-            backref = orm.backref(self.name, cascade='all, delete, delete-orphan')
-            self.property = orm.relationship(self.entity, backref = backref, enable_typechecks=False)
-            self.status_history.status_for = self.property
 
 class StatusMixin( object ):
     """This class adds additional methods to classes that have a status.
@@ -386,6 +310,8 @@ class ChangeStatus( Action ):
     this might slow down list views too much.
     """
 
+    name = 'change_status'
+
     def __init__( self, new_status, verbose_name = None ):
         self.verbose_name = verbose_name or _(new_status)
         self.new_status = new_status
@@ -404,7 +330,7 @@ class ChangeStatus( Action ):
         """
         yield action_steps.UpdateProgress(text=_('Changed status'))
 
-    def model_run(self, model_context, new_status=None):
+    def model_run(self, model_context, mode, new_status=None):
         """
         :param new_status: overrule the new_status defined at the class level,
             this can be used when overwwriting the `model_run` method in a
@@ -417,27 +343,31 @@ class ChangeStatus( Action ):
                 raise UserException(message)
         with model_context.session.begin():
             for obj in model_context.get_selection():
+                subsystem_obj = model_context.admin.get_subsystem_object(obj)
                 # the number of status changes as seen in the UI
-                number_of_statuses = len(obj.status)
-                history_type = obj._status_history
+                number_of_statuses = len(subsystem_obj.status)
+                history_type = subsystem_obj._status_history
                 history = model_context.session.query(history_type)
-                history = history.filter(history_type.status_for==obj)
+                history = history.filter(history_type.status_for==subsystem_obj)
                 history = history.with_for_update(nowait=True)
                 history_count = sum(1 for _h in history.yield_per(10))
                 if number_of_statuses != history_count:
-                    if obj not in model_context.session.new:
-                        model_context.session.expire(obj)
-                    yield action_steps.UpdateObjects([obj])
+                    if subsystem_obj not in model_context.session.new:
+                        model_context.session.expire(subsystem_obj)
+                    yield action_steps.UpdateObjects([subsystem_obj])
                     raise UserException(_('Concurrent status change'),
                                         detail=_('Another user changed the status'),
                                         resolution=_('Try again if needed'))
-                if obj.current_status != new_status:
+                if subsystem_obj.current_status != new_status:
                     for step in self.before_status_change(model_context, obj):
                         yield step
-                    obj.change_status(new_status)
+                    subsystem_obj.change_status(new_status)
                     for step in self.after_status_change(model_context, obj):
                         yield step
-                    yield action_steps.UpdateObjects([obj])
+                    objects_to_update = [subsystem_obj]
+                    if obj != subsystem_obj:
+                        objects_to_update.append(obj)
+                    yield action_steps.UpdateObjects(objects_to_update)
             yield action_steps.FlushSession(model_context.session)
 
 class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
@@ -447,18 +377,29 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
     such, needs not to query the distinct values used in the database to
     build up it's widget.
     
-    :param attribute: the attribute that holds the status
+    :param entity_with_status: an entity class that inherits from ´WithStatus' and thus holds the status to filter on.
+    :param joins: in case of a related status filter, the joins required to get from the status class back to the target entity.
     """
 
-    def decorate_query(self, query, values):
-        if list_filter.All in values:
-            return query
-        if (len(values) == 0) and (self.exclusive==False):
-            return query.filter(self.column==None)
-        query = query.outerjoin(*self.joins)
-        where_clauses = [self.column==v for v in values]
-        query = query.filter(sql.or_(*where_clauses))
-        return query
+    name = 'status_filter'
+    filter_strategy = list_filter.RelatedFilter
+
+    def __init__(self, entity_with_status, joins=[], default=list_filter.All, verbose_name=None, exclusive=True):
+        assert issubclass(entity_with_status, WithStatus)
+        attribute = entity_with_status._status_history.classified_by
+        self.joins = joins
+        super().__init__(attribute, default=default, verbose_name=verbose_name, exclusive=exclusive)
+
+    def get_strategy(self, attribute):
+        history_type = attribute.class_
+        current_date = sql.functions.current_date()
+        return self.filter_strategy(
+            list_filter.ChoicesFilter(attribute),
+            joins=[history_type.status_for] + self.joins,
+            where=sql.and_(
+                history_type.status_from_date <= current_date,
+                history_type.status_for_id == history_type.status_for.prop.entity.class_.id,
+                history_type.status_thru_date >= current_date))
 
     def filter(self, it, value):
         """
@@ -476,15 +417,11 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
                         if history.classified_by in value:
                             yield obj
 
-    def get_entity_id(self, model_context):
-        return model_context.admin.entity.id
-
     def get_state(self, model_context):
         state = Action.get_state(self, model_context)
-        admin = model_context.admin
-        self.attributes = admin.get_field_attributes(self.attribute)
-        history_type = self.attributes['target']
-        history_admin = admin.get_related_admin(history_type)
+        attributes = model_context.admin.get_field_attributes(self.attribute.key)
+        history_type = self.attribute.class_
+        history_admin = model_context.admin.get_related_admin(history_type)
         classification_fa = history_admin.get_field_attributes('classified_by')
 
         target = classification_fa.get('target')
@@ -495,13 +432,6 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
 
         state.modes = []
         modes = []
-        current_date = sql.functions.current_date()
-        self.joins = (history_type, sql.and_(history_type.status_from_date <= current_date,
-                                             history_type.status_for_id == self.get_entity_id(model_context),
-                                             history_type.status_thru_date >= current_date)
-                      )
-        self.column = getattr(history_type, 'classified_by')
-
         for value, name in choices:
             mode = list_filter.FilterMode(
                 value=value,
@@ -522,137 +452,5 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
             modes.append(none_mode)
 
         state.modes = modes
-        state.verbose_name = self.attributes['name']
+        state.verbose_name = attributes['name']
         return state
-
-class Type(EntityBuilder):
-    """EntityBuilder that adds a related type table to an `Entity`.
-
-    An additional `Type` entity is created, this is the list of possible types an
-    entity can have.
-
-    :param type_table: the tablename used to store the `Type` entity
-
-    :param nullable: if the underlying column is nullable
-    
-    :param type_verbose_name: the verbose name of the `Type Entity`
-    
-    :param type_verbose_name_plural: the verbose plural name of the `Type Entity`
-    """
-
-    def __init__(self,
-                 type_table=None,
-                 nullable=False,
-                 type_verbose_name=None,
-                 type_verbose_name_plural=None,
-                 ):
-        super(Type, self ).__init__()
-        self.property = None
-        self.type_table = type_table
-        self.nullable = nullable
-        self.type_verbose_name = type_verbose_name
-        self.type_verbose_name_plural = type_verbose_name_plural
-
-    def attach( self, entity, name ):
-        super(Type, self ).attach( entity, name )
-        assert entity != Entity
-
-        if self.type_table is None:
-            self.type_table = entity.__tablename__ + '_type'
-
-        # use `type` instead of `class`, to give status type and history
-        # classes a specific name, so these classes can be used whithin the
-        # memento and the fixture module
-
-        type_verbose_name = self.type_verbose_name or _(entity.__name__ + ' Type')
-        type_verbose_name_plural = self.type_verbose_name_plural or _(entity.__name__ + ' Type')
-        
-        type_admin = type( entity.__name__ + 'TypeAdmin',
-                           ( TypeAdmin, ),
-                           { 'verbose_name':  type_verbose_name,
-                             'verbose_name_plural': type_verbose_name_plural, }
-                           )
-
-        type_entity = type( entity.__name__ + 'Type', 
-                            (TypeMixin, entity._descriptor.get_top_entity_base(),),
-                            { '__tablename__':self.type_table,
-                              'Admin':type_admin }
-                            )
-
-        self.type_entity = type_entity
-        setattr(entity, '_%s_type'%name, self.type_entity)
-
-    def create_non_pk_cols( self ):
-        table = orm.class_mapper(self.type_entity).local_table
-        for col in table.primary_key.columns:
-            col_name = u'%s_%s'%(self.name, col.name)
-            if not hasattr(self.entity, col_name):
-                constraint = schema.ForeignKey(col,
-                                               ondelete = 'restrict', 
-                                               onupdate = 'cascade')
-                column = schema.Column(PrimaryKey(),
-                                       constraint,
-                                       index=True,
-                                       nullable=self.nullable)
-                setattr(self.entity, col_name, column )
-
-    def create_properties( self ):
-        if not self.property:
-            self.property = orm.relationship(self.type_entity)
-            setattr(self.entity, self.name, self.property)
-
-
-class TypeFilter(list_filter.GroupBoxFilter):
-    """
-    Filter to be used in a table view to enable filtering on the type
-    of an object.  This filter will display all available types, and as
-    such, needs not to query the distinct values used in the database to
-    build up it's widget.
-    
-    :param attribute: the attribute that holds the type
-    """
-
-    def decorate_query(self, query, values):
-        if list_filter.All in values:
-            return query
-        if (len(values) == 0) and (self.exclusive==False):
-            return query.filter(self.column==None)
-        where_clauses = [self.column==v for v in values]
-        query = query.filter(sql.or_(*where_clauses))
-        return query
-
-    def get_state(self, model_context):
-        state = Action.get_state(self, model_context)
-        admin = model_context.admin
-        self.attributes = admin.get_field_attributes(self.attribute)
-        type_type = self.attributes['target']
-
-        choices = [(t, t.code) for t in type_type.query.all()]
-
-        state.modes = []
-        modes = []
-        self.column = getattr(admin.entity, self.attribute)
-
-        for value, name in choices:
-            mode = list_filter.FilterMode(
-                value=value,
-                verbose_name=name,
-                checked=(self.exclusive==False),
-            )
-            modes.append(mode)
-
-        if self.exclusive:
-            all_mode = list_filter.FilterMode(value=list_filter.All,
-                                              verbose_name=ugettext('All'),
-                                              checked=(self.default==list_filter.All))
-            modes.insert(0, all_mode)
-        else:
-            none_mode = list_filter.FilterMode(value=None,
-                                               verbose_name=ugettext('None'),
-                                               checked=True)
-            modes.append(none_mode)
-
-        state.modes = modes
-        state.verbose_name = self.attributes['name']
-        return state
-

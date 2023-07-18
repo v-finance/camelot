@@ -31,10 +31,11 @@
 
 import os
 import json
-import logging
-logger = logging.getLogger('camelot.view.art')
 
 from ..core.qt import QtCore, QtGui, QtWidgets
+
+import logging
+logger = logging.getLogger('camelot.view.art')
 
 def file_(name):
     from camelot.core.resources import resource_filename
@@ -137,26 +138,26 @@ class FontIconEngine(QtGui.QIconEngine):
         :param state: a :class:`QtGui.QIcon.State` object
         """
         font = QtGui.QFont(self.font_family)
-        font.setStyleStrategy(QtGui.QFont.NoFontMerging)
+        font.setStyleStrategy(QtGui.QFont.StyleStrategy.NoFontMerging)
         drawSize = QtCore.qRound(rect.height() * 0.8)
         font.setPixelSize(drawSize)
 
         penColor = QtGui.QColor()
         if not self.color.isValid():
-            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Normal, QtGui.QPalette.ButtonText)
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Normal, QtGui.QPalette.ColorRole.ButtonText)
         else:
             penColor = self.color
 
-        if mode == QtGui.QIcon.Disabled:
-            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText)
+        if mode == QtGui.QIcon.Mode.Disabled:
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText)
 
-        if mode == QtGui.QIcon.Selected:
-            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.Active, QtGui.QPalette.ButtonText)
+        if mode == QtGui.QIcon.Mode.Selected:
+            penColor = QtWidgets.QApplication.palette("QWidget").color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.ButtonText)
 
         painter.save()
         painter.setPen(QtGui.QPen(penColor))
         painter.setFont(font)
-        painter.drawText(rect, QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter, self.code)
+        painter.drawText(rect, QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignVCenter, self.code)
         painter.restore()
 
     def pixmap(self, size, mode, state):
@@ -166,7 +167,7 @@ class FontIconEngine(QtGui.QIconEngine):
         :param state: a :class:`QtGui.QIcon.State` object
         """
         pix = QtGui.QPixmap(size)
-        pix.fill(QtCore.Qt.transparent)
+        pix.fill(QtCore.Qt.GlobalColor.transparent)
 
         painter = QtGui.QPainter(pix)
         self.paint(painter, QtCore.QRect(QtCore.QPoint(0, 0), size), mode, state)
@@ -178,20 +179,20 @@ class FontIconEngine(QtGui.QIconEngine):
 class FontIcon:
 
     _name_to_code = None
-    _color = QtGui.QColor('#009999')
 
-    def __init__(self, name, pixmap_size=32):
+    def __init__(self, name, pixmap_size=32, color='#009999'):
         """
         The pixmap size is only used when calling getQPixmap().
         """
-        self._name = name
-        self._pixmap_size = pixmap_size
+        self.name = name
+        self.pixmap_size = pixmap_size
+        self.color = color
 
         if FontIcon._name_to_code is None:
             FontIcon._load_name_to_code()
 
-        if self._name not in FontIcon._name_to_code:
-            raise Exception("Unknown font awesome icon: {}".format(self._name))
+        if self.name not in FontIcon._name_to_code:
+            raise Exception("Unknown font awesome icon: {}".format(self.name))
 
     @staticmethod
     def _load_name_to_code():
@@ -202,8 +203,8 @@ class FontIcon:
         # this method should not raise an exception, as it is used in slots
         engine = FontIconEngine()
         engine.font_family = 'Font Awesome 5 Free'
-        engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
-        engine.color = self._color
+        engine.code = chr(int(FontIcon._name_to_code[self.name], 16))
+        engine.color = QtGui.QColor(self.color)
 
         icon = QtGui.QIcon(engine)
         return icon
@@ -212,10 +213,42 @@ class FontIcon:
         # this method should not raise an exception, as it is used in slots
         engine = FontIconEngine()
         engine.font_family = 'Font Awesome 5 Free'
-        engine.code = chr(int(FontIcon._name_to_code[self._name], 16))
-        engine.color = self._color
+        engine.code = chr(int(FontIcon._name_to_code[self.name], 16))
+        engine.color = QtGui.QColor(self.color)
 
-        return engine.pixmap(QtCore.QSize(self._pixmap_size, self._pixmap_size), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        return engine.pixmap(QtCore.QSize(self.pixmap_size, self.pixmap_size), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+
+
+class QrcIcon:
+    """Icon loaded from Qt resource file"""
+
+    def __init__(self, path):
+        """
+        :param: path: The Qt resource path.
+        """
+        self.path = path
+        # Check if the resource path is valid
+        #if not QtCore.QFile.exists(self.path):
+        #    raise RuntimeError('Qt resource "{}" not found'.format(self.path))
+
+    def getQIcon(self):
+        return QtGui.QIcon(self.path)
+
+    def getQPixmap(self):
+        return QtGui.QPixmap(self.path)
+
+
+def from_admin_icon(admin_icon):
+    """Convert :class:`camelot.admin.icon.Icon` object to :class:`camelot.view.art.QrcIcon` or
+    :class:`camelot.view.art.FontIcon`.
+
+    If the name of the admin icon starts with ":/", a :class:`camelot.view.art.QrcIcon` object
+    will be returned.
+    """
+    if admin_icon.name.startswith(':/'):
+        return QrcIcon(admin_icon.name)
+    else:
+        return FontIcon(admin_icon.name, admin_icon.pixmap_size, admin_icon.color)
 
 
 class ColorScheme(object):

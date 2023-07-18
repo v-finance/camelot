@@ -35,11 +35,11 @@ import logging
 from camelot.core.utils import ugettext, ugettext_lazy
 from camelot.view.art import FontIcon
 
-import six
 
-from ...core.qt import QtModel, QtCore, QtWidgets, Qt, py_to_variant, is_deleted
 
-LOGGER = logging.getLogger( 'camelot.view.controls.progress_dialog' )
+from ...core.qt import QtModel, QtCore, QtWidgets, Qt, is_deleted
+
+LOGGER = logging.getLogger('camelot.view.controls.progress_dialog')
 
 class ProgressDialog(QtWidgets.QProgressDialog):
     """
@@ -83,7 +83,7 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         layout.addWidget( label )
         layout.addWidget( progress_bar )
         button_layout = QtWidgets.QHBoxLayout()
-        button_layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
+        button_layout.setDirection( QtWidgets.QBoxLayout.Direction.RightToLeft )
         button_layout.addWidget( ok_button )
         button_layout.addWidget( cancel_button )
         button_layout.addWidget( copy_button )
@@ -128,25 +128,31 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             return
         model = details.model()
         if model is not None:
-            text = u'\n'.join([six.text_type(s) for s in model.stringList()])
+            text = u'\n'.join([str(s) for s in model.stringList()])
             QtWidgets.QApplication.clipboard().setText(text)
 
     def push_level(self, verbose_name):
+        if is_deleted(self):
+            return
         label = self.findChild(QtWidgets.QLabel)
         if label is not None:
             label.setText(verbose_name)
         self.levels.append(verbose_name)
+        LOGGER.debug('Push level to {} with {}'.format(len(self.levels), verbose_name))
 
     def pop_level(self):
         self.levels.pop()
         if is_deleted(self):
             return
+        LOGGER.debug('Pop level to {}'.format(len(self.levels)))
         if len(self.levels):
             label = self.findChild(QtWidgets.QLabel)
             if label is not None:
                 label.setText(self.levels[-1])
         else:
+            LOGGER.debug('Reset dialog')
             self.reset()
+        
 
     def add_detail( self, text ):
         """Add detail text to the list of details in the progress dialog
@@ -171,9 +177,9 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
             model.insertRow(model.rowCount())
             index = model.index(model.rowCount()-1, 0)
             model.setData(index,
-                          py_to_variant(text),
-                          Qt.DisplayRole)
-            details.scrollTo(index, QtWidgets.QListView.PositionAtBottom)
+                          text,
+                          Qt.ItemDataRole.DisplayRole)
+            details.scrollTo(index, QtWidgets.QListView.ScrollHint.PositionAtBottom)
 
     def clear_details( self ):
         """Clear the detail text"""
@@ -186,8 +192,8 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
 
     def enlarge(self):
         """ Increase the size of the dialog window """
-        desktop = QtWidgets.QApplication.desktop()
-        geo = desktop.availableGeometry(self)
+        screen = self.screen()
+        geo = screen.availableGeometry()
         self.resize(geo.width() * 0.75, geo.height() * 0.75)
         frame = self.frameGeometry()
         frame.moveCenter(geo.center())

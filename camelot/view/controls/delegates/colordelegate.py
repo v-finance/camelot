@@ -27,21 +27,27 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
 
 from camelot.core.qt import Qt
+from camelot.core.naming import initial_naming_context
 from camelot.view.controls import editors
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
-@six.add_metaclass(DocumentationMetaclass)
-class ColorDelegate(CustomDelegate):
 
-    editor = editors.ColorEditor
+@dataclass
+class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(ColorDelegate, cls).get_standard_item(locale, value, fa_values)
-        color = editors.ColorEditor.to_qcolor(value, Qt.transparent)
-        item.setData(color, Qt.BackgroundColorRole)
+    def get_editor_class(cls):
+        return editors.ColorEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        color = editors.ColorEditor.to_qcolor(model_context.value, Qt.GlobalColor.transparent)
+        item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(color)
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(color)
         return item
