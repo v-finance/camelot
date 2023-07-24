@@ -51,7 +51,6 @@ from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
-from ..art import FontIcon
 from .. import gui_naming_context
 from .crud import CompletionValue
 
