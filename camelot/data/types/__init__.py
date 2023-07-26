@@ -143,6 +143,11 @@ class zip_code_type(collections.namedtuple('national_identifier_type', ('code', 
             return multi_repl
         return self.repl
 
+    @property
+    def tooltip(self):
+        if self.example is not None:
+            return 'e.g: {}'.format(self.example)
+
 zip_code_types = Types(
   #             #code #regex                                            #regex_repl     #example
   zip_code_type("AD", "AD\d{3}",                                         None,          "AD100"),
