@@ -301,8 +301,10 @@ class City(GeographicBoundary, WithCountry):
     @property
     def zip_code_type(self):
         if self.country is not None:
-            if self.country.code in zip_code_types:
+            try:
                 return zip_code_types[self.country.code]
+            except KeyError:
+                return
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
