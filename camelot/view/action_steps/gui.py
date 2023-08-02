@@ -44,13 +44,13 @@ from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest, UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
+from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
-from ..art import FontIcon
 from .. import gui_naming_context
 from .crud import CompletionValue
 
@@ -226,7 +226,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
                 functools.reduce(lambda a, b: a | b, step["standard_buttons"])
             ))
         if step.get("icon"):
-            message_box.setIconPixmap(FontIcon(**step["icon"]).getQPixmap())
+            message_box.setIconPixmap(from_admin_icon(Icon(**step["icon"])).getQPixmap())
         message_box.setInformativeText(str(step["informative_text"] or ''))
         message_box.setDetailedText(str(step["detailed_text"] or ''))
         return message_box
