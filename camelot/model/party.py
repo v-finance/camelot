@@ -37,6 +37,7 @@ by Len Silverston, Chapter 2
 import copy
 import datetime
 import enum
+import re
 
 import sqlalchemy.types
 
@@ -52,6 +53,7 @@ from camelot.admin.action.list_filter import StringFilter
 from camelot.admin.action import list_filter
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext_lazy as _
+from camelot.data.types import zip_code_types
 import camelot.types
 from camelot.types.typing import Note
 from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
@@ -296,6 +298,14 @@ class City(GeographicBoundary, WithCountry):
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
 
+    @property
+    def zip_code_type(self):
+        if self.country is not None:
+            try:
+                return zip_code_types[self.country.code]
+            except KeyError:
+                return
+
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
         matched_mm = default_mm = None
@@ -358,12 +368,19 @@ class City(GeographicBoundary, WithCountry):
     # TODO: refactor this to MessageEnum after move to vFinance repo.
     class Message(enum.Enum):
 
-        invalid_administrative_division = '{} is geen geldige administratieve indeling voor {}'
+        invalid_administrative_division = "{} is geen geldige administratieve indeling voor {}"
+        invalid_zip_code =                "{} is not a valid zip code for {}"
 
     def get_messages(self):
-        if None not in (self.country, self.administrative_division):
-            if self.country != self.administrative_division.country:
-                yield _(self.Message.invalid_administrative_division.value, self.administrative_division, self.country)
+        if self.country is not None:
+
+            if None not in (self.code, self.zip_code_type):
+                if not re.fullmatch(re.compile(self.zip_code_type.regex), self.code):
+                    yield _(self.Message.invalid_zip_code.value, self.code, self.country)
+
+            if self.administrative_division is not None:
+                if self.country != self.administrative_division.country:
+                    yield _(self.Message.invalid_administrative_division.value, self.administrative_division, self.country)
 
     @property
     def note(self) -> Note:
@@ -446,6 +463,11 @@ class Address( Entity ):
         if self.city is not None and not self.city.code:
             self._zip_code = value
 
+    @property
+    def zip_code_type(self):
+        if self.city is not None:
+            return self.city.zip_code_type
+
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
         whereclause=(GeographicBoundary.id == city_geographicboundary_id)), deferred=True)
@@ -461,6 +483,11 @@ class Address( Entity ):
     def get_messages(self):
         if self.city is not None:
             yield from self.city.get_messages()
+
+            if None not in (self._zip_code, self.city.zip_code_type):
+                if not re.fullmatch(re.compile(self.city.zip_code_type.regex), self._zip_code):
+                    yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country)
+
             if self.administrative_division is not None and self.city.country != self.administrative_division.country:
                 yield _(City.Message.invalid_administrative_division.value, self.administrative_division, self.city.country)
 
