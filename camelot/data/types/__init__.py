@@ -101,7 +101,7 @@ sensitivity_levels = Types(
 )
 
 # Zip/Postal code types with regular expression specifications as required for use with BECRIS.
-class zip_code_type(collections.namedtuple('national_identifier_type', ('code', 'regex', 'repl', 'example'))):
+class zip_code_type(collections.namedtuple('zip_code_type', ('code', 'regex', 'repl', 'example'))):
 
     @property
     def id(self):
