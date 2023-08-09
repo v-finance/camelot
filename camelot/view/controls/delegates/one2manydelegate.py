@@ -70,10 +70,11 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     def __post_init__(self, parent):
         super().__post_init__(parent)
         logger.debug( 'create one2manycolumn delegate' )
-        if not self.crud_actions:
-            self.crud_actions = CrudActions(initial_naming_context.resolve(self.admin_route))
-        if not self.group:
-            self.group = get_settings_group(self.admin_route)
+        if self.admin_route:
+            if not self.crud_actions:
+                self.crud_actions = CrudActions(initial_naming_context.resolve(self.admin_route))
+            if not self.group:
+                self.group = get_settings_group(self.admin_route)
         if not self.action_states:
             self.action_states = [(action.route, State()) for action in self.list_actions] + [(route, State()) for route in self.action_routes]
 
