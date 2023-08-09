@@ -28,15 +28,19 @@
 #  ============================================================================
 
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import itertools
 
 from ....admin.admin_route import Route, RouteWithRenderHint
+from ....admin.action import State
 from ....admin.action.application_action import model_context_naming, model_context_counter
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
+
 from ....core.qt import Qt
-from camelot.view.controls import editors
+from ....view.utils import get_settings_group
+from ....view.controls import editors
+from ....view.crud_action import CrudActions
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 import logging
@@ -59,10 +63,19 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     action_routes: List[Route] = field(default_factory=list)
     list_actions: List[RouteWithRenderHint] = field(default_factory=list)
     list_action: Optional[Route] = None
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
+    crud_actions: CrudActions = field(default_factory=list)
+    group: List[str] = field(default_factory=list)
 
     def __post_init__(self, parent):
         super().__post_init__(parent)
         logger.debug( 'create one2manycolumn delegate' )
+        if not self.crud_actions:
+            self.crud_actions = CrudActions(initial_naming_context.resolve(self.admin_route))
+        if not self.group:
+            self.group = get_settings_group(self.admin_route)
+        if not self.action_states:
+            self.action_states = [(action.route, State()) for action in self.list_actions] + [(route, State()) for route in self.action_routes]
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
