@@ -11,7 +11,10 @@ from ...admin.action.base import ActionStep, State
 from ...admin.icon import CompletionValue
 from ...core.serializable import DataclassSerializable
 from ..controls import delegates
-from camelot.view.crud_action import DataUpdate
+from ..crud_action import CrudActions
+from ...view.crud_action import DataUpdate
+from ...view.utils import get_settings_group
+
 
 def filter_attributes(attributes, keys):
     filtered = {}
@@ -91,6 +94,8 @@ class SetColumns(ActionStep, DataclassSerializable):
         elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
             attrs = filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
                                                 'action_routes', 'list_actions', 'list_action'])
+            attrs['group'] = get_settings_group(attrs['admin_route'])
+            attrs['crud_actions'] = CrudActions(None) # FIXME: admin arg
         elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
             attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type', 'completer_type'])
         elif issubclass(fa['delegate'], delegates.TextEditDelegate):

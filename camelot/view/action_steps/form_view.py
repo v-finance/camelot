@@ -46,8 +46,7 @@ from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
 from ...view.utils import get_settings_group
 from .item_view import AbstractCrudView
-from  ..qml_view import get_qml_root_backend
-#from ..qml_view import qml_action_step
+from  ..qml_view import get_qml_root_backend, qml_action_step
 
 
 @dataclass
@@ -139,15 +138,21 @@ class OpenFormView(AbstractCrudView):
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
-        # Use new QML forms:
-        #qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
         step = json.loads(serialized_step)
-        formview = cls.render(gui_context_name, step)
-        if formview is not None:
-            formview.setObjectName('form.{}.{}'.format(
-                step['admin_route'], id(formview)
-            ))
-            show_top_level(formview, gui_context_name, step['form_state'])
+        cpp_form_whitelist = [
+            'LoanAccount',
+            'FinancialAccount',
+        ]
+        if step['admin_route'][1] in cpp_form_whitelist:
+            # Use new QML forms:
+            qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
+        else:
+            formview = cls.render(gui_context_name, step)
+            if formview is not None:
+                formview.setObjectName('form.{}.{}'.format(
+                    step['admin_route'], id(formview)
+                ))
+                show_top_level(formview, gui_context_name, step['form_state'])
 
 
 @dataclass
