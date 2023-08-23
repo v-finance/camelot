@@ -50,12 +50,8 @@ from ...core.utils import ugettext_lazy
 from ...view.utils import get_settings_group
 from .. import gui_naming_context
 from ..workspace import show_top_level
-from camelot.view.crud_action import (
-    setcolumns_name, rowcount_name, rowdata_name, setdata_name,
-    changeselection_name, update_name, deleted_name, created_name,
-    sort_name, runfieldaction_name, completion_name
-)
 from ..qml_view import qml_action_step, is_cpp_gui_context_name
+from ...view.crud_action import CrudActions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -84,27 +80,6 @@ class Sort( ActionStep, DataclassSerializable ):
                     step["column"],
                     Qt.SortOrder._value2member_map_[step["order"]]
                 )
-
-
-@dataclass
-class CrudActions(DataclassSerializable):
-    """
-    A data class which contains the routes to crud actions available
-    to the gui to invoke.
-    """
-
-    admin: InitVar
-    set_columns: Route = field(init=False, default=setcolumns_name)
-    row_count: Route = field(init=False, default=rowcount_name)
-    row_data: Route = field(init=False, default=rowdata_name)
-    set_data: Route = field(init=False, default=setdata_name)
-    change_selection: Route = field(init=False, default=changeselection_name)
-    update: Route = field(init=False, default=update_name)
-    deleted: Route = field(init=False, default=deleted_name)
-    created: Route = field(init=False, default=created_name)
-    sort: Route = field(init=False, default=sort_name)
-    field_action: Route = field(init=False, default=runfieldaction_name)
-    completion: Route = field(init=False, default=completion_name)
 
 @dataclass
 class AbstractCrudView(ActionStep, DataclassSerializable):
