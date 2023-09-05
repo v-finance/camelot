@@ -512,19 +512,10 @@ class ColumnSpan(AbstractForm):
     title: str = dataclasses.field(init=False, default=None)
     field: InitVar[str] = None
     num: InitVar[int] = 2
-    
+
     def __post_init__(self, field, num):
         self.content = [field]
         self.columns = num
-    
-    @property
-    def field(self):
-        for field in self.content:
-            return field
-    
-    @property
-    def num(self):
-        return self.columns
 
 @dataclass
 class GridForm(AbstractForm):
