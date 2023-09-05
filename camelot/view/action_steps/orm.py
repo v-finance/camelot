@@ -57,7 +57,8 @@ class AbstractCrudSignal(ActionStep):
         self.objects_created = tuple()
 
     def gui_run(self, gui_context):
-        super(AbstractCrudSignal, self).gui_run(gui_context)
+        # See VFIN-2386
+        #super(AbstractCrudSignal, self).gui_run(gui_context)
         crud_signal_handler = CrudSignalHandler()
         if len(self.objects_deleted):
             crud_signal_handler.send_objects_deleted(self, self.objects_deleted)
