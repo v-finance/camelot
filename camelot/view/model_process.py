@@ -58,6 +58,12 @@ class ModelProcess(spawned_mp.Process):
 
     def run(self):
         LOGGER = logging.getLogger("model_process")
+        # begin dirty hack to make sure the unbind action is available,
+        # todo is to find a proper solution for setting up the initial naming
+        # context when starting a new process.
+        from ..admin.action.application_action import application_action_context
+        assert application_action_context.resolve('unbind')
+        # end of dirty hack
         initial_naming_context.bind(self._context_name, self._context)
         response_handler = PipeResponseHandler(self._response_sender)
         while True:

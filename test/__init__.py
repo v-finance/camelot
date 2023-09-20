@@ -14,6 +14,7 @@ from camelot.core.qt import QtCore
 from camelot.core.qt import QtGui
 from camelot.core.qt import QtWidgets
 from camelot.core.qt import QtNetwork
+from camelot.admin.action.application_action import application_action_context
 from camelot.admin.application_admin import ApplicationAdmin
 
 from sqlalchemy.pool import StaticPool
@@ -32,6 +33,8 @@ app_admin = ApplicationAdmin()
 unit_test_context = initial_naming_context.bind_new_context(
     'unit_test', immutable=True
 )
+
+assert application_action_context.resolve('unbind')
 
 class TestSettings( object ):
 
