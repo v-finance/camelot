@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 from ..admin.action.base import Action
+from ..admin.admin_route import Route
 from ..admin.icon import Icon
 from ..admin.action.field_action import FieldActionModelContext
 from ..core.cache import ValueCache
@@ -696,3 +697,24 @@ class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
             )
 
 runfieldaction_name = crud_action_context.bind(RunFieldAction.name, RunFieldAction(), True)
+
+
+@dataclass
+class CrudActions(DataclassSerializable):
+    """
+    A data class which contains the routes to crud actions available
+    to the gui to invoke.
+    """
+
+    admin: InitVar
+    set_columns: Route = field(init=False, default=setcolumns_name)
+    row_count: Route = field(init=False, default=rowcount_name)
+    row_data: Route = field(init=False, default=rowdata_name)
+    set_data: Route = field(init=False, default=setdata_name)
+    change_selection: Route = field(init=False, default=changeselection_name)
+    update: Route = field(init=False, default=update_name)
+    deleted: Route = field(init=False, default=deleted_name)
+    created: Route = field(init=False, default=created_name)
+    sort: Route = field(init=False, default=sort_name)
+    field_action: Route = field(init=False, default=runfieldaction_name)
+    completion: Route = field(init=False, default=completion_name)
