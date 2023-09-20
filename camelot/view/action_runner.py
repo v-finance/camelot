@@ -172,7 +172,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                 LOGGER.info('{} actions running'.format(len(run_names)))
                 for run_name in run_names:
                     run = gui_run_names.resolve(run_name)
-                    LOGGER.info('{} : {}'.format(run_name, run.action_name))
+                    LOGGER.info('{} : {} with mode {}'.format(run_name, run.action_name, run.mode))
                     LOGGER.info('  Generated {} steps during {} seconds'.format(run.step_count, run.time_running()))
                     LOGGER.info('  Steps : {}'.format(run.steps))
                     if run.time_running() >= max_wait:
