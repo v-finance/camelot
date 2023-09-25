@@ -235,7 +235,7 @@ class Country( GeographicBoundary ):
     class Admin(GeographicBoundary.Admin):
         verbose_name = _('Country')
         verbose_name_plural = _('Countries')
-        list_display = ['name', 'code']
+        list_display = ['id', 'name', 'code']
 
 class WithCountry(object):
     """
@@ -392,7 +392,7 @@ class City(GeographicBoundary, WithCountry):
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
 
-        list_display = ['code', 'name', 'administrative_name', 'administrative_division', 'country']
+        list_display = ['id', 'code', 'name', 'administrative_name', 'administrative_division', 'country']
         form_display = Form(
             [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
              GroupBoxForm(_('Administrative division'), ['administrative_division', None], columns=2),
