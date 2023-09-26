@@ -102,6 +102,7 @@ class GuiRun(object):
         self.mode = mode
         self.started_at = time.time()
         self.steps = []
+        self.server = None
 
     @property
     def step_count(self):
@@ -167,13 +168,19 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         actions_running = True
         while actions_running:
             # very dirty hack to not wait for unbinds
-            run_names = list(e for e in gui_run_names.list() if e[-1]!='unbind')
-            actions_running = len(run_names) > 0
+            run_names = list(gui_run_names.list())
+            for run_name in run_names:
+                run = gui_run_names.resolve(run_name)
+                if run.action_name[-1] != 'unbind':
+                    actions_running=True
+                    break
+            else:
+                actions_running=False
             if actions_running:
                 LOGGER.info('{} actions running'.format(len(run_names)))
                 for run_name in run_names:
                     run = gui_run_names.resolve(run_name)
-                    LOGGER.info('{} : {} with mode {}'.format(run_name, run.action_name, run.mode))
+                    LOGGER.info('{} : {} with mode {} on {}'.format(run_name, run.action_name, run.mode, run.server))
                     LOGGER.info('  Generated {} steps during {} seconds'.format(run.step_count, run.time_running()))
                     LOGGER.info('  Steps : {}'.format(run.steps))
                     if run.time_running() >= max_wait:
@@ -193,7 +200,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         self.run_gui_run(gui_run)
 
     def run_gui_run(self, gui_run):
-        post(InitiateAction(
+        gui_run.server = post(InitiateAction(
             gui_run_name = gui_run_names.bind(str(id(gui_run)), gui_run),
             action_name = gui_run.action_name,
             model_context = gui_run.model_context_name,

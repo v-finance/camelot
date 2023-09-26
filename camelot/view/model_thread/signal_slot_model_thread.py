@@ -128,6 +128,7 @@ class SignalSlotModelThread( AbstractModelThread ):
         self._request_queue.append(serialized_request)
         if not is_deleted(self):
             self.task_available.emit()
+        return ['thread', str(id(self))]
 
     @synchronized
     def stop( self ):
