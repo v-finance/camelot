@@ -169,22 +169,20 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         while actions_running:
             # very dirty hack to not wait for unbinds
             run_names = list(gui_run_names.list())
+            max_time_running = 0
+            actions_running = False
+            LOGGER.info('{} actions running'.format(len(run_names)))
             for run_name in run_names:
                 run = gui_run_names.resolve(run_name)
                 if run.action_name[-1] != 'unbind':
                     actions_running=True
                     break
-            else:
-                actions_running=False
-            if actions_running:
-                LOGGER.info('{} actions running'.format(len(run_names)))
-                for run_name in run_names:
-                    run = gui_run_names.resolve(run_name)
-                    LOGGER.info('{} : {} with mode {} on {}'.format(run_name, run.action_name, run.mode, run.server))
-                    LOGGER.info('  Generated {} steps during {} seconds'.format(run.step_count, run.time_running()))
-                    LOGGER.info('  Steps : {}'.format(run.steps))
-                    if run.time_running() >= max_wait:
-                        raise Exception('Action running for more then {} seconds'.format(max_wait))
+                LOGGER.info('{} : {} with mode {} on {}'.format(run_name, run.action_name, run.mode, run.server))
+                LOGGER.info('  Generated {} steps during {} seconds'.format(run.step_count, run.time_running()))
+                LOGGER.info('  Steps : {}'.format(run.steps))
+                max_time_running = max(max_time_running, run.time_running())
+            if max_time_running >= max_wait:
+                raise Exception('Action running for more then {} seconds'.format(max_wait))
             QtCore.QCoreApplication.instance().processEvents()
             time.sleep(0.05)
 
