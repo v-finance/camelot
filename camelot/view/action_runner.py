@@ -176,11 +176,10 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                 run = gui_run_names.resolve(run_name)
                 if run.action_name[-1] != 'unbind':
                     actions_running=True
-                    break
+                    max_time_running = max(max_time_running, run.time_running())
                 LOGGER.info('{} : {} with mode {} on {}'.format(run_name, run.action_name, run.mode, run.server))
                 LOGGER.info('  Generated {} steps during {} seconds'.format(run.step_count, run.time_running()))
                 LOGGER.info('  Steps : {}'.format(run.steps))
-                max_time_running = max(max_time_running, run.time_running())
             if max_time_running >= max_wait:
                 raise Exception('Action running for more then {} seconds'.format(max_wait))
             QtCore.QCoreApplication.instance().processEvents()
