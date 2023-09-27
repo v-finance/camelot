@@ -67,7 +67,7 @@ class PlainTextDelegate(CustomDelegate):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
-        cls.set_item_editability(model_context, item, False)
+        #cls.set_item_editability(model_context, item, False)
         item.roles[ValidatorStateRole] = model_context.field_attributes.get('validator_state')
         item.roles[CompleterStateRole] = model_context.field_attributes.get('completer_state')
         if model_context.value is not None:
