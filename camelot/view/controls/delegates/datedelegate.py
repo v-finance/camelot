@@ -58,7 +58,7 @@ class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
-        #cls.set_item_editability(model_context, item, False)
+        cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
             value_str = str(locale.toString(model_context.value, QtCore.QLocale.FormatType.ShortFormat))
