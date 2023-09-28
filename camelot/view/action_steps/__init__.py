@@ -50,7 +50,7 @@ from .orm import (
 )
 from .select_file import SelectFile, SelectDirectory, SaveFile
 from .select_object import SelectObjects, SelectObject
-from .update_progress import UpdateProgress, PushProgressLevel, PopProgressLevel
+from .update_progress import UpdateProgress, PushProgressLevel, PopProgressLevel, SetProgressAnimate
 from .crud import (
     SetColumns, Completion, CompletionValue, Created, RowCount, Update, ChangeSelection
 )
@@ -109,6 +109,7 @@ __all__ = [
     UpdateProgress.__name__,
     PushProgressLevel.__name__,
     PopProgressLevel.__name__,
+    SetProgressAnimate.__name__,
     UpdateTableView.__name__,
     WordJinjaTemplate.__name__,
     ]
