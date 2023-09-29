@@ -173,3 +173,8 @@ updated.
                 if progress_dialog.wasCanceled():
                     progress_dialog.reset()
                     post(CancelAction(run_name=[]))
+
+@dataclass
+class SetProgressAnimate(ActionStep, DataclassSerializable):
+
+    animate: bool
