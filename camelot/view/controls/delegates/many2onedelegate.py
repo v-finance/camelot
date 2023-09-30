@@ -67,7 +67,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
-        cls.set_item_editability(model_context, item, False)
+        #cls.set_item_editability(model_context, item, False)
         value_name = initial_naming_context._bind_object(model_context.value)
         # eventually, all values should be names, so this should happen in the
         # custom delegate class
