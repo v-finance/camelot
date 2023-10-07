@@ -63,7 +63,7 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         minimum = minimum if minimum is not None else constants.camelot_minfloat
         maximum = maximum if maximum is not None else constants.camelot_maxfloat
         item = super().get_standard_item(locale, model_context)
-        #cls.set_item_editability(model_context, item, False)
+        cls.set_item_editability(model_context, item, False)
         item.roles[FocusPolicyRole] = model_context.field_attributes.get('focus_policy')
         item.roles[SuffixRole] = model_context.field_attributes.get('suffix')
         item.roles[PrefixRole] = model_context.field_attributes.get('prefix')
