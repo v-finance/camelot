@@ -678,7 +678,8 @@ class SearchFilter(Action, AbstractModelFilter):
                     query = query.order_by(None)
                     order_by_clauses = [cls._order_by_decorator(order_by, search_text) for order_by in order_search_by]
                     if len(order_by_clauses) > 1:
-                        query = query.order_by(sql.func.min(*order_by_clauses))
+                        from vfinance import sql as vf_sql
+                        query = query.order_by(vf_sql.least(*order_by_clauses))
                     else:
                         query = query.order_by(*order_by_clauses)
         return query
