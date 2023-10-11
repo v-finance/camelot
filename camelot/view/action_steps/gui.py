@@ -49,7 +49,7 @@ from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
-from ...core.qt import QtCore, QtWidgets, is_deleted
+from ...core.qt import QtCore, QtGui, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from .. import gui_naming_context
 from .crud import CompletionValue
