@@ -91,7 +91,7 @@ class AbstractRequest(NamedDataclassSerializable):
             run_name = tuple(request_data['run_name'])
             run = initial_naming_context.resolve(run_name)
         except NameNotFoundException:
-            LOGGER.error('Run name not found : {}'.format(run_name))
+            LOGGER.error('Run name not found : {} for request {}'.format(run_name, request_data))
             return
         gui_run_name = run.gui_run_name
         try:

@@ -233,7 +233,6 @@ class FieldFilter(AbstractFilterStrategy):
     """
 
     search_operator = Operator.eq
-    attribute = None
     _default_from_string = functools.partial(utils.pyvalue_from_string, str)
 
     def __init__(self, *attributes, where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, connective_operator = Operator.or_, **field_attributes):
