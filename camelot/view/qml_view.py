@@ -54,3 +54,8 @@ def qml_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     backend = get_qml_root_backend()
     response = backend.actionStep(gui_context_name, name, step)
     return json.loads(response.data())
+
+def qml_action_steps(steps):
+    backend = get_qml_root_backend()
+    response = backend.actionSteps(steps)
+    return json.loads(response.data())
