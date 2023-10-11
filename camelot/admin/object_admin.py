@@ -273,6 +273,7 @@ be specified using the verbose_name attribute.
     field_attributes = {}
     form_state = None
     icon = None # Default
+    qml_form = False # Use new QML forms
 
     def __init__( self, app_admin, entity ):
         """

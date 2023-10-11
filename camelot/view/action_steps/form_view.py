@@ -139,12 +139,9 @@ class OpenFormView(AbstractCrudView):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        cpp_form_whitelist = [
-            #'LoanAccount',
-            #'FinancialAccount',
-        ]
-        if step['admin_route'][1] in cpp_form_whitelist:
-            # Use new QML forms:
+        admin = initial_naming_context.resolve(tuple(step['admin_route']))
+        if admin.qml_form:
+            # Use new QML forms
             qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
         else:
             formview = cls.render(gui_context_name, step)
