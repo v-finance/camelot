@@ -2,8 +2,6 @@ from sqlalchemy.types import Unicode, Date, Numeric
 
 from camelot.data import types
 
-def remove_transform(data):
-    return None
 
 def first_letter_transform(data):
     return data[0] if data else data
