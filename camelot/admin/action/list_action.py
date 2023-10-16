@@ -1075,6 +1075,7 @@ class EditProfileMixin:
         from camelot.view import action_steps
         # Validate database settings
         yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
+        engine = None
         try:
             #if not profile.dialect:
             #    raise RuntimeError('No database dialect selected')
@@ -1084,10 +1085,13 @@ class EditProfileMixin:
             cursor.close()
             connection.close()
         except Exception as e:
-            exception_box = action_steps.MessageBox( title = self.database_error_title,
-                                                     text = _('Verify driver, host and port or contact your system administrator'),
-                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            exception_box = action_steps.MessageBox(
+                title = self.database_error_title,
+                text = _('Verify driver, host and port or contact your system administrator'),
+                standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok]
+            )
             exception_box.informative_text = str(e)
+            exception_box.detailed_text = 'Engine : {}'.format(engine)
             yield exception_box
             return False
         # Validate media location
