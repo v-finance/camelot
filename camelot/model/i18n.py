@@ -111,7 +111,7 @@ class Translation( Entity ):
 
 class TranslationAdmin( EntityAdmin ):
     verbose_name_plural = _( 'Translations' )
-    form_size = ( 700, 150 )
+    form_state = 'right'
     list_display = ['source', 'language', 'value']#, 'uid']
     list_filter = [Translation.language]
     field_attributes = { 'language':{ 'default':default_language } }
