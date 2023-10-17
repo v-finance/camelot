@@ -64,7 +64,7 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         # eventually, all values should be names, so this should happen in the
         # custom delegate class
         item.roles[Qt.ItemDataRole.EditRole] = value_name
-        #cls.set_item_editability(model_context, item, True)
+        cls.set_item_editability(model_context, item, True)
         choices = model_context.field_attributes.get('choices', [])
 
         none_available = False

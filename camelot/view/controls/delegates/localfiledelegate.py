@@ -56,7 +56,7 @@ class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
-        #cls.set_item_editability(model_context, item, False)
+        cls.set_item_editability(model_context, item, False)
         item.roles[DirectoryRole] = model_context.field_attributes.get('directory', False)
         if model_context.value is not None:
             item.roles[PreviewRole] = str(model_context.value)

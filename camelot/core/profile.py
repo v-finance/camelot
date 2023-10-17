@@ -86,15 +86,20 @@ class Profile:
         """The database connection string according to SQLAlchemy conventions,
         as specified by this profile.
         """
-        connection_string = '%s://'%self.dialect
-        if self.user or self.password:
-            connection_string = connection_string + '%s:%s@'%( self.user, 
-                                                               self.password )
-        if self.host:
-            connection_string = connection_string + self.host
+        dialect = self.dialect or ''
+        user = self.user or ''
+        password = self.password or ''
+        host = self.host or ''
+        database = self.database or ''
+
+        connection_string = '%s://' % dialect
+        if user or password:
+            connection_string = connection_string + '%s:%s@' % (user, password)
+        if host:
+            connection_string = connection_string + host
         if self.port:
-            connection_string = connection_string + ':%s'%self.port
-        connection_string = connection_string + '/%s'%self.database
+            connection_string = connection_string + ':%s' % self.port
+        connection_string = connection_string + '/%s' % database
         return connection_string
     
     def create_engine( self, **kwargs ):
@@ -133,6 +138,9 @@ class Profile:
                 key='pass'
             elif key=='name':
                 key='profilename'
+            # Avoid None values
+            if value is None and key != 'port':
+                value = ''
             state[key] = value
         return state
     
@@ -249,6 +257,8 @@ class ProfileStore(object):
         """Encrypt and encode a single value, this method is used to 
         write profiles."""
         cipher = self._cipher()
+        if value is None:
+            value = ''
         return base64.b64encode( cipher.encrypt( str(value).encode('utf-8' ) ) ).decode('ascii')
             
     def _decode( self, value ):
