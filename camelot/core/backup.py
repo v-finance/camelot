@@ -29,7 +29,6 @@
 import logging
 
 
-from camelot.types import PrimaryKey
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
 from .qt import QtCore
