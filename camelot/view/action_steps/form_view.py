@@ -83,6 +83,9 @@ class OpenFormView(AbstractCrudView):
     form_state: str = field(init=False)
     blocking: bool = False
 
+    # test related options (e.g. action_cls, tab, ...)
+    highlight: dict = field(default_factory=dict)
+
     def __post_init__(self, value, admin, proxy):
         assert value is not None
         assert (proxy is None) or (isinstance(proxy, AbstractModelProxy))
