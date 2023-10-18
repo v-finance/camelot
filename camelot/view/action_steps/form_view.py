@@ -86,10 +86,10 @@ class OpenFormView(AbstractCrudView):
     def __post_init__(self, value, admin, proxy):
         assert value is not None
         assert (proxy is None) or (isinstance(proxy, AbstractModelProxy))
-        self.fields = dict((f, {
+        self.fields = [[f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
-            }) for f, fa in admin.get_fields())
+            }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
         if proxy is None:
@@ -122,13 +122,13 @@ class OpenFormView(AbstractCrudView):
         form = FormView()
         model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), form)
         model.setValue(step['model_context_name'])
-        columns = [ fn for fn, fa in step['fields'].items() ]
+        columns = [ fn for fn, fa in step['fields']]
         model.setColumns(columns)
 
         form.setup(
             title=step['title'], admin_route=step['admin_route'],
             close_route=tuple(step['close_route']), model=model,
-            fields=step['fields'], form_display=step['form'],
+            fields=dict(step['fields']), form_display=step['form'],
             index=step['row']
         )
         form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
