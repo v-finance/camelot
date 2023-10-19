@@ -31,7 +31,7 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import Dict
+from typing import Dict, Optional
 from dataclasses import dataclass, field
 import json
 
@@ -82,9 +82,6 @@ class OpenFormView(AbstractCrudView):
     row: int = field(init=False)
     form_state: str = field(init=False)
     blocking: bool = False
-
-    # test related options (e.g. action_cls, tab, ...)
-    highlight: dict = field(default_factory=dict)
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
@@ -154,6 +151,24 @@ class OpenFormView(AbstractCrudView):
                 ))
                 show_top_level(formview, gui_context_name, step['form_state'])
 
+@dataclass
+class HighlightForm(ActionStep, DataclassSerializable):
+
+    tab: Optional[str] = None
+    table_label: Optional[str] = None
+    table_row: Optional[int] = None
+    table_column: Optional[str] = None
+
+    #action_cls: Optional[?] = None
+    #action_cls_menu: Optional[?] = None
+    #action_cls_menu_action: Optional[?] = None
+    #action_cls_state: Optional[?] = None
+    label: Optional[str] = None
+    label_next_widget: bool = False
+    focus_label_next_widget: bool = False
+    #group_box: Optional[?] = None
+    form_state: Optional[str] = None
+    field_name: Optional[str] = None
 
 @dataclass
 class ChangeFormIndex(ActionStep, DataclassSerializable):
