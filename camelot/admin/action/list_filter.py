@@ -676,7 +676,12 @@ class SearchFilter(Action, AbstractModelFilter):
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
                     # Reset any default ordering for the configured search order to take effect.
                     query = query.order_by(None)
-                    query = query.order_by(sql.func.least(*[cls._order_by_decorator(order_by, search_text) for order_by in order_search_by]))
+                    order_by_clauses = [cls._order_by_decorator(order_by, search_text) for order_by in order_search_by]
+                    if len(order_by_clauses) > 1:
+                        from vfinance import sql as vf_sql
+                        query = query.order_by(vf_sql.least(*order_by_clauses))
+                    else:
+                        query = query.order_by(*order_by_clauses)
         return query
 
     def gui_run(self, gui_context_name):

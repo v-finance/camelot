@@ -235,7 +235,7 @@ class Country( GeographicBoundary ):
     class Admin(GeographicBoundary.Admin):
         verbose_name = _('Country')
         verbose_name_plural = _('Countries')
-        list_display = ['name', 'code']
+        list_display = ['id', 'name', 'code']
 
 class WithCountry(object):
     """
@@ -392,7 +392,7 @@ class City(GeographicBoundary, WithCountry):
         verbose_name = _('City')
         verbose_name_plural = _('Cities')
 
-        list_display = ['code', 'name', 'administrative_name', 'administrative_division', 'country']
+        list_display = ['id', 'code', 'name', 'administrative_name', 'administrative_division', 'country']
         form_display = Form(
             [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
              GroupBoxForm(_('Administrative division'), ['administrative_division', None], columns=2),
@@ -500,7 +500,7 @@ class Address( Entity ):
         verbose_name_plural = _('Addresses')
         list_display = ['street1', 'street2', 'city']
         form_display = ['street1', 'street2', 'zip_code', 'city', 'administrative_division']
-        form_size = ( 700, 150 )
+        form_state = 'right'
         field_attributes = {
             'street1': {'minimal_column_width':30},
             'zip_code': {'editable': lambda o: o.city is not None and not o.city.code},
@@ -524,7 +524,7 @@ def receive_city_set(target, city, oldvalue, initiator):
             target._administrative_division = None
 
 class PartyContactMechanismAdmin( EntityAdmin ):
-    form_size = ( 700, 200 )
+    form_state = 'right'
     verbose_name = _('Contact mechanism')
     verbose_name_plural = _('Contact mechanisms')
     list_display = ['party_name', 'mechanism', 'comment', 'from_date', ]
@@ -1140,7 +1140,7 @@ class PartyAddress( Entity, Addressable ):
         list_display = ['party_name', 'street1', 'street2', 'zip_code', 'city', 'comment']
         form_display = [ 'party', 'street1', 'street2', 'zip_code', 'city', 'comment', 
                          'from_date', 'thru_date']
-        form_size = ( 700, 200 )
+        form_state = 'right'
         field_attributes = dict(party_name=dict(editable=False, name='Party', minimal_column_width=30),
                                 zip_code=dict(editable=lambda o: o.city is not None and not o.city.code))
         
@@ -1192,7 +1192,7 @@ class ContactMechanism( Entity ):
             return u'%s : %s' % ( self.mechanism[0], self.mechanism[1] )
 
     class Admin( EntityAdmin ):
-        form_size = ( 700, 150 )
+        form_state = 'right'
         verbose_name = _('Contact mechanism')
         list_display = ['mechanism']
         form_display = Form( ['mechanism', 'party_address'] )
@@ -1300,7 +1300,7 @@ class PartyAdmin( EntityAdmin ):
     verbose_name_plural = _('Parties')
     list_display = ['name', 'email', 'phone'] # don't use full name, since it might be None for new objects
     form_display = ['addresses', 'contact_mechanisms']
-    form_size = (700, 700)
+    form_state = 'right'
     field_attributes = dict(addresses = {'admin':AddressAdmin},
                             contact_mechanisms = {'admin':PartyPartyContactMechanismAdmin},
                             sex = dict( choices = [( u'M', _('male') ), ( u'F', _('female') )], name=_('Gender')),

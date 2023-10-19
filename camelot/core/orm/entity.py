@@ -331,6 +331,7 @@ class EntityMeta( DeclarativeMeta ):
                 order_search_by = entity_args.get('order_search_by')
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
+                    assert len(order_search_by) <= 2, 'Can not define more than 2 search order by clauses.'
 
                 application_date = entity_args.get('application_date')
                 if application_date is not None:
