@@ -155,7 +155,9 @@ class OpenFormView(AbstractCrudView):
 class HighlightForm(ActionStep, DataclassSerializable):
 
     tab: Optional[str] = None # The form tab
-    label: Optional[str] = None # A field lbale to highlight
+    label: Optional[str] = None # A field label to highlight
+    label_delegate: bool = False # Highlight delegate associated with label
+    label_delegate_focus: bool = False # Focus delegate associated with label
     table_label: Optional[str] = None # Label of the table for table_row and table_column
     table_row: Optional[int] = None # Table row to highlight
     table_column: Optional[str] = None # Table column to highlight
@@ -164,8 +166,6 @@ class HighlightForm(ActionStep, DataclassSerializable):
     action_menu_mode: Optional[str] = None # Menu mode (verbose name) to highlight
 
     #action_cls_state: Optional[?] = None
-    label_next_widget: bool = False
-    focus_label_next_widget: bool = False
     #group_box: Optional[?] = None
     form_state: Optional[str] = None
     field_name: Optional[str] = None
