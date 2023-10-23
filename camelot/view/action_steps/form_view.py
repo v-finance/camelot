@@ -39,7 +39,7 @@ from ..controls.formview import FormView
 from ..forms import AbstractForm
 from ..workspace import show_top_level
 from ...admin.action.base import ActionStep, RenderHint
-from ...admin.admin_route import AdminRoute
+from ...admin.admin_route import Route, AdminRoute
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
@@ -154,16 +154,16 @@ class OpenFormView(AbstractCrudView):
 @dataclass
 class HighlightForm(ActionStep, DataclassSerializable):
 
-    tab: Optional[str] = None
-    table_label: Optional[str] = None
-    table_row: Optional[int] = None
-    table_column: Optional[str] = None
+    tab: Optional[str] = None # The form tab
+    label: Optional[str] = None # A field lbale to highlight
+    table_label: Optional[str] = None # Label of the table for table_row and table_column
+    table_row: Optional[int] = None # Table row to highlight
+    table_column: Optional[str] = None # Table column to highlight
+    action_route: Optional[Route] = None # Action to highlight
+    action_menu_route: Optional[Route] = None # Menu to open
+    action_menu_mode: Optional[str] = None # Menu mode (verbose name) to highlight
 
-    #action_cls: Optional[?] = None
-    #action_cls_menu: Optional[?] = None
-    #action_cls_menu_action: Optional[?] = None
     #action_cls_state: Optional[?] = None
-    label: Optional[str] = None
     label_next_widget: bool = False
     focus_label_next_widget: bool = False
     #group_box: Optional[?] = None
