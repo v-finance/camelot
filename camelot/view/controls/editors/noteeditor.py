@@ -54,6 +54,7 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
         self.setTextFormat( QtCore.Qt.TextFormat.RichText )
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding,
                             QtWidgets.QSizePolicy.Policy.Minimum )
+        self.setWordWrap(True);
         self.setContentsMargins(0, 0, 0, 0)
         self.setFrameStyle(QtWidgets.QFrame.Shape.Box)
         self.setLineWidth(2)
