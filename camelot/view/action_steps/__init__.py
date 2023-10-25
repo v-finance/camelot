@@ -34,7 +34,7 @@ from .application import (
 )
 from .change_object import ChangeObject, ChangeObjects
 from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
-                        ToPreviousForm)
+                        ToPreviousForm, HighlightForm)
 from .gui import (
     CloseView, MessageBox, Refresh, SelectItem
 )
@@ -79,6 +79,7 @@ __all__ = [
     NavigationPanel.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
+    HighlightForm.__name__,
     OpenStream.__name__,
     OpenString.__name__,
     OpenTableView.__name__,

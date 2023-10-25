@@ -31,7 +31,7 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import Dict
+from typing import Dict, Optional
 from dataclasses import dataclass, field
 import json
 
@@ -39,7 +39,7 @@ from ..controls.formview import FormView
 from ..forms import AbstractForm
 from ..workspace import show_top_level
 from ...admin.action.base import ActionStep, RenderHint
-from ...admin.admin_route import AdminRoute
+from ...admin.admin_route import Route, AdminRoute
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
@@ -86,10 +86,10 @@ class OpenFormView(AbstractCrudView):
     def __post_init__(self, value, admin, proxy):
         assert value is not None
         assert (proxy is None) or (isinstance(proxy, AbstractModelProxy))
-        self.fields = dict((f, {
+        self.fields = [[f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
-            }) for f, fa in admin.get_fields())
+            }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
         if proxy is None:
@@ -122,13 +122,13 @@ class OpenFormView(AbstractCrudView):
         form = FormView()
         model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), form)
         model.setValue(step['model_context_name'])
-        columns = [ fn for fn, fa in step['fields'].items() ]
+        columns = [ fn for fn, fa in step['fields']]
         model.setColumns(columns)
 
         form.setup(
             title=step['title'], admin_route=step['admin_route'],
             close_route=tuple(step['close_route']), model=model,
-            fields=step['fields'], form_display=step['form'],
+            fields=dict(step['fields']), form_display=step['form'],
             index=step['row']
         )
         form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
@@ -139,12 +139,9 @@ class OpenFormView(AbstractCrudView):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        cpp_form_whitelist = [
-            #'LoanAccount',
-            #'FinancialAccount',
-        ]
-        if step['admin_route'][1] in cpp_form_whitelist:
-            # Use new QML forms:
+        admin = initial_naming_context.resolve(tuple(step['admin_route']))
+        if admin.qml_form:
+            # Use new QML forms
             qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
         else:
             formview = cls.render(gui_context_name, step)
@@ -154,6 +151,24 @@ class OpenFormView(AbstractCrudView):
                 ))
                 show_top_level(formview, gui_context_name, step['form_state'])
 
+@dataclass
+class HighlightForm(ActionStep, DataclassSerializable):
+
+    tab: Optional[str] = None # The form tab
+    label: Optional[str] = None # A field label to highlight
+    label_delegate: bool = False # Highlight delegate associated with label
+    label_delegate_focus: bool = False # Focus delegate associated with label
+    table_label: Optional[str] = None # Label of the table for table_row and table_column
+    table_row: Optional[int] = None # Table row to highlight
+    table_column: Optional[str] = None # Table column to highlight
+    action_route: Optional[Route] = None # Action to highlight
+    action_menu_route: Optional[Route] = None # Menu to open
+    action_menu_mode: Optional[str] = None # Menu mode (verbose name) to highlight
+
+    #action_cls_state: Optional[?] = None
+    #group_box: Optional[?] = None
+    form_state: Optional[str] = None
+    field_name: Optional[str] = None
 
 @dataclass
 class ChangeFormIndex(ActionStep, DataclassSerializable):

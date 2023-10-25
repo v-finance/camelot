@@ -307,7 +307,7 @@ class ChangeObject(OpenFormView):
             tuple(step['admin_route']),
             step['title'],
             step['form'],
-            step['fields'],
+            dict(step['fields']),
             step['actions'],
             step['action_states'],
             step['accept'],
