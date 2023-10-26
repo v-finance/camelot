@@ -58,14 +58,6 @@ class Exit(ActionStep, DataclassSerializable):
     return_code: int = 0
     blocking: bool = False
 
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        from camelot.view.model_thread import get_model_thread
-        model_thread = get_model_thread()
-        if model_thread != None:
-            model_thread.stop()
-        qml_action_step(gui_context, 'Exit', serialized_step)
-
 
 @dataclass
 class SetThemeColors(ActionStep, DataclassSerializable):
@@ -91,40 +83,20 @@ class MainWindow(ActionStep, DataclassSerializable):
     (e.g. stopping the model thread).
     """
 
-    class MainWindowEventFilter(QtCore.QObject):
-
-        def __init__(self, parent):
-            super().__init__(parent)
-
-        def eventFilter(self, qobject, event):
-            if event.type() == QtCore.QEvent.Type.Close:
-                from camelot.view.model_thread import get_model_thread
-                model_thread = get_model_thread()
-                LOGGER.info( 'closing mainwindow' )
-                model_thread.stop()
-                QtCore.QCoreApplication.exit(0)
-            # allow events to propagate
-            return False
-
     admin: InitVar[ApplicationAdmin]
+    model_context: InitVar(ModelContext) = None
     window_title: str = field(init=False)
     blocking: bool = False
     admin_route: Route = field(init=False)
+    model_context_name: Route = field(default_factory=list)
+    exit_action: Route = field(init=False)
 
-    def __post_init__(self, admin):
+    def __post_init__(self, admin, model_context):
         self.window_title = admin.get_name()
         self.admin_route = admin.get_admin_route()
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        LOGGER.info('installing event filter')
-        qml_window = get_qml_window()
-        event_filter = cls.MainWindowEventFilter(qml_window)
-        # prevent garbage collection of the event_filter, by keeping it
-        # out of the garbage collection cyle
-        transferto(event_filter, event_filter)
-        qml_window.installEventFilter(event_filter)
-        qml_action_step(gui_context, 'MainWindow', serialized_step)
+        from ...admin.action.application_action import Exit
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+        self.exit_action = initial_naming_context.bind('exit', Exit())
 
 
 @dataclass
