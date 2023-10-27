@@ -101,6 +101,7 @@ class GuiRun(object):
         self.model_context_name = model_context_name
         self.mode = mode
         self.started_at = time.time()
+        self.last_update = self.started_at
         self.steps = []
 
     @property
@@ -113,12 +114,19 @@ class GuiRun(object):
         """
         return time.time() - self.started_at
 
+    def time_idle(self):
+        """
+        :return: the time the action has been running
+        """
+        return time.time() - self.last_update
+
     def handle_action_step(self, action_step):
         self.steps.append(type(action_step).__name__)
         return action_step.gui_run(self.gui_context_name)
 
     def handle_serialized_action_step(self, step_type, serialized_step):
         self.steps.append(step_type)
+        self.last_update = time.time()
         cls = MetaActionStep.action_steps[step_type]
         if cls.blocking==True:
             app = QtGui.QGuiApplication.instance()
@@ -175,8 +183,8 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
                     LOGGER.info('{} : {}'.format(run_name, run.action_name))
                     LOGGER.info('  Generated {} steps during {} seconds'.format(run.step_count, run.time_running()))
                     LOGGER.info('  Steps : {}'.format(run.steps))
-                    if run.time_running() >= max_wait:
-                        raise Exception('Action running for more then {} seconds'.format(max_wait))
+                    if run.time_idle() >= max_wait:
+                        raise Exception('Action idle for more then {} seconds'.format(max_wait))
             QtCore.QCoreApplication.instance().processEvents()
             time.sleep(0.05)
 
