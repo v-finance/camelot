@@ -311,7 +311,8 @@ class FieldFilter(AbstractFilterStrategy):
                     where_conditions.append(self.where)
                 if where_conditions:
                     attribute_clauses.append(sql.and_(*where_conditions, attribute_clause))
-                attribute_clauses.append(attribute_clause)
+                else:
+                    attribute_clauses.append(attribute_clause)
         if attribute_clauses:
             return self.connective_operator.operator(*attribute_clauses).self_group()
 
