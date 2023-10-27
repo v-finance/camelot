@@ -155,7 +155,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         self.response.connect(self._handle_response)
 
     @classmethod
-    def wait_for_completion(cls, max_wait=30):
+    def wait_for_completion(cls, max_wait=15):
         """
         Wait until all actions are completed
 
