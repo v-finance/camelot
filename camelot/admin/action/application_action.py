@@ -407,6 +407,9 @@ class Exit( Action ):
         if model_thread != None:
             model_thread.stop()
         yield Exit()
+
+exit_name = application_action_context.bind(Exit.name, Exit(), True)
+
        
 class SegmentationFault( Action ):
     """Create a segmentation fault by reading null, this is to test

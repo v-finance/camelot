@@ -35,16 +35,16 @@ import pstats
 import typing
 
 from ...admin.action.base import ActionStep, State, ModelContext
-from ...admin.action.application_action import model_context_naming, model_context_counter
+from ...admin.action.application_action import model_context_naming, model_context_counter, exit_name
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.naming import initial_naming_context
-from ...core.qt import QtCore, QtQuick, transferto
+from ...core.qt import QtCore, QtQuick
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import AuthenticationMechanism
 from .. import gui_naming_context
-from camelot.view.qml_view import qml_action_step, get_qml_window, is_cpp_gui_context_name
+from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
 from .open_file import OpenFile
 
 LOGGER = logging.getLogger(__name__)
@@ -94,9 +94,8 @@ class MainWindow(ActionStep, DataclassSerializable):
     def __post_init__(self, admin, model_context):
         self.window_title = admin.get_name()
         self.admin_route = admin.get_admin_route()
-        from ...admin.action.application_action import Exit
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
-        self.exit_action = initial_naming_context.bind('exit', Exit())
+        self.exit_action = exit_name
 
 
 @dataclass
