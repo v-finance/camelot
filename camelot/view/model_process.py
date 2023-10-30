@@ -83,13 +83,21 @@ class ModelProcess(spawned_mp.Process):
         LOGGER.info("Terminated")
 
     def post(self, request):
+        if self._request_queue is None:
+            LOGGER.error('Request posted to no longer running process {}'.format(request))
+            raise Exception('Process no longer running')
         self._request_queue.put(request._to_bytes())
+        return ['process', str(self.pid)]
 
     def stop(self):
         """
         Request the worker to finish its ongoing tasks and stop
         """
-        self.post(stop_request)
+        # make sure no messages can be send to the request queue, after
+        # the stop_request was send
+        request_queue = self._request_queue
+        self._request_queue = None
+        request_queue.put(stop_request._to_bytes())
         self.join()
         # as per Qt documentation, explicit disabling of the notifier is advised
         self.socket_notifier.setEnabled(False)
