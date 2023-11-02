@@ -81,6 +81,7 @@ class OpenFormView(AbstractCrudView):
     row: int = field(init=False)
     form_state: str = field(init=False)
     blocking: bool = False
+    qml: bool = False
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
@@ -91,6 +92,7 @@ class OpenFormView(AbstractCrudView):
             }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
+        self.qml = admin.qml_form
         if proxy is None:
             proxy = admin.get_proxy([value])
             self.row = 0
@@ -138,8 +140,7 @@ class OpenFormView(AbstractCrudView):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        admin = initial_naming_context.resolve(tuple(step['admin_route']))
-        if admin.qml_form:
+        if step.get("qml", False) == True:
             # Use new QML forms
             qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
         else:
