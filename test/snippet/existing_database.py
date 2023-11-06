@@ -1,5 +1,11 @@
 from sqlalchemy.engine import create_engine
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.schema import Table
+
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.conf import settings
+from camelot.core.sql import metadata
 
 engine = create_engine( 'sqlite:///test.sqlite' )
 #
@@ -19,10 +25,6 @@ connection.execute( """insert into person (first_name, last_name)
 #
 # Use declarative to reflect the table and create classes
 #
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.sql import metadata
-from sqlalchemy.schema import Table
-from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base( metadata = metadata )
 
@@ -36,15 +38,10 @@ class Person( Base ):
 #
 # Setup a camelot application
 #
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.section import Section
-from camelot.core.conf import settings
 
 class AppAdmin( ApplicationAdmin ):
-    
-    def get_sections( self ):
-        return [ Section( 'All tables', self, items = [Person] ) ]
-    
+    pass
+
 class Settings(object):
     
     def ENGINE( self ):
@@ -55,6 +52,8 @@ class Settings(object):
     
 settings.append( Settings() )
 app_admin = AppAdmin()
+all_tables = app_admin.add_navigation_menu('All tables')
+app_admin.add_navigation_entity_table(Person, all_tables)
 
 #
 # Start the application 

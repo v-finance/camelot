@@ -27,35 +27,44 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
+from typing import ClassVar, Any
 
 from ....core.item_model import PreviewRole
-from ....core.qt import Qt, QtCore, py_to_variant
+from ....core.qt import Qt, QtCore
+from camelot.core.naming import initial_naming_context
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.view.utils import local_date_format
 
-@six.add_metaclass(DocumentationMetaclass)
-class DateDelegate(CustomDelegate):
+@dataclass
+class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for date values"""
     
-    editor = editors.DateEditor
-    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
+    nullable: bool = True
+
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
     
-    def __init__(self, parent=None, **kwargs):
-        CustomDelegate.__init__(self, parent, **kwargs)
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         self.date_format = local_date_format()
         self._width = self._font_metrics.averageCharWidth() * (len(self.date_format) + 2)  + (camelot_small_icon_width*2)
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(DateDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            value_str = six.text_type(locale.toString(value, QtCore.QLocale.ShortFormat))
-            item.setData(py_to_variant(value_str), PreviewRole)
+    def get_editor_class(cls):
+        return editors.DateEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
+            value_str = str(locale.toString(model_context.value, QtCore.QLocale.FormatType.ShortFormat))
+            item.roles[PreviewRole] = value_str
         else:
-            item.setData(py_to_variant(six.text_type()), PreviewRole)
+            item.roles[PreviewRole] = str()
         return item
 
 

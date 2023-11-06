@@ -27,28 +27,36 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass, field
+from typing import List
 
-from ....core.qt import py_to_variant
+from camelot.core.qt import Qt
+from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class FileDelegate(CustomDelegate):
+@dataclass
+class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for :class:`camelot.types.File` columns.  Expects values of type 
     :class:`camelot.core.files.storage.StoredFile`.
     """
     
-    editor = editors.FileEditor
+    action_routes: List[Route] = field(default_factory=list)
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(FileDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            item.setData(py_to_variant(value.verbose_name), PreviewRole)
+    def get_editor_class(cls):
+        return editors.FileEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = model_context.value.verbose_name # FIXME: bind object?
+            item.roles[PreviewRole] = model_context.value.verbose_name
         else:
-            item.setData(py_to_variant(six.text_type()), PreviewRole)
+            item.roles[PreviewRole] = str()
         return item
 
 

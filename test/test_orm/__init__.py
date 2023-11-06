@@ -1,10 +1,24 @@
 import unittest
 
+from sqlalchemy import MetaData
+from sqlalchemy.ext.declarative import declarative_base
+
 from camelot.core.orm import EntityBase, EntityMeta, Session
+
+class EntityMetaMock(EntityMeta):
+    """
+    Specialized EntityMeta mock used for testing that overwrites the default assignment of
+    the __entity_args__ entity name argument in a way that allows test cases to define multiple Entities
+    with the same name.
+    """
+
+    def _default_entity_name(cls, classname, dict_):
+        entity_name = super()._default_entity_name(cls, classname, dict_)
+        return '{}_{}'.format(entity_name, id(entity_name))
 
 class TestMetaData( unittest.TestCase ):
     """Test case that provides setUp and tearDown
-    of metadata separated from the camelot default
+    of metadata separated from camelot default
     metadata.  
     
     This can be used to setup and test various
@@ -13,13 +27,11 @@ class TestMetaData( unittest.TestCase ):
     """
     
     def setUp(self):
-        from sqlalchemy import MetaData
-        from sqlalchemy.ext.declarative import declarative_base
         self.metadata = MetaData()
         self.class_registry = dict()
         self.Entity = declarative_base( cls = EntityBase, 
                                         metadata = self.metadata,
-                                        metaclass = EntityMeta,
+                                        metaclass = EntityMetaMock,
                                         class_registry = self.class_registry,
                                         constructor = None,
                                         name = 'Entity' )
@@ -27,8 +39,6 @@ class TestMetaData( unittest.TestCase ):
         self.session = Session()
 
     def create_all(self):
-        from camelot.core.orm import process_deferred_properties
-        process_deferred_properties( self.class_registry )
         self.metadata.create_all()
         
     def tearDown(self):

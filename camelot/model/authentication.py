@@ -31,167 +31,28 @@
 """
 import base64
 import datetime
-import getpass
 import threading
 
-from sqlalchemy import types, orm
+from sqlalchemy import types, orm, schema, sql
 from sqlalchemy.schema import Column, ForeignKey
 
 import camelot.types
 
-from ..admin.action import list_filter
-from ..admin.entity_admin import EntityAdmin
+from ..core.exception import UserException
 from ..core.qt import QtCore, QtGui
-from ..core.orm import Entity, Session, ManyToMany
-from ..core.utils import ugettext_lazy as _
-from ..view import forms
-from ..view.controls import delegates
+from ..core.orm import Entity
+from ..core.sql import metadata
+from ..sql.types import IdentifyingUnicode
 
 END_OF_TIMES = datetime.date( year = 2400, month = 12, day = 31 )
-
-#
-# Enumeration of the types of authentication supported
-#
-authentication_types = [ (1, 'operating_system'),
-                         (2, 'database') ]
-
-def end_of_times():
-    return END_OF_TIMES
-
-_current_authentication_ = threading.local()
-
-def get_current_authentication( _obj = None ):
-    """Get the currently logged in :class:'AuthenticationMechanism'"""
-    global _current_authentication_
-    if not hasattr( _current_authentication_, 'mechanism' ) \
-        or not _current_authentication_.mechanism \
-        or not orm.object_session( _current_authentication_.mechanism ):
-            # According to the documentation (and the implementation), getpass.getuser
-            # can fail with any exception.  Eg when USERNAME env variable is not
-            # available on Windows, it will fail with an ImportError
-            user = ''
-            try:
-                user = getpass.getuser()
-            except Exception:
-                pass
-            _current_authentication_.mechanism = AuthenticationMechanism.get_or_create( user )
-    return _current_authentication_.mechanism
-
-def clear_current_authentication():
-    _current_authentication_.mechanism = None
-
-def update_last_login( initial_group_name = None,
-                       initial_group_roles = [] ):
-    """Update the last login of the currently logged in user to now.  If there
-    is no :class:`AuthenticationGroup` yet in the database, create one and add
-    the user to it.  This can be used to bootstrap the authentication system
-    and create an `admin` group and add the user to it.
-    
-    :param initial_group_name: The name of the authentication group that needs
-        to be created if there is none yet.
-    :param initial_group_roles: a :class:`list` with the roles for the initial
-        group
-    """
-    authentication = get_current_authentication()
-    session = orm.object_session( authentication )
-    if session:
-        authentication.last_login = datetime.datetime.now()
-        if initial_group_name:
-            group_count = session.query( AuthenticationGroup ).count()
-            if group_count == 0:
-                group = AuthenticationGroup( name = initial_group_name )
-                for role in initial_group_roles:
-                    setattr( group, role, True )
-                group.members.append( authentication )
-        session.flush()
 
 #
 # Enumeration for the roles in an application
 #
 roles = []
 
-class AuthenticationMechanism( Entity ):
-    
-    __tablename__ = 'authentication_mechanism'
-    
-    authentication_type = Column(
-        camelot.types.Enumeration(authentication_types),
-        nullable = False, index = True , default = authentication_types[0][1]
-    )
-    username = Column( types.Unicode( 40 ), nullable = False, index = True, unique = True )
-    password = Column( types.Unicode( 200 ), nullable = True, index = False, default = None )
-    from_date = Column( types.Date(), default = datetime.date.today, nullable = False, index = True )
-    thru_date = Column( types.Date(), default = end_of_times, nullable = False, index = True )
-    last_login = Column( types.DateTime() )
-    representation = orm.deferred(Column(types.Text(), nullable=True))
 
-    @classmethod
-    def get_or_create( cls, username ):
-        session = Session()
-        authentication = session.query( cls ).filter_by( username = username ).first()
-        if not authentication:
-            authentication = cls( username = username )
-            session.add( authentication )
-            session.flush()
-        return authentication
-
-    def get_representation(self):
-        """
-        :return: a :class:`QtGui.QImage` object with the avatar of the user,
-            or `None`.
-        """
-        if self.representation is None:
-            return self.representation
-        return QtGui.QImage.fromData(base64.b64decode(self.representation))
-    
-    def set_representation(self, image):
-        """
-        :param image: a :class:`QtGui.QImage` object with the avatar of the user,
-            or `None`.
-        """
-        if image is None:
-            self.representation=None
-        qbyte_array = QtCore.QByteArray()
-        qbuffer = QtCore.QBuffer( qbyte_array )
-        image.save( qbuffer, 'PNG' )
-        self.representation=qbyte_array.toBase64().data().decode()
-        
-    def has_role( self, role_name ):
-        """
-        :param role_name: a string with the name of the role
-        :return; `True` if the user is associated to this role, otherwise 
-            `False`.
-            
-        """
-        for group in self.groups:
-            if getattr( group, role_name ) == True:
-                return True
-        return False
-        
-    def __str__( self ):
-        return self.username
-    
-    class Admin( EntityAdmin ):
-        verbose_name = _('Authentication mechanism')
-        verbose_name_plural = _('Authentication mechanism')
-        list_display = [
-            'authentication_type', 'username', 'from_date', 'thru_date',
-            'last_login'
-        ]
-        form_display = forms.HBoxForm(
-            [list_display, ['representation']]
-        )
-        field_attributes = {
-            'representation': {
-                'delegate': delegates.DbImageDelegate,
-                'name': ' ',
-                'max_size': 100000,
-                'preview_width': 100,
-                'preview_height': 200,
-                'search_strategy': list_filter.NoSearch
-                }}
-
-class AuthenticationGroup( Entity ):
+class AuthenticationGroup(Entity):
     """A group of users (defined by their :class:`AuthenticationMechanism`).
     Different roles can be assigned to a group.
     """
@@ -199,9 +60,6 @@ class AuthenticationGroup( Entity ):
     __tablename__ = 'authentication_group'
     
     name = Column( types.Unicode(256), nullable=False )
-    members = ManyToMany( AuthenticationMechanism, 
-                          tablename = 'authentication_group_member',
-                          backref = 'groups' )
     
     def __getattr__( self, name ):
         for role_id, role_name in roles:
@@ -229,25 +87,8 @@ class AuthenticationGroup( Entity ):
         
     def __str__( self ):
         return self.name or ''
-    
-    class Admin( EntityAdmin ):
-        verbose_name = _('Authentication group')
-        verbose_name_plural = _('Authentication groups')
-        list_display = [ 'name' ]
-        form_state = 'right'
-        
-        def get_form_display( self ):
-            return forms.TabForm( [(_('Group'), ['name', 'members']),
-                                   (_('Authentication roles'), [role[1] for role in roles])
-                                   ])
-        
-        def get_field_attributes( self, field_name ):
-            fa = EntityAdmin.get_field_attributes( self, field_name )
-            if field_name in [role[1] for role in roles]:
-                fa['delegate'] = delegates.BoolDelegate
-                fa['editable'] = True
-            return fa
-        
+
+
 class AuthenticationGroupRole( Entity ):
     """Table with the different roles associated with an
     :class:`AuthenticationGroup`
@@ -269,3 +110,153 @@ class AuthenticationGroupRole( Entity ):
 
 AuthenticationGroup.roles = orm.relationship( AuthenticationGroupRole,
                                               cascade = 'all, delete, delete-orphan')
+group_table = AuthenticationGroup.table
+group_role_table = AuthenticationGroupRole.table
+
+#
+# Enumeration of the types of authentication supported
+#
+authentication_types = [
+    (1, 'operating_system'),
+    (2, 'database')
+]
+
+def end_of_times():
+    return END_OF_TIMES
+
+class Authentication(threading.local):
+
+    def __init__(self):
+        self.clear()
+
+    def has_role(self, role_name):
+        """
+        :param role_name: a string with the name of the role
+        :return; `True` if the user is associated to this role, otherwise 
+            `False`.
+        """
+        assert role_name in [r[1] for r in roles]
+        return role_name in self.roles
+
+    def clear(self):
+        self.authentication_type = None
+        self.username = None
+        self.authentication_mechanism_id = None
+        self.roles = set()
+        self.groups = set()
+        self.pseudonym = None
+
+    def __str__(self):
+        if self.username is not None:
+            return self.username
+        return ''
+
+_current_authentication_ = Authentication()
+
+class AuthenticationMechanism( Entity ):
+    
+    __tablename__ = 'authentication_mechanism'
+    
+    authentication_type = Column(
+        camelot.types.Enumeration(authentication_types),
+        nullable = False, index = True , default = authentication_types[0][1]
+    )
+    username = Column( IdentifyingUnicode(length=40), nullable = False, index = True, unique = True )
+    password = Column( types.Unicode( 200 ), nullable = True, index = False, default = None )
+    from_date = Column( types.Date(), default = datetime.date.today, nullable = False, index = True )
+    thru_date = Column( types.Date(), default = end_of_times, nullable = False, index = True )
+    last_login = Column( types.DateTime() )
+    representation = orm.deferred(Column(types.Text(), nullable=True))
+
+    @classmethod
+    def get_current_authentication(cls) -> Authentication:
+        """
+        Get the currently logged in :class:'AuthenticationMechanism'
+        """
+        if _current_authentication_.authentication_mechanism_id is None:
+            raise UserException("Current user is not authenticated")
+        return _current_authentication_
+
+    @classmethod
+    def authenticate(cls, connection, authenication_type, username, groups) -> Authentication:
+        """
+        Authenticate a user and set the current authentication
+        """
+        cls.clear_authentication()
+        mechanism_id = cls.get_or_create(connection, username)
+        _current_authentication_.username = username
+        _current_authentication_.authentication_mechanism_id = mechanism_id
+        role_id_to_role = dict(roles)
+        for row in connection.execute(sql.select(
+            [group_role_table.c.role_id, group_table.c.name],
+            from_obj=group_role_table.join(group_table, group_table.c.id==group_role_table.c.group_id),
+            whereclause=group_table.c.name.in_(groups))):
+            _current_authentication_.groups.add(row['name'])
+            role_name = role_id_to_role.get(row['role_id'])
+            if role_name is not None:
+                _current_authentication_.roles.add(role_name)
+        return _current_authentication_
+
+    @classmethod
+    def update_last_login(cls, connection, username):
+        mechanism_id = cls.get_or_create(connection, username)
+        connection.execute(cls.table.update().values(last_login=sql.func.now()).where(cls.table.c.id==mechanism_id))
+
+    @classmethod
+    def clear_authentication(cls):
+        _current_authentication_.clear()
+
+    @classmethod
+    def set_current_authentication(cls, session):
+        """
+        Get the currently logged in :class:'AuthenticationMechanism', within
+        a specific session.
+        """
+        global _current_authentication_
+
+    @classmethod
+    def get_or_create(cls, connection, username):
+        for row in connection.execute(sql.select([cls.id.label('id')]).where(cls.username==username)):
+            return row['id']
+        result = connection.execute(cls.table.insert().values(username=username, last_login=sql.func.now()))
+        return result.inserted_primary_key[0]
+
+    def get_representation(self):
+        """
+        :return: a :class:`QtGui.QImage` object with the avatar of the user,
+            or `None`.
+        """
+        if self.representation is None:
+            return self.representation
+        return QtGui.QImage.fromData(base64.b64decode(self.representation))
+    
+    def set_representation(self, image):
+        """
+        :param image: a :class:`QtGui.QImage` object with the avatar of the user,
+            or `None`.
+        """
+        if image is None:
+            self.representation=None
+        qbyte_array = QtCore.QByteArray()
+        qbuffer = QtCore.QBuffer( qbyte_array )
+        image.save( qbuffer, 'PNG' )
+        self.representation=qbyte_array.toBase64().data().decode()
+        
+    def __str__(self):
+        return self.username or ''
+
+
+authentication_group_member_table = schema.Table('authentication_group_member', metadata,
+                            schema.Column('authentication_group_id', types.Integer(),
+                                          schema.ForeignKey(AuthenticationGroup.id, name='authentication_group_members_fk'),
+                                          nullable=False, primary_key=True),
+                            schema.Column('authentication_mechanism_id', types.Integer(),
+                                          schema.ForeignKey(AuthenticationMechanism.id, name='authentication_group_members_inverse_fk'),
+                                          nullable=False, primary_key=True)
+                            )
+
+AuthenticationGroup.members = orm.relationship(AuthenticationMechanism, backref='groups', secondary=authentication_group_member_table,
+                                               foreign_keys=[
+                                                   authentication_group_member_table.c.authentication_group_id,
+                                                   authentication_group_member_table.c.authentication_mechanism_id])
+

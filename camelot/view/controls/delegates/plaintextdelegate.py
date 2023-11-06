@@ -28,45 +28,68 @@
 #  ============================================================================
 
 import logging
+from dataclasses import dataclass, field
+from typing import Optional, List
+
 logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 
-import six
 
-from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant
+from ....admin.admin_route import Route
+from ....core.item_model import PreviewRole, ValidatorStateRole, CompleterStateRole
+from ....core.qt import Qt
 from .customdelegate import CustomDelegate
-from .customdelegate import DocumentationMetaclass
-from camelot.core.qt import QtWidgets
 
 from camelot.view.controls import editors
+from camelot.view.validator import AbstractValidator
 
 DEFAULT_COLUMN_WIDTH = 20
 
-@six.add_metaclass(DocumentationMetaclass)
+@dataclass
 class PlainTextDelegate(CustomDelegate):
     """Custom delegate for simple string values"""
 
-    editor = editors.TextLineEditor
+    length: int = DEFAULT_COLUMN_WIDTH
+    echo_mode: Optional[int] = None
+    column_width: Optional[int] = None
+    action_routes: List[Route] = field(default_factory=list)
+    validator_type: Optional[str] = None
+    completer_type: Optional[str] = None
 
-    def __init__( self,
-                  parent = None,
-                  length = DEFAULT_COLUMN_WIDTH,
-                  translate_content=False,
-                  **kw ):
-        CustomDelegate.__init__( self, parent, length = length, **kw )
-        self._translate_content = translate_content
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         char_width = self._font_metrics.averageCharWidth()
-        self._width = char_width * min( DEFAULT_COLUMN_WIDTH, length or DEFAULT_COLUMN_WIDTH )
+        self._width = char_width * min( DEFAULT_COLUMN_WIDTH, self.length or DEFAULT_COLUMN_WIDTH )
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        completer = fa_values.get('completer')
-        if completer is not None:
-            completer.moveToThread(QtWidgets.QApplication.instance().thread())
-        item = super(PlainTextDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            item.setData(py_to_variant(six.text_type(value)), PreviewRole)
+    def get_editor_class(cls):
+        return editors.TextLineEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        item.roles[ValidatorStateRole] = model_context.field_attributes.get('validator_state')
+        item.roles[CompleterStateRole] = model_context.field_attributes.get('completer_state')
+        if model_context.value is not None:
+            value = str(model_context.value)
+            # If a validator is defined, use it to format the model value:
+            validator = AbstractValidator.get_validator(model_context.field_attributes.get('validator_type'))
+            if validator is not None:
+                validator.set_state(model_context.field_attributes.get('validator_state'))
+                value = validator.format_value(value)
+            item.roles[PreviewRole] = value
+            # Set EditRole to possible reformatted value, to apply programatically triggered changes.
+            item.roles[Qt.ItemDataRole.EditRole] = value
         return item
 
-
-
+    def setEditorData(self, editor, index):
+        if index.model() is None:
+            return
+        self.set_default_editor_data(editor, index)
+        completer_state = index.data(CompleterStateRole)
+        validator_state = index.data(ValidatorStateRole)
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
+        editor.set_completer_state(completer_state)
+        editor.set_validator_state(validator_state)
+        editor.set_value(value)
+        self.update_field_action_states(editor, index)

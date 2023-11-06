@@ -29,153 +29,16 @@
 
 """Convenience functions and classes to present views to the user"""
 
-import six
+
 
 import logging
 logger = logging.getLogger('camelot.view.workspace')
 
 from ..core import constants
-from ..core.qt import QtCore, QtGui, QtWidgets, transferto
-from camelot.admin.action import ApplicationActionGuiContext
-from camelot.view.model_thread import object_thread
+from ..core.qt import QtCore, QtWidgets, transferto
+from .qml_view import is_cpp_gui_context_name, get_qml_window
+from . import gui_naming_context
 
-
-class DesktopWorkspace(QtWidgets.QTabWidget):
-    """
-    A tab based workspace that can be used by views to display themselves.
-
-    In essence this is a wrapper around QTabWidget with initial setup.
-
-    :param admin_route: the route to the desktop workspace view
-
-    :param parent: a :class:`QtWidgets.QWidget` object or :class:`None`
-
-    """
-
-    view_activated_signal = QtCore.qt_signal(QtWidgets.QWidget)
-
-    def __init__(self, admin_route, parent):
-        super().__init__(parent)
-        assert isinstance(admin_route, tuple)
-        self.gui_context = ApplicationActionGuiContext()
-        self.gui_context.admin_route = admin_route
-        self.gui_context.workspace = self
-
-        self.setObjectName('workspace_tab_widget')
-        self.setTabPosition(QtWidgets.QTabWidget.North)
-        self.setDocumentMode(True)
-        self.currentChanged.connect(self._tab_changed)
-
-    @QtCore.qt_slot(int)
-    def _tab_close_request(self, index):
-        """
-        Handle the request for the removal of a tab at index.
-
-        Note that only at-runtime added tabs are being closed, implying
-        the immortality of the 'Start' tab.
-        """
-        view = self.widget(index)
-        if view is not None:
-            view.validate_close()
-            # it's not enough to simply remove the tab, because this
-            # would keep the underlying view widget alive
-            view.deleteLater()
-            self.removeTab(index)
-
-    @QtCore.qt_slot(int)
-    def _tab_changed(self, _index):
-        """
-        The active tab has changed, emit the view_activated signal.
-        """
-        self.view_activated_signal.emit(self.active_view())
-
-    def active_view(self):
-        """
-        :return: The currently active view or None in case of the 'Start' tab.
-        """
-        i = self.currentIndex()
-        return self.widget(i)
-
-    @QtCore.qt_slot(six.text_type)
-    def change_title(self, new_title):
-        """
-        Slot to be called when the tile of a view needs to change.
-        """
-        sender = self.sender()
-        if sender is not None:
-            index = self.indexOf(sender)
-            self.setTabText(index, new_title)
-
-    @QtCore.qt_slot(QtGui.QIcon)
-    def change_icon(self, new_icon):
-        """
-        Slot to be called when the icon of a view needs to change.
-        """
-        sender = self.sender()
-        if sender is not None:
-            index = self.indexOf(sender)
-            self.setTabIcon(index, new_icon)
-
-    @QtCore.qt_slot()
-    def close_view(self):
-        """
-        Slot to be called when a view requests to be closed.
-        """
-        sender = self.sender()
-        if sender is not None:
-            index = self.indexOf(sender)
-            self._tab_close_request(index)
-
-    def set_view(self, view, icon = None, title = '...'):
-        """
-        Remove the currently active view and replace it with a new view.
-        """
-        index = self.currentIndex()
-        current_view = self.widget(index)
-        if (current_view is None) or (current_view.close() == False):
-            self.add_view(view, icon, title)
-        else:
-            self._tab_close_request(index)
-            view.title_changed_signal.connect(self.change_title)
-            view.icon_changed_signal.connect(self.change_icon)
-            view.close_clicked_signal.connect(self.close_view)
-            if icon:
-                index = self.insertTab(index, view, icon, title)
-            else:
-                index = self.insertTab(index, view, title)
-            self.setCurrentIndex(index)
-
-    def add_view(self, view, icon = None, title = '...'):
-        """
-        Add a Widget implementing AbstractView to the workspace.
-        """
-        assert object_thread(self)
-        view.title_changed_signal.connect(self.change_title)
-        view.icon_changed_signal.connect(self.change_icon)
-        view.close_clicked_signal.connect(self.close_view)
-        if icon:
-            index = self.addTab(view, icon, title)
-        else:
-            index = self.addTab(view, title)
-        self.setCurrentIndex(index)
-
-    def refresh(self):
-        """Refresh all views on the desktop"""
-        for i in range( self.count() ):
-            self.widget(i).refresh()
-
-    def close_all_views(self):
-        """
-        Remove all views, except the 'Start' tab, from the workspace.
-        """
-        # NOTE: will call removeTab until tab widget is cleared
-        # but removeTab does not really delete the page objects
-        #self._tab_widget.clear()
-        max_index = self.count()
-
-        while max_index > 0:
-            self.tabCloseRequested.emit(max_index)
-            max_index -= 1
 
 top_level_windows = []
 
@@ -188,13 +51,9 @@ def apply_form_state(view, parent, state):
     # position the new window in the center of the same screen
     # as the parent.
     # That parent might be a QWidget or a QWindow
-    if isinstance(parent, QtWidgets.QWidget):
-        screen = QtWidgets.QApplication.desktop().screenNumber(parent)
-    else:
-        screen = 0
-    geometry = QtWidgets.QApplication.desktop().availableGeometry(screen)
     decoration_width, decoration_height = 0, 0
     if parent is not None:
+        screen = parent.screen()
         # here we use the incorrect assumption that we can use the size of
         # the decorations of the parent window to know the size of the
         # decorations of the new window
@@ -204,10 +63,14 @@ def apply_form_state(view, parent, state):
         parent_frame = parent.frameGeometry()
         decoration_width = parent_frame.width() - parent_geometry.width()
         decoration_height = parent_frame.height() - parent_geometry.height()
+    else:
+        screen = QtCore.QCoreApplication.instance().primaryScreen()
+
+    geometry = screen.availableGeometry()
     if state == constants.MAXIMIZED:
-        view.setWindowState(QtCore.Qt.WindowMaximized)
+        view.setWindowState(QtCore.Qt.WindowState.WindowMaximized)
     elif state == constants.MINIMIZED:
-        view.setWindowState(QtCore.Qt.WindowMinimized)
+        view.setWindowState(QtCore.Qt.WindowState.WindowMinimized)
     elif state == constants.RIGHT:
         geometry.setLeft(geometry.center().x())
         view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
@@ -223,7 +86,7 @@ def apply_form_state(view, parent, state):
                               point.y()-view.height()/2)
         view.move(point)
 
-def show_top_level(view, parent, state=None):
+def show_top_level(view, gui_context_name, state=None):
     """Show a widget as a top level window.  If a parent window is given, the new
     window will have the same modality as the parent.
 
@@ -232,6 +95,11 @@ def show_top_level(view, parent, state=None):
         window will be placed.
     :param state: the state of the form, 'maximized', or 'left' or 'right', ...
      """
+    if is_cpp_gui_context_name(gui_context_name):
+        parent = get_qml_window()
+    else:
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        parent = gui_context.get_window()
     #
     # assert the view has an objectname, so it can be retrieved later
     # by this object name, since a top level view might have no references
@@ -259,17 +127,17 @@ def show_top_level(view, parent, state=None):
     view.setWindowTitle(' ')
     view.title_changed_signal.connect( view.setWindowTitle )
     view.icon_changed_signal.connect( view.setWindowIcon )
-    view.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+    view.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
     # parent might be a QWidget or a QWindow
     # the modality should be set before showing the window
     if isinstance(parent, QtWidgets.QWidget):
         view.setWindowModality(parent.windowModality())
     #
     # There is a bug in certain versions of Qt5 (QTBUG-57882), that causes
-    # view.show() to unmax/min the window.
-    # Therefor show the window before moving/resizing it to its final position
+    # view.show() to unmax/min the window. This is supposed to be fixed in Qt6
+    # No longer show the window before moving/resizing it to its final position
     #
-    view.show()
     apply_form_state(view, parent, state)
+    view.show()
 
 

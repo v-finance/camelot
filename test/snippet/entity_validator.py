@@ -1,5 +1,6 @@
-from camelot.admin.validator.entity_validator import EntityValidator
 from camelot.admin.entity_admin import EntityAdmin
+from camelot.admin.validator.entity_validator import EntityValidator
+
 
 class PersonValidator(EntityValidator):
 

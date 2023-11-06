@@ -27,18 +27,26 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+
+from camelot.core.qt import Qt
+from camelot.core.naming import initial_naming_context
 from .customdelegate import DocumentationMetaclass
 from .datedelegate import DateDelegate
-from camelot.view.controls import editors
-
-import six
-
-@six.add_metaclass(DocumentationMetaclass)
-class DateTimeDelegate(DateDelegate):
-
-    editor = editors.DateTimeEditor
 
 
+@dataclass
+class DateTimeDelegate(DateDelegate, metaclass=DocumentationMetaclass):
+
+    editable: bool = True
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
+        return item
 
 
 

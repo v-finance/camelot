@@ -48,7 +48,6 @@ from .choiceseditor import ChoicesEditor
 from .coloreditor import ColorEditor
 from .customeditor import CustomEditor
 from .dateeditor import DateEditor
-from .datetimeeditor import DateTimeEditor
 from .fileeditor import FileEditor
 from .floateditor import FloatEditor
 from .dbimageeditor import DbImageEditor
@@ -59,7 +58,6 @@ from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
 from .richtexteditor import RichTextEditor
 from .textlineeditor import TextLineEditor
-from .timeeditor import TimeEditor
 from .virtualaddresseditor import VirtualAddressEditor
 from .textediteditor import TextEditEditor
 from .wideeditor import WideEditor
@@ -73,7 +71,6 @@ __all__ = [
     ColorEditor.__name__,
     CustomEditor.__name__,
     DateEditor.__name__,
-    DateTimeEditor.__name__,
     FileEditor.__name__,
     FloatEditor.__name__,
     DbImageEditor.__name__,
@@ -87,7 +84,6 @@ __all__ = [
     One2ManyEditor.__name__,
     RichTextEditor.__name__,
     TextLineEditor.__name__,
-    TimeEditor.__name__,
     VirtualAddressEditor.__name__,
     TextEditEditor.__name__,
     WideEditor.__name__,

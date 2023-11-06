@@ -89,9 +89,6 @@ For examples, please refer to the examples and unit tests.
 
 from sqlalchemy import types
 
-import six
-
-from . statements import ClassMutator
 
 DEFAULT_AUTO_PRIMARYKEY_NAME = "id"
 DEFAULT_AUTO_PRIMARYKEY_KWARGS = dict(primary_key=True, doc='The primary key')
@@ -123,24 +120,9 @@ options_defaults = dict(
     table_options={},
 )
 
-valid_options = list( six.iterkeys(options_defaults) ) + [
+valid_options = list( options_defaults.keys() ) + [
     'metadata',
     'session',
 ]
-    
-class using_options( ClassMutator ):
-    """This statement its sole reason of existence is to keep existing Elixir
-    model definitions working.  Do not use it when writing new code, instead
-    use Declarative directly."""
-    
-    def process( self, entity_dict, tablename = None, **kwargs ):
-        if tablename:
-            entity_dict.setdefault('__tablename__', tablename )
-        for kwarg in kwargs:
-            if kwarg in valid_options:
-                setattr( entity_dict['_descriptor'], kwarg, kwargs[kwarg])
-            else:
-                raise Exception("'%s' is not a valid option for entities."
-                                % kwarg)
 
 

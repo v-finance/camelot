@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import six
+
 
 from camelot.admin.action import Action
 from camelot.core.utils import ugettext_lazy as _
@@ -34,6 +34,7 @@ from camelot.view.art import FontIcon
 
 class ImportCovers( Action ):
     verbose_name = _('Import cover images')
+    name = 'import_covers'
     icon = FontIcon('image')
     
 # begin select files
@@ -62,8 +63,8 @@ class ImportCovers( Action ):
         for i, file_name in enumerate(file_names):
             yield UpdateProgress( i, file_count )
             title = os.path.splitext( os.path.basename( file_name ) )[0]
-            stored_file = storage.checkin( six.text_type( file_name ) )
-            movie = Movie( title = six.text_type( title ) )
+            stored_file = storage.checkin( str( file_name ) )
+            movie = Movie( title = str( title ) )
             movie.cover = stored_file
             
         yield FlushSession( session )

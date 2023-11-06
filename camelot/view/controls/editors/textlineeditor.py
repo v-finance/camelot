@@ -27,9 +27,11 @@
 #
 #  ============================================================================
 
-import six
 
-from ....core.qt import QtCore, QtWidgets
+
+from ....core.qt import QtCore, QtGui, QtWidgets
+from camelot.view.validator import AbstractValidator
+from camelot.view.completer import AbstractCompleter
 
 from .customeditor import (CustomEditor, set_background_color_palette)
 from ..decorated_line_edit import DecoratedLineEdit
@@ -41,13 +43,14 @@ class TextLineEditor(CustomEditor):
                  parent,
                  length=20,
                  echo_mode=None,
-                 field_name='text_line',
-                 actions=[],
                  column_width=None,
-                 **kwargs):
+                 action_routes=[],
+                 validator_type=None,
+                 completer_type=None,
+                 field_name='text_line'):
         CustomEditor.__init__(self, parent, column_width=column_width)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                           QtWidgets.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
+                           QtWidgets.QSizePolicy.Policy.Fixed)
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -55,14 +58,25 @@ class TextLineEditor(CustomEditor):
         text_input = DecoratedLineEdit(self)
         text_input.setObjectName('text_input')
         text_input.editingFinished.connect(self.text_input_editing_finished)
-        text_input.setEchoMode(echo_mode or QtWidgets.QLineEdit.Normal)
+        if echo_mode is not None:
+            text_input.setEchoMode(QtWidgets.QLineEdit.EchoMode(echo_mode))
+        else:
+            text_input.setEchoMode(QtWidgets.QLineEdit.EchoMode.Normal)
+        validator = AbstractValidator.get_validator(validator_type, self)
+        if validator is not None:
+            validator.setObjectName('validator')
+            text_input.setValidator(validator)
+        completer = AbstractCompleter.get_completer(completer_type, self)
+        if completer is not None:
+            completer.setObjectName('completer')
+            text_input.setCompleter(completer)
         layout.addWidget(text_input)
         if length:
             text_input.setMaxLength(length)
         self.setFocusProxy(text_input)
         self.setObjectName(field_name)
         self._value = None
-        self.add_actions(actions, layout)
+        self.add_actions(action_routes, layout)
         self.setLayout(layout)
 
     @QtCore.qt_slot()
@@ -75,7 +89,7 @@ class TextLineEditor(CustomEditor):
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
             if value is not None:
-                text_input.setText(six.text_type(value))
+                text_input.setText(str(value))
             else:
                 text_input.setText('')
         return value
@@ -87,7 +101,7 @@ class TextLineEditor(CustomEditor):
 
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
-            value = six.text_type(text_input.text())
+            value = str(text_input.text())
             if len(value) == 0:
                 # convert an empty string to None, but not if the original
                 # value itself was an empty string
@@ -96,23 +110,33 @@ class TextLineEditor(CustomEditor):
                 return None
             return value
 
-    value = QtCore.qt_property(six.text_type, get_value, set_value)
+    value = QtCore.qt_property(str, get_value, set_value)
 
-    def set_field_attributes(self, **kwargs):
-        super(TextLineEditor, self).set_field_attributes(**kwargs)
+    def set_validator_state(self, validator_state):
+        validator = self.findChild(QtGui.QValidator, 'validator')
+        if validator is not None:
+            validator.set_state(validator_state)
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
-        validator = kwargs.get('validator')
-        completer = kwargs.get('completer')
         if text_input is not None:
-            editable = kwargs.get('editable', False)
+            text_input.setToolTip(str(tooltip or ''))
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+        if text_input is not None:
+            set_background_color_palette(text_input, background_color)
+
+    def set_completer_state(self, completer_state):
+        completer = self.findChild(QtWidgets.QCompleter, 'completer')
+        if completer is not None:
+            completer.set_state(completer_state)
+
+    def set_editable(self, editable):
+        text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
+        if text_input is not None:
             value = text_input.text()
             text_input.setReadOnly(not editable)
             text_input.setText(value)
-            text_input.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
-            set_background_color_palette(text_input,
-                                         kwargs.get('background_color'))
-            if completer:
-                text_input.setCompleter(completer)
-            text_input.setValidator(validator)
-
-

@@ -31,7 +31,7 @@ import logging
 
 logger = logging.getLogger( 'camelot.core.files.storage' )
 
-import six
+
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -103,7 +103,7 @@ class Storage( object ):
         if self._upload_to == None:
             root = self._root or settings.CAMELOT_MEDIA_ROOT
             import os
-            if six.callable( root ):
+            if callable( root ):
                 root = root()
             self._upload_to = os.path.join( root, self._subfolder )
         return self._upload_to
