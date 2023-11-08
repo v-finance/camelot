@@ -33,7 +33,7 @@ class SourceQualityCase( unittest.TestCase ):
         # test for the use of constructs that should be handled through
         # the qt compatibility module
         qt_incompatible = [
-            'QVariant',
+            #'QVariant', can be used in slot definitions
             'toBool',
             'toString()',
             'toSize()',
@@ -47,7 +47,7 @@ class SourceQualityCase( unittest.TestCase ):
 
         for dirpath, filename in self.walk_source_files():
             code = open( os.path.join( dirpath, filename ) ).read()
-            if filename=='qt.py':
+            if filename in ['qt.py', 'serializable.py']:
                 continue
             for expr in qt_incompatible:
                 if expr in code:

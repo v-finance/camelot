@@ -38,8 +38,9 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
     as its value the ISO code of the language"""
 
     editingFinished = QtCore.qt_signal()
+    actionTriggered = QtCore.qt_signal(list, object)
     
-    def __init__(self, parent=None, field_name='language', **kwargs):
+    def __init__(self, parent=None, field_name='language'):
         """
         :param languages: a list of ISO codes with languages
         that are allowed in the combo box, if the list is empty, all languages
@@ -63,9 +64,9 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
             localeModel = QtGui.QStandardItemModel(0, 1, app)
             localeModel.setObjectName('localeModel')
             if localeModel.rowCount() == 0:
-                for language in range(QtCore.QLocale.C, QtCore.QLocale.Chewa + 1):
+                for language in QtCore.QLocale.Language._member_map_.values():
                     countries = set()
-                    for locale in QtCore.QLocale.matchingLocales(language, QtCore.QLocale.AnyScript, QtCore.QLocale.AnyCountry):
+                    for locale in QtCore.QLocale.matchingLocales(language, QtCore.QLocale.Script.AnyScript, QtCore.QLocale.Country.AnyCountry):
                         country = locale.country()
                         if country not in countries:
                             countries.add(country)
@@ -75,17 +76,16 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
                         country_name = QtCore.QLocale.countryToString(country)
                         row = next(rows)
                         localeModel.setData(localeModel.index(row, 0), '{} {}'.format(language_name, country_name))
-                        localeModel.setData(localeModel.index(row, 0), language, Qt.UserRole)
-                        localeModel.setData(localeModel.index(row, 0), country, Qt.UserRole+1)
+                        localeModel.setData(localeModel.index(row, 0), language, Qt.ItemDataRole.UserRole)
+                        localeModel.setData(localeModel.index(row, 0), country, Qt.ItemDataRole.UserRole+1)
         return localeModel
 
     @QtCore.qt_slot(int)
     def _activated(self, _index):
         self.editingFinished.emit()
 
-    def set_field_attributes(self, **kwargs):
-        super(LanguageEditor, self).set_field_attributes(**kwargs)
-        self.setEnabled(kwargs.get('editable', False))
+    def set_editable(self, editable):
+        self.setEnabled(editable)
 
     def set_value(self, value):
         self.setCurrentIndex(-1)
@@ -97,8 +97,8 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
         localeModel = self.get_locale_model()
         for row in range(localeModel.rowCount()):
             index = localeModel.index(row, 0)
-            if localeModel.data(index, Qt.UserRole)==locale.language():
-                if localeModel.data(index, Qt.UserRole+1)==locale.country():
+            if localeModel.data(index, Qt.ItemDataRole.UserRole)==locale.language():
+                if localeModel.data(index, Qt.ItemDataRole.UserRole+1)==locale.country():
                     self.setCurrentIndex(row)
                     return
 
@@ -106,8 +106,8 @@ class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
         current_index = self.currentIndex()
         if current_index >= 0:
             localeModel = self.get_locale_model()
-            language = localeModel.data(localeModel.index(self.currentIndex(), 0), Qt.UserRole)
-            country = localeModel.data(localeModel.index(self.currentIndex(), 0), Qt.UserRole+1)
+            language = localeModel.data(localeModel.index(self.currentIndex(), 0), Qt.ItemDataRole.UserRole)
+            country = localeModel.data(localeModel.index(self.currentIndex(), 0), Qt.ItemDataRole.UserRole+1)
             locale = QtCore.QLocale(language, country)
             return locale.name()
         return None

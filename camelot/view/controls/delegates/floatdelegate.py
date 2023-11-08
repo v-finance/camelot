@@ -27,53 +27,97 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass, field
+from typing import List, ClassVar, Any
+from decimal import Decimal
 
-from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant, Qt
+from ....admin.admin_route import Route
+from ....core.item_model import (
+    PreviewRole, SuffixRole, PrefixRole, SingleStepRole,
+    PrecisionRole, MinimumRole, MaximumRole, FocusPolicyRole
+)
+from ....core.qt import Qt
+from camelot.core.naming import initial_naming_context
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 from camelot.core import constants
 
-@six.add_metaclass(DocumentationMetaclass)
-class FloatDelegate(CustomDelegate):
+
+@dataclass
+class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for float values"""
 
-    editor = editors.FloatEditor
-    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
+    calculator: bool = True
+    decimal: bool = False
+    action_routes: List[Route] = field(default_factory=list)
 
-    def __init__( self,
-                 parent=None,
-                 **kwargs ):
-        super(FloatDelegate, self).__init__(parent=parent,
-                                            **kwargs )
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        minimum, maximum = fa_values.get('minimum'), fa_values.get('maximum')
-        fa_values.update({
-            'minimum': minimum if minimum is not None else constants.camelot_minfloat,
-            'maximum': maximum if maximum is not None else constants.camelot_maxfloat,
-        })
-        item = super(FloatDelegate, cls).get_standard_item(locale, value, fa_values)
-        precision = fa_values.get('precision', 2)
+    def get_editor_class(cls):
+        return editors.FloatEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
+        minimum = minimum if minimum is not None else constants.camelot_minfloat
+        maximum = maximum if maximum is not None else constants.camelot_maxfloat
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        item.roles[FocusPolicyRole] = model_context.field_attributes.get('focus_policy')
+        item.roles[SuffixRole] = model_context.field_attributes.get('suffix')
+        item.roles[PrefixRole] = model_context.field_attributes.get('prefix')
+        single_step = model_context.field_attributes.get('single_step')
+        if single_step is not None:
+            item.roles[SingleStepRole] = initial_naming_context._bind_object(Decimal(single_step))
+        precision = model_context.field_attributes.get('precision', 2)
+        item.roles[PrecisionRole] = precision
+        item.roles[MinimumRole] = initial_naming_context._bind_object(Decimal(minimum))
+        item.roles[MaximumRole] = initial_naming_context._bind_object(Decimal(maximum))
         # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
         # as that only handles the precision key not being present, not it being explicitly set to None.
         if precision is None:
             precision = 2
-        if value is not None:
-            value_str = six.text_type(
-                locale.toString(float(value), 'f', precision)
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(Decimal(model_context.value))
+            value_str = str(
+                locale.toString(float(model_context.value), 'f', precision)
             )
-            if fa_values.get('suffix') is not None:
-                value_str = value_str + ' ' + fa_values.get('suffix')
-            if fa_values.get('prefix') is not None:
-                value_str = fa_values.get('prefix') + ' ' + value_str
-            item.setData(py_to_variant(value_str), PreviewRole)
+            if model_context.field_attributes.get('suffix') is not None:
+                value_str = value_str + ' ' + model_context.field_attributes.get('suffix')
+            if model_context.field_attributes.get('prefix') is not None:
+                value_str = model_context.field_attributes.get('prefix') + ' ' + value_str
+            item.roles[PreviewRole] = value_str
         else:
-            item.setData(py_to_variant(six.text_type()), PreviewRole)
+            item.roles[PreviewRole] = str()
         return item
 
+    def setEditorData(self, editor, index):
+        if index.model() is None:
+            return
+        self.set_default_editor_data(editor, index)
+        suffix = index.data(SuffixRole)
+        prefix = index.data(PrefixRole)
+        single_step = index.data(SingleStepRole)
+        precision = index.data(PrecisionRole)
+        minimum = index.data(MinimumRole)
+        maximum = index.data(MaximumRole)
+        focus_policy = index.data(FocusPolicyRole)
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
+        editor.set_suffix(suffix)
+        editor.set_prefix(prefix)
+        editor.set_single_step(single_step)
+        editor.set_precision(precision)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
+        editor.set_focus_policy(focus_policy)
+        editor.set_value(value)
+        self.update_field_action_states(editor, index)
 
+    def setModelData(self, editor, model, index):
+        # convert Decimal to float
+        value = editor.get_value()
+        value = float(value) if value is not None else value
+        model.setData(index, value)
 
 

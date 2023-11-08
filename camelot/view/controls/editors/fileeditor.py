@@ -27,10 +27,9 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtWidgets, Qt
-from ....admin.action import field_action
 from .customeditor import CustomEditor, set_background_color_palette
 
 from camelot.view.art import FontIcon
@@ -42,111 +41,66 @@ class FileEditor(CustomEditor):
 
     document_pixmap = FontIcon('edit', 16) # 'tango/16x16/mimetypes/x-office-document.png'
         
-    def __init__(self, parent=None,
-                 storage=None,
-                 field_name='file',
-                 remove_original=False,
-                 actions = [field_action.DetachFile(),
-                            field_action.OpenFile(),
-                            field_action.UploadFile(),
-                            field_action.SaveFile()],
-                 **kwargs):
+    def __init__(self,
+                 parent=None,
+                 action_routes=[],
+                 field_name='file'):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
-        self.storage = storage
         self.filename = None # the widget containing the filename
         self.value = None
         self.file_name = None
-        self.remove_original = remove_original
-        self.actions = actions
         self.setup_widget()
+        self.add_actions(action_routes, self.layout())
 
     def setup_widget(self):
         """Called inside init, overwrite this method for custom
         file edit widgets"""
-        self.layout = QtWidgets.QHBoxLayout()
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # Filename
         self.filename = DecoratedLineEdit( self )
         self.filename.set_minimum_width( 20 )
-        self.filename.setFocusPolicy( Qt.ClickFocus )
+        self.filename.setFocusPolicy( Qt.FocusPolicy.ClickFocus )
 
         # Setup layout
         self.document_label = QtWidgets.QLabel(self)
         self.document_label.setPixmap(self.document_pixmap.getQPixmap())
-        self.layout.addWidget(self.document_label)
-        self.layout.addWidget(self.filename)
-        self.add_actions(self.actions, self.layout)
-        self.setLayout(self.layout)
-
-    def file_completion_activated(self, index):
-        from camelot.view.storage import create_stored_file
-        source_index = index.model().mapToSource( index )
-        if not self.completions_model.isDir( source_index ):
-            path = self.completions_model.filePath( source_index )
-            create_stored_file(
-                self,
-                self.storage,
-                self.stored_file_ready,
-                filter=self.filter,
-                remove_original=self.remove_original,
-                filename = path,
-            )
+        layout.addWidget(self.document_label)
+        layout.addWidget(self.filename)
+        self.setLayout(layout)
 
     def set_value(self, value):
         value = CustomEditor.set_value(self, value)
         self.value = value
         if value is not None:
-            self.filename.setText(value.verbose_name)
+            self.filename.setText(value)
         else:
             self.filename.setText('')
-        self.update_actions()
         return value
 
     def get_value(self):
         return CustomEditor.get_value(self) or self.value
 
-    def set_field_attributes(self, **kwargs):
-        super(FileEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
         if self.filename:
-            set_background_color_palette( self.filename, kwargs.get('background_color', None))
-            self.filename.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
-        self.remove_original = kwargs.get('remove_original', False)
+            self.filename.setToolTip(str(tooltip or ''))
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        if self.filename:
+            set_background_color_palette(self.filename, background_color)
+
+    def set_editable(self, editable):
+        self.set_enabled(editable)
 
     def set_enabled(self, editable=True):
         self.filename.setEnabled(editable)
         self.filename.setReadOnly(not editable)
         self.document_label.setEnabled(editable)
         self.setAcceptDrops(editable)
-
-    #
-    # Drag & Drop
-    #
-    def dragEnterEvent(self, event):
-        event.acceptProposedAction()
-
-    def dragMoveEvent(self, event):
-        event.acceptProposedAction()
-
-    def dropEvent(self, event):
-        from camelot.view.storage import create_stored_file
-        if event.mimeData().hasUrls():
-            url = event.mimeData().urls()[0]
-            filename = url.toLocalFile()
-            if filename:
-                create_stored_file(
-                    self,
-                    self.storage,
-                    self.stored_file_ready,
-                    filter=self.filter,
-                    remove_original=self.remove_original,
-                    filename = filename,
-                )
-
-
-

@@ -41,21 +41,27 @@ machine.
 import base64
 import functools
 import logging
+import pkgutil
+import sqlalchemy.dialects
+from typing import Optional
+import copy
 
-import six
 
-from .qt import QtCore, variant_to_py, py_to_variant
+from .qt import QtCore, QtWidgets
 
 from camelot.core.conf import settings
+from camelot.core.dataclasses import dataclass
+from camelot.admin.dataclass_admin import DataclassAdmin
+from camelot.view.controls import delegates
+from camelot.admin.action import list_action
 
-logger = logging.getLogger('camelot.core.dbprofiles')
 
-profile_fields = [ 'name', 'dialect', 'host', 'database', 'user', 'password',
-                   'port', 'media_location', 'locale_language', 'proxy_host',
-                   'proxy_port', 'proxy_username', 'proxy_password' ]
+LOGGER = logging.getLogger('camelot.core.profile')
+
 
 @functools.total_ordering
-class Profile(object):
+@dataclass
+class Profile:
     """This class holds the local configuration of the application, such as
     the location of the database.  It provides some convenience functions to
     store and retrieve this information to :class:`QtCore.QSettings`
@@ -66,26 +72,34 @@ class Profile(object):
     object.
     """
     
-    def __init__( self, name, **kwargs ):
-        kwargs['name'] = name
-        for profile_field in profile_fields:
-            kwargs.setdefault( profile_field, '' )
-        for key, value in six.iteritems(kwargs):
-            setattr(self, key, value )
-    
+    name: str = ''
+    dialect: Optional[str] = None
+    host: str = ''
+    port: Optional[int] = None
+    database: str = ''
+    user: str = ''
+    password: str = ''
+    media_location: str = ''
+    locale_language: str = QtCore.QLocale.system().name()
+
     def get_connection_string( self ):
         """The database connection string according to SQLAlchemy conventions,
         as specified by this profile.
         """
-        connection_string = '%s://'%self.dialect
-        if self.user or self.password:
-            connection_string = connection_string + '%s:%s@'%( self.user, 
-                                                               self.password )
-        if self.host:
-            connection_string = connection_string + self.host
+        dialect = self.dialect or ''
+        user = self.user or ''
+        password = self.password or ''
+        host = self.host or ''
+        database = self.database or ''
+
+        connection_string = '%s://' % dialect
+        if user or password:
+            connection_string = connection_string + '%s:%s@' % (user, password)
+        if host:
+            connection_string = connection_string + host
         if self.port:
-            connection_string = connection_string + ':%s'%self.port
-        connection_string = connection_string + '/%s'%self.database
+            connection_string = connection_string + ':%s' % self.port
+        connection_string = connection_string + '/%s' % database
         return connection_string
     
     def create_engine( self, **kwargs ):
@@ -118,12 +132,15 @@ class Profile(object):
             encoded form
         """
         state = dict()
-        for key, value in six.iteritems(self.__dict__):
+        for key, value in self.__dict__.items():
             # flip 'pass' and 'password' for backward compatibility
             if key=='password':
                 key='pass'
             elif key=='name':
                 key='profilename'
+            # Avoid None values
+            if value is None and key != 'port':
+                value = ''
             state[key] = value
         return state
     
@@ -133,7 +150,7 @@ class Profile(object):
         :param state: a `dict` with the profile information in encrypted and
             encoded form, as created by `__getstate__`.
         """
-        for key, value in six.iteritems(state):
+        for key, value in state.items():
             if key=='pass':
                 key='password'
             if key=='profilename':
@@ -153,6 +170,52 @@ class Profile(object):
     def __hash__(self):
         return hash(self.name)
 
+    class Admin(DataclassAdmin):
+        list_display = ['name', 'dialect', 'host', 'port', 'database']
+        form_display = ['name', 'dialect', 'host', 'port', 'database', 'user', 'password', 'media_location', 'locale_language']
+        related_toolbar_actions = [
+            list_action.delete_selection,
+            list_action.duplicate_selection,
+            list_action.add_new_profile
+        ]
+        list_action = list_action.edit_profile
+        field_attributes = {
+            'dialect': {
+                'choices': [(name,name) for i, name in enumerate([name for _importer, name, is_package in pkgutil.iter_modules(sqlalchemy.dialects.__path__)])]
+            },
+            'host': { 'nullable': True },
+            'port': {
+                'nullable': True,
+                'delegate': delegates.IntegerDelegate,
+                'calculator': False
+            },
+            'database': { 'nullable': True },
+            'user': { 'nullable': True },
+            'password': {
+                'nullable': True,
+                'echo_mode': QtWidgets.QLineEdit.EchoMode.Password
+            },
+            'media_location': {
+                'nullable': True,
+                'delegate': delegates.LocalFileDelegate,
+                'directory': True
+            },
+            'locale_language': {
+                'nullable': True,
+                'delegate': delegates.LanguageDelegate
+            },
+        }
+
+        def copy(self, entity_instance):
+            new_entity_instance = super().copy(entity_instance)
+            new_entity_instance.name = new_entity_instance.name + ' - Copy'
+            return new_entity_instance
+
+class NonEditableProfileAdmin(Profile.Admin):
+        field_attributes = copy.deepcopy(Profile.Admin.field_attributes)
+
+for field in Profile.Admin.list_display:
+    NonEditableProfileAdmin.field_attributes.setdefault(field, {})['editable'] = False
 
 class ProfileStore(object):
     """Class that reads/writes profiles, either to a file or to the local
@@ -187,18 +250,16 @@ class ProfileStore(object):
         """:return: the :class:`Crypto.Cipher` object used for encryption and
         decryption in :meth:`_encode` and :meth:`_decode`.
         """
-        if six.PY2:
-            from Crypto.Cipher import ARC4
-            return ARC4.new( self.cipher_key )
-        else:
-            from .pyarc4 import Arc4
-            return Arc4(self.cipher_key.encode('ascii'))
+        from .pyarc4 import Arc4
+        return Arc4(self.cipher_key.encode('ascii'))
 
     def _encode( self, value ):
         """Encrypt and encode a single value, this method is used to 
         write profiles."""
         cipher = self._cipher()
-        return base64.b64encode( cipher.encrypt( six.text_type(value).encode('utf-8' ) ) ).decode('ascii')
+        if value is None:
+            value = ''
+        return base64.b64encode( cipher.encrypt( str(value).encode('utf-8' ) ) ).decode('ascii')
             
     def _decode( self, value ):
         """Decrypt and decode a single value, this method is used to
@@ -206,7 +267,7 @@ class ProfileStore(object):
         """
         cipher = self._cipher()
         return cipher.decrypt( base64.b64decode( value ) ).decode('utf-8')
-    
+
     def _qsettings(self):
         # recreate QSettings each time it's needed, to make sure we're at
         # the same entry point
@@ -214,7 +275,7 @@ class ProfileStore(object):
             return QtCore.QSettings()
         else:
             return QtCore.QSettings(self.filename, 
-                                    QtCore.QSettings.IniFormat)
+                                    QtCore.QSettings.Format.IniFormat)
     
     def write_to_file(self, filename):
         file_store = ProfileStore(filename, cipher_key=self.cipher_key)
@@ -233,20 +294,25 @@ class ProfileStore(object):
         size = qsettings.beginReadArray('database_profiles')
         if size == 0:
             return profiles
-        empty = py_to_variant(b'')
+        empty = b''
         for index in range(size):
             qsettings.setArrayIndex(index)
             profile = self.profile_class(name=None)
             state = profile.__getstate__()
-            encrypted = int(variant_to_py(qsettings.value('encrypted', py_to_variant(1))))
-            for key in six.iterkeys(state):
-                value = variant_to_py(qsettings.value(key, empty))
+            encrypted = int(qsettings.value('encrypted', 1))
+            for key in state.keys():
+                value = qsettings.value(key, empty)
                 if (key != 'profilename') and (encrypted==1):
                     value = self._decode(value or b'')
                 else:
                     value = value
                 state[key] = value
             profile.__setstate__(state)
+            # Port used to be stored as string
+            try:
+                profile.port = int(profile.port)
+            except ValueError:
+                profile.port = None
             # only profiles with a name can be selected and handled
             if profile.name:
                 profiles.append(profile)
@@ -270,8 +336,8 @@ class ProfileStore(object):
         qsettings.beginWriteArray('database_profiles', len(profiles))
         for index, profile in enumerate(profiles):
             qsettings.setArrayIndex(index)
-            qsettings.setValue('encrypted', py_to_variant(1))
-            for key, value in six.iteritems(profile.__getstate__()):
+            qsettings.setValue('encrypted', 1)
+            for key, value in profile.__getstate__().items():
                 if key != 'profilename':
                     value = self._encode(value)
                 else:
@@ -298,8 +364,7 @@ class ProfileStore(object):
             yet or the profile information is not available.
         """
         profiles = self.read_profiles()
-        name = variant_to_py(self._qsettings().value('last_used_database_profile',
-                                                      u''))
+        name = self._qsettings().value('last_used_database_profile', u'')
         for profile in profiles:
             if profile.name == name:
                 return profile

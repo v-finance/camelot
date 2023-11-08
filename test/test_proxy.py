@@ -2,18 +2,17 @@ import datetime
 import logging
 import unittest
 
+from camelot.admin.action.field_action import ClearObject, SelectObject
+from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.item_model import (
     AbstractModelFilter, ListModelProxy, QueryModelProxy
 )
-
-from camelot.model.party import Person, Party
-
+from camelot.model.party import Party, Person
 from camelot.view.controls import delegates
-from camelot.admin.object_admin import ObjectAdmin
 
 LOGGER = logging.getLogger(__name__)
 
-from .test_model import ExampleModelMixinCase
+from .test_model import ExampleModelMixinCase, LoadSampleData
 
 class B(object):
 
@@ -27,13 +26,16 @@ class B(object):
         list_display = ['value']
 
 
+class C(B):
+    pass
+
 class A(object):
 
     def __init__(self, x):
         self.w = B(x)
         self.x = x
         self.y = 0
-        self.z = [object(), object()]
+        self.z = [C(0), C(0)]
         self.created = datetime.datetime.now()
 
     class Admin(ObjectAdmin):
@@ -42,6 +44,7 @@ class A(object):
             'w': {'editable': True,
                   'delegate': delegates.Many2OneDelegate,
                   'target': B,
+                  'actions':[SelectObject(), ClearObject()],
                   },
             'x': {'editable': True,
                   'static':'static',
@@ -56,8 +59,11 @@ class A(object):
                   },
             'z': {'editable': True,
                   'delegate': delegates.One2ManyDelegate,
-                  'target': int,
+                  'target': C,
                   },
+            'created': {
+                'delegate': delegates.DateTimeDelegate
+            }
         }
 
         def get_verbose_identifier(self, obj):
@@ -234,7 +240,7 @@ class QueryModelProxyCase(ListModelProxyCase, ExampleModelMixinCase):
     def setUpClass(cls):
         super(QueryModelProxyCase, cls).setUpClass()
         cls.setup_sample_model()
-        cls.load_example_data()
+        list(LoadSampleData().model_run(None, None))
 
     @classmethod
     def tearDownClass(cls):

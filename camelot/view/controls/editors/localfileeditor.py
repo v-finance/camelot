@@ -29,8 +29,6 @@
 
 import os.path
 
-import six
-
 from ....core.qt import QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 
@@ -46,14 +44,13 @@ class LocalFileEditor( CustomEditor ):
 
     def __init__(self,
                  parent = None,
-                 field_name = 'local_file',
                  directory = False,
                  save_as = False,
                  file_filter = 'All files (*)',
-                 **kwargs):
+                 field_name = 'local_file'):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self._directory = directory
         self._save_as = save_as
@@ -68,7 +65,7 @@ class LocalFileEditor( CustomEditor ):
         layout.setContentsMargins(0, 0, 0, 0)
 
         browse_button = QtWidgets.QToolButton( self )
-        browse_button.setFocusPolicy( Qt.ClickFocus )
+        browse_button.setFocusPolicy( Qt.FocusPolicy.ClickFocus )
         browse_button.setIcon( self.browse_icon.getQIcon() )
         browse_button.setToolTip( _('Browse') )
         browse_button.setAutoRaise( True )
@@ -102,7 +99,7 @@ class LocalFileEditor( CustomEditor ):
                                                           directory = current_directory,
                                                           filter = self._file_filter)
         if value!='':
-            value = os.path.abspath( six.text_type( value ) )
+            value = os.path.abspath( str( value ) )
             self.filename.setText( value )
             self.valueChanged.emit()
             self.editingFinished.emit()
@@ -117,16 +114,22 @@ class LocalFileEditor( CustomEditor ):
         return value
 
     def get_value(self):
-        return CustomEditor.get_value(self) or six.text_type( self.filename.text() )
+        return CustomEditor.get_value(self) or str( self.filename.text() )
 
     value = QtCore.qt_property( str, get_value, set_value )
 
-    def set_field_attributes( self, **kwargs):
-        super(LocalFileEditor, self).set_field_attributes(**kwargs)
-        self.setEnabled(kwargs.get('editable', False))
-        self._directory=kwargs.get('directory',False)
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
         if self.filename:
-            set_background_color_palette(self.filename, kwargs.get('background_color', None))
-            self.filename.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            self.filename.setToolTip(str(tooltip or ''))
 
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        if self.filename:
+            set_background_color_palette(self.filename, background_color)
 
+    def set_editable(self, editable):
+        self.setEnabled(editable)
+
+    def set_directory(self, directory):
+        self._directory = directory

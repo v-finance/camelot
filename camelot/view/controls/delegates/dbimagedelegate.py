@@ -1,25 +1,32 @@
+from dataclasses import dataclass
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.dbimagedelegate')
 
 from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant
 from .customdelegate import CustomDelegate
 from camelot.core.qt import QtGui, QtCore, Qt
 
 from camelot.view.controls import editors
 
+@dataclass
 class DbImageDelegate(CustomDelegate):
     # Delegate for images that are saved in the database as a base64 string.
-    
-    editor = editors.DbImageEditor
+
+    preview_width: int = 100
+    preview_height: int = 100
+    max_size: int = 50000
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.DbImageEditor
     
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(DbImageDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        if model_context.value is not None:
             image = QtGui.QImage()
-            byte_array = QtCore.QByteArray.fromBase64( value.encode() )
+            byte_array = QtCore.QByteArray.fromBase64( model_context.value.encode() )
             image.loadFromData( byte_array )
-            thumbnail = image.scaled(100,100, Qt.KeepAspectRatio)
-            item.setData(py_to_variant(thumbnail), PreviewRole)
+            thumbnail = image.scaled(100,100, Qt.AspectRatioMode.KeepAspectRatio)
+            item.roles[PreviewRole] = thumbnail
         return item  

@@ -31,15 +31,27 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
+from typing import Dict
+from dataclasses import dataclass, field
+import json
 
-from ...admin.action.base import ActionStep
-from ...core.qt import Qt, is_deleted
-
-from ...core.item_model import AbstractModelProxy
+from ..controls.formview import FormView
+from ..forms import AbstractForm
 from ..workspace import show_top_level
-from ..proxy.collection_proxy import CollectionProxy
+from ...admin.action.base import ActionStep, RenderHint
+from ...admin.admin_route import AdminRoute
+from ...core.item_model import AbstractModelProxy
+from ...core.naming import initial_naming_context
+from ...core.qt import is_deleted
+from ...core.serializable import DataclassSerializable
+from ...view.utils import get_settings_group
+from .item_view import AbstractCrudView
+from  ..qml_view import get_qml_root_backend
+#from ..qml_view import qml_action_step
 
-class OpenFormView( ActionStep ):
+
+@dataclass
+class OpenFormView(AbstractCrudView):
     """Open the form view for a list of objects, in a non blocking way.
 
     :param object: the object to display in the form view.
@@ -63,65 +75,83 @@ class OpenFormView( ActionStep ):
         at the top toolbar of the form, this defaults to the ones returned by the
         admin
 
-    .. attribute:: top_level
-
-       Display the form view top-level, or as a tab in the workspace,
-       defaults to `True`.
-
     """
 
-    def __init__( self, obj, proxy, admin ):
-        assert obj is not None
-        assert isinstance(proxy, AbstractModelProxy)
-        self.admin_name = admin.get_name()
-        self.admin = admin
-        self.actions = admin.get_form_actions(None)
-        self.top_level = True
-        get_form_toolbar_actions = admin.get_form_toolbar_actions
-        self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
-        self.title = u' '
-        self._columns = admin.get_fields()
-        self._form_display = admin.get_form_display()
+    fields: Dict[str, dict] = field(init=False)
+    form: AbstractForm = field(init=False)
+    admin_route: AdminRoute = field(init=False)
+    row: int = field(init=False)
+    form_state: str = field(init=False)
+    blocking: bool = False
+
+    def __post_init__(self, value, admin, proxy):
+        assert value is not None
+        assert (proxy is None) or (isinstance(proxy, AbstractModelProxy))
+        self.fields = dict((f, {
+            'hide_title':fa.get('hide_title', False),
+            'verbose_name':str(fa['name']),
+            }) for f, fa in admin.get_fields())
+        self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
-        
-        self.objects = [obj]
-        self.row = proxy.index(obj)
-        self.proxy = proxy
-        
-    def get_objects( self ):
-        """Use this method to get access to the objects to change in unit tests
+        if proxy is None:
+            proxy = admin.get_proxy([value])
+            self.row = 0
+        else:
+            self.row = proxy.index(value)
+        self.close_route = AdminRoute._register_action_route(
+            self.admin_route, admin.form_close_action
+        )
+        self.title = admin.get_verbose_name()
+        self.form_state = admin.form_state
+        self._add_actions(admin, self.actions)
+        super().__post_init__(value, admin, proxy)
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        model_context.current_row = self.row
+        model_context.selection_count = 1
 
-        :return: the list of objects to display in the form view
-        """
-        return self.objects
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_form_actions(None))
+        actions.extend(admin.get_form_toolbar_actions())
 
-    def render(self, gui_context):
-        from camelot.view.controls.formview import FormView
-            
-        model = CollectionProxy(self.admin_route)
-        list(model.add_columns((fn for fn, fa in self._columns)))
-        model.set_value(self.proxy)
+    def get_admin(self):
+        """Use this method to get access to the admin in unit tests"""
+        return initial_naming_context.resolve(self.admin_route)
 
-        form = FormView(title=self.title, admin=self.admin, model=model,
-                        columns=self._columns, form_display=self._form_display,
-                        index=self.row)
-        form.set_actions(self.actions)
-        form.set_toolbar_actions(self.top_toolbar_actions)
+    @classmethod
+    def render(self, gui_context_name, step):
+        form = FormView()
+        model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), form)
+        model.setValue(step['model_context_name'])
+        columns = [ fn for fn, fa in step['fields'].items() ]
+        model.setColumns(columns)
+
+        form.setup(
+            title=step['title'], admin_route=step['admin_route'],
+            close_route=tuple(step['close_route']), model=model,
+            fields=step['fields'], form_display=step['form'],
+            index=step['row']
+        )
+        form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
+        for action_route, action_state in step['action_states']:
+            form.set_action_state(form, tuple(action_route), action_state)
         return form
 
-    def gui_run( self, gui_context ):
-        window = gui_context.get_window()
-        formview = self.render(gui_context)
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # Use new QML forms:
+        #qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
+        step = json.loads(serialized_step)
+        formview = cls.render(gui_context_name, step)
         if formview is not None:
-            if self.top_level == True:
-                formview.setObjectName('form.{}.{}'.format(
-                    self.admin_name, id(formview)
-                ))
-                show_top_level(formview, window, self.admin.form_state)
-            else:
-                gui_context.workspace.set_view(formview)
+            formview.setObjectName('form.{}.{}'.format(
+                step['admin_route'], id(formview)
+            ))
+            show_top_level(formview, gui_context_name, step['form_state'])
 
-class ChangeFormIndex(ActionStep):
+
+@dataclass
+class ChangeFormIndex(ActionStep, DataclassSerializable):
 
     def gui_run( self, gui_context ):
         # a pending request might change the number of rows, and therefor
@@ -129,7 +159,7 @@ class ChangeFormIndex(ActionStep):
         # submit all pending requests to the model thread
         if is_deleted(gui_context.widget_mapper):
             return
-        gui_context.widget_mapper.model().timeout_slot()
+        gui_context.widget_mapper.model().onTimeout()
         # wait until they are handled
         super(ChangeFormIndex, self).gui_run(gui_context)
 

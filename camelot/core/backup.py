@@ -28,8 +28,7 @@
 #  ============================================================================
 import logging
 
-import six
-from camelot.types import PrimaryKey
+
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
 from .qt import QtCore
@@ -62,7 +61,7 @@ class BackupMechanism(object):
             this defaults to the `metadata` object of :module:`camelot.core.sql`.
             This metadata object should not contain any dialect specific constructs.
         """
-        self.filename = six.text_type(filename)
+        self.filename = str(filename)
         self.storage = storage
         self.metadata = metadata or default_metadata
 
@@ -88,7 +87,7 @@ class BackupMechanism(object):
         By default, this will return a Storage that puts the backup files
         in the DataLocation as specified by the QDesktopServices
         """
-        apps_folder = six.text_type(
+        apps_folder = str(
             QtCore.QStandardPaths.writableLocation(
                 QtCore.QStandardPaths.DataLocation
             )
@@ -206,11 +205,6 @@ class BackupMechanism(object):
             provides a connection to the database to be backed up.
         """
         #
-        # The restored database may contain different AuthenticationMechanisms
-        #
-        from camelot.model.authentication import clear_current_authentication
-        clear_current_authentication()
-        #
         # Proceed with the restore
         #
         import os
@@ -274,8 +268,7 @@ class BackupMechanism(object):
         to_dialect = to_connection.engine.url.get_dialect().name
         if to_dialect == 'postgresql':
             for column in to_table.columns:
-                # Support both sqlalchemy's as Camelot's primary key type.
-                if (isinstance(column.type, types.Integer) or isinstance(column.type, PrimaryKey)) and \
+                if not isinstance(column.type, types.Unicode) and \
                    column.autoincrement=='auto' and column.primary_key==True and \
                    len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
                     column_name = column.name
