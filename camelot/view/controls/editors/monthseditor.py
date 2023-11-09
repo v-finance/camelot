@@ -32,7 +32,6 @@
 from ....core.qt import QtCore, Qt, QtWidgets
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors import CustomEditor
-from camelot.view.controls.editors.customeditor import ValueLoading
 from camelot.view.controls.editors.integereditor import CustomDoubleSpinBox
 
 class MonthsEditor(CustomEditor):
@@ -61,11 +60,13 @@ class MonthsEditor(CustomEditor):
         self.years_spinbox.setDecimals(0)
         self.years_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.years_spinbox.setSingleStep(1)
+        self.years_spinbox.setValue(self.years_spinbox.minimum())
         
         self.months_spinbox.setDecimals(0)
         self.months_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.months_spinbox.setSingleStep(1)
-
+        self.months_spinbox.setValue(self.months_spinbox.minimum())
+        
         self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         self.months_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         
@@ -100,7 +101,6 @@ class MonthsEditor(CustomEditor):
 
     def set_value(self, value):
         # will set privates value_is_none and _value_loading
-        value = CustomEditor.set_value(self, value)
         if value is None:
             self.years_spinbox.setValue(self.years_spinbox.minimum())
             self.months_spinbox.setValue(self.months_spinbox.minimum())
@@ -111,8 +111,6 @@ class MonthsEditor(CustomEditor):
             self.months_spinbox.setValue(months)
 
     def get_value(self):
-        if CustomEditor.get_value(self) is ValueLoading:
-            return ValueLoading
         self.years_spinbox.interpretText()
         years = int(self.years_spinbox.value())
         self.months_spinbox.interpretText()

@@ -105,7 +105,6 @@ class VirtualAddressEditor(CustomEditor):
         self.emit_editing_finished()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         if value is None:
             self.editor.setText('')
         else:
@@ -131,7 +130,7 @@ class VirtualAddressEditor(CustomEditor):
             value = None
         else:
             value = (str(self.combo.currentText()), address_value)
-        return CustomEditor.get_value(self) or value
+        return value
 
     def set_enabled(self, editable=True):
         self.combo.setEnabled(editable)

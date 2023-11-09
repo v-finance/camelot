@@ -43,7 +43,6 @@ from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
 from camelot.view.qml_view import get_qml_root_backend
-from camelot.view.proxy import ValueLoading
 from camelot.view.utils import get_settings_group
 from camelot_example.application_admin import MyApplicationAdmin
 
@@ -70,7 +69,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
   - get_value
   - set_value
-  - support for ValueLoading
+  - support for None
   """
 
     images_path = static_images_path
@@ -88,11 +87,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         """Test the basic functions of an editor that are needed to integrate
         well with Camelot and Qt
         """
-        #
-        # The editor should remember its when its value is ValueLoading
-        #
-        #editor.set_value( ValueLoading )
-        #self.assertEqual( editor.get_value(), ValueLoading )
         #
         # When a value is set, no editingFinished should be called
         #
@@ -118,7 +112,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_DateEditor(self):
         editor = editors.DateEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         editor.set_value( QtCore.QDate(datetime.date(1980, 12, 31)) )
@@ -128,16 +121,12 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def test_TextLineEditor(self):
         editor = editors.TextLineEditor(parent=None, length=10)
-        self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), u'za coś tam' )
-        editor.set_value( ValueLoading )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor = editors.TextLineEditor(parent=None, length=10)
         editor.set_editable( False )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( u'za coś tam' )
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( None )
@@ -176,7 +165,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_LocalFileEditor( self ):
         editor = editors.LocalFileEditor( parent=None )
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( '/home/lancelot/quests.txt' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), '/home/lancelot/quests.txt' )
@@ -185,16 +174,16 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_BoolEditor(self):
         editor = editors.BoolEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( True )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
         self.assertEqual( editor.get_value(), False )
-        editor.set_value( ValueLoading )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
         editor = editors.BoolEditor()
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( True )
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
@@ -286,7 +275,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_FileEditor(self):
         editor = editors.FileEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, StoredFile( storage, 'test.txt').verbose_name )
 
@@ -308,7 +297,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
@@ -319,7 +308,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_editable(True)
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
@@ -373,7 +362,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0 )
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( 3 )
@@ -430,7 +419,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def test_RichTextEditor(self):
         editor = editors.RichTextEditor(parent=None)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( u'<h1>Rich Text Editor</h1>' )
         self.grab_default_states( editor )
         self.assertTrue( u'Rich Text Editor' in editor.get_value() )
@@ -438,7 +427,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def test_TextEditEditor(self):
         editor = editors.TextEditEditor(parent=None, editable=True)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 'Plain text' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'Plain text' )
@@ -447,7 +436,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_VirtualAddressEditor(self):
         editor = editors.VirtualAddressEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( ('im','test') )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(),  ('im','test') )
@@ -456,7 +445,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_MonthsEditor(self):
         editor = editors.MonthsEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual(editor.get_value(), ValueLoading)
+        self.assertEqual(editor.get_value(), None)
         editor.set_value(12)
         self.grab_default_states( editor )
         self.assertEqual(editor.get_value(),  12)
