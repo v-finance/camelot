@@ -114,10 +114,6 @@ class GuiRun(object):
         """
         return time.time() - self.started_at
 
-    def handle_action_step(self, action_step):
-        self.steps.append(type(action_step).__name__)
-        return action_step.gui_run(self.gui_context_name)
-
     def handle_serialized_action_step(self, step_type, serialized_step):
         self.steps.append(step_type)
         cls = MetaActionStep.action_steps[step_type]

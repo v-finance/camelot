@@ -42,7 +42,6 @@ from ...admin.action.base import ActionStep, RenderHint
 from ...admin.admin_route import Route, AdminRoute
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
-from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
 from ...view.utils import get_settings_group
 from .item_view import AbstractCrudView
@@ -82,6 +81,7 @@ class OpenFormView(AbstractCrudView):
     row: int = field(init=False)
     form_state: str = field(init=False)
     blocking: bool = False
+    qml: bool = False
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
@@ -92,6 +92,7 @@ class OpenFormView(AbstractCrudView):
             }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
+        self.qml = admin.qml_form
         if proxy is None:
             proxy = admin.get_proxy([value])
             self.row = 0
@@ -139,8 +140,7 @@ class OpenFormView(AbstractCrudView):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        admin = initial_naming_context.resolve(tuple(step['admin_route']))
-        if admin.qml_form:
+        if step.get("qml", False) == True:
             # Use new QML forms
             qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
         else:
@@ -169,53 +169,3 @@ class HighlightForm(ActionStep, DataclassSerializable):
     #group_box: Optional[?] = None
     form_state: Optional[str] = None
     field_name: Optional[str] = None
-
-@dataclass
-class ChangeFormIndex(ActionStep, DataclassSerializable):
-
-    def gui_run( self, gui_context ):
-        # a pending request might change the number of rows, and therefor
-        # the new index
-        # submit all pending requests to the model thread
-        if is_deleted(gui_context.widget_mapper):
-            return
-        gui_context.widget_mapper.model().onTimeout()
-        # wait until they are handled
-        super(ChangeFormIndex, self).gui_run(gui_context)
-
-class ToFirstForm(ChangeFormIndex):
-    """
-    Show the first object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        super(ToFirstForm, self).gui_run(gui_context)
-        gui_context.widget_mapper.toFirst()
-
-class ToNextForm(ChangeFormIndex):
-    """
-    Show the next object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        super(ToNextForm, self).gui_run(gui_context)
-        gui_context.widget_mapper.toNext()
-        
-class ToLastForm(ChangeFormIndex):
-    """
-    Show the last object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        super(ToLastForm, self).gui_run(gui_context)
-        gui_context.widget_mapper.toLast()
-        
-class ToPreviousForm(ChangeFormIndex):
-    """
-    Show the previous object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        super(ToPreviousForm, self).gui_run(gui_context)
-        gui_context.widget_mapper.toPrevious()
-

@@ -35,7 +35,6 @@ from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action
 from camelot.core.utils import ugettext as _
 
-from . import list_action
 from .base import RenderHint
 
 
@@ -146,47 +145,3 @@ class CloseForm( Action ):
                 yield self.step_when_valid()
 
 close_form = CloseForm()
-
-class ToPreviousForm( list_action.AbstractToPrevious, CloseForm ):
-    """Move to the previous form"""
-
-    name = 'to_previous_form'
-
-    def step_when_valid(self):
-        from camelot.view import action_steps
-        return action_steps.ToPreviousForm()
-
-to_previous_form = ToPreviousForm()
-
-class ToFirstForm( list_action.AbstractToFirst, CloseForm ):
-    """Move to the form"""
-
-    name = 'to_first_form'
-
-    def step_when_valid(self):
-        from camelot.view import action_steps
-        return action_steps.ToFirstForm()
-
-to_first_form = ToFirstForm()
-
-class ToNextForm( list_action.AbstractToNext, CloseForm ):
-    """Move to the next form"""
-
-    name = 'to_next_form'
-
-    def step_when_valid(self):
-        from camelot.view import action_steps
-        return action_steps.ToNextForm()
-
-to_next_form = ToNextForm()
-
-class ToLastForm( list_action.AbstractToLast, CloseForm ):
-    """Move to the last form"""
-
-    name = 'to_last_form'
-
-    def step_when_valid(self):
-        from camelot.view import action_steps
-        return action_steps.ToLastForm()
-
-to_last_form = ToLastForm()

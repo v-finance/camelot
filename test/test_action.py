@@ -437,7 +437,8 @@ class ListActionsCase(
 
     def test_import_from_file(self, filename='import_example.csv'):
         replies = {
-            action_steps.SelectFile: [os.path.join(self.example_folder, filename)]
+            action_steps.SelectFile: [os.path.join(self.example_folder, filename)],
+            action_steps.MessageBox: {"button": QtWidgets.QMessageBox.StandardButton.Ok,},
         }
         steps = self.gui_run(import_from_file_name, self.gui_context, None, replies, model_context_name=self.model_context_name)
         for step in steps:
@@ -641,10 +642,7 @@ class ListActionsCase(
 
 
 close_form_name = unit_test_context.bind(('close_form',), form_action.CloseForm())
-to_previous_form_name = unit_test_context.bind(('to_previous_form',), form_action.ToPreviousForm())
-to_next_form_name = unit_test_context.bind(('to_next_form',), form_action.ToNextForm())
-to_first_form_name = unit_test_context.bind(('to_first_form',), form_action.ToFirstForm())
-to_last_form_name = unit_test_context.bind(('to_last_form',), form_action.ToLastForm())
+
 
 class FormActionsCase(
     RunningProcessCase,
@@ -677,12 +675,6 @@ class FormActionsCase(
     def tearDown(self):
         self.tear_down_item_model()
         super().tearDown()
-
-    def test_previous_next( self ):
-        list(self.gui_run(to_previous_form_name, self.gui_context_name, model_context_name=self.model_context_name))
-        list(self.gui_run(to_next_form_name, self.gui_context_name, model_context_name=self.model_context_name))
-        list(self.gui_run(to_first_form_name, self.gui_context_name, model_context_name=self.model_context_name))
-        list(self.gui_run(to_last_form_name, self.gui_context_name, model_context_name=self.model_context_name))
 
     def test_close_form( self ):
         list(self.gui_run(close_form_name, self.gui_context_name, model_context_name=self.model_context_name))
@@ -761,7 +753,10 @@ class ApplicationActionsCase(
                 step.get_object().level = logging.INFO
 
     def test_segmentation_fault( self ):
-        list(self.gui_run(segmentation_fault_action_name, self.gui_context, None))
+        list(self.gui_run(
+            segmentation_fault_action_name, self.gui_context, None,
+            replies={action_steps.MessageBox: {"button": QtWidgets.QMessageBox.StandardButton.No,},}
+        ))
 
 
 class FieldActionCase(TestMetaData, ExampleModelMixinCase):

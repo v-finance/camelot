@@ -34,7 +34,7 @@ import logging
 
 from ...admin.action import RenderHint
 from ...core.qt import QtCore, QtGui, QtWidgets
-from ..action_runner import action_runner
+from ..qml_view import get_qml_root_backend
 from .action_widget import AbstractActionWidget
 
 LOGGER = logging.getLogger(__name__)
@@ -100,9 +100,11 @@ class ViewWithActionsMixin(object):
     def run_action(self, action_widget, gui_context_name, model_context_name, mode):
         action_name = tuple(action_widget.property('action_route') or [])
         if len(action_name):
-            action_runner.run_action(
-                action_name, gui_context_name, model_context_name, mode
+            root_backend = get_qml_root_backend()
+            root_backend.runAction.emit(
+                gui_context_name, action_name, model_context_name, mode
             )
+
 
 class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
     """A string used to format the title of the view ::
