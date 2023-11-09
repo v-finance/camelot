@@ -188,6 +188,10 @@ class SelectProfileMixin:
             # explicit handling of exit when cancel button is pressed,
             # to avoid the use of subgenerators in the main action
             from camelot.view.action_steps.application import Exit
+            from camelot.view.model_thread import get_model_thread
+            model_thread = get_model_thread()
+            if model_thread != None:
+                model_thread.stop()
             yield Exit()
             return
         message = ugettext(u'Use {} profile'.format(selected_profile.name))
@@ -398,7 +402,14 @@ class Exit( Action ):
 
     def model_run( self, model_context, mode ):
         from camelot.view.action_steps.application import Exit
+        from camelot.view.model_thread import get_model_thread
+        model_thread = get_model_thread()
+        if model_thread != None:
+            model_thread.stop()
         yield Exit()
+
+exit_name = application_action_context.bind(Exit.name, Exit(), True)
+
        
 class SegmentationFault( Action ):
     """Create a segmentation fault by reading null, this is to test
