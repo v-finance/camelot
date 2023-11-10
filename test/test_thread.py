@@ -1,10 +1,8 @@
 import time
-import unittest
 
 from camelot.test import RunningProcessCase
 from camelot.view.action_runner import action_runner
 from camelot.view.model_process import ModelProcess
-from camelot.view.model_thread.signal_slot_model_thread import TaskHandler
 from camelot.view.requests import (
     CancelAction, InitiateAction, SendActionResponse, ThrowActionException
 )
@@ -16,14 +14,6 @@ initiate_action = InitiateAction(
 send_action_response = SendActionResponse(run_name=['a'], response=None)
 throw_action_exception = ThrowActionException(run_name=['a'], exception=None)
 
-
-class ModelThreadCase(unittest.TestCase):
-
-    def test_handle_request(self):
-        task_queue = [None, cancel_action._to_bytes()]
-        task_handler = TaskHandler(task_queue)
-        task_handler.handle_task()
-        self.assertFalse(len(task_queue))
 
 class ModelProcessCase(RunningProcessCase):
 

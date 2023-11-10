@@ -67,67 +67,11 @@ def gui_thread():
     app = QtCore.QCoreApplication.instance()
     return object_thread(app)
 
-class AbstractModelThread(QtCore.QThread):
-    """Abstract implementation of a model thread class
-    Thread in which the model runs, all requests to the model should be
-    posted to the the model thread.
-
-    This class ensures the gui thread doesn't block when the model needs
-    time to complete tasks by providing asynchronous communication between
-    the model thread and the gui thread
-    
-    The Model thread class provides a number of signals :
-    
-    *thread_busy_signal*
-    """
-
-    thread_busy_signal = QtCore.qt_signal(bool)
-
-    def __init__(self):
-        super(AbstractModelThread, self).__init__()
-        self.logger = logging.getLogger(logger.name + '.%s' % id(self))
-        self._exit = False
-        self._traceback = ''
-        self.logger.debug('model thread constructed')
-
-    def run(self):
-        pass
-
-    def post(self, request, args=()):
-        """Post a request to the model thread, request should be a function
-        that takes args as arguments. The request function will be called within the
-        model thread. When the request is finished, on first occasion, the
-        response function will be called within the gui thread. The response
-        function takes as arguments, the results of the request function.
-
-        :param request: function to be called within the model thread
-        :param response: a slot that will be called with the result of the
-        request function
-        :param args: arguments with which the request function will be called        
-        """
-        raise NotImplementedError
-
-    def busy(self):
-        """Return True or False indicating wether either the model or the gui
-        thread is doing something"""
-        return False
-    
-    def stop(self):
-        """Stop the model thread from accepting any further posts.
-        """
-        return True
-
 def has_model_thread():
     return len(_model_thread_) > 0
 
 def get_model_thread():
-    try:
-        return _model_thread_[0]
-    except IndexError:
-        from .signal_slot_model_thread import SignalSlotModelThread
-        _model_thread_.insert(0, SignalSlotModelThread())
-        _model_thread_[0].start()
-        return _model_thread_[0]
+    return _model_thread_[0]
 
 def post(request):
     """Post a request and a response to the default model thread"""
