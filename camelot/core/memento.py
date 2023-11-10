@@ -41,7 +41,7 @@ import logging
 
 from sqlalchemy import sql, orm, exc
 
-import six
+
 
 
 from camelot.core.utils import ugettext
@@ -78,7 +78,7 @@ class Change( object ):
         self.by = row.by
         self.changes = None
         if row.previous_attributes:
-            self.changes = u', '.join( ugettext('%s was %s')%(k,six.text_type(v)) for k,v in six.iteritems(row.previous_attributes) )
+            self.changes = u', '.join( ugettext('%s was %s')%(k,str(v)) for k,v in row.previous_attributes.items() )
         self.memento_type = row.memento_type
         
 class SqlMemento( object ):
@@ -115,8 +115,9 @@ class SqlMemento( object ):
 
     def _get_authentication_id( self ):
         """:return: the id to store in the memento table"""
-        from camelot.model.authentication import get_current_authentication
-        return get_current_authentication().id
+        from camelot.model.authentication import AuthenticationMechanism
+        authentication = AuthenticationMechanism.get_current_authentication()
+        return authentication.authentication_mechanism_id
     
     def register_changes( self, 
                           memento_changes ):

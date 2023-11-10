@@ -26,16 +26,24 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+
+from dataclasses import dataclass
+
 from .plaintextdelegate import PlainTextDelegate
 from camelot.view.controls.editors import LanguageEditor
 
+@dataclass
 class LanguageDelegate( PlainTextDelegate ):
     """Delegate for :class:`camelot.types.Language` columns.  Expects string
     values.
     """
     
-    editor = LanguageEditor
+    @classmethod
+    def get_editor_class(cls):
+        return LanguageEditor
 
-
-
-
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        return item

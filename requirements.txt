@@ -3,5 +3,6 @@ Jinja2==2.7.2
 chardet==2.2.1 
 six==1.10.0
 openpyxl==2.4.5
-PyQt5
+PyQt6
 xlsxwriter
+dataclasses

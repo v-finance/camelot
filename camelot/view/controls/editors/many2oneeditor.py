@@ -27,54 +27,46 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, Qt, QtWidgets, variant_to_py
+import logging
 
-from ....admin.action import field_action
-from ...crud_signals import CrudSignalHandler
-from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
-from camelot.core.utils import ugettext as _
+from ....core.naming import initial_naming_context
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets
+from ....core.utils import ugettext as _
+from ..decorated_line_edit import DecoratedLineEdit
 
 from .customeditor import CustomEditor, set_background_color_palette
 
-import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
-class Many2OneEditor( CustomEditor ):
+# since this is gui code, we assume all names are lists,
+# as the original tuple has been serialized/deserialized
+
+none_name = list(initial_naming_context._bind_object(None))
+
+class Many2OneEditor(CustomEditor):
     """Widget for editing many 2 one relations"""
 
     arrow_down_key_pressed = QtCore.qt_signal()
 
     def __init__(self,
-                 admin=None,
                  parent=None,
-                 editable=True,
-                 field_name='manytoone',
-                 actions = [field_action.ClearObject(),
-                            field_action.SelectObject(),
-                            field_action.NewObject(),
-                            field_action.OpenObject()],
-                 **kwargs):
+                 action_routes = [],
+                 field_name='manytoone'):
         """
         :param entity_admin : The Admin interface for the object on the one
         side of the relation
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtWidgets.QSizePolicy.Preferred,
-                            QtWidgets.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
-        self.admin = admin
-        self.new_value = None
-        self._entity_representation = ''
-        self.obj = None
-        self._last_highlighted_entity_getter = None
+        self.verbose_name = ''
+        self.name = none_name
+        self.last_highlighted_name = None
 
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins( 0, 0, 0, 0)
-
-        self.index = None
-        
-
         #
         # The search timer reduced the number of search signals that are
         # emitted, by waiting for the next keystroke before emitting the
@@ -101,9 +93,9 @@ class Many2OneEditor( CustomEditor ):
         # Search Completer
         self.completer = QtWidgets.QCompleter()
         self.completer.setModel(QtGui.QStandardItemModel(self.completer))
-        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.completer.setCompletionMode(
-            QtWidgets.QCompleter.UnfilteredPopupCompletion
+            QtWidgets.QCompleter.CompletionMode.UnfilteredPopupCompletion
         )
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
@@ -112,8 +104,7 @@ class Many2OneEditor( CustomEditor ):
         # Setup layout
         layout.addWidget(self.search_input)
         self.setLayout(layout)
-        self.add_actions(actions, layout)
-        CrudSignalHandler().connect_signals(self)
+        self.add_actions(action_routes, layout)
 
     @QtCore.qt_slot()
     @QtCore.qt_slot(str)
@@ -129,19 +120,23 @@ class Many2OneEditor( CustomEditor ):
         if timer is not None:
             timer.stop()
         self.textEdited(self.search_input.text())
-        
-    def set_field_attributes(self, **kwargs):
-        super(Many2OneEditor, self).set_field_attributes(**kwargs)
-        set_background_color_palette(self.search_input, kwargs.get('background_color'))
-        self.search_input.setToolTip(kwargs.get('tooltip') or '')
-        self.search_input.setEnabled(kwargs.get('editable', False))
-        self.update_actions()
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        self.search_input.setToolTip(str(tooltip or ''))
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        set_background_color_palette(self.search_input, background_color)
+
+    def set_editable(self, editable):
+        self.search_input.setEnabled(editable)
 
     def on_arrow_down_key_pressed(self):
         self.arrow_down_key_pressed.emit()
 
     def textEdited(self, text):
-        self._last_highlighted_entity_getter = None
+        self.last_highlighted_name = None
         self.completer.setCompletionPrefix(text)
         self.completionPrefixChanged.emit(str(text))
 
@@ -153,79 +148,45 @@ class Many2OneEditor( CustomEditor ):
         for row, completion in enumerate(completions):
             index = model.index(row, 0)
             for role, data in completion.items():
-                model.setData(index, data, role)
+                model.setData(index, data, int(role))
         self.completer.complete()
 
     def completionActivated(self, index):
-        obj = index.data(Qt.UserRole)
-        self.set_object(variant_to_py(obj))
+        self.name = index.data(Qt.ItemDataRole.UserRole)
+        self.editingFinished.emit()
 
-    def completion_highlighted(self, index ):
-        obj = index.data(Qt.UserRole)
-        self._last_highlighted_entity_getter = variant_to_py(obj)
-
-    @QtCore.qt_slot(object, tuple)
-    def objects_updated(self, sender, objects):
-        value = self.get_value()
-        for obj in objects:
-            if obj is value:
-                self.set_object(obj, False)
-
-    @QtCore.qt_slot(object, tuple)
-    def objects_deleted(self, sender, objects):
-        value = self.get_value()
-        for obj in objects:
-            if obj is value:
-                self.set_object(None, False)
-
-    @QtCore.qt_slot(object, tuple)
-    def objects_created(self, sender, objects):
-        for obj in objects:
-            if obj is self.new_value:
-                self.new_value = None
-                self.set_object(obj)
+    def completion_highlighted(self, index):
+        self.last_highlighted_name = index.data(Qt.ItemDataRole.UserRole)
 
     def search_input_editing_finished(self):
-        if self.obj is None:
+        if self.name == none_name:
             # Only try to 'guess' what the user meant when no entity is set
             # to avoid inappropriate removal of data, (eg when the user presses
             # Esc, editingfinished will be called as well, and we should not
             # overwrite the current entity set)
-            if self._last_highlighted_entity_getter:
-                self.set_object(self._last_highlighted_entity_getter)
+            if self.last_highlighted_name is not None:
+                self.name = self.last_highlighted_name
+                self.editingFinished.emit()
             elif self.completer.model().rowCount()==1:
                 # There is only one possible option
                 index = self.completer.model().index(0,0)
-                entity_getter = variant_to_py(index.data(Qt.EditRole))
-                self.set_object(entity_getter)
-        self.search_input.setText(self._entity_representation or u'')
+                self.name = index.data(Qt.ItemDataRole.UserRole)
+                self.editingFinished.emit()
+        self.search_input.setText(self.verbose_name or u'')
 
     def set_value(self, value):
         """:param value: either ValueLoading, or a function that returns None
         or the entity to be shown in the editor"""
-        self._last_highlighted_entity_getter = None
-        self.new_value = None
-        value = CustomEditor.set_value(self, value)
-        self.set_object(value, propagate = False)
-        self.update_actions()
+        value = list(value if value is not None else none_name)
+        self.last_highlighted_name = None
+        self.name = value
 
     def get_value(self):
         """:return: a function that returns the selected entity or ValueLoading
         or None"""
-        value = CustomEditor.get_value(self)
-        if value is not None:
-            return value
-        return self.obj
+        return self.name
 
     def set_verbose_name(self, verbose_name):
         """Update the gui"""
-        self._entity_representation = verbose_name
+        self.verbose_name = verbose_name
         self.search_input.setText(verbose_name or u'')
-
-    def set_object(self, obj, propagate=True):
-        self.obj = obj
-        if propagate==True:
-            self.editingFinished.emit()
-
-    selected_object = property(fset=set_object)
-

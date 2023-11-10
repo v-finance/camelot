@@ -88,8 +88,7 @@ class ReadOnlyAdminDecorator(AdminRoute):
         return []
     
     def get_columns(self): 
-        return [(field, self._process_field_attributes(field, attrs))
-                for field, attrs in self._original_admin.get_columns()]
+        return self._original_admin.get_columns()
 
 def not_editable_admin( original_admin, 
                         actions = False, 
