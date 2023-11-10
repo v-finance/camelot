@@ -166,12 +166,18 @@ class ActionMixinCase(object):
 
 class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     """
-    Test case that starts a model thread when setting up the case class
+    Test case that starts a model thread when setting up the case class.
+
+    Overwrite the process_cls class variable with a ModelProcess subclass
+    that initialized the needed resources to run the test case.
     """
+
+    process_cls = None
 
     @classmethod
     def setUpClass(cls):
-        cls.thread = ModelProcess('test', test_context)
+        cls.thread = cls.process_cls()
+        assert isinstance(cls.thread, ModelProcess)
         model_thread._model_thread_.insert(0, cls.thread)
         cls.thread.start()
 

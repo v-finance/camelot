@@ -3,6 +3,7 @@ import unittest
 
 from camelot.test import RunningProcessCase
 from camelot.view.action_runner import action_runner
+from camelot.view.model_process import ModelProcess
 from camelot.view.model_thread.signal_slot_model_thread import TaskHandler
 from camelot.view.requests import (
     CancelAction, InitiateAction, SendActionResponse, ThrowActionException
@@ -25,6 +26,8 @@ class ModelThreadCase(unittest.TestCase):
         self.assertFalse(len(task_queue))
 
 class ModelProcessCase(RunningProcessCase):
+
+    process_cls = ModelProcess
 
     def test_execute_request(self):
         CancelAction.execute(cancel_action._to_dict()[1], action_runner, None)

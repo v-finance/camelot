@@ -4,7 +4,6 @@ import multiprocessing as _mp
 
 from ..core.qt import QtCore
 from ..core.serializable import NamedDataclassSerializable, DataclassSerializable
-from ..core.naming import initial_naming_context
 from .responses import AbstractResponse, ActionStepped, Busy
 from .requests import StopProcess
 
@@ -34,12 +33,10 @@ class PipeResponseHandler(object):
 
 class ModelProcess(spawned_mp.Process):
 
-    def __init__(self, context_name, context):
+    def __init__(self):
         super().__init__()
         self._request_queue = spawned_mp.JoinableQueue()
         self._response_receiver, self._response_sender = spawned_mp.Pipe(duplex=False)
-        self._context_name = context_name
-        self._context = context
         self.socket_notifier = QtCore.QSocketNotifier(
             self._response_receiver.fileno(), QtCore.QSocketNotifier.Type.Read
         )
@@ -56,15 +53,20 @@ class ModelProcess(spawned_mp.Process):
         state.pop('_response_receiver')
         return state
 
+    def initialize(self):
+        """
+        Overwrite this method in subclasses to initialize a process when it
+        starts running.
+        """
+        pass
+
     def run(self):
         LOGGER = logging.getLogger("model_process")
-        # begin dirty hack to make sure the unbind action is available,
-        # todo is to find a proper solution for setting up the initial naming
-        # context when starting a new process.
+        self.initialize()
+        # begin dirty hack to make sure the unbind action is available
         from ..admin.action.application_action import application_action_context
         assert application_action_context.resolve('unbind')
         # end of dirty hack
-        initial_naming_context.bind(self._context_name, self._context)
         response_handler = PipeResponseHandler(self._response_sender)
         while True:
             response_handler.send_response(Busy(False))
