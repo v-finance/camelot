@@ -26,31 +26,37 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import typing
 
-import six
-from six import moves
+from dataclasses import dataclass, field
+import json
+from typing import List, Union
 
-from ...admin.action import RenderHint
-from ...core.qt import QtCore, QtWidgets, Qt, variant_to_py
-from ..workspace import apply_form_state
-from ..controls.action_widget import ActionPushButton
-
-from camelot.admin.action import ActionStep
-from camelot.admin.action.form_action import FormActionGuiContext
-from camelot.core.item_model import ValidRole, ValidMessageRole
+from camelot.admin.action.base import GuiContext
+from camelot.admin.icon import Icon
 from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext_lazy as _
-from camelot.core.utils import ugettext
+from camelot.core.item_model import ValidRole, ValidMessageRole
+from camelot.core.naming import initial_naming_context
+from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.art import FontIcon
-from camelot.view.controls import delegates, editors
+from camelot.view.art import from_admin_icon
+from camelot.view.controls import editors
 from camelot.view.controls.formview import FormWidget
-from camelot.view.controls.actionsbox import ActionsBox
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.proxy import ValueLoading
-from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.view.qml_view import get_qml_root_backend
+from camelot.view.utils import get_settings_group
 
-class ChangeObjectDialog( StandaloneWizardPage ):
+from .form_view import OpenFormView
+from .item_view import UpdateTableView
+from .. import gui_naming_context
+from ..controls.view import ViewWithActionsMixin
+from ..workspace import apply_form_state
+from ...admin.action import RenderHint
+from ...admin.admin_route import AdminRoute, RouteWithRenderHint
+from ...core.qt import QtCore, QtWidgets, Qt
+
+
+class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext):
     """A dialog to change an object.  This differs from a FormView in that
     it does not contains Actions, and has an OK button that is enabled when
     the object is valid.
@@ -62,35 +68,34 @@ class ChangeObjectDialog( StandaloneWizardPage ):
     """
 
     def __init__( self,
-                  obj,
+                  proxy_route,
                   admin_route,
-                  admin,
+                  title,
                   form_display,
-                  columns,
+                  fields,
                   form_actions,
+                  action_states,
                   accept,
                   reject,
-                  window_title,
-                  title =  _('Please complete'),
-                  subtitle = _('Complete the form and press the OK button'),
-                  icon = FontIcon('cog'), # 'tango/22x22/categories/preferences-system.png'
+                  icon = Icon('cog'), # 'tango/22x22/categories/preferences-system.png'
                   parent=None,
-                  flags=QtCore.Qt.Dialog ):
+                  flags=QtCore.Qt.WindowType.Dialog ):
         super(ChangeObjectDialog, self).__init__( '', parent, flags )
-        self.setWindowTitle( str(window_title) )
-        self.set_banner_logo_pixmap( icon.getQPixmap() )
-        self.set_banner_title( six.text_type(title) )
-        self.set_banner_subtitle( six.text_type(subtitle) )
+        self.setWindowTitle( title )
+        self.set_banner_logo_pixmap( from_admin_icon(icon).getQPixmap() )
         self.banner_widget().setStyleSheet('background-color: white;')
-
-        model = CollectionProxy(admin_route)
 
         layout = QtWidgets.QHBoxLayout()
         layout.setObjectName( 'form_and_actions_layout' )
         form_widget = FormWidget(
-            admin=admin, model=model, form_display=form_display,
-            columns=columns, parent=self
+            admin_route=admin_route, model=None, form_display=form_display,
+            fields=fields, parent=self
         )
+
+        model = get_qml_root_backend().createModel(get_settings_group(admin_route), form_widget)
+        self.action_routes = dict()
+        form_widget.set_model(model)
+
         note_layout = QtWidgets.QVBoxLayout()
         note = editors.NoteEditor( parent=self )
         note.set_value(None)
@@ -100,23 +105,13 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         layout.addLayout(note_layout)
         model.headerDataChanged.connect(self.header_data_changed)
         form_widget.setObjectName( 'form' )
-        if hasattr(admin, 'form_size') and admin.form_size:
-            form_widget.setMinimumSize(admin.form_size[0], admin.form_size[1])
         self.main_widget().setLayout(layout)
-
-        self.gui_context = FormActionGuiContext()
-        self.gui_context.workspace = self
-        self.gui_context.admin = admin
-        self.gui_context.view = self
-        self.gui_context.widget_mapper = self.findChild( QtWidgets.QDataWidgetMapper,
-                                                         'widget_mapper' )
-
-        cancel_button = QtWidgets.QPushButton(six.text_type(reject))
+        cancel_button = QtWidgets.QPushButton(str(reject))
         cancel_button.setObjectName( 'cancel' )
-        ok_button = QtWidgets.QPushButton(six.text_type(accept))
+        ok_button = QtWidgets.QPushButton(str(accept))
         ok_button.setObjectName( 'ok' )
         layout = QtWidgets.QHBoxLayout()
-        layout.setDirection( QtWidgets.QBoxLayout.RightToLeft )
+        layout.setDirection( QtWidgets.QBoxLayout.Direction.RightToLeft )
         layout.addWidget( ok_button )
         layout.addWidget( cancel_button )
         layout.addStretch()
@@ -126,34 +121,52 @@ class ChangeObjectDialog( StandaloneWizardPage ):
         ok_button.pressed.connect( self.accept )
         # set the actions in the actions panel
         self.set_actions(form_actions)
+        for action_route, action_state in action_states:
+            self.set_action_state(self, tuple(action_route), action_state)
         # set the value last, so the validity can be updated
-        model.set_value(admin.get_proxy([obj]))
-        list(model.add_columns((fn for fn, _fa in columns)))
+        model.setValue(proxy_route)
+        self.model_context_name = proxy_route
+        columns = [fn for fn, _fa in fields.items()]
+        model.setColumns(columns)
+        self.gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self))), self
+        )
 
-    def render_action(self, action, parent):
-        if action.render_hint == RenderHint.PUSH_BUTTON:
-            return ActionPushButton(action, self.gui_context, parent)
-        raise Exception('Unhandled render hint {} for {}'.format(action.render_hint, type(action)))
+    @property
+    def widget_mapper(self):
+        return self.findChild(QtWidgets.QDataWidgetMapper, 'widget_mapper')
+
+    def get_window(self):
+        return self.window()
+
+    @QtCore.qt_slot(bool)
+    def button_clicked(self, checked):
+        self.run_action(self.sender(), self.gui_context_name, self.model_context_name, None)
+
+    @QtCore.qt_slot()
+    def menu_triggered(self):
+        qaction = self.sender()
+        self.run_action(qaction, self.gui_context_name, self.model_context_name, qaction.data())
 
     @QtCore.qt_slot(list)
     def set_actions(self, actions):
         layout = self.findChild(QtWidgets.QLayout, 'form_and_actions_layout' )
         if actions and layout:
             side_panel_layout = QtWidgets.QVBoxLayout()
-            actions_widget = ActionsBox(parent = self)
-            actions_widget.setObjectName('actions')
             for action in actions:
-                action_widget = self.render_action(action, actions_widget)
-                actions_widget.layout().addWidget(action_widget)
-            side_panel_layout.addWidget( actions_widget )
+                action_widget = self.render_action(
+                    RenderHint(action['render_hint']), tuple(action['route']),
+                    self, self
+                )
+                side_panel_layout.addWidget(action_widget)
             side_panel_layout.addStretch()
-            layout.addLayout( side_panel_layout )
+            layout.addLayout(side_panel_layout)
 
     @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
-        if orientation == Qt.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             model = self.sender()
-            valid = variant_to_py(model.headerData(0, orientation, ValidRole))
+            valid = model.headerData(0, orientation, ValidRole)
             self._change_complete(model, valid or False)
 
     def _change_complete(self, model, complete):
@@ -166,7 +179,7 @@ class ChangeObjectDialog( StandaloneWizardPage ):
             if complete:
                 note.set_value(None)
             else:
-                note.set_value(variant_to_py(model.headerData(0, Qt.Vertical, ValidMessageRole))) 
+                note.set_value(model.headerData(0, Qt.Orientation.Vertical, ValidMessageRole))
         if cancel_button is not None:
             ok_button.setDefault( not complete )
 
@@ -185,18 +198,21 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                   objects,
                   admin_route,
                   columns,
-                  toolbar_actions,
+                  action_routes,
                   invalid_rows,
+                  action_states,
+                  list_action,
                   parent = None,
-                  flags = QtCore.Qt.Window ):
+                  flags = QtCore.Qt.WindowType.Window ):
         super(ChangeObjectsDialog, self).__init__( '', parent, flags )
         self.banner_widget().setStyleSheet('background-color: white;')
         table_widget = editors.One2ManyEditor(
             admin_route = admin_route,
             parent = self,
-            create_inline = True,
-            columns=columns,
-            toolbar_actions=toolbar_actions,
+            columns=[column['name'] for column in columns],
+            # assume all actions are list actions and no field action,
+            list_actions=action_routes,
+            list_action=list_action,
         )
         self.invalid_rows = invalid_rows
         model = table_widget.get_model()
@@ -212,13 +228,18 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         self.main_widget().setLayout( layout )
         self.set_default_buttons()
         self.update_complete(model)
+        for route, state in action_states:
+            table_widget.action_state_changed(
+                route,
+                QtCore.QByteArray(json.dumps(state).encode('utf-8'))
+            )
 
     @QtCore.qt_slot(Qt.Orientation, int, int)
     def header_data_changed(self, orientation, first, last):
-        if orientation == Qt.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             model = self.sender()
-            for row in moves.xrange(first, last+1):
-                valid = variant_to_py(model.headerData(row, orientation, ValidRole))
+            for row in range(first, last+1):
+                valid = model.headerData(row, orientation, ValidRole)
                 if (valid==True) and (row in self.invalid_rows):
                     self.invalid_rows.remove(row)
                     self.update_complete(model)
@@ -240,11 +261,11 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
                 row = min(self.invalid_rows)
                 note.set_value(u'{0}<br/>{1}'.format(
                     ugettext(u'Please correct row {0} before proceeding.').format(row+1),
-                    variant_to_py(model.headerData(row, Qt.Vertical, ValidMessageRole))
+                    model.headerData(row, Qt.Orientation.Vertical, ValidMessageRole)
                 ))
 
-
-class ChangeObject(ActionStep):
+@dataclass
+class ChangeObject(OpenFormView):
     """
     Pop up a form for the user to change an object
 
@@ -259,57 +280,56 @@ class ChangeObject(ActionStep):
 
         The text shown in the reject button
 
-    .. attribute:: window_title
-
-        The window title for the dialog
-
     """
 
-    def __init__(self, obj, admin):
-        assert admin is not None
-        self.obj = obj
-        self.admin = admin
-        self.accept = _('OK')
-        self.reject = _('Cancel')
-        self.window_title = str(self.admin.get_verbose_name())
-        self.form_display = self.admin.get_form_display()
-        self.columns = self.admin.get_fields()
-        self.form_actions = self.admin.get_form_actions(None)
-        self.admin_route = admin.get_admin_route()
+    subtitle: typing.Union[str, ugettext_lazy, None] = _('Complete the form and press the OK button')
+    accept: typing.Union[str, ugettext_lazy] = _('OK')
+    reject: typing.Union[str, ugettext_lazy] = _('Cancel')
+    blocking: bool = True
+
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_form_actions(None))
 
     def get_object( self ):
         """Use this method to get access to the object to change in unit tests
 
         :return: the object to change
         """
-        return self.obj
+        return self.get_objects()[0]
 
-    def render(self, gui_context):
+    @classmethod
+    def render(self, gui_context, step):
         """create the dialog. this method is used to unit test
         the action step."""
-        super(ChangeObject, self).gui_run(gui_context)
-        dialog = ChangeObjectDialog(self.obj,
-                                    self.admin_route,
-                                    self.admin,
-                                    self.form_display,
-                                    self.columns,
-                                    self.form_actions,
-                                    self.accept,
-                                    self.reject,
-                                    self.window_title)
+        dialog = ChangeObjectDialog(
+            step['model_context_name'],
+            tuple(step['admin_route']),
+            step['title'],
+            step['form'],
+            step['fields'],
+            step['actions'],
+            step['action_states'],
+            step['accept'],
+            step['reject'],
+        )
+        dialog.set_banner_title(step['title'])
+        dialog.set_banner_subtitle(step['subtitle'])
         return dialog
 
-    def gui_run( self, gui_context ):
-        dialog = self.render(gui_context)
-        apply_form_state(dialog, None, self.admin.form_state)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        dialog = cls.render(gui_context, step)
+        apply_form_state(dialog, None, step['form_state'])
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
-            if result == QtWidgets.QDialog.Rejected:
+            result = dialog.exec()
+            if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
-            return self.obj
 
 
-class ChangeObjects( ActionStep ):
+@dataclass
+class ChangeObjects(UpdateTableView):
     """
     Pop up a list for the user to change objects
 
@@ -338,209 +358,74 @@ class ChangeObjects( ActionStep ):
 
     .. attribute:: icon
 
-        the :class:`camelot.view.art.FontIcon` in the top right corner of
+        the :class:`camelot.admin.icon.Icon` in the top right corner of
         the dialog
 
     """
 
-    def __init__(self, objects, admin, validate=True):
-        self.objects = objects
-        self.admin = admin
+    validate: bool = True
+
+    invalid_rows: List = field(init=False, default_factory=list)
+    admin_route: AdminRoute = field(init=False)
+    window_title: str = field(init=False)
+    title: Union[str, ugettext_lazy] = field(init=False, default= _('Data Preview'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Please review the data below.'))
+    icon: typing.Union[Icon, None] = field(init=False, default=Icon('file-excel'))
+
+    def __post_init__( self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
-        self.title = _('Data Preview')
-        self.subtitle = _('Please review the data below.')
-        self.icon = FontIcon('file-excel') # 'tango/32x32/mimetypes/x-office-spreadsheet.png'
-        self.invalid_rows = set()
-        self.columns = admin.get_columns()
-        self.toolbar_actions = admin.get_related_toolbar_actions(
-            Qt.RightToolBarArea, 'onetomany'
-        )
-        if validate==True:
-            validator = self.admin.get_validator()
-            for row, obj in enumerate(objects):
-                for message in validator.validate_object(obj):
-                    self.invalid_rows.add(row)
+        if self.validate:
+            validator = admin.get_validator()
+            for row, obj in enumerate(value):
+                for _message in validator.validate_object(obj):
+                    self.invalid_rows.append(row)
                     break
-                
 
-    def get_objects( self ):
-        """Use this method to get access to the objects to change in unit tests
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_related_toolbar_actions('onetomany'))
 
-        :return: the object to change
-        """
-        return self.objects
+    def get_admin(self):
+        """Use this method to get access to the admin in unit tests"""
+        return initial_naming_context.resolve(self.admin_route)
 
-    def render( self ):
+    @classmethod
+    def render(cls, step):
         """create the dialog. this method is used to unit test
         the action step."""
-        dialog = ChangeObjectsDialog(self.admin.get_proxy(self.objects),
-                                     self.admin_route,
-                                     self.columns,
-                                     self.toolbar_actions,
-                                     self.invalid_rows)
-        dialog.setWindowTitle( six.text_type( self.window_title ) )
-        dialog.set_banner_title( six.text_type( self.title ) )
-        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
-        dialog.set_banner_logo_pixmap( self.icon.getQPixmap() )
+        dialog = ChangeObjectsDialog(
+            tuple(step['model_context_name']),
+            tuple(step['admin_route']), step['columns'],
+            [RouteWithRenderHint(tuple(rwrh['route']), RenderHint(rwrh['render_hint'])) for rwrh in step['actions']],
+            set(step['invalid_rows']), step['action_states'],
+            step['list_action']
+        )
+        dialog.setWindowTitle(step['window_title'])
+        dialog.set_banner_title(step['title'])
+        dialog.set_banner_subtitle(step['subtitle'])
+        if step['icon'] is not None:
+            icon = Icon(
+                step['icon']['name'],
+                step['icon']['pixmap_size'],
+                step['icon']['color']
+            )
+            dialog.set_banner_logo_pixmap(from_admin_icon(icon).getQPixmap())
         #
         # the dialog cannot estimate its size, so use 75% of screen estate
         #
-        desktop = QtWidgets.QApplication.desktop()
-        available_geometry = desktop.availableGeometry( dialog )
+        screen = dialog.screen()
+        available_geometry = screen.availableGeometry()
         dialog.resize( available_geometry.width() * 0.75,
                        available_geometry.height() * 0.75 )
         return dialog
 
-    def gui_run( self, gui_context ):
-        dialog = self.render()
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        dialog = cls.render(step)
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
-            if result == QtWidgets.QDialog.Rejected:
+            result = dialog.exec()
+            if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
-            return self.objects
-
-class ChangeFieldDialog(StandaloneWizardPage):
-    """A dialog to change a field of  an object.
-    """
-
-    def __init__( self,
-                  admin,
-                  field_attributes,
-                  field_name,
-                  field_value = None,
-                  parent = None,
-                  flags=QtCore.Qt.Dialog ):
-        super(ChangeFieldDialog, self).__init__( '', parent, flags )
-        from camelot.view.controls.editors import ChoicesEditor
-        self.field_attributes = field_attributes
-        self.field = field_name
-        self.value = None
-        self.static_field_attributes = admin.get_static_field_attributes
-        self.banner_widget().setStyleSheet('background-color: white;')
-        editor = ChoicesEditor( parent=self )
-        editor.setObjectName( 'field_choice' )
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget( editor )
-        self.main_widget().setLayout( layout )
-        choices = [(field, six.text_type(attributes['name'])) for field, attributes in six.iteritems(field_attributes)]
-        choices.sort( key = lambda choice:choice[1] )
-        editor.set_choices( choices + [(None,'')] )
-        editor.set_value(self.field)
-        self.field_changed(field_value)
-        editor.editingFinished.connect( self.field_changed )
-        self.set_default_buttons()
-        if self.field is not None:
-            value_editor = self.findChild(QtWidgets.QWidget, 'value_editor')
-            if value_editor is not None:
-                value_editor.setFocus()
-
-    @QtCore.qt_slot()
-    def field_changed(self, value=None):
-        selected_field = ValueLoading
-        editor = self.findChild( QtWidgets.QWidget, 'field_choice' )
-        value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
-        if editor != None:
-            selected_field = editor.get_value()
-        if value_editor != None:
-            value_editor.deleteLater()
-        if selected_field not in (None, ValueLoading):
-            self.field = selected_field
-            self.value = value
-            static_field_attributes = list(self.static_field_attributes([selected_field]))[0]
-            # if the field is displayed in this dialog, it should be editable
-            static_field_attributes['editable'] = True
-            delegate = static_field_attributes['delegate'](parent = self,
-                                                            **static_field_attributes)
-            option = QtWidgets.QStyleOptionViewItem()
-            option.version = 5
-            value_editor = delegate.createEditor( self, option, None )
-            value_editor.setObjectName( 'value_editor' )
-            value_editor.set_field_attributes( **static_field_attributes )
-            self.main_widget().layout().addWidget( value_editor )
-            value_editor.editingFinished.connect( self.value_changed )
-            value_editor.set_value(value)
-            self.value_changed( value_editor )
-
-    def value_changed(self, value_editor=None):
-        if not value_editor:
-            value_editor = self.findChild( QtWidgets.QWidget, 'value_editor' )
-        if value_editor != None:
-            self.value = value_editor.get_value()
-
-class ChangeField( ActionStep ):
-    """
-    Pop up a list of fields from an object a user can change.  When the
-    user selects a field, an appropriate widget is shown to change the
-    value of that field.
-
-    :param admin: the admin of the object of which to change the field
-    :param field_attributes: a list of field attributes of the fields that
-        can be changed.  If `None` is given, all editable fields are shown.
-    :param field_name: the name of the selected field when opening the dialog
-    :param field_value: the value of the selected field when opening the dialog
-
-    This action step returns a tuple with the name of the selected field, and
-    its new value.
-
-    This action step can be customised using these attributes :
-
-    .. attribute:: window_title
-
-        the window title of the dialog shown
-
-    .. attribute:: title
-
-        the title of the dialog shown
-
-    .. attribute:: subtitle
-
-        the subtitle of the dialog shown
-
-    """
-
-    def __init__(self,
-                 admin,
-                 field_attributes = None,
-                 field_name = None,
-                 field_value = None,
-                 ):
-        super( ChangeField, self ).__init__()
-        self.admin = admin
-        self.field_name = field_name
-        self.field_value = field_value
-        if field_attributes is None:
-            field_attributes = dict(admin.get_all_fields_and_attributes())
-            not_editable_fields = []
-            for key, attributes in six.iteritems(field_attributes):
-                if not attributes.get('editable', False):
-                    not_editable_fields.append(key)
-                elif attributes.get('delegate', None) in (delegates.One2ManyDelegate,):
-                    not_editable_fields.append(key)
-            for key in not_editable_fields:
-                field_attributes.pop(key)
-        self.field_attributes = field_attributes
-        self.window_title = admin.get_verbose_name_plural()
-        self.title = _('Replace field contents')
-        self.subtitle = _('Select the field to update and enter its new value')
-
-    def render( self ):
-        """create the dialog. this method is used to unit test
-        the action step."""
-        dialog = ChangeFieldDialog(
-            self.admin, self.field_attributes, self.field_name, self.field_value
-        )
-        dialog.setWindowTitle( six.text_type( self.window_title ) )
-        dialog.set_banner_title( six.text_type( self.title ) )
-        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
-        return dialog
-
-    def gui_run( self, gui_context ):
-        dialog = self.render()
-        with hide_progress_dialog( gui_context ):
-            result = dialog.exec_()
-            if result == QtWidgets.QDialog.Rejected:
-                raise CancelRequest()
-            return (dialog.field, dialog.value)
-
-

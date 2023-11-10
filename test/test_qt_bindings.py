@@ -1,10 +1,12 @@
 """Test the behaviour of the qt bindings in various circumstances.
 """
 
-import unittest
 import gc
+import random
+import unittest
 
-from camelot.core.qt import variant_to_py, QtWidgets, QtCore, QtGui
+from camelot.core.qt import QtCore, QtWidgets
+
 
 #
 # some helper classes to create all kinds of weird object structures
@@ -63,7 +65,7 @@ class ModelViewRegister(QtCore.QObject):
         
     @QtCore.pyqtSlot(QtCore.QObject)
     def _registered_object_destroyed(self, qobject):
-        key = variant_to_py( qobject.property('registered_key') )
+        key = qobject.property('registered_key')
         del self.model_by_view[key]
 
 class TableViewCases(unittest.TestCase):
@@ -153,10 +155,7 @@ class SignalSlotCase( unittest.TestCase ):
     
     def setUp(self):
         self.app = QtWidgets.QApplication.instance()
-        if self.app == None:
-            self.app = QtWidgets.QApplication([])
-        #from camelot.test import get_application
-        #self.app = get_application()
+        assert self.app is not None
 
     def test_queued_connection_after_delete(self):
         """Connect emitter and receiver in a different thread with a
@@ -165,8 +164,6 @@ class SignalSlotCase( unittest.TestCase ):
         
         this corrupts the program.
         """
-        import random
-        import time
         receiver = SignalReceiver()
         #threads = []
         for i in range(1000):
@@ -179,7 +176,7 @@ class SignalSlotCase( unittest.TestCase ):
                     self.emitter = SignalEmitter()
                     
                 def connect( self, receiver ):
-                    self.emitter.my_signal[object].connect( receiver.my_slot, QtCore.Qt.QueuedConnection )
+                    self.emitter.my_signal[object].connect( receiver.my_slot, QtCore.Qt.ConnectionType.QueuedConnection )
                     
                 def run(self): 
                     self.emitter.start_emitting( 1 )
@@ -238,7 +235,7 @@ class SignalSlotCase( unittest.TestCase ):
                 
             @QtCore.pyqtSlot(object)
             def my_slot(self, obj):
-                child = self.findChild(QtCore.QObject, 'child')
+                self.findChild(QtCore.QObject, 'child')
         
         class ReceiverParent(QtWidgets.QTabWidget):
             
@@ -267,7 +264,7 @@ class SignalSlotCase( unittest.TestCase ):
                         pass
                                     
         thread = EmittingThread()
-        thread.my_signal.connect( receiver_parent.get_receiver().my_slot, QtCore.Qt.QueuedConnection )
+        thread.my_signal.connect( receiver_parent.get_receiver().my_slot, QtCore.Qt.ConnectionType.QueuedConnection )
         #del receiver_parent
         thread.start()
         while thread.started == False:

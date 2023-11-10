@@ -27,13 +27,29 @@
 #
 #  ============================================================================
 
-import six
 
-from ....core.qt import (QtGui, QtCore, QtWidgets, Qt,
-                         py_to_variant, variant_to_py)
-from ....core.item_model import ProxyDict, FieldAttributesRole
-from camelot.view.proxy import ValueLoading
+import json
+import logging
+import dataclasses
 
+from camelot.core.naming import initial_naming_context
+
+from ....admin.icon import CompletionValue
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
+from ....core.serializable import json_encoder, NamedDataclassSerializable
+from ....core.item_model import (
+    ActionRoutesRole, ActionStatesRole,
+    ChoicesRole, VisibleRole, NullableRole
+)
+from ..action_widget import AbstractActionWidget
+from camelot.view.controls import editors
+from camelot.view.crud_action import DataCell
+from dataclasses import dataclass, InitVar
+from typing import Any, ClassVar
+
+
+
+LOGGER = logging.getLogger(__name__)
 
 def DocumentationMetaclass(name, bases, dct):
     dct['__doc__'] = (dct.get('__doc__') or '') + """
@@ -77,7 +93,7 @@ def DocumentationMetaclass(name, bases, dct):
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
         dct['__doc__'] = dct['__doc__'] + row_format%('**Field Attributes**', '**Editor**') + '\n'
         dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
-        for state, attrs in six.iteritems(states):
+        for state, attrs in states.items():
             for i,attr in enumerate(attrs):
                 if i==0:
                     image = '.. image:: /_static/editors/%s_%s.png'%(dct['editor'].__name__, state)
@@ -103,10 +119,14 @@ def DocumentationMetaclass(name, bases, dct):
 
     return type(name, bases, dct)
 
-color_groups = {True: QtGui.QPalette.Inactive,
-                False: QtGui.QPalette.Disabled}
+color_groups = {True: QtGui.QPalette.ColorGroup.Inactive,
+                False: QtGui.QPalette.ColorGroup.Disabled}
 
-class CustomDelegate(QtWidgets.QItemDelegate):
+class CustomDelegateMeta(type(NamedDataclassSerializable), type(QtWidgets.QItemDelegate)):
+    pass
+
+@dataclass
+class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metaclass=CustomDelegateMeta):
     """Base class for implementing custom delegates.
 
     .. attribute:: editor
@@ -115,45 +135,90 @@ class CustomDelegate(QtWidgets.QItemDelegate):
 
     """
 
-    editor = None
-    horizontal_align = Qt.AlignLeft | Qt.AlignVCenter
+    _parent: InitVar[QtCore.QObject] = None
 
-    def __init__(self, parent=None, editable=True, **kwargs):
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+
+    def __post_init__(self, parent):
         """:param parent: the parent object for the delegate
         :param editable: a boolean indicating if the field associated to the delegate
         is editable
-
         """
-        super( CustomDelegate, self ).__init__(parent)
-        self.editable = editable
-        self.kwargs = kwargs
+        super().__init__(parent)
         self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
 
     @classmethod
-    def get_standard_item(cls, locale, value, field_attributes_values):
+    def get_editor_class(cls):
+        """Get the editor class for this delegate."""
+        raise NotImplementedError
+
+    @classmethod
+    def set_item_editability(cls, model_context, item, default):
+        editable = model_context.field_attributes.get('editable', default)
+        if editable:
+            item.flags = item.flags | Qt.ItemFlag.ItemIsEditable
+        else:
+            item.flags = item.flags & ~Qt.ItemFlag.ItemIsEditable
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
         """
         This method is used by the proxy to convert the value of a field
         to the data for the standard item model.  The result of this call can be
         used by the methods of the delegate.
 
         :param locale: the `QLocale` to be used to display locale dependent values
-        :param value: the value of the field on the object
-        :param field_attributes_values: the values of the field attributes on the
-           object
-        
+        :param model_context: a FieldActionModelContext object
         :return: a `QStandardItem` object
         """
-        item = QtGui.QStandardItem()
-        item.setData(py_to_variant(value), Qt.EditRole)
-        item.setData(py_to_variant(cls.horizontal_align), Qt.TextAlignmentRole)
-        item.setData(py_to_variant(ProxyDict(field_attributes_values)),
-                     FieldAttributesRole)
-        item.setData(py_to_variant(field_attributes_values.get('tooltip')),
-                     Qt.ToolTipRole)
-        item.setData(py_to_variant(field_attributes_values.get('background_color')),
-                     Qt.BackgroundRole)
+        routes = model_context.field_attributes.get('action_routes', [])
+        states = []
+        for action in model_context.field_attributes.get('actions', []):
+            state = action.get_state(model_context)
+            states.append(dataclasses.asdict(state))
+        #assert len(routes) == len(states), 'len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states)
+        if len(routes) != len(states):
+            LOGGER.error('CustomDelegate: len(routes) != len(states)\nroutes: {}\nstates: {}'.format(routes, states))
+
+        # eventually, the whole item will need to be serialized, while this
+        # is not yet the case, serialize some roles to make the usable outside
+        # python.
+        serialized_action_routes = json_encoder.encode(routes)
+        serialized_action_states = json_encoder.encode(states)
+        item = DataCell()
+        # @todo : the line below should be removed, but only after testing
+        #         if each delegate properly handles setting edit role
+        item.roles[Qt.ItemDataRole.EditRole] = model_context.value
+        # NOTE: one of the goals is to serialize the field attributes, which currently
+        # still comprises a large variety of elements, some of which should still be made serializable,
+        # while others may only be used at the model side and should not be included in the serialization.
+        # That exact set of elements that should be included is still a TODO, as many editors still rely
+        # on the field attributes being passes as kwargs as part of their initialization.
+        # As a transition phase, custom ItemData roles are introduced to store those elements
+        # that are already made serializable, as to gradually get towards the final goal.
+        # Eventually, when the final set of serializable field attributes is known, those roles
+        # may be combined again somehow, but this is still TBD.
+        item.roles[ActionRoutesRole] = serialized_action_routes
+        item.roles[ActionStatesRole] = serialized_action_states
+        item.roles[Qt.ItemDataRole.TextAlignmentRole] = cls.horizontal_align
+        item.roles[Qt.ItemDataRole.ToolTipRole] = model_context.field_attributes.get('tooltip')
+        background_color = model_context.field_attributes.get('background_color')
+        if background_color is not None:
+            if not isinstance(background_color, QtGui.QColor):
+                background_color = QtGui.QColor(background_color)
+            item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(background_color)
+        item.roles[VisibleRole] = model_context.field_attributes.get('visible', True)
+        item.roles[NullableRole] = model_context.field_attributes.get('nullable', True)
+        # FIXME: move choices to delegates that actually use it?
+        choices = model_context.field_attributes.get('choices')
+        if choices is not None:
+            choices = [CompletionValue(
+                value=initial_naming_context._bind_object(obj),
+                verbose_name=verbose_name
+                )._to_dict() for obj, verbose_name in choices]
+        item.roles[ChoicesRole] = choices
         return item
 
     def createEditor(self, parent, option, index):
@@ -161,8 +226,35 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         :param option: use an option with version 5 to indicate the widget
         will be put onto a form
         """
-
-        editor = self.editor(parent, editable = self.editable, option = option, **self.kwargs)
+        editor_cls = self.get_editor_class()
+        if issubclass(editor_cls, (editors.BoolEditor, editors.ColorEditor, editors.LanguageEditor,
+                                   editors.NoteEditor, editors.RichTextEditor)):
+            editor = editor_cls(parent)
+        elif issubclass(editor_cls, (editors.ChoicesEditor, editors.Many2OneEditor,
+                                     editors.FileEditor)):
+            editor = editor_cls(parent, self.action_routes)
+        elif issubclass(editor_cls, editors.DateEditor):
+            editor = editor_cls(parent, self.nullable)
+        elif issubclass(editor_cls, editors.DbImageEditor):
+            editor = editor_cls(parent, self.preview_width, self.preview_height, self.max_size)
+        elif issubclass(editor_cls, editors.FloatEditor):
+            editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)
+        elif issubclass(editor_cls, editors.IntegerEditor):
+            editor = editor_cls(parent, self.calculator, option)
+        elif issubclass(editor_cls, editors.LabelEditor):
+            editor = editor_cls(parent, self.text, self.field_name)
+        elif issubclass(editor_cls, editors.LocalFileEditor):
+            editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
+        elif issubclass(editor_cls, editors.MonthsEditor):
+            editor = editor_cls(parent, self.minimum, self.maximum)
+        elif issubclass(editor_cls, editors.TextLineEditor):
+            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type, self.completer_type)
+        elif issubclass(editor_cls, editors.TextEditEditor):
+            editor = editor_cls(parent, self.length, self.editable)
+        elif issubclass(editor_cls, editors.VirtualAddressEditor):
+            editor = editor_cls(parent, self.address_type)
+        else:
+            raise NotImplementedError()
         assert editor != None
         assert isinstance(editor, QtWidgets.QWidget)
         if option.version != 5:
@@ -184,78 +276,53 @@ class CustomDelegate(QtWidgets.QItemDelegate):
         # * Closing the editor results in the calculator not working
         # * not closing the editor results in the virtualaddresseditor not
         #   getting closed always
-        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.NoHint )
+        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint )
+
+    def set_default_editor_data(self, editor, index):
+        editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
+        nullable = bool(index.data(NullableRole))
+        visible = bool(index.data(VisibleRole))
+        tooltip = index.data(Qt.ItemDataRole.ToolTipRole)
+        background_color = index.data(Qt.ItemDataRole.BackgroundRole)
+        editor.set_editable(editable)
+        editor.set_nullable(nullable)
+        editor.set_visible(visible)
+        editor.set_tooltip(tooltip)
+        editor.set_background_color(background_color)
 
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
-        value = variant_to_py(index.model().data(index, Qt.EditRole))
-        field_attributes = variant_to_py(index.data(FieldAttributesRole)) or dict()
-        # ok i think i'm onto something, dynamically set tooltip doesn't change
-        # Qt model's data for Qt.ToolTipRole
-        # but i wonder if we should make the detour by Qt.ToolTipRole or just
-        # get our tooltip from field_attributes
-        # (Nick G.): Avoid 'None' being set as tooltip.
-        if field_attributes.get('tooltip'):
-            editor.setToolTip( six.text_type( field_attributes.get('tooltip', '') ) )
+        self.set_default_editor_data(editor, index)
         #
         # first set the field attributes, as these may change the 'state' of the
         # editor to properly display and hold the value, eg 'precision' of a 
         # float might be changed
         #
-        editor.set_field_attributes(**field_attributes)
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
         editor.set_value(value)
+        # update actions
+        self.update_field_action_states(editor, index)
+
+    def update_field_action_states(self, editor, index):
+        action_states = json.loads(index.model().data(index, ActionStatesRole))
+        action_routes = json.loads(index.model().data(index, ActionRoutesRole))
+        if len(action_routes) == 0:
+            return
+        for action_route, action_state in zip(action_routes, action_states):
+            for action_widget in editor.findChildren(QtWidgets.QToolButton):
+                action_route_of_widget = action_widget.property('action_route')
+                if action_route_of_widget is None:
+                    continue
+                if list(action_route_of_widget)==action_route:
+                    AbstractActionWidget.set_toolbutton_state(
+                        action_widget, action_state, editor.action_menu_triggered
+                    )
+                    break
+            else:
+                LOGGER.error('action route not found {} in editor'.format(
+                    action_route
+                ))
 
     def setModelData(self, editor, model, index):
-        model.setData(index, py_to_variant(editor.get_value()))
-
-    def paint_text(
-        self,
-        painter,
-        option,
-        index,
-        text,
-        margin_left=0,
-        margin_right=0,
-        horizontal_align=None,
-        vertical_align=Qt.AlignVCenter
-    ):
-        """Paint unicode text into the given rect defined by option, and fill the rect with
-        the background color
-        :arg margin_left: additional margin to the left, to be used for icons or others
-        :arg margin_right: additional margin to the right, to be used for icons or others"""
-
-        rect = option.rect
-        # prevent text being centered if the height of the cell increases beyond multiple
-        # lines of text
-        if rect.height() > 2 * self._height:
-            vertical_align = Qt.AlignTop
-
-        field_attributes = variant_to_py(index.data(FieldAttributesRole))
-        if field_attributes != ValueLoading:
-            editable = field_attributes.get( 'editable', True )
-            background_color = field_attributes.get( 'background_color', None )
-            prefix = field_attributes.get( 'prefix', None )
-            suffix = field_attributes.get( 'suffix', None )
-
-        if( option.state & QtWidgets.QStyle.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-            fontColor = option.palette.highlightedText().color()
-        else:
-            color_group = color_groups[editable]
-            painter.fillRect(rect, background_color or option.palette.brush(color_group, QtGui.QPalette.Base) )
-            fontColor = option.palette.color(color_group, QtGui.QPalette.Text)
-        
-
-        if prefix:
-            text = '%s %s' % (six.text_type( prefix ).strip(), six.text_type( text ).strip() )
-        if suffix:
-            text = '%s %s' % (six.text_type( text ).strip(), six.text_type( suffix ).strip() )
-
-        painter.setPen(fontColor.toRgb())
-        painter.drawText(rect.x() + 2 + margin_left,
-                         rect.y() + 2,
-                         rect.width() - 4 - (margin_left + margin_right),
-                         rect.height() - 4, # not -10, because the row might not be high enough for this
-                         vertical_align | (horizontal_align or self.horizontal_align),
-                         text)
+        model.setData(index, editor.get_value())

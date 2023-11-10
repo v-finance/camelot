@@ -31,23 +31,43 @@
 editors or other widgets.
 """
 
-import six
-
-from camelot.core.qt import QtGui, variant_api
+from camelot.core.qt import QtGui
 
 from .utils import date_from_string, ParsingError
+
+class AbstractValidator:
+    """
+    Validators must be default constructable.
+    Validators can have a state which is set by set_state.
+    """
+
+    validators = dict()
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.validators[cls.__name__] = cls
+
+    @classmethod
+    def get_validator(cls, validator_type, parent=None):
+        if validator_type is None:
+            return None
+        return cls.validators[validator_type](parent)
+
+    def set_state(self, state):
+        pass
+
+    def format_value(self, value):
+        """
+        Format the given value for display.
+        The value is left untouched by default.
+        """
+        return value
 
 class DateValidator(QtGui.QValidator):
 
     def validate(self, input_, pos):
         try:
-            date_from_string(six.text_type(input_))
+            date_from_string(str(input_))
         except ParsingError:
-            if variant_api == 1:
-                return (QtGui.QValidator.Intermediate, pos)
-            else:
-                return (QtGui.QValidator.Intermediate, input_, pos)
-        if variant_api == 1:
-            return (QtGui.QValidator.Acceptable, pos)
-        else:
-            return (QtGui.QValidator.Acceptable, input_, pos)
+            return (QtGui.QValidator.State.Intermediate, input_, pos)
+        return (QtGui.QValidator.State.Acceptable, input_, pos)

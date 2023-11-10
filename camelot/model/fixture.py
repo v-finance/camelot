@@ -30,7 +30,7 @@
 from camelot.core.orm import Entity, Session
 from camelot.types import PrimaryKey
 
-import six
+
 
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Unicode, Integer
@@ -74,8 +74,8 @@ class Fixture( Entity ):
         :return: a :class:`Fixture` instance refering to the stored data, or
             None of no data was found.
         """
-        entity_name = six.text_type( entity.__name__ )
-        return Session().query( cls ).filter_by( model = six.text_type( entity_name ), 
+        entity_name = str( entity.__name__ )
+        return Session().query( cls ).filter_by( model = str( entity_name ), 
                                                  fixture_key = fixture_key, 
                                                  fixture_class = fixture_class ).first()
 
@@ -102,7 +102,7 @@ class Fixture( Entity ):
         :return: a string with the fixture_key that refers to this data, None
             if no such data is found
         """
-        entity_name = six.text_type( entity.__name__ )
+        entity_name = str( entity.__name__ )
         fixture = Session().query( cls ).filter_by( model = entity_name, 
                                                     primary_key = primary_key ).first()
         if fixture:
@@ -119,7 +119,7 @@ class Fixture( Entity ):
         :return: (fixture_key, fixture_class) if the object was registered
         through the fixture mechanism, (None, None) otherwise
         """
-        entity_name = six.text_type( obj.__class__.__name__ )
+        entity_name = str( obj.__class__.__name__ )
         fixture = Session().query( cls ).filter_by( model = entity_name, 
                                                     primary_key = obj.id ).first()
         if fixture:
@@ -135,7 +135,7 @@ class Fixture( Entity ):
         :return: a dictionary mapping the primary key of a on object of type 
             entity to a tuple of type (fixture key, fixture class)
         """
-        entity_name = six.text_type( entity.__name__ )
+        entity_name = str( entity.__name__ )
         fixtures = Session().query( cls ).filter_by( model = entity_name ).all()
         return dict( ( f.primary_key, (f.fixture_key, 
                                        f.fixture_class) ) for f in fixtures )
@@ -173,7 +173,7 @@ class Fixture( Entity ):
                                                     fixture_key, 
                                                     fixture_class )
             if not reference:
-                reference = cls( model = six.text_type( entity.__name__ ), 
+                reference = cls( model = str( entity.__name__ ), 
                                  primary_key = obj.id, 
                                  fixture_key = fixture_key, 
                                  fixture_class = fixture_class )
@@ -190,7 +190,7 @@ class Fixture( Entity ):
         
         :param entity: the class of the stored data
         """
-        keys_and_classes = six.itervalues(cls.find_fixture_keys_and_classes(entity))
+        keys_and_classes = cls.find_fixture_keys_and_classes(entity).values()
         for fixture_key, fixture_class in keys_and_classes:
             cls.remove_fixture( entity, fixture_key, fixture_class )
             

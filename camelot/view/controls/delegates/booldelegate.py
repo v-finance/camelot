@@ -27,50 +27,28 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
 
-from ....core.qt import variant_to_py, Qt, QtCore, QtWidgets
+from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class BoolDelegate(CustomDelegate):
+@dataclass
+class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for boolean values"""
 
-    editor = editors.BoolEditor
+    @classmethod
+    def get_editor_class(cls):
+        return editors.BoolEditor
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground( painter, option, index )
-        checked = variant_to_py(index.model().data(index, Qt.EditRole))
-
-        check_option = QtWidgets.QStyleOptionButton()
-
-        rect = QtCore.QRect(option.rect.left(),
-                            option.rect.top(),
-                            option.rect.width(),
-                            option.rect.height())
-
-        check_option.rect = rect
-        check_option.palette = option.palette
-        if (option.state & QtWidgets.QStyle.State_Selected):
-            painter.fillRect(option.rect, option.palette.highlight())
-        elif not self.editable:
-            painter.fillRect(option.rect, option.palette.window())
-
-        if checked in (ValueLoading, None):
-            check_option.state = option.state | QtWidgets.QStyle.State_Off
-        elif checked:
-            check_option.state = option.state | QtWidgets.QStyle.State_On
-        else:
-            check_option.state = option.state | QtWidgets.QStyle.State_Off
-
-
-        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_CheckBox,
-                                               check_option,
-                                               painter)
-
-        painter.restore()
-
-
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, True)
+        if model_context.value is not None:
+            if model_context.value == True:
+                value_str = '\u2611' # checkmark
+            else:
+                value_str = '\u2610' # checkbox
+            item.roles[PreviewRole] = value_str
+        return item

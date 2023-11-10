@@ -137,7 +137,7 @@ class Calculator(QtWidgets.QDialog):
         #QtWidgets.QWidget.keyPressEvent(self, event)
 
         key = event.key()
-        if key == QtCore.Qt.Key_S:
+        if key == QtCore.Qt.Key.Key_S:
             self.SaveValue()
             return
         else:
@@ -178,11 +178,11 @@ class Calculator(QtWidgets.QDialog):
                 self,
                 'Message',
                 'Do you want to Save and Quit?',
-                QtWidgets.QMessageBox.Yes,
-                QtWidgets.QMessageBox.No
+                QtWidgets.QMessageBox.StandardButton.Yes,
+                QtWidgets.QMessageBox.StandardButton.No
             )
 
-            if reply == QtWidgets.QMessageBox.Yes:
+            if reply == QtWidgets.QMessageBox.StandardButton.Yes:
                 self.SaveValue()
 
         try:

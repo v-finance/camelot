@@ -29,7 +29,7 @@
 import functools
 import logging
 
-import six
+
 
 from sqlalchemy import orm, sql, exc
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -131,7 +131,7 @@ class QueryModelProxy(ListModelProxy):
         """
         query = self._query
         # filters might be changed in the gui thread while being iterated
-        for filter_, value in six.iteritems(self._filters.copy()):
+        for filter_, value in self._filters.copy().items():
             query = filter_.decorate_query(query, value)
         if order_clause:
             query = self._sort_decorator(query)

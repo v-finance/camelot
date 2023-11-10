@@ -27,23 +27,22 @@
 #
 #  ============================================================================
 
-import itertools
 import logging
-import os
 import sys
 
 logger = logging.getLogger('camelot.admin.application_admin')
 
-import six
 
-from .admin_route import AdminRoute
+
+from .action.base import Action
+from .action.application_action import OpenTableView
+from .admin_route import AdminRoute, register_list_actions, register_form_actions
 from .entity_admin import EntityAdmin
+from .menu import MenuItem
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
-from ..core.qt import Qt, QtCore
+from ..core.qt import QtCore
 from camelot.admin.action import application_action, form_action, list_action
-from camelot.core.utils import ugettext_lazy as _
-from camelot.view import art
 
 #
 # The translations data needs to be kept alive during the
@@ -91,32 +90,42 @@ When the same action is returned in the :meth:`get_toolbar_actions` and
 shortcut confusion and reduce the number of status updates.
     """
 
-    name = 'Camelot'
     application_url = None
     help_url = 'http://www.python-camelot.com/docs.html'
     author = 'Conceptive Engineering'
-    domain = 'python-camelot.com'
 
     version = '1.0'
 
     #
     # actions that will be shared between the toolbar and the main menu
     #
-    change_row_actions = [ list_action.ToFirstRow(),
-                           list_action.ToLastRow(), ]
-    edit_actions = [ list_action.AddNewObject(),
-                     list_action.DeleteSelection(),
-                     list_action.DuplicateSelection(),]
+    list_toolbar_actions = [
+        list_action.close_list,
+        list_action.list_label,
+    ]
+    change_row_actions = [ list_action.to_first_row,
+                           list_action.to_last_row ]
+    edit_actions = [ list_action.add_new_object,
+                     list_action.delete_selection,
+                     list_action.duplicate_selection ]
     help_actions = []
-    export_actions = [ list_action.PrintPreview(),
-                       list_action.ExportSpreadsheet() ]
-    form_toolbar_actions = [ form_action.CloseForm(),
-                             form_action.ToFirstForm(),
-                             form_action.ToPreviousForm(),
-                             form_action.ToNextForm(),
-                             form_action.ToLastForm(),
-                             application_action.Refresh(),
-                             form_action.ShowHistory() ]
+    export_actions = [ list_action.export_spreadsheet ]
+    form_toolbar_actions = [ form_action.close_form,
+                             form_action.to_first_form,
+                             form_action.to_previous_form,
+                             form_action.to_next_form,
+                             form_action.to_last_form,
+                             application_action.refresh,
+                             form_action.show_history ]
+    onetomany_actions = [
+        list_action.delete_selection,
+        list_action.duplicate_selection,
+        list_action.export_spreadsheet
+    ]
+    manytomany_actions = [
+        list_action.remove_selection,
+        list_action.export_spreadsheet
+    ]
 
     def __init__(self, name=None, author=None, domain=None):
         #
@@ -135,6 +144,8 @@ shortcut confusion and reduce the number of status updates.
         if domain is not None:
             self.domain = domain
         self._admin_route = super()._register_admin_route(self)
+        self._main_menu = MenuItem()
+        self._navigation_menu = MenuItem()
 
     def get_admin_route(self):
         return self._admin_route
@@ -151,17 +162,11 @@ shortcut confusion and reduce the number of status updates.
         """
         self.admins[entity] = admin_class
 
-    def get_sections( self ):
-        """A list of :class:`camelot.admin.section.Section` objects,
-        these are the sections to be displayed in the left panel.
-
-        .. image:: /_static/picture2.png
+    def get_navigation_menu(self):
         """
-        from camelot.admin.section import Section
-
-        return [ Section( _('Relations'), self ),
-                 Section( _('Configuration'), self ),
-                 ]
+        :return: a :class:`camelot.admin.menu.MenuItem` object
+        """
+        return self._navigation_menu
 
     def get_memento( self ):
         """Returns an instance of :class:`camelot.core.memento.SqlMemento` that
@@ -229,24 +234,19 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
 
-    def get_related_toolbar_actions( self, toolbar_area, direction ):
+    @register_list_actions('_admin_route')
+    def get_related_toolbar_actions( self, direction ):
         """Specify the toolbar actions that should appear by default on every
         OneToMany editor in the application.
 
-        :param toolbar_area: the position of the toolbar
         :param direction: the direction of the relation : 'onetomany' or 
             'manytomany'
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
-        if toolbar_area == Qt.RightToolBarArea and direction == 'onetomany':
-            return [ list_action.AddNewObject(),
-                     list_action.DeleteSelection(),
-                     list_action.DuplicateSelection(),
-                     list_action.ExportSpreadsheet(), ]
-        if toolbar_area == Qt.RightToolBarArea and direction == 'manytomany':
-            return [ list_action.AddExistingObject(),
-                     list_action.RemoveSelection(),
-                     list_action.ExportSpreadsheet(), ]
+        if direction == 'onetomany':
+            return self.onetomany_actions
+        if direction == 'manytomany':
+            return self.manytomany_actions
 
     def get_form_actions( self ):
         """Specify the action buttons that should appear on each form in the
@@ -259,279 +259,130 @@ shortcut confusion and reduce the number of status updates.
         """
         return []
 
-    def get_form_toolbar_actions( self, toolbar_area ):
+    @register_form_actions('_admin_route', '_form_toolbar_actions')
+    def get_form_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of a form view.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.TopToolBarArea:
-            if sys.platform.startswith('darwin'):
-                #
-                # NOTE We remove the CloseForm from the toolbar action list
-                #      on Mac because this regularly causes segfaults.
-                #      The user can still close the form with the
-                #      OS close button (i.e. "X").
-                #
-                return [action for action in self.form_toolbar_actions
-                        if type(action) != form_action.CloseForm]
-            return self.form_toolbar_actions
+        if sys.platform.startswith('darwin'):
+            #
+            # NOTE We remove the CloseForm from the toolbar action list
+            #      on Mac because this regularly causes segfaults.
+            #      The user can still close the form with the
+            #      OS close button (i.e. "X").
+            #
+            return [action for action in self.form_toolbar_actions
+                    if type(action) != form_action.CloseForm]
+        return self.form_toolbar_actions
 
-    def get_list_toolbar_actions( self, toolbar_area ):
+    @register_list_actions('_admin_route', '_toolbar_actions')
+    def get_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.TopToolBarArea:
-            return [
-                list_action.CloseList(), list_action.ListLabel()
-                ] + self.edit_actions + self.change_row_actions + self.export_actions
-        return []
+        return self.list_toolbar_actions + \
+               self.edit_actions + \
+               self.change_row_actions + \
+               self.export_actions
 
-    def get_select_list_toolbar_actions( self, toolbar_area ):
+    @register_list_actions('_admin_route', '_select_toolbar_actions')
+    def get_select_list_toolbar_actions( self ):
         """
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned when selecting objects 
-            from a table.
-
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of the application.  return
             None if no toolbar should be created.
         """
-        if toolbar_area == Qt.TopToolBarArea:
-            return [
-                list_action.CloseList(), list_action.ListLabel()
-                ] + self.change_row_actions
-        return []
+        return self.list_toolbar_actions + self.change_row_actions
 
-    def get_main_menu( self ):
+    def add_main_menu(self, verbose_name, icon=None, role=None, parent_menu=None):
         """
-        :return: a list of :class:`camelot.admin.menu.Menu` objects, or None if 
-            there should be no main menu
-        """
-        from camelot.admin.menu import Menu
+        add a new item to the main menu
 
-        return [ Menu( _('&File'),
-                       [ application_action.Backup(),
-                         application_action.Restore(),
-                         None,
-                         application_action.Exit(),
-                         ] ),
-                 Menu( _('View'),
-                       [ application_action.Refresh(),] ),
-                 Menu( _('&Help'),
-                       self.help_actions + [
-                           application_action.ShowAbout() ] )
-                 ]
+        :return: a `MenuItem` object that can be used in subsequent calls to
+            add other items as children of this item.
+        """
+        menu = MenuItem(verbose_name, icon, role=role)
+        if parent_menu is None:
+            parent_menu = self._main_menu
+        parent_menu.items.append(menu)
+        return menu
+
+    def add_navigation_menu(self, verbose_name, icon=None, role=None, parent_menu=None):
+        """
+        add a new item to the navigation menu
+
+        :return: a `MenuItem` object that can be used in subsequent calls to
+            add other items as children of this item.
+        """
+        menu = MenuItem(verbose_name, icon, role=role)
+        if parent_menu is None:
+            parent_menu = self._navigation_menu
+        parent_menu.items.append(menu)
+        return menu
+
+    def add_navigation_entity_table(self, entity, parent_menu, role=None, add_before=None):
+        """
+        Add an action to open a table view of an entity to the navigation menu
+        """
+        admin = self.get_related_admin(entity)
+        return self.add_navigation_admin_table(admin, parent_menu, role=role, add_before=add_before)
+
+    def add_navigation_admin_table(self, admin, parent_menu, role=None, add_before=None):
+        """
+        Add an action to open a table view for a specified admin
+        """
+        assert isinstance(add_before, (type(None), MenuItem,))
+        assert isinstance(role, (type(None), str))
+        action = OpenTableView(admin)
+        action_route = self._register_action_route(admin._admin_route, action)
+        menu = MenuItem(action_route=action_route, role=role)
+        if add_before is None:
+            parent_menu.items.append(menu)
+        else:
+            parent_menu.items.insert(parent_menu.items.index(add_before), menu)
+        return menu
+
+    def add_navigation_action(self, action, parent_menu, role=None, add_before=None):
+        action_route = self._register_action_route(self._admin_route, action)
+        menu = MenuItem(action_route=action_route, role=role)
+        if add_before is None:
+            parent_menu.items.append(menu)
+        else:
+            parent_menu.items.insert(parent_menu.items.index(add_before), menu)
+        return menu
+
+    def add_main_action(self, action, parent_menu=None):
+        assert isinstance(action, Action)
+        action_route = self._register_action_route(self._admin_route, action)
+        if parent_menu is None:
+            parent_menu = self._main_menu
+        else:
+            assert isinstance(parent_menu, MenuItem)
+        parent_menu.items.append(MenuItem(action_route=action_route))
+
+    def add_main_separator(self, parent_menu):
+        assert isinstance(parent_menu, MenuItem)
+        parent_menu.items.append(MenuItem())
+
+    def get_main_menu(self) -> MenuItem:
+        """
+        :return: a :class:`camelot.admin.menu.MenuItem` object
+        """
+        return self._main_menu
 
     def get_name(self):
-        """
-        :return: the name of the application, by default this is the class
-            attribute name"""
-        return six.text_type( self.name )
+        return 'application'
 
     def get_version(self):
         """:return: string representing version of the application, by default this
                     is the class attribute verion"""
         return self.version
 
-    def get_icon(self):
-        """:return: the :class:`camelot.view.art.FontIcon` that should be used for the application"""
-        from camelot.view.art import FontIcon
-        return FontIcon('users').getQIcon() # 'tango/32x32/apps/system-users.png'
-
-    def get_splashscreen(self):
-        """:return: a :class:`QtGui.QPixmap` to be used as splash screen"""
-        from camelot.view.art import Pixmap
-        qpm = Pixmap('splashscreen.png').getQPixmap()
-        img = qpm.toImage()
-        # support transparency
-        if not qpm.mask(): 
-            if img.hasAlphaBuffer(): bm = img.createAlphaMask() 
-            else: bm = img.createHeuristicMask() 
-            qpm.setMask(bm) 
-        return qpm
-
-    def get_organization_name(self):
-        """
-        :return: a string with the name of the organization that wrote the
-            application. By default returns the :attr:`ApplicationAdmin.author`
-            attribute.
-        """
-        return self.author
-
-    def get_organization_domain(self):
-        """
-        :return: a string with the domain name of the organization that wrote the
-            application. By default returns the :attr:`ApplicationAdmin.domain`
-            attribute.
-        """
-        return self.domain
-
     def get_help_url(self):
         """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""
         if self.help_url:
             return QtCore.QUrl( self.help_url )
-
-    def get_stylesheet(self):
-        """
-        :return: a string with the content of a qt stylesheet to be used for 
-        this application as a string or None if no stylesheet needed.
-
-        Camelot comes with a couple of default stylesheets :
-
-         * stylesheet/office2007_blue.qss
-         * stylesheet/office2007_black.qss
-         * stylesheet/office2007_silver.qss
-
-        Have a look at the default implementation to use another stylesheet.
-        """
-        #
-        # Try to load a custom QStyle, if that fails use a stylesheet from
-        # a file
-        #
-        try:
-            from PyTitan import QtnOfficeStyle
-            QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
-        except:
-            pass
-        return art.read('stylesheet/office2007_blue.qss').decode('utf-8')
-
-
-    @classmethod
-    def _load_translator_from_file( cls, 
-                                    module_name, 
-                                    file_name, 
-                                    directory = '', 
-                                    search_delimiters = '_', 
-                                    suffix = '.qm' ):
-        """
-        Tries to create a translator based on a file stored within a module.
-        The file is loaded through the pkg_resources, to enable loading it from
-        within a Python egg.  This method tries to mimic the behavior of
-        :meth:`QtCore.QTranslator.load` while looking for an appropriate
-        translation file.
-
-        :param module_name: the name of the module in which to look for
-            the translation file with pkg_resources.
-        :param file_name: the filename of the the tranlations file, without 
-            suffix
-        :param directory: the directory, relative to the module in which
-            to look for translation files
-        :param suffix: the suffix of the filename
-        :param search_delimiters: list of characters by which to split the file
-            name to search for variations of the file name
-        :return: :keyword:None if unable to load the file, otherwise a
-            :obj:`QtCore.QTranslator` object.
-
-        This method tries to load all file names with or without suffix, and
-        with or without the part after the search delimiter.
-        """
-        from camelot.core.resources import resource_string
-
-        #
-        # split the directory names and file name
-        #
-        file_name_parts = [ file_name ]
-        head, tail = os.path.split( file_name_parts[0] )
-        while tail:
-            file_name_parts[0] = tail
-            file_name_parts = [ head ] + file_name_parts
-            head, tail = os.path.split( file_name_parts[0] )
-        #
-        # for each directory and file name, generate all possibilities
-        #
-        file_name_parts_possibilities = []
-        for file_name_part in file_name_parts:
-            part_possibilities = []
-            for search_delimiter in search_delimiters:
-                delimited_parts = file_name_part.split( search_delimiter )
-                for i in range( len( delimited_parts ) ):
-                    part_possibility = search_delimiter.join( delimited_parts[:len(delimited_parts)-i] )
-                    part_possibilities.append( part_possibility )
-            file_name_parts_possibilities.append( part_possibilities )
-        #
-        # make the combination of all those possibilities
-        #
-        file_names = []
-        for parts_possibility in itertools.product( *file_name_parts_possibilities ):
-            file_name = os.path.join( *parts_possibility )
-            file_names.append( file_name )
-            file_names.append( file_name + suffix )
-        #
-        # now try all file names
-        #
-        translations = None
-        for file_name in file_names:
-            try:
-                logger.debug( u'try %s'%file_name )
-                translations = resource_string( module_name, os.path.join(directory,file_name) )
-                break
-            except IOError:
-                pass
-        if translations:
-            _translations_data_.append( translations ) # keep the data alive
-            translator = QtCore.QTranslator()
-            # PySide workaround for missing loadFromData method
-            if not hasattr( translator, 'loadFromData' ):
-                return
-            if translator.loadFromData( translations ):
-                logger.info("add translation %s" % (directory + file_name))
-                return translator
-
-    def get_translator(self):
-        """Reimplement this method to add application specific translations
-        to your application.  The default method returns a list with the
-        default Qt and the default Camelot translator for the current system
-        locale.  Call :meth:`QLocale.setDefault` before this method is called
-        if you want to load different translations then the system default.
-
-        :return: a list of :obj:`QtCore.QTranslator` objects that should be 
-            used to translate the application
-        """
-        translators = []
-        qt_translator = QtCore.QTranslator()
-        locale_name = QtCore.QLocale().name()
-        logger.info( u'using locale %s'%locale_name )
-        if qt_translator.load( "qt_" + locale_name,
-                               QtCore.QLibraryInfo.location( QtCore.QLibraryInfo.TranslationsPath ) ):
-            translators.append(qt_translator)
-        logger.debug("Qt translator found for {} : {}".format(locale_name, len(translators)>0))
-        camelot_translator = self._load_translator_from_file(
-            'camelot', 
-            os.path.join( '%s/LC_MESSAGES/'%locale_name, 'camelot' ),
-            'art/translations/'
-        )
-        logger.debug("Camelot translator found for {} : {}".format(locale_name, camelot_translator is not None))
-        if camelot_translator:
-            translators.append( camelot_translator )
-        return translators
-
-    def get_about(self):
-        """:return: the content of the About dialog, a string with html
-                    syntax"""
-        import datetime
-        from camelot.core import license
-        today = datetime.date.today()
-        return """<b>Camelot</b><br/>
-                  Building desktop applications at warp speed
-                  <p>
-                  Copyright &copy; 2007-%s Conceptive Engineering.
-                  All rights reserved.
-                  </p>
-                  <p>
-                  %s
-                  </p>
-                  <p>
-                  http://www.python-camelot.com<br/>
-                  http://www.conceptive.be
-                  </p>
-                  """%(today.year, license.license_type)
-
