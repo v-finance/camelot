@@ -188,12 +188,8 @@ class SelectProfileMixin:
             # explicit handling of exit when cancel button is pressed,
             # to avoid the use of subgenerators in the main action
             from camelot.view.action_steps.application import Exit
-            from camelot.view.model_thread import get_model_thread
-            model_thread = get_model_thread()
-            if model_thread != None:
-                model_thread.stop()
             yield Exit()
-            return
+            raise SystemExit()
         message = ugettext(u'Use {} profile'.format(selected_profile.name))
         yield action_steps.UpdateProgress(text=message)
         profile_store.set_last_profile(selected_profile)
@@ -402,11 +398,8 @@ class Exit( Action ):
 
     def model_run( self, model_context, mode ):
         from camelot.view.action_steps.application import Exit
-        from camelot.view.model_thread import get_model_thread
-        model_thread = get_model_thread()
-        if model_thread != None:
-            model_thread.stop()
         yield Exit()
+        raise SystemExit()
 
 exit_name = application_action_context.bind(Exit.name, Exit(), True)
 
