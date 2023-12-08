@@ -39,6 +39,7 @@ REQUEST_LOGGER = logging.getLogger('request')
 
 from ..action_runner import action_runner
 from ..requests import CancelAction
+from ..responses import Busy
 from ...core.qt import QtCore, is_deleted
 from ...core.serializable import NamedDataclassSerializable
 from ...core.threading import synchronized
@@ -70,6 +71,7 @@ class TaskHandler(QtCore.QObject):
     def handle_task(self):
         """Handle all tasks that are in the queue"""
         request = self._queue.pop()
+        action_runner.send_response(Busy(True))
         while request:
             try:
                 assert isinstance(request, bytes)
@@ -85,6 +87,7 @@ class TaskHandler(QtCore.QObject):
             except:
                 logger.fatal('Unhandled something in model thread')
             request = self._queue.pop()
+        action_runner.send_response(Busy(False))
 
 class SignalSlotModelThread( AbstractModelThread ):
     """A model thread implementation that uses signals and slots

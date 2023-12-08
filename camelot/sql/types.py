@@ -31,7 +31,7 @@ def QuasiIdentifyingUnicode(*args, transform=None, **kwargs):
     return SensitiveUnicode(types.sensitivity_levels.quasi_identifying, *args, transform=transform, **kwargs)
 
 def SensitivePersonalUnicode(*args, transform=None, **kwargs):
-    return SensitiveUnicode(types.sensitivity_levels.sensitive_peronsal, *args, transform=transform, **kwargs)
+    return SensitiveUnicode(types.sensitivity_levels.sensitive_personal, *args, transform=transform, **kwargs)
 
 def SensitiveFinancialUnicode(*args, transform=None, **kwargs):
     return SensitiveUnicode(types.sensitivity_levels.sensitive_financial, *args, transform=transform, **kwargs)
@@ -56,7 +56,7 @@ def QuasiIdentifyingDate(*args, transform=None, **kwargs):
     return SensitiveDate(types.sensitivity_levels.quasi_identifying, *args, transform=transform, **kwargs)
 
 def SensitivePersonalDate(*args, transform=None, **kwargs):
-    return SensitiveDate(types.sensitivity_levels.sensitive_peronsal, *args, transform=transform, **kwargs)
+    return SensitiveDate(types.sensitivity_levels.sensitive_personal, *args, transform=transform, **kwargs)
 
 def SensitiveFinancialDate(*args, transform=None, **kwargs):
     return SensitiveDate(types.sensitivity_levels.sensitive_financial, *args, transform=transform, **kwargs)
@@ -81,7 +81,7 @@ def QuasiIdentifyingNumeric(*args, transform=None, **kwargs):
     return SensitiveNumeric(types.sensitivity_levels.quasi_identifying, *args, transform=transform, **kwargs)
 
 def SensitivePersonalNumeric(*args, transform=None, **kwargs):
-    return SensitiveNumeric(types.sensitivity_levels.sensitive_peronsal, *args, transform=transform, **kwargs)
+    return SensitiveNumeric(types.sensitivity_levels.sensitive_personal, *args, transform=transform, **kwargs)
 
 def SensitiveFinancialNumeric(*args, transform=None, **kwargs):
     return SensitiveNumeric(types.sensitivity_levels.sensitive_financial, *args, transform=transform, **kwargs)

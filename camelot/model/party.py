@@ -76,9 +76,15 @@ class GeographicBoundary( Entity ):
 
     @hybrid.hybrid_method
     def translation(self, language='nl_BE'):
-        for translation in self.translations:
-            if translation.language == language:
-                return translation.name
+        # VFIN-2512 : enable eager loading all alternative names, where
+        # each property filters the needed alternative name.
+        #
+        # When language is None, the optimalisation could be made of not
+        # looping over alternative names ?
+        #
+        for alternative_name in self.alternative_names:
+            if (alternative_name.language == language) and (alternative_name.row_type=='translation'):
+                return alternative_name.name
         return self.name
 
     @translation.expression
@@ -309,7 +315,11 @@ class City(GeographicBoundary, WithCountry):
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
         matched_mm = default_mm = None
-        for main_municipality in self.main_municipality_alternative_names:
+        for main_municipality in self.alternative_names:
+            # VFIN-2512 : enable eager loading all alternative names, where
+            # each property filters the needed alternative name.
+            if main_municipality.row_type != 'main_municipality':
+                continue
             if main_municipality.language == language:
                 matched_mm = main_municipality.name
             elif main_municipality.language is None:
