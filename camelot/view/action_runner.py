@@ -101,6 +101,7 @@ class GuiRun(object):
         self.model_context_name = model_context_name
         self.mode = mode
         self.started_at = time.time()
+        self.last_update = self.started_at
         self.steps = []
         self.server = None
 
@@ -114,12 +115,19 @@ class GuiRun(object):
         """
         return time.time() - self.started_at
 
+    def time_idle(self):
+        """
+        :return: the time the action has been running
+        """
+        return time.time() - self.last_update
+
     def handle_action_step(self, action_step):
         self.steps.append(type(action_step).__name__)
         return action_step.gui_run(self.gui_context_name)
 
     def handle_serialized_action_step(self, step_type, serialized_step):
         self.steps.append(step_type)
+        self.last_update = time.time()
         cls = MetaActionStep.action_steps[step_type]
         if cls.blocking==True:
             app = QtGui.QGuiApplication.instance()

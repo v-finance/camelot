@@ -207,6 +207,15 @@ class DeleteSelection( EditAction ):
         admin = model_context.admin
         if model_context.selection_count <= 0:
             return
+        answer = yield action_steps.MessageBox(
+            title = ugettext('Remove %s %s ?')%( model_context.selection_count, ugettext('rows') ),
+            icon = Icon('question'), 
+            standard_buttons = [QtWidgets.QMessageBox.StandardButton.Yes, QtWidgets.QMessageBox.StandardButton.No], 
+            text = ugettext('If you continue, they will no longer be accessible.'),
+            hide_progress = True,
+        )
+        if answer != QtWidgets.QMessageBox.StandardButton.Yes:
+            return
         objects_to_remove = list( model_context.get_selection() )
         #
         # it might be impossible to determine the depending objects once
@@ -1075,6 +1084,7 @@ class EditProfileMixin:
         from camelot.view import action_steps
         # Validate database settings
         yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
+        engine = None
         try:
             #if not profile.dialect:
             #    raise RuntimeError('No database dialect selected')
@@ -1084,10 +1094,13 @@ class EditProfileMixin:
             cursor.close()
             connection.close()
         except Exception as e:
-            exception_box = action_steps.MessageBox( title = self.database_error_title,
-                                                     text = _('Verify driver, host and port or contact your system administrator'),
-                                                     standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
+            exception_box = action_steps.MessageBox(
+                title = self.database_error_title,
+                text = _('Verify driver, host and port or contact your system administrator'),
+                standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok]
+            )
             exception_box.informative_text = str(e)
+            exception_box.detailed_text = 'Engine : {}'.format(engine)
             yield exception_box
             return False
         # Validate media location

@@ -581,6 +581,12 @@ class SetData(Update, ChangedObjectMixin):
                 depending_objects_before_set = set(admin.get_depending_objects(obj))
                 value_changed = ( new_value != old_value )
                 #
+                # In case the field is a key in a storage, it cannot be changed.
+                # through the editor. VFIN-2494
+                #
+                if static_field_attributes.get('storage', False):
+                    value_changed = False
+                #
                 # In case the attribute is a OneToMany or ManyToMany, we cannot simply compare the
                 # old and new value to know if the object was changed, so we'll
                 # consider it changed anyway
