@@ -388,7 +388,7 @@ class StatusFilter(list_filter.GroupBoxFilter, AbstractModelFilter):
         assert issubclass(entity_with_status, WithStatus)
         attribute = entity_with_status._status_history.classified_by
         self.joins = joins
-        super().__init__(attribute, default=default, verbose_name=verbose_name, exclusive=exclusive)
+        super().__init__(attribute, default=default, verbose_name=verbose_name, joins=joins, exclusive=exclusive)
 
     def get_strategy(self, attribute):
         history_type = attribute.class_
