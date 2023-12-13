@@ -63,7 +63,10 @@ class TaskHandler(QtCore.QObject):
 
     def has_cancel_request(self):
         for request in self._queue._request_queue:
-            if request == request.startswith(cancel_action_prefix):
+            # TODO : the cancel request stays in the request queue, and will
+            # be handled after the action has stopped, this will result in a
+            # run name not found error message
+            if request.startswith(cancel_action_prefix):
                 return True
         return False
 
