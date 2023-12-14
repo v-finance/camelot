@@ -27,13 +27,13 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtWidgets, q_string_type
+from ...core.qt import QtCore, QtWidgets
 from camelot.view.art import FontIcon
 from camelot.core.utils import ugettext as _
 
 class Calculator(QtWidgets.QDialog):
     
-    calculation_finished_signal = QtCore.qt_signal(q_string_type)
+    calculation_finished_signal = QtCore.qt_signal(str)
     
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
