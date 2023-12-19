@@ -74,10 +74,7 @@ class UserException(Exception):
         :param resolution: what the user should do to solve the issue
         :param detail: a detailed description of what went wrong
         """
-        msg = text
-        if detail:
-            msg += '\n{}'.format(detail)
-        super(UserException, self).__init__(msg)
+        super(UserException, self).__init__(text)
         self.title = title
         self.text = text
         self.icon = icon
