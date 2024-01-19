@@ -1136,6 +1136,14 @@ be specified using the verbose_name attribute.
         """
         return True
 
+    def deletable_or_raise(self, obj):
+        """
+        Check the given instance is allowed to be deleted within the context of this
+        admin or raise a UserException otherwise.
+        """
+        if not self.is_obj_deletable(obj):
+            raise UserException(_('{} is not permitted to be deleted'), obj)
+
     def get_subsystem_object(self, obj):
         """Return the given object's applicable subsystem object."""
         return obj
