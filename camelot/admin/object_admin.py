@@ -936,12 +936,11 @@ be specified using the verbose_name attribute.
         """
         fields = {}
         # capture all properties
-        for cls in inspect.getmro(self.entity):
-            for desc_name, desc in cls.__dict__.items():
-                if desc_name.startswith('__'):
-                    continue
-                if len(self.get_descriptor_field_attributes(desc_name)):
-                    fields[desc_name] = self.get_field_attributes(desc_name)
+        for desc_name, _ in inspect.getmembers(self.entity):
+            if desc_name.startswith('__'):
+                continue
+            if len(self.get_descriptor_field_attributes(desc_name)):
+                fields[desc_name] = self.get_field_attributes(desc_name)
         fields.update([(field, self.get_field_attributes(field)) for field in self.get_columns()])
         fields.update(self.get_fields())
         return fields
