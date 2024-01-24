@@ -936,7 +936,7 @@ be specified using the verbose_name attribute.
         """
         fields = {}
         # capture all properties
-        for desc_name, _ in inspect.getmembers(self.entity):
+        for desc_name, _desc_value in inspect.getmembers(self.entity):
             if desc_name.startswith('__'):
                 continue
             if len(self.get_descriptor_field_attributes(desc_name)):
