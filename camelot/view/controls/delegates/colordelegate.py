@@ -47,7 +47,7 @@ class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         color = editors.ColorEditor.to_qcolor(model_context.value, Qt.GlobalColor.transparent)
+        # only the BackgroundRole should be of type color, the EditRole should
+        # be of type str
         item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(color)
-        if model_context.value is not None:
-            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(color)
         return item

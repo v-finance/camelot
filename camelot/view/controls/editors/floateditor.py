@@ -32,6 +32,7 @@
 from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 from ...art import FontIcon
+from ..calculator import Calculator
 
 class CustomDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """Spinbox that doesn't accept mouse scrolling as input"""
@@ -250,7 +251,6 @@ class FloatEditor(CustomEditor):
         return value
 
     def popupCalculator(self, value):
-        from camelot.view.controls.calculator import Calculator
         calculator = Calculator(self)
         calculator.setValue(value)
         calculator.calculation_finished_signal.connect( self.calculation_finished )

@@ -30,16 +30,19 @@
 from copy import copy
 from itertools import tee
 
-from .admin_route import AdminRoute
+from camelot.core.exception import UserException
+from camelot.core.utils import ugettext_lazy as _
 
+from .admin_route import AdminRoute
 
 class ReadOnlyAdminDecorator(AdminRoute):
     """Decorator to make an instance of an Admin class read only"""
 
-    def __init__(self, original_admin, editable_fields=[]):
+    def __init__(self, original_admin, editable_fields=[], allow_deletes=False):
         super().__init__()
         self._original_admin = original_admin
         self._editable_fields = editable_fields
+        self._allow_deletes = allow_deletes
         self._field_attributes = dict()
         self._admin_route = super()._register_admin_route(self)
 
@@ -90,10 +93,25 @@ class ReadOnlyAdminDecorator(AdminRoute):
     def get_columns(self): 
         return self._original_admin.get_columns()
 
+    def is_obj_editable(self, obj):
+        return False
+
+    def is_obj_deletable(self, obj):
+        if self._allow_deletes:
+            return self._original_admin.is_obj_deletable(obj)
+        return False
+
+    def deletable_or_raise(self, obj):
+        if self._allow_deletes:
+            self._original_admin.deletable_or_raise(obj)
+        else:
+            raise UserException(_('{} is not permitted to be deleted', obj))
+
 def not_editable_admin( original_admin, 
                         actions = False, 
                         editable_fields = [],
-                        deep = True ):
+                        deep = True,
+                        allow_deletes=False):
     """Class decorator to make all fields read-only.
 
     :param original_admin: an :class:`camelot.admin.object_admin.ObjectAdmin` 
@@ -105,6 +123,9 @@ def not_editable_admin( original_admin,
     :param deep: indicates if Admin classes related to this admin should become
         read-only as well.  This makes other objects pointed to by OneToMany and
         ManyToOne fields read only.
+    :param allow_deletes: indicates whether objects are allowed to be deleted within the
+        context of this not editable admin. Defaults to False, in which case the existing/
+        original admin's deletable methodology is used.
     :return: a new admin class, with read only fields.  The new admin class
         is a subclass of the original class.
 
@@ -127,7 +148,7 @@ def not_editable_admin( original_admin,
             admin = super( NewAdmin, self ).get_related_admin( cls )
             if not deep:
                 return admin
-            return ReadOnlyAdminDecorator(admin, editable_fields)
+            return ReadOnlyAdminDecorator(admin, editable_fields, allow_deletes)
 
         def get_field_attributes( self, field_name ):
             attribs = super( NewAdmin, self ).get_field_attributes( field_name )
@@ -144,6 +165,20 @@ def not_editable_admin( original_admin,
             if actions == True:
                 return super( NewAdmin, self ).get_list_actions()
             return []
+    
+        def is_obj_editable(self, obj):
+            return False
+
+        def is_obj_deletable(self, obj):
+            if allow_deletes:
+                return super( NewAdmin, self ).is_obj_deletable(obj)
+            return False
+
+        def deletable_or_raise(self, obj):
+            if allow_deletes:
+                super( NewAdmin, self ).deletable_or_raise(obj)
+            else:
+                raise UserException(_('{} is not permitted to be deleted', obj))
 
     return NewAdmin
 

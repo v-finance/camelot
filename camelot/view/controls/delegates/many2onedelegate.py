@@ -74,7 +74,14 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item.roles[Qt.ItemDataRole.EditRole] = value_name
         if model_context.value is not None:
             admin = model_context.field_attributes['admin']
-            verbose_name = admin.get_verbose_object_name(model_context.value)
+            try:
+                verbose_name = admin.get_verbose_object_name(model_context.value)
+            except Exception as e:
+                verbose_name = ''
+                logger.error(
+                    'Could not call get_verbose_object_name on {}'.format(type(admin).__name__),
+                    exc_info=e
+                )
             item.roles[PreviewRole] = verbose_name
         return item
 
