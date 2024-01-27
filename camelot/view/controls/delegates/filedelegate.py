@@ -53,7 +53,12 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
-            item.roles[Qt.ItemDataRole.EditRole] = model_context.value.verbose_name # FIXME: bind object?
+            # FIXME: bind an object to the EditoRole
+            # this is not so trivial as a file, is a key in a storage,
+            # and the storage itself is not known in the naming contexts.
+            # so enabling this might require making the storage itself available
+            # as a naming context, which might be a good idea ...
+            item.roles[Qt.ItemDataRole.EditRole] = model_context.value.verbose_name 
             item.roles[PreviewRole] = model_context.value.verbose_name
         else:
             item.roles[PreviewRole] = str()

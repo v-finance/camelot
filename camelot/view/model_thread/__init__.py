@@ -133,7 +133,7 @@ def post(request):
     """Post a request and a response to the default model thread"""
     assert isinstance(request, AbstractRequest)
     mt = get_model_thread()
-    mt.post(request)
+    return mt.post(request)
 
 
 

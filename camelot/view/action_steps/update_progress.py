@@ -31,14 +31,13 @@ from dataclasses import dataclass
 import json
 import typing
 
+from camelot.core.exception import CancelRequest
 from camelot.core.qt import QtCore, QtWidgets, transferto
 from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
 from ...core.serializable import DataclassSerializable
 from .. import gui_naming_context
-from ..requests import CancelAction
 from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
-from camelot.view.model_thread import post
 
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
@@ -137,7 +136,7 @@ updated.
                 # reset progress dialog
                 reset_step = QtCore.QByteArray(json.dumps({ 'reset': True }).encode())
                 qml_action_step(gui_context_name, 'UpdateProgress', reset_step)
-                post(CancelAction(run_name=[]))
+                raise CancelRequest()
             return
         gui_context = gui_naming_context.resolve(gui_context_name)
         if gui_context is None:
@@ -172,7 +171,7 @@ updated.
                     progress_dialog.set_cancel_hidden(False)
                 if progress_dialog.wasCanceled():
                     progress_dialog.reset()
-                    post(CancelAction(run_name=[]))
+                    raise CancelRequest()
 
 @dataclass
 class SetProgressAnimate(ActionStep, DataclassSerializable):
