@@ -5,8 +5,11 @@ from camelot.data import types
 def remove_transform(data):
     return None
 
-def first_letter_transform(data):
-    return data[0] if data else data
+def mask_first_name(column):
+    return 'anon.pseudo_first_name({})'.format(column)
+
+def mask_last_name(column):
+    return 'anon.pseudo_last_name({})'.format(column)
 
 
 class SensitiveType:
