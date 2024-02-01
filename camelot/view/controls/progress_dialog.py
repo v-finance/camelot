@@ -141,7 +141,10 @@ A Progress Dialog, used during the :meth:`gui_run` of an action.
         LOGGER.debug('Push level to {} with {}'.format(len(self.levels), verbose_name))
 
     def pop_level(self):
-        self.levels.pop()
+        try:
+            self.levels.pop()
+        except IndexError:
+            pass
         if is_deleted(self):
             return
         LOGGER.debug('Pop level to {}'.format(len(self.levels)))

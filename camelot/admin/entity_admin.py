@@ -532,6 +532,10 @@ and used as a custom action.
         # new and deleted instances cannot be deleted
         #
         if session:
+
+            # First check the instance is allowed to be deleted and raise otherwise.
+            self.deletable_or_raise(entity_instance)
+
             if entity_instance in session.new:
                 session.expunge(entity_instance)
             elif entity_instance not in session.deleted:
