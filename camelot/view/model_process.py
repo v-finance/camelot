@@ -6,6 +6,7 @@ from ..core.qt import QtCore
 from ..core.serializable import NamedDataclassSerializable, DataclassSerializable
 from .responses import AbstractResponse, ActionStepped, Busy
 from .requests import StopProcess
+from .qml_view import get_qml_root_backend
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,8 +45,11 @@ class ModelProcess(spawned_mp.Process):
 
     def _response_socket_notice(self, socket):
         if self._response_receiver.poll():
-            serialized_response = self._response_receiver.recv_bytes()
-            AbstractResponse.handle_serialized_response(serialized_response, self.post)
+            serialized_response = QtCore.QByteArray(
+                self._response_receiver.recv_bytes()
+            )
+            root_backend = get_qml_root_backend()
+            root_backend.onResponse(serialized_response)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -92,9 +96,9 @@ class ModelProcess(spawned_mp.Process):
 
     def post(self, request):
         if self._request_queue is None:
-            LOGGER.error('Request posted to no longer running process {}'.format(request))
+            LOGGER.error('Request posted to no longer running process {}'.format(request.data()))
             raise Exception('Process no longer running')
-        self._request_queue.put(request._to_bytes())
+        self._request_queue.put(request.data())
         return ['process', str(self.pid)]
 
     def stop(self):
