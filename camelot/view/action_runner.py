@@ -30,16 +30,11 @@
 import contextlib
 import logging
 import time
-import typing
 
 from ..core.naming import CompositeName
-from ..core.qt import QtCore, QtGui, is_deleted
+from ..core.qt import QtGui, is_deleted
 from . import gui_naming_context
 from camelot.admin.action.base import MetaActionStep
-from camelot.core.singleton import QSingleton
-from camelot.view.model_thread import post
-from .requests import InitiateAction
-from .responses import AbstractResponse
 
 LOGGER = logging.getLogger('camelot.view.action_runner')
 
@@ -144,83 +139,3 @@ class GuiRun(object):
                 print()
                 app.exit(-1)
         return cls.gui_run(self.gui_context_name, serialized_step)
-
-
-class ActionRunner(QtCore.QObject, metaclass=QSingleton):
-    """Helper class for handling the signals and slots when an action
-    is running.  This class takes a generator and iterates it within the
-    model thread while taking care of Exceptions raised and ActionSteps
-    yielded by the generator.
-    
-    This is class is intended for internal Camelot use only.
-    """
-
-    response = QtCore.qt_signal(bytes)
-    busy = QtCore.qt_signal(bool)
-
-    def __init__(self):
-        super().__init__()
-        self.response.connect(self._handle_response)
-
-    @classmethod
-    def wait_for_completion(cls, max_wait=15):
-        """
-        Wait until all actions are completed
-
-        :param max_wait: maximum time to wait for an action to complete
-        """
-        # @todo : max_wait should be high enough to ensure completion when
-        # actions_running is flooded with actions during unit testing, this
-        # is probably caused by either item_models not being garbage collected,
-        # or actions not properly terminated when their initiation fails
-        actions_running = True
-        while actions_running:
-            # very dirty hack to not wait for unbinds
-            run_names = list(gui_run_names.list())
-            max_time_running = 0
-            actions_running = False
-            LOGGER.info('{} actions running'.format(len(run_names)))
-            for run_name in run_names:
-                run = gui_run_names.resolve(run_name)
-                if run.action_name[-1] != 'unbind':
-                    actions_running=True
-                    max_time_running = max(max_time_running, run.time_running())
-                LOGGER.info('{} : {} with mode {} on {}'.format(run_name, run.action_name, run.mode, run.server))
-                LOGGER.info('  Generated {} steps during {} seconds'.format(run.step_count, run.time_running()))
-                LOGGER.info('  Steps : {}'.format(run.steps))
-            if max_time_running >= max_wait:
-                raise Exception('Action running for more then {} seconds'.format(max_wait))
-            QtCore.QCoreApplication.instance().processEvents()
-            time.sleep(0.05)
-
-    def run_action(self,
-        action_name: CompositeName,
-        gui_context: CompositeName,
-        model_context: CompositeName,
-        mode: typing.Union[str, dict, list, int]
-    ):
-        gui_run = GuiRun(
-            tuple(gui_context), tuple(action_name), tuple(model_context), mode
-        )
-        self.run_gui_run(gui_run)
-
-    def run_gui_run(self, gui_run):
-        gui_run.server = post(InitiateAction(
-            gui_run_name = gui_run_names.bind(str(id(gui_run)), gui_run),
-            action_name = gui_run.action_name,
-            model_context = gui_run.model_context_name,
-            mode = gui_run.mode,
-        ))
-
-    def send_response(self, response):
-        self.response.emit(response._to_bytes())
-
-    @QtCore.qt_slot(bytes)
-    def _handle_response(self, serialized_response):
-        try:
-            AbstractResponse.handle_serialized_response(serialized_response, post)
-        except Exception as e:
-            LOGGER.error('Unhandled exception while handling response {}'.format(serialized_response), exc_info=e)
-
-
-action_runner = ActionRunner()
