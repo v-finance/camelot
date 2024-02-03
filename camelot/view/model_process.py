@@ -4,7 +4,7 @@ import multiprocessing as _mp
 
 from ..core.qt import QtCore
 from ..core.serializable import NamedDataclassSerializable, DataclassSerializable
-from .responses import AbstractResponse, ActionStepped, Busy
+from .responses import ActionStepped, Busy
 from .requests import StopProcess
 from .qml_view import get_qml_root_backend
 
