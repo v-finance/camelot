@@ -1,7 +1,10 @@
 import logging
 import json
 
+from camelot.admin.action.base import MetaActionStep
+from camelot.core.exception import CancelRequest
 from camelot.core.qt import QtWidgets, QtCore
+from camelot.core.serializable import json_encoder
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,9 +45,22 @@ class QmlDispatch(QtCore.QObject):
         root_backend.unhandledActionStep.connect(self.onUnhandledActionStep)
 
     @QtCore.qt_slot('QStringList', str, 'QStringList', QtCore.QByteArray)
-    def onUnhandledActionStep(self, guiRunName, stepType, guiContextName, serializedStep):
+    def onUnhandledActionStep(self, gui_run_name, step_type, gui_context_name, serialized_step):
         """The backend has cannot handle an action step"""
-        print("onUnhandledActionStep", stepType)
+        root_backend = get_qml_root_backend()
+        try:
+            step_cls = MetaActionStep.action_steps[step_type]
+            result = step_cls.gui_run(tuple(gui_context_name), bytes(serialized_step))
+            if step_cls.blocking == True:
+                serialized_result = json_encoder.encode(result).encode('utf-8')
+                root_backend.actionStepResultValid.emit(gui_run_name, serialized_result, False, "")
+        except CancelRequest:
+            root_backend.actionStepResultValid.emit(gui_run_name, b'', True, "")
+        except Exception as e:
+            LOGGER.error("Step type {}".format(step_type))
+            LOGGER.error("Gui context name {}".format(gui_context_name))
+            LOGGER.error("Unhandled action step raised an exception", exc_info=e)
+            root_backend.actionStepResultValid.emit(gui_run_name, b'', False, str(e))
 
 qml_dispatch = QmlDispatch()
 
