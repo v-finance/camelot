@@ -43,6 +43,7 @@ class QmlDispatch(QtCore.QObject):
         super().__init__(parent)
         root_backend = get_qml_root_backend()
         root_backend.unhandledActionStep.connect(self.onUnhandledActionStep)
+        self.action_runner = root_backend.actionRunner()
 
     @QtCore.qt_slot('QStringList', str, 'QStringList', QtCore.QByteArray)
     def onUnhandledActionStep(self, gui_run_name, step_type, gui_context_name, serialized_step):

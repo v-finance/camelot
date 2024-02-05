@@ -43,8 +43,8 @@ import json
 from ..admin.action.base import MetaActionStep, Action
 from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
-from ..view.action_runner import action_runner, GuiRun
 from ..view.model_process import ModelProcess
+from ..view.qml_view import get_qml_root_backend
 from ..view import model_thread, action_steps
 
 has_programming_error = False
