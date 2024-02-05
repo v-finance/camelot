@@ -29,7 +29,6 @@
 
 from ...core.qt import QtCore, QtWidgets
 from camelot.view.art import Pixmap
-from ..action_runner import action_runner
 
 working_pixmap = Pixmap( 'process-working.png' )
 

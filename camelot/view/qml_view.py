@@ -1,9 +1,10 @@
 import logging
 import json
 
-from camelot.core.qt import QtWidgets, QtCore, jsonvalue_to_py
-from .action_runner import action_runner
-
+from camelot.admin.action.base import MetaActionStep
+from camelot.core.exception import CancelRequest
+from camelot.core.qt import QtWidgets, QtCore
+from camelot.core.serializable import json_encoder
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,23 +33,36 @@ def is_cpp_gui_context_name(gui_context_name):
         return False
     return gui_context_name[0] == 'cpp_gui_context'
 
-# FIXME: add timeout + keep-alive on client
-class QmlActionDispatch(QtCore.QObject):
+class QmlDispatch(QtCore.QObject):
+    """
+    Dispatch requests from the root backend that cannot be handled
+    by the root backend itself to the python code being able to handle it.
+    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
         root_backend = get_qml_root_backend()
-        if root_backend is not None:
-            root_backend.runAction.connect(self.run_action)
+        root_backend.unhandledActionStep.connect(self.onUnhandledActionStep)
 
-    def run_action(self, gui_context_name, route, model_context_name, args):
-        LOGGER.debug('QmlActionDispatch.run_action({}, {}, {}, {})'.format(gui_context_name, route, jsonvalue_to_py(args), model_context_name))
-        action_runner.run_action(
-            tuple(route), tuple(gui_context_name), tuple(model_context_name), jsonvalue_to_py(args)
-        )
+    @QtCore.qt_slot('QStringList', str, 'QStringList', QtCore.QByteArray)
+    def onUnhandledActionStep(self, gui_run_name, step_type, gui_context_name, serialized_step):
+        """The backend has cannot handle an action step"""
+        root_backend = get_qml_root_backend()
+        try:
+            step_cls = MetaActionStep.action_steps[step_type]
+            result = step_cls.gui_run(tuple(gui_context_name), bytes(serialized_step))
+            if step_cls.blocking == True:
+                serialized_result = json_encoder.encode(result).encode('utf-8')
+                root_backend.actionStepResultValid.emit(gui_run_name, serialized_result, False, "")
+        except CancelRequest:
+            root_backend.actionStepResultValid.emit(gui_run_name, b'', True, "")
+        except Exception as e:
+            LOGGER.error("Step type {}".format(step_type))
+            LOGGER.error("Gui context name {}".format(gui_context_name))
+            LOGGER.error("Unhandled action step raised an exception", exc_info=e)
+            root_backend.actionStepResultValid.emit(gui_run_name, b'', False, str(e))
 
-qml_action_dispatch = QmlActionDispatch()
-
+qml_dispatch = QmlDispatch()
 
 def qml_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     backend = get_qml_root_backend()

@@ -93,6 +93,9 @@ class AbstractRequest(NamedDataclassSerializable):
         except NameNotFoundException:
             LOGGER.error('Run name not found : {} for request {}'.format(run_name, request_data))
             return
+        if run is None:
+            LOGGER.error('Request contains no run {}'.format(request_data))
+            return
         gui_run_name = run.gui_run_name
         try:
             result = cls._next(run, request_data)
