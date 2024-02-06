@@ -30,7 +30,6 @@
 from ...core.qt import QtCore, QtWidgets
 from ..art import Pixmap
 from ..qml_view import qml_dispatch
-from camelot.view.art import Pixmap
 
 working_pixmap = Pixmap( 'process-working.png' )
 
