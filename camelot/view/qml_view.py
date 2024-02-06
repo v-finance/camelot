@@ -4,7 +4,9 @@ import json
 from camelot.admin.action.base import MetaActionStep
 from camelot.core.exception import CancelRequest
 from camelot.core.qt import QtWidgets, QtCore
-from camelot.core.serializable import json_encoder
+from camelot.core.serializable import json_encoder, NamedDataclassSerializable
+
+from .requests import StopProcess
 
 LOGGER = logging.getLogger(__name__)
 
@@ -69,3 +71,36 @@ def qml_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     backend = get_qml_root_backend()
     response = backend.actionStep(gui_context_name, name, step)
     return json.loads(response.data())
+
+class PythonConnection(object):
+    """Use python to connect to a server, this is done by using
+    the PythonRootBackend, and lister for signals from the action runner
+    and the dgc
+    """
+
+    def __init__(self):
+        backend = get_qml_root_backend()
+        dgc = backend.distributedGarbageCollector()
+        dgc.request.connect(self.onRequest)
+
+    @classmethod
+    def _execute_serialized_request(cls, serialized_request, response_handler):
+        try:
+            request_type_name, request_data = json.loads(serialized_request)
+            request_type = NamedDataclassSerializable.get_cls_by_name(
+                request_type_name
+            )
+            if request_type == StopProcess:
+                pass
+                #break
+            request_type.execute(request_data, response_handler, response_handler)
+        except Exception as e:
+            LOGGER.error('Unhandled exception in model process', exc_info=e)
+            import traceback
+            traceback.print_exc()
+        except:
+            LOGGER.error('Unhandled event in model process')
+
+    @QtCore.qt_slot(QtCore.QByteArray)
+    def onRequest(self, request):
+        self._execute_serialized_request(request.data(), None)
