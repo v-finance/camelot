@@ -538,8 +538,12 @@ class ExportSpreadsheet(Action):
         # write data
         #
         offset = 2
-        static_attributes = list(admin.get_static_field_attributes(field_names)) 
-        for j, obj in enumerate( model_context.get_collection( yield_per = 100 ) ):
+        static_attributes = list(admin.get_static_field_attributes(field_names))
+        if model_context.selected_rows:
+            objects = model_context.get_selection( yield_per = 100 )
+        else:
+            objects = model_context.get_collection( yield_per = 100 )
+        for j, obj in enumerate( objects ):
             dynamic_attributes = admin.get_dynamic_field_attributes( obj, 
                                                                      field_names )
             row = offset + j
