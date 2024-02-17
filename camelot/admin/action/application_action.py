@@ -345,22 +345,6 @@ Restore the database to disk
                 yield step
 
 
-class Unbind(Action):
-
-    name = 'unbind'
-
-    def model_run(self, model_context, mode):
-        from camelot.view.action_steps import UpdateProgress
-        if len(mode) == 0:
-            yield UpdateProgress()
-        for lease in mode:
-            try:
-                initial_naming_context.unbind(tuple(lease))
-            except NameNotFoundException:
-                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))
-
-unbind_name = application_action_context.bind(Unbind.name, Unbind(), True)
-
 class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging
     purposes, to evaluate where an application spends its time.

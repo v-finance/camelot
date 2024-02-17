@@ -72,13 +72,14 @@ def qml_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     response = backend.actionStep(gui_context_name, name, step)
     return json.loads(response.data())
 
-class PythonConnection(object):
+class PythonConnection(QtCore.QObject):
     """Use python to connect to a server, this is done by using
     the PythonRootBackend, and lister for signals from the action runner
     and the dgc
     """
 
     def __init__(self):
+        super().__init__()
         backend = get_qml_root_backend()
         dgc = backend.distributedGarbageCollector()
         dgc.request.connect(self.onRequest)
@@ -103,4 +104,5 @@ class PythonConnection(object):
 
     @QtCore.qt_slot(QtCore.QByteArray)
     def onRequest(self, request):
+        print('Received request', request.data())
         self._execute_serialized_request(request.data(), None)

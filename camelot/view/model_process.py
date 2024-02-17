@@ -67,10 +67,6 @@ class ModelProcess(spawned_mp.Process):
     def run(self):
         LOGGER = logging.getLogger("model_process")
         self.initialize()
-        # begin dirty hack to make sure the unbind action is available
-        from ..admin.action.application_action import application_action_context
-        assert application_action_context.resolve('unbind')
-        # end of dirty hack
         response_handler = PipeResponseHandler(self._response_sender)
         while True:
             response_handler.send_response(Busy(False))
