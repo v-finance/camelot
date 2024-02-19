@@ -54,7 +54,10 @@ statuses as needed.
 """
 import datetime
 
-from sqlalchemy import inspection, orm, schema, sql, types, util
+from sqlalchemy import (
+    inspection, orm, schema, sql, types, type_coerce,
+    util,
+)
 from sqlalchemy.ext import hybrid
 from sqlalchemy.ext.declarative import declared_attr
 
@@ -264,7 +267,11 @@ class StatusMixin( object ):
 
     @current_status.expression
     def current_status( cls ):
-        return StatusMixin.current_status_query( cls._status_history, cls ).label( 'current_status' )
+        from vfinance.sql.types import IntEnum
+        return type_coerce(
+            StatusMixin.current_status_query(cls._status_history, cls).label('current_status'),
+            IntEnum(cls.status_types)
+            )
 
     def change_status(self, new_status, 
                       status_from_date=None,
