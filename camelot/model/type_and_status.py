@@ -267,9 +267,12 @@ class StatusMixin( object ):
 
     @current_status.expression
     def current_status( cls ):
+        status_types = cls.status_types
+        if isinstance(status_types, util.OrderedProperties):
+            status_types = [(member.id, name) for name, member in cls.status_types.__members__.items()]
         return type_coerce(
             StatusMixin.current_status_query(cls._status_history, cls).label('current_status'),
-            Enumeration(cls.status_types)
+            Enumeration(status_types)
             )
 
     def change_status(self, new_status, 
