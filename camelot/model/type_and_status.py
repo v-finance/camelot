@@ -267,10 +267,9 @@ class StatusMixin( object ):
 
     @current_status.expression
     def current_status( cls ):
-        from vfinance.sql.types import IntEnum
         return type_coerce(
             StatusMixin.current_status_query(cls._status_history, cls).label('current_status'),
-            IntEnum(cls.status_types)
+            Enumeration(cls.status_types)
             )
 
     def change_status(self, new_status, 
