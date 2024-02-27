@@ -43,6 +43,7 @@ from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import QtCore
 from camelot.admin.action import application_action, form_action, list_action
+from ..view.qml_view import get_qml_root_backend
 
 #
 # The translations data needs to be kept alive during the
@@ -81,10 +82,6 @@ methods :
     The domain name of the author of the application, eg 'mydomain.com', this
     domain will be used to store settings of the application.
 
-.. attribute:: version
-
-    A string with the version of the application
-
 When the same action is returned in the :meth:`get_toolbar_actions` and 
 :meth:`get_main_menu` method, it should be exactly the same object, to avoid
 shortcut confusion and reduce the number of status updates.
@@ -93,8 +90,6 @@ shortcut confusion and reduce the number of status updates.
     application_url = None
     help_url = 'http://www.python-camelot.com/docs.html'
     author = 'Conceptive Engineering'
-
-    version = '1.0'
 
     #
     # actions that will be shared between the toolbar and the main menu
@@ -377,10 +372,17 @@ shortcut confusion and reduce the number of status updates.
     def get_name(self):
         return 'application'
 
-    def get_version(self):
-        """:return: string representing version of the application, by default this
-                    is the class attribute verion"""
-        return self.version
+    def get_build_tag(self):
+        """:return: string representing version of the application"""
+        return get_qml_root_backend().buildTag()
+
+    def get_branch(self):
+        """:return: string representing git branch"""
+        return get_qml_root_backend().branch()
+
+    def get_directory(self):
+        """:return: string representing ther installation directory"""
+        return get_qml_root_backend().directory()
 
     def get_help_url(self):
         """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""
