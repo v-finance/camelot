@@ -39,7 +39,7 @@ class ApplicationAdminCase(unittest.TestCase):
         self.assertTrue( app_admin.get_navigation_menu() )
         self.assertTrue( app_admin.get_related_toolbar_actions( 'onetomany' ) )
         self.assertTrue( app_admin.get_related_toolbar_actions( 'manytomany' ) )
-        self.assertTrue( app_admin.get_version() )
+        self.assertTrue( app_admin.get_build_tag() )
         with self.assertRaises(Exception):
             app_admin.get_related_admin(1)
         self.assertEqual(type(app_admin.get_related_admin(object)), ObjectAdmin)
