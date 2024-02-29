@@ -43,7 +43,6 @@ from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import QtCore
 from camelot.admin.action import application_action, form_action, list_action
-from ..view.qml_view import get_qml_root_backend
 
 #
 # The translations data needs to be kept alive during the
