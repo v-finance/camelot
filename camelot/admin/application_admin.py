@@ -43,7 +43,6 @@ from .object_admin import ObjectAdmin
 from ..core.orm import Entity
 from ..core.qt import QtCore
 from camelot.admin.action import application_action, form_action, list_action
-from ..view.qml_view import get_qml_root_backend
 
 #
 # The translations data needs to be kept alive during the
@@ -371,18 +370,6 @@ shortcut confusion and reduce the number of status updates.
 
     def get_name(self):
         return 'application'
-
-    def get_build_tag(self):
-        """:return: string representing version of the application"""
-        return get_qml_root_backend().buildTag()
-
-    def get_branch(self):
-        """:return: string representing git branch"""
-        return get_qml_root_backend().branch()
-
-    def get_directory(self):
-        """:return: string representing ther installation directory"""
-        return get_qml_root_backend().directory()
 
     def get_help_url(self):
         """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""
