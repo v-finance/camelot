@@ -81,10 +81,6 @@ methods :
     The domain name of the author of the application, eg 'mydomain.com', this
     domain will be used to store settings of the application.
 
-.. attribute:: version
-
-    A string with the version of the application
-
 When the same action is returned in the :meth:`get_toolbar_actions` and 
 :meth:`get_main_menu` method, it should be exactly the same object, to avoid
 shortcut confusion and reduce the number of status updates.
@@ -93,8 +89,6 @@ shortcut confusion and reduce the number of status updates.
     application_url = None
     help_url = 'http://www.python-camelot.com/docs.html'
     author = 'Conceptive Engineering'
-
-    version = '1.0'
 
     #
     # actions that will be shared between the toolbar and the main menu
@@ -372,11 +366,6 @@ shortcut confusion and reduce the number of status updates.
 
     def get_name(self):
         return 'application'
-
-    def get_version(self):
-        """:return: string representing version of the application, by default this
-                    is the class attribute verion"""
-        return self.version
 
     def get_help_url(self):
         """:return: a :class:`QtCore.QUrl` pointing to the index page for help"""

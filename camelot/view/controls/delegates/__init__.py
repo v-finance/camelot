@@ -43,6 +43,7 @@ from .many2onedelegate import Many2OneDelegate
 from .one2manydelegate import One2ManyDelegate
 from .plaintextdelegate import PlainTextDelegate
 from .richtextdelegate import RichTextDelegate
+from .statusdelegate import StatusDelegate
 from .texteditdelegate import TextEditDelegate
 from .virtualaddressdelegate import VirtualAddressDelegate
 from .notedelegate import NoteDelegate
@@ -67,6 +68,7 @@ __all__ = [
     One2ManyDelegate.__name__,
     PlainTextDelegate.__name__,
     RichTextDelegate.__name__,
+    StatusDelegate.__name__,
     TextEditDelegate.__name__,
     VirtualAddressDelegate.__name__,
     NoteDelegate.__name__,

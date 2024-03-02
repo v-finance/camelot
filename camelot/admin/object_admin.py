@@ -727,7 +727,8 @@ be specified using the verbose_name attribute.
             filter_strategy_overrulable = ('filter_strategy' not in forced_attributes) and (attributes['filter_strategy'] != list_filter.NoFilter)
             if 'choices' in forced_attributes:
                 from camelot.view.controls import delegates
-                attributes['delegate'] = delegates.ComboBoxDelegate
+                if 'delegate' not in forced_attributes:
+                    attributes['delegate'] = delegates.ComboBoxDelegate
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
                     attributes['to_string'] = lambda x : str(choices_dict.get(x, ''))
