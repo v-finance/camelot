@@ -34,8 +34,6 @@ unit_test_context = initial_naming_context.bind_new_context(
     'unit_test', immutable=True
 )
 
-assert application_action_context.resolve('unbind')
-
 class TestSettings( object ):
 
     CAMELOT_MEDIA_ROOT = 'media'

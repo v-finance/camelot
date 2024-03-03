@@ -102,6 +102,8 @@ class ActionBaseCase(RunningProcessCase, SerializableMixinCase):
 
     def test_action(self):
         self.gui_run(custom_action_name, self.gui_context_name, 'mode_1')
+
+    def test_action_state(self):
         state = self.get_state(custom_action_name, self.gui_context_name)
         self.assertTrue(state['verbose_name'])
         self.assertTrue(len(state['modes']))

@@ -83,6 +83,7 @@ class PythonConnection(QtCore.QObject):
         backend = get_qml_root_backend()
         dgc = backend.distributedGarbageCollector()
         dgc.request.connect(self.onRequest)
+        backend.request.connect(self.onRequest)
 
     @classmethod
     def _execute_serialized_request(cls, serialized_request, response_handler):
@@ -105,4 +106,14 @@ class PythonConnection(QtCore.QObject):
     @QtCore.qt_slot(QtCore.QByteArray)
     def onRequest(self, request):
         print('Received request', request.data())
-        self._execute_serialized_request(request.data(), None)
+        self._execute_serialized_request(request.data(), self)
+
+    @classmethod
+    def send_response(cls, response):
+        print('send response', type(response))
+        backend = get_qml_root_backend()
+        action_runner = backend.actionRunner()
+        action_runner.onResponse(QtCore.QByteArray(response._to_bytes()))
+
+    def has_cancel_request(self):
+        return False

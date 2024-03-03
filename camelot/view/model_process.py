@@ -57,6 +57,11 @@ class ModelProcess(spawned_mp.Process):
         state.pop('_response_receiver')
         return state
 
+    def start(self):
+        root_backend = get_qml_root_backend()
+        root_backend.request.connect(self.post)
+        super().start()
+
     def initialize(self):
         """
         Overwrite this method in subclasses to initialize a process when it

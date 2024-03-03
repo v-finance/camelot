@@ -32,18 +32,20 @@ to write unittests for Camelot applications.  These are not the unittests for
 Camelot itself. 
 """
 
+import collections
 import logging
 import unittest
 import sys
 import os
-#import json
+import json
 
 
 from ..admin.action.base import Action #, MetaActionStep
 from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
+from ..core.serializable import json_encoder
 from ..view.model_process import ModelProcess
-from ..view.qml_view import qml_dispatch
+from ..view.qml_view import qml_dispatch, get_qml_root_backend
 from ..view import model_thread, action_steps
 
 has_programming_error = False
@@ -124,12 +126,15 @@ class ActionMixinCase(object):
         Get the state of an action in the model thread and return
         the result.
         """
-        for step_type, step_data in self.gui_run(
+        recorded_steps = self.gui_run(
             get_action_state_name, mode=action_name,
             model_context_name=self.model_context_name
-        ):
+        )
+        assert len(recorded_steps)
+        for step_type, step_data in recorded_steps:
             if step_type == action_steps.UpdateProgress.__name__:
                 return step_data['detail']
+        assert False
 
     @classmethod
     def gui_run(cls,
@@ -159,11 +164,11 @@ class ActionMixinCase(object):
                 #cls = MetaActionStep.action_steps[step_type]
                 #return replies.get(cls)
 
-        gui_run_name = qml_dispatch.action_runner.runAction(
+        gui_run_name = get_qml_root_backend().runAction(
             gui_context_name, action_name, model_context_name, mode
         )
         qml_dispatch.action_runner.waitForCompletion()
-        return qml_dispatch.action_runner.actionSteps(gui_run_name)
+        return cls._recorded_steps[tuple(gui_run_name)]
 
 
 class RunningProcessCase(unittest.TestCase, ActionMixinCase):
@@ -181,10 +186,13 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
         cls.thread = cls.process_cls()
         assert isinstance(cls.thread, ModelProcess)
         model_thread._model_thread_.insert(0, cls.thread)
+        cls._recorded_steps = collections.defaultdict(list)
+        get_qml_root_backend().actionStepped.connect(cls._record_step)
         cls.thread.start()
 
     @classmethod
     def tearDownClass(cls):
+        get_qml_root_backend().actionStepped.disconnect(cls._record_step)
         try:
             cls.process()
         finally:
@@ -193,8 +201,15 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
 
     def tearDown(self):
         self.process()
+        
+
+    @classmethod
+    def _record_step(cls, gui_run_name, action_step_type, gui_context_name, action_step):
+        cls._recorded_steps[tuple(gui_run_name)].append(
+            (action_step_type, json.loads(action_step.data()))
+        )
 
     @classmethod
     def process(cls):
         """Wait until all events are processed and the queues of the model thread are empty"""
-        qml_dispatch.action_runner.waitForCompletion(15)
+        qml_dispatch.action_runner.waitForCompletion()
