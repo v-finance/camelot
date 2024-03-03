@@ -379,7 +379,7 @@ class FormView(AbstractView, GuiContext):
     def validate_close( self ):
         self.widget_mapper.submit()
         root_backend = get_qml_root_backend()
-        root_backend.runAction.emit(
+        root_backend.runAction(
             self.gui_context_name, self.close_route, self.model.value(), None
         )
 

@@ -435,7 +435,9 @@ class ListActionsCase(
     def test_remove_selection(self):
         list(self.gui_run(
             remove_selection_name, self.gui_context,
-            None, model_context_name=self.model_context_name
+            None, replies={
+                action_steps.MessageBox: {"button": QtWidgets.QMessageBox.StandardButton.Yes}
+                }, model_context_name=self.model_context_name
         ))
 
     def test_move_rank_up_down(self):

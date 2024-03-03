@@ -58,8 +58,7 @@ class ModelProcess(spawned_mp.Process):
         return state
 
     def start(self):
-        root_backend = get_qml_root_backend()
-        root_backend.request.connect(self.post)
+        get_qml_root_backend().request.connect(self.post)
         super().start()
 
     def initialize(self):
@@ -106,6 +105,7 @@ class ModelProcess(spawned_mp.Process):
         """
         Request the worker to finish its ongoing tasks and stop
         """
+        get_qml_root_backend().request.disconnect(self.post)
         # make sure no messages can be send to the request queue, after
         # the stop_request was send
         request_queue = self._request_queue

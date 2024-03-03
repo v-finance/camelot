@@ -29,7 +29,7 @@
 
 from ...core.qt import QtCore, QtWidgets
 from ..art import Pixmap
-from ..qml_view import qml_dispatch
+from ..qml_view import get_qml_root_backend
 
 working_pixmap = Pixmap( 'process-working.png' )
 
@@ -49,7 +49,7 @@ class BusyWidget(QtWidgets.QLabel):
         self.highlighted_orb = 0
         self.timer = None
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding )
-        qml_dispatch.action_runner.busy.connect(self.set_busy)
+        get_qml_root_backend().actionRunner().busy.connect(self.set_busy)
 
     @QtCore.qt_slot(bool)
     def set_busy(self, busy_state):

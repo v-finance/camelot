@@ -550,7 +550,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.signal_register.clear()
         self.gui_run(
             set_data_name, mode=(1, 'y', None),
-            model_context_name=self.model_context_name, handle_action_steps=True
+            model_context_name=self.model_context_name
         )
         self.item_model.onTimeout()
         self.process()
@@ -613,13 +613,13 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.assertNotIn(1, self.get_data(0, 'z', True))
         # manipulate the returned list, and see if the original is manipulated
         # as well
-        self.gui_run(add_z_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        self.gui_run(add_z_name, model_context_name=self.model_context_name)
         attribute_item_model.onTimeout()
         self.process()
         self.assertEqual(attribute_item_model.rowCount(), 3)
         self._load_data(attribute_item_model)
         self.assertIn(1, self.get_data(0, 'z', True))
-        self.gui_run(remove_z_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        self.gui_run(remove_z_name, model_context_name=self.model_context_name)
         self.assertNotIn(1, self.get_data(0, 'z', True))
         # @todo : this only works when a load data has happend after the
         #         rowCount increased, which seems not really the desired effect
@@ -715,7 +715,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.signal_register.clear()
         self.gui_run(
             set_data_name, mode=(0, 'y', 10),
-            model_context_name=self.model_context_name, handle_action_steps=True
+            model_context_name=self.model_context_name
         )
         self.item_model.onTimeout()
         self.process()
@@ -735,11 +735,11 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.signal_register.clear()
         self.gui_run(
             set_data_name, mode=(0, 'x', 9),
-            model_context_name=self.model_context_name, handle_action_steps=True
+            model_context_name=self.model_context_name
         )
         self.gui_run(
             set_data_name, mode=(0, 'y', 10),
-            model_context_name=self.model_context_name, handle_action_steps=True
+            model_context_name=self.model_context_name
         )
         self.item_model.onTimeout()
         self.process()
@@ -751,7 +751,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self._load_data(self.item_model)
         row_count = self.item_model.rowCount()
         self.signal_register.clear()
-        self.gui_run(add_element_name, model_context_name=self.model_context_name, mode=43, handle_action_steps=True)
+        self.gui_run(add_element_name, model_context_name=self.model_context_name, mode=43)
         self.item_model.onTimeout()
         self.process()
         self.assertEqual(len(self.signal_register.header_changes), 1)
@@ -763,7 +763,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         row_count = self.item_model.rowCount()
         self.assertEqual(self._data(0, 0, self.item_model), 0)
         self.signal_register.clear()
-        self.gui_run(remove_element_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        self.gui_run(remove_element_name, model_context_name=self.model_context_name)
         # but the timeout might be after the object was deleted
         self.item_model.onTimeout()
         self.process()
@@ -885,7 +885,7 @@ class QueryQStandardItemModelCase(
         self.assertGreater(data0, data1)
         # insert a new object
         person_id = None
-        for step in self.gui_run(insert_object_name, model_context_name=self.model_context_name, handle_action_steps=True):
+        for step in self.gui_run(insert_object_name, model_context_name=self.model_context_name):
             if step[0] == action_steps.UpdateProgress.__name__:
                 person_id = step[1]['detail']
         self.assertTrue(person_id)
@@ -919,7 +919,7 @@ class QueryQStandardItemModelCase(
         # - contact mechanism select in load
         # - address select in load
         # those last 2 are needed for the validation of the compounding objects
-        self.gui_run(apply_filter_name, model_context_name=self.model_context_name, handle_action_steps=True)
+        self.gui_run(apply_filter_name, model_context_name=self.model_context_name)
         self.gui_run(start_query_counter_name)
         item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         item_model.setValue(self.model_context_name)

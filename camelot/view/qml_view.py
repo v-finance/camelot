@@ -35,10 +35,10 @@ def is_cpp_gui_context_name(gui_context_name):
         return False
     return gui_context_name[0] == 'cpp_gui_context'
 
-class QmlDispatch(QtCore.QObject):
+class PythonBackend(QtCore.QObject):
     """
     Dispatch requests from the root backend that cannot be handled
-    by the root backend itself to the python code being able to handle it.
+    by the root backend to this python backend object.
     """
 
     def __init__(self, parent=None):
@@ -55,17 +55,15 @@ class QmlDispatch(QtCore.QObject):
             step_cls = MetaActionStep.action_steps[step_type]
             result = step_cls.gui_run(tuple(gui_context_name), bytes(serialized_step))
             if step_cls.blocking == True:
-                serialized_result = json_encoder.encode(result).encode('utf-8')
-                root_backend.actionStepResultValid.emit(gui_run_name, serialized_result, False, "")
+                root_backend.actionStepResultValid(gui_run_name, result, False, "")
         except CancelRequest:
-            root_backend.actionStepResultValid.emit(gui_run_name, b'', True, "")
+            root_backend.actionStepResultValid(gui_run_name, None, True, "")
         except Exception as e:
             LOGGER.error("Step type {}".format(step_type))
             LOGGER.error("Gui context name {}".format(gui_context_name))
             LOGGER.error("Unhandled action step raised an exception", exc_info=e)
-            root_backend.actionStepResultValid.emit(gui_run_name, b'', False, str(e))
+            root_backend.actionStepResultValid(gui_run_name, None, False, str(e))
 
-qml_dispatch = QmlDispatch()
 
 def qml_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     backend = get_qml_root_backend()
