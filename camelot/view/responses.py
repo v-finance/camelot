@@ -24,7 +24,7 @@ class AbstractResponse(NamedDataclassSerializable):
         user pressed the cancel button of the progress dialog in the
         gui_context.
         """
-        from .qml_view import is_cpp_gui_context_name
+        from ..core.backend import is_cpp_gui_context_name
         if is_cpp_gui_context_name(gui_context_name):
             # @TODO : check was canceled for cpp
             return

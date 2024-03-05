@@ -50,7 +50,7 @@ from ...core.utils import ugettext_lazy
 from ...view.utils import get_settings_group
 from .. import gui_naming_context
 from ..workspace import show_top_level
-from ..qml_view import qml_action_step, is_cpp_gui_context_name
+from ...core.backend import cpp_action_step, is_cpp_gui_context_name
 from ...view.crud_action import CrudActions
 
 LOGGER = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ class Sort( ActionStep, DataclassSerializable ):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'Sort', serialized_step)
+            cpp_action_step(gui_context_name, 'Sort', serialized_step)
         else:
             gui_context = gui_naming_context.resolve(gui_context_name)
             step = json.loads(serialized_step)
@@ -269,7 +269,7 @@ class OpenQmlTableView(OpenTableView):
 
     @classmethod
     def render(cls, gui_context, action_step_name, serialized_step):
-        response = qml_action_step(gui_context, action_step_name,
+        response = cpp_action_step(gui_context, action_step_name,
                 serialized_step)
         return response, None
 
@@ -300,7 +300,7 @@ class ClearSelection(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'ClearSelection', serialized_step)
+            cpp_action_step(gui_context_name, 'ClearSelection', serialized_step)
         else:
             gui_context = gui_naming_context.resolve(gui_context_name)
             gui_context.item_view.clearSelection()
@@ -326,7 +326,7 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'RefreshItemView', serialized_step)
+            cpp_action_step(gui_context_name, 'RefreshItemView', serialized_step)
         else:
             gui_context = gui_naming_context.resolve(gui_context_name)
             model = gui_context.get_model()

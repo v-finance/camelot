@@ -43,7 +43,7 @@ from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
 
 from .form_view import OpenFormView
@@ -92,7 +92,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
             fields=fields, parent=self
         )
 
-        model = get_qml_root_backend().createModel(get_settings_group(admin_route), form_widget)
+        model = get_root_backend().create_model(get_settings_group(admin_route), form_widget)
         self.action_routes = dict()
         form_widget.set_model(model)
 

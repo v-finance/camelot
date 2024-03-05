@@ -42,7 +42,7 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.forms import Form
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie, Tag
 
@@ -124,7 +124,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         cls.action_name = initial_naming_context.bind(('import_covers',), cls.action)
 
     def setUp(self):
-        get_qml_root_backend().setVisible(True, False)
+        get_root_backend().set_visible(True, False)
         self.gui_context_obj = GuiContext()
         self.gui_context = gui_naming_context.bind(
             ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
@@ -200,7 +200,7 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
-        get_qml_root_backend().setVisible(True, False)
+        get_root_backend().set_visible(True, False)
         self.admin_route = app_admin.get_admin_route()
         self.gui_context = ('cpp_gui_context', 'root_backend')
 

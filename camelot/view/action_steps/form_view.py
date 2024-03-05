@@ -45,8 +45,8 @@ from ...core.naming import initial_naming_context
 from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
 from ...view.utils import get_settings_group
+from ...core.backend import get_root_backend, cpp_action_step
 from .item_view import AbstractCrudView
-from  ..qml_view import get_qml_root_backend, qml_action_step
 
 
 @dataclass
@@ -120,7 +120,7 @@ class OpenFormView(AbstractCrudView):
     @classmethod
     def render(self, gui_context_name, step):
         form = FormView()
-        model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), form)
+        model = get_root_backend().create_model(get_settings_group(step['admin_route']), form)
         model.setValue(step['model_context_name'])
         columns = [ fn for fn, fa in step['fields']]
         model.setColumns(columns)
@@ -142,7 +142,7 @@ class OpenFormView(AbstractCrudView):
         admin = initial_naming_context.resolve(tuple(step['admin_route']))
         if admin.qml_form:
             # Use new QML forms
-            qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
+            cpp_action_step(gui_context_name, 'OpenFormView', serialized_step)
         else:
             formview = cls.render(gui_context_name, step)
             if formview is not None:

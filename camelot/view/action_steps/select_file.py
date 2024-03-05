@@ -32,7 +32,7 @@ from camelot.admin.action import ActionStep
 from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
-from camelot.view.qml_view import qml_action_step
+from camelot.core.backend import cpp_action_step
 
 from dataclasses import dataclass, field
 
@@ -73,7 +73,7 @@ class SelectFile( ActionStep, DataclassSerializable ):
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         with hide_progress_dialog(gui_context):
-            response = qml_action_step(gui_context, 'SelectFile', serialized_step)
+            response = cpp_action_step(gui_context, 'SelectFile', serialized_step)
             selected = response['selected']
             if selected:
                 return selected
@@ -110,7 +110,7 @@ class SaveFile( ActionStep, DataclassSerializable ):
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         with hide_progress_dialog(gui_context):
-            response = qml_action_step(gui_context, 'SaveFile', serialized_step)
+            response = cpp_action_step(gui_context, 'SaveFile', serialized_step)
             selected = response['selected']
             if selected:
                 return selected
@@ -140,7 +140,7 @@ class SelectDirectory(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
         with hide_progress_dialog(gui_context):
-            response = qml_action_step(gui_context, 'SelectDirectory', serialized_step)
+            response = cpp_action_step(gui_context, 'SelectDirectory', serialized_step)
             selected = response['selected']
             if selected:
                 return selected

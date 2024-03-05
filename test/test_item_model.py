@@ -32,7 +32,7 @@ from camelot.model.party import Person
 from camelot.test import RunningProcessCase, test_context
 from camelot.core.cache import ValueCache
 from camelot.view import action_steps
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 
 LOGGER = logging.getLogger(__name__)
 context_counter = itertools.count()
@@ -198,7 +198,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
         self.qt_parent = QtCore.QObject()
-        self.item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        self.item_model = get_root_backend().create_model(get_settings_group(self.admin_route), self.qt_parent)
         self.item_model.setValue(self.model_context_name)
         self.columns = self.admin.list_display
         self.item_model.setColumns(self.columns)
@@ -394,7 +394,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         # on this list should be reflected in the original list
         self._load_data(self.item_model)
         attribute_model_context_name = self._data(0, 2, self.item_model)
-        attribute_item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        attribute_item_model = get_root_backend().create_model(get_settings_group(self.admin_route), self.qt_parent)
         attribute_item_model.setValue(attribute_model_context_name)
         attribute_item_model.setColumns(['value'])
         self._load_data(attribute_item_model)
@@ -819,7 +819,7 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
 
     def setup_item_model(self, admin_route, admin_name):
         self.qt_parent = QtCore.QObject()
-        self.item_model = get_qml_root_backend().createModel(get_settings_group(admin_route), self.qt_parent)
+        self.item_model = get_root_backend().create_model(get_settings_group(admin_route), self.qt_parent)
         self.item_model.setValue(self.model_context_name)
         self.columns = ('first_name', 'last_name', 'id',)
         self.item_model.setColumns(self.columns)
@@ -920,7 +920,7 @@ class QueryQStandardItemModelCase(
         # those last 2 are needed for the validation of the compounding objects
         self.gui_run(apply_filter_name, model_context_name=self.model_context_name, handle_action_steps=True)
         self.gui_run(start_query_counter_name)
-        item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        item_model = get_root_backend().create_model(get_settings_group(self.admin_route), self.qt_parent)
         item_model.setValue(self.model_context_name)
         item_model.setColumns(self.columns)
         self._load_data(item_model)

@@ -68,9 +68,8 @@ strictly to the :class:`ModelContext`
                  or :keyword:`None`
         """
         from camelot.view.controls.progress_dialog import ProgressDialog
-        from camelot.view.qml_view import get_qml_root_backend
-        root_backend = get_qml_root_backend()
-        if not root_backend.isVisible():
+        from camelot.core.backend import get_root_backend
+        if not get_root_backend().is_visible():
             return None
         app = QtWidgets.QApplication.instance()
         progress_dialog = app.property('application_progress')
@@ -259,7 +258,7 @@ return immediately and the :meth:`model_run` will not be blocked.
         action step.  The return value of this method is the result of the
         :keyword:`yield` statement in the *model thread*.
         
-        The default behavior of this method is to call the qml_action_step
+        The default behavior of this method is to call the cpp_action_step
         function.
         
         :param gui_context:  An object of type 
@@ -271,8 +270,8 @@ return immediately and the :meth:`model_run` will not be blocked.
         this method will raise a :class:`camelot.core.exception.CancelRequest`
         exception, if the user canceled the operation.
         """
-        from camelot.view.qml_view import qml_action_step
-        return qml_action_step(gui_context_name, cls.__name__, serialized_step)
+        from camelot.core.backend import cpp_action_step
+        return cpp_action_step(gui_context_name, cls.__name__, serialized_step)
 
     def model_run( self, model_context, mode ):
         raise Exception('This should not happen')

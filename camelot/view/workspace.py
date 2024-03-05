@@ -36,7 +36,7 @@ logger = logging.getLogger('camelot.view.workspace')
 
 from ..core import constants
 from ..core.qt import QtCore, QtWidgets, transferto
-from .qml_view import is_cpp_gui_context_name, get_qml_window
+from ..core.backend import is_cpp_gui_context_name, get_window
 from . import gui_naming_context
 
 
@@ -96,7 +96,7 @@ def show_top_level(view, gui_context_name, state=None):
     :param state: the state of the form, 'maximized', or 'left' or 'right', ...
      """
     if is_cpp_gui_context_name(gui_context_name):
-        parent = get_qml_window()
+        parent = get_window()
     else:
         gui_context = gui_naming_context.resolve(gui_context_name)
         parent = gui_context.get_window()

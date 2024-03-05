@@ -37,7 +37,7 @@ from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
 from ...core.serializable import DataclassSerializable
 from .. import gui_naming_context
-from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
+from camelot.core.backend import cpp_action_step, is_cpp_gui_context_name
 
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
@@ -53,7 +53,7 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
     def gui_run(cls, gui_context_name, serialized_step):
         # @TODO : this needs to be handled in the action runner
         if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
+            cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
             return
         gui_context = gui_naming_context.resolve(gui_context_name)
         if gui_context is None:
@@ -73,7 +73,7 @@ class PopProgressLevel(ActionStep, DataclassSerializable):
     def gui_run(cls, gui_context_name, serialized_step):
         # @TODO : this needs to be handled in the action runner
         if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
+            cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
             return
         gui_context = gui_naming_context.resolve(gui_context_name)
         if gui_context is None:
@@ -131,11 +131,11 @@ updated.
         # @TODO : this needs to be handled in the action runner
         if is_cpp_gui_context_name(gui_context_name):
             # C++ QmlProgressDialog
-            response = qml_action_step(gui_context_name, 'UpdateProgress', serialized_step)
+            response = cpp_action_step(gui_context_name, 'UpdateProgress', serialized_step)
             if response['was_canceled']:
                 # reset progress dialog
                 reset_step = QtCore.QByteArray(json.dumps({ 'reset': True }).encode())
-                qml_action_step(gui_context_name, 'UpdateProgress', reset_step)
+                cpp_action_step(gui_context_name, 'UpdateProgress', reset_step)
                 raise CancelRequest()
             return
         gui_context = gui_naming_context.resolve(gui_context_name)
