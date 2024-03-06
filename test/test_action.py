@@ -315,7 +315,7 @@ class ListActionsCase(
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
         # Make sure to ChangeSelection action step is executed
-        self.item_model.onTimeout()
+        self.item_model.submit()
         # create a model context
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
 
@@ -472,11 +472,11 @@ class ListActionsCase(
         item_view = self.view.item_view
         list_model = item_view.model()
         list_model.sort(1, Qt.SortOrder.DescendingOrder)
-        list_model.onTimeout()
+        list_model.submit()
         self.process()
         list_model.headerData(0, Qt.Orientation.Vertical, ObjectRole)
         list_model.data(list_model.index(0, 0), Qt.ItemDataRole.DisplayRole)
-        list_model.onTimeout()
+        list_model.submit()
         self.process()
         self.view.item_view.setCurrentIndex(list_model.index(0, 0))
         for step_name, step in self.gui_run(open_form_view_name, self.gui_context,None, model_context_name=self.model_context_name):

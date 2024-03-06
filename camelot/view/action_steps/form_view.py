@@ -179,7 +179,7 @@ class ChangeFormIndex(ActionStep, DataclassSerializable):
         # submit all pending requests to the model thread
         if is_deleted(gui_context.widget_mapper):
             return
-        gui_context.widget_mapper.model().onTimeout()
+        gui_context.widget_mapper.model().submit()
         # wait until they are handled
         super(ChangeFormIndex, self).gui_run(gui_context)
 
