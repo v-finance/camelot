@@ -101,7 +101,7 @@ class ViewWithActionsMixin(object):
         action_name = tuple(action_widget.property('action_route') or [])
         if len(action_name):
             root_backend = get_qml_root_backend()
-            root_backend.runAction.emit(
+            root_backend.runAction(
                 gui_context_name, action_name, model_context_name, mode
             )
 
