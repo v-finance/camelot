@@ -175,6 +175,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         # or actions not properly terminated when their initiation fails
         actions_running = True
         while actions_running:
+            QtCore.QCoreApplication.instance().processEvents()
             # very dirty hack to not wait for unbinds
             run_names = list(gui_run_names.list())
             max_time_running = 0
