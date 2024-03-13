@@ -82,6 +82,7 @@ class OpenFormView(AbstractCrudView):
     row: int = field(init=False)
     form_state: str = field(init=False)
     blocking: bool = False
+    auto_update: bool = True
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
