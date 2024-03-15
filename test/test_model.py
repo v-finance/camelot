@@ -188,10 +188,19 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.session = Session()
         self.session.close()
 
-    def test_party( self ):
+    def test_party(self):
         p = party.Party()
         self.assertFalse(p.name)
-        
+
+    def test_ordering(self):
+        p1 = party.Party()
+        p2 = party.Party()
+        self.assertNotEqual(p1, p2)
+        self.assertTrue((p1 < p2) or (p2 < p1))
+        self.assertTrue((p1 > p2) or (p2 > p1))
+        self.assertTrue(p1 <= p1)
+        self.assertTrue(p1 >= p1)
+
     def test_geographic_boundary( self ):
         belgium = party.Country.get_or_create( code = u'BE', 
                                                name = u'Belgium' )
