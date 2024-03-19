@@ -42,7 +42,7 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 from camelot.view.proxy import ValueLoading
 from camelot.view.utils import get_settings_group
 from camelot_example.application_admin import MyApplicationAdmin
@@ -485,7 +485,7 @@ class FormTest(
         self.admin_route = self.person_admin.get_admin_route()
         columns = [ fn for fn, fa in self.person_admin.get_fields() ]
         self.qt_parent = QtCore.QObject()
-        self.person_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        self.person_model = get_root_backend().create_model(get_settings_group(self.admin_route), self.qt_parent)
         self.person_model.setValue(self.model_context_name)
         self.person_model.setColumns(columns)
         self._load_data(self.person_model)
@@ -845,14 +845,14 @@ class ControlsTest(
         #create a table view for an Admin interface with small columns
         self.gui_run(setup_query_proxy_small_columns_name, mode=self.model_context_name)
         widget = TableWidget()
-        model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), widget)
+        model = get_root_backend().create_model(get_settings_group(self.admin_route), widget)
         widget.setModel(model)
         model.setValue(self.model_context_name)
         model.setColumns(('first_name', 'suffix'))
-        model.onTimeout()
+        model.submit()
         self.process()
         self.grab_widget( widget )
-        model.onTimeout()
+        model.submit()
         self.process()
         widget.horizontalHeader()
 
@@ -865,14 +865,14 @@ class ControlsTest(
         #create a table view for an Admin interface with small columns
         self.gui_run(setup_query_proxy_equal_columns_name, mode=self.model_context_name)
         widget = TableWidget()
-        model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), widget)
+        model = get_root_backend().create_model(get_settings_group(self.admin_route), widget)
         widget.setModel(model)
         model.setValue(self.model_context_name)
         model.setColumns(('first_name', 'suffix',))
-        model.onTimeout()
+        model.submit()
         self.process()
         self.grab_widget(widget)
-        model.onTimeout()
+        model.submit()
         self.process()
         widget.horizontalHeader()
         first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()

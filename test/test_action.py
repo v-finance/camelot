@@ -42,7 +42,7 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.forms import Form
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 from camelot_example.importer import ImportCovers
 from camelot_example.model import Movie, Tag
 
@@ -124,7 +124,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         cls.action_name = initial_naming_context.bind(('import_covers',), cls.action)
 
     def setUp(self):
-        get_qml_root_backend().setVisible(True, False)
+        get_root_backend().set_visible(True, False)
         self.gui_context_obj = GuiContext()
         self.gui_context = gui_naming_context.bind(
             ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
@@ -200,7 +200,7 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
-        get_qml_root_backend().setVisible(True, False)
+        get_root_backend().set_visible(True, False)
         self.admin_route = app_admin.get_admin_route()
         self.gui_context = ('cpp_gui_context', 'root_backend')
 
@@ -315,7 +315,7 @@ class ListActionsCase(
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
         # Make sure to ChangeSelection action step is executed
-        self.item_model.onTimeout()
+        self.item_model.submit()
         # create a model context
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
 
@@ -472,11 +472,11 @@ class ListActionsCase(
         item_view = self.view.item_view
         list_model = item_view.model()
         list_model.sort(1, Qt.SortOrder.DescendingOrder)
-        list_model.onTimeout()
+        list_model.submit()
         self.process()
         list_model.headerData(0, Qt.Orientation.Vertical, ObjectRole)
         list_model.data(list_model.index(0, 0), Qt.ItemDataRole.DisplayRole)
-        list_model.onTimeout()
+        list_model.submit()
         self.process()
         self.view.item_view.setCurrentIndex(list_model.index(0, 0))
         for step_name, step in self.gui_run(open_form_view_name, self.gui_context,None, model_context_name=self.model_context_name):

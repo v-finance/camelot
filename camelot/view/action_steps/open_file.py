@@ -30,7 +30,7 @@ from dataclasses import dataclass
 
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
-from camelot.view.qml_view import qml_action_step
+from camelot.core.backend import cpp_action_step
 
 from ...core.serializable import DataclassSerializable
 
@@ -78,7 +78,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
 
     @classmethod
     def gui_run( cls, gui_context_name, serialized_step ):
-        qml_action_step(gui_context_name, 'OpenFile', serialized_step)
+        cpp_action_step(gui_context_name, 'OpenFile', serialized_step)
 
 class OpenStream( OpenFile ):
     """Write a stream to a temporary file and open that file with the 

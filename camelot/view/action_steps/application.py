@@ -44,7 +44,7 @@ from ...core.qt import QtCore, QtQuick
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import AuthenticationMechanism
 from .. import gui_naming_context
-from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
+from camelot.core.backend import cpp_action_step, is_cpp_gui_context_name
 from .open_file import OpenFile
 
 LOGGER = logging.getLogger(__name__)
@@ -242,7 +242,7 @@ class UpdateActionsState(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         if is_cpp_gui_context_name(gui_context_name):
-            return qml_action_step(gui_context_name, 'UpdateActionsState', serialized_step)
+            return cpp_action_step(gui_context_name, 'UpdateActionsState', serialized_step)
         gui_context = gui_naming_context.resolve(gui_context_name)
         step = json.loads(serialized_step)
         for action_route, action_state in step['action_states']:

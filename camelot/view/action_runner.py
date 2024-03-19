@@ -47,7 +47,7 @@ LOGGER = logging.getLogger('camelot.view.action_runner')
 def hide_progress_dialog(gui_context_name):
     """A context manager to hide the progress dialog of the gui context when
     the context is entered, and restore the original state at exit"""
-    from .qml_view import is_cpp_gui_context_name, qml_action_step
+    from ..core.backend import is_cpp_gui_context_name, cpp_action_step
     progress_dialog = None
     if not is_cpp_gui_context_name(gui_context_name):
         gui_context = gui_naming_context.resolve(gui_context_name)
@@ -56,14 +56,14 @@ def hide_progress_dialog(gui_context_name):
     if progress_dialog is None:
         is_hidden = None
         if is_cpp_gui_context_name(gui_context_name):
-            response = qml_action_step(gui_context_name, 'GetProgressState')
+            response = cpp_action_step(gui_context_name, 'GetProgressState')
             is_hidden = response["is_hidden"]
             if not is_hidden:
-                qml_action_step(gui_context_name, 'HideProgress')
+                cpp_action_step(gui_context_name, 'HideProgress')
         yield
         if is_cpp_gui_context_name(gui_context_name):
             if not is_hidden:
-                qml_action_step(gui_context_name, 'ShowProgress')
+                cpp_action_step(gui_context_name, 'ShowProgress')
         return
     original_state, original_minimum_duration = None, None
     original_state = progress_dialog.isHidden()
@@ -175,6 +175,7 @@ class ActionRunner(QtCore.QObject, metaclass=QSingleton):
         # or actions not properly terminated when their initiation fails
         actions_running = True
         while actions_running:
+            QtCore.QCoreApplication.instance().processEvents()
             # very dirty hack to not wait for unbinds
             run_names = list(gui_run_names.list())
             max_time_running = 0
