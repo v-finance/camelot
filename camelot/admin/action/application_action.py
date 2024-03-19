@@ -31,7 +31,7 @@ import cProfile
 import logging
 import itertools
 
-from ...core.naming import initial_naming_context, NameNotFoundException
+from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from .base import RenderHint

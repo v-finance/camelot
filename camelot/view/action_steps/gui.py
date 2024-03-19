@@ -48,7 +48,7 @@ from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
+from camelot.core.backend import cpp_action_step, is_cpp_gui_context_name
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from .. import gui_naming_context
@@ -61,10 +61,6 @@ class Refresh( ActionStep, DataclassSerializable ):
     from the database"""
 
     blocking: bool = False
-
-    @classmethod
-    def gui_run(self, gui_context_name, serialized_step):
-        qml_action_step(gui_context_name, 'Refresh')
 
 class ItemSelectionDialog(StandaloneWizardPage):
 
@@ -171,7 +167,7 @@ class CloseView(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'CloseView', serialized_step)
+            cpp_action_step(gui_context_name, 'CloseView', serialized_step)
         else:
             # python implementation, still used for FormView
             gui_context = gui_naming_context.resolve(gui_context_name)

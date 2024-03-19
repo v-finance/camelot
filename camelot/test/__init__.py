@@ -43,9 +43,8 @@ import json
 from ..admin.action.base import Action, MetaActionStep
 from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
-from ..core.serializable import json_encoder
+from ..core.backend import get_root_backend
 from ..view.model_process import ModelProcess
-from ..view.qml_view import get_qml_root_backend
 from ..view import model_thread, action_steps
 
 has_programming_error = False
@@ -148,11 +147,11 @@ class ActionMixinCase(object):
         a blocking action step is presented.
         """
 
-        gui_run_name = get_qml_root_backend().runAction(
+        gui_run_name = get_root_backend().runAction(
             gui_context_name, action_name, model_context_name, mode
         )
         cls._replies[tuple(gui_run_name)] = replies
-        get_qml_root_backend().actionRunner().waitForCompletion()
+        get_root_backend().actionRunner().waitForCompletion()
         return cls._recorded_steps[tuple(gui_run_name)]
 
 
@@ -173,12 +172,12 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
         model_thread._model_thread_.insert(0, cls.thread)
         cls._recorded_steps = collections.defaultdict(list)
         cls._replies = collections.defaultdict(dict)
-        get_qml_root_backend().actionStepped.connect(cls._record_step)
+        get_root_backend().actionStepped.connect(cls._record_step)
         cls.thread.start()
 
     @classmethod
     def tearDownClass(cls):
-        get_qml_root_backend().actionStepped.disconnect(cls._record_step)
+        get_root_backend().actionStepped.disconnect(cls._record_step)
         try:
             cls.process()
         finally:
@@ -201,10 +200,10 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
             result = replies.get(step_cls)
             # the result needs to be convertible to a QJsonValue
             assert isinstance(result, (dict, int, float, str, list, type(None)))
-            get_qml_root_backend().actionStepResultValid(gui_run_name, result, False, "")
+            get_root_backend().actionStepResultValid(gui_run_name, result, False, "")
 
     @classmethod
     def process(cls):
         """Wait until all events are processed and the queues of the model thread are empty"""
-        completed = get_qml_root_backend().actionRunner().waitForCompletion()
+        completed = get_root_backend().actionRunner().waitForCompletion()
         assert completed

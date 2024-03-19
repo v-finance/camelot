@@ -1,31 +1,36 @@
 import logging
 import json
 
-from camelot.admin.action.base import MetaActionStep
-from camelot.core.exception import CancelRequest
 from camelot.core.qt import QtWidgets, QtCore
-from camelot.core.serializable import json_encoder, NamedDataclassSerializable
-
-from .requests import StopProcess
+from ..admin.action.base import MetaActionStep
+from ..view.requests import CancelRequest, StopProcess
+from .serializable import NamedDataclassSerializable
 
 LOGGER = logging.getLogger(__name__)
 
-def get_qml_root_backend():
+_backend = None
+_window = None
+
+def get_root_backend():
     """
     Get the root backend that is used to communicate between python and C++/QML.
     """
-    app = QtWidgets.QApplication.instance()
-    backend = app.findChild(QtCore.QObject, 'cpp_qml_root_backend')
-    return backend
+    global _backend
+    if _backend is None:
+        app = QtWidgets.QApplication.instance()
+        _backend = app.findChild(QtCore.QObject, 'cpp_root_backend')
+        assert _backend
+    return _backend
 
-def get_qml_window():
+def get_window():
     """
     Get the QQuickView that was created in C++.
     """
-    app = QtWidgets.QApplication.instance()
-    for widget in app.allWindows():
-        if widget.objectName() == 'cpp_qml_window':
-            return widget
+    global _window
+    if _window is None:
+        _window = get_root_backend().window()
+        assert _window
+    return _window
 
 def is_cpp_gui_context_name(gui_context_name):
     """
@@ -35,6 +40,12 @@ def is_cpp_gui_context_name(gui_context_name):
         return False
     return gui_context_name[0] == 'cpp_gui_context'
 
+
+def cpp_action_step(gui_context_name, name, step=QtCore.QByteArray()):
+    response = get_root_backend().action_step(gui_context_name, name, step)
+    return json.loads(response.data())
+
+
 class PythonBackend(QtCore.QObject):
     """
     Dispatch requests from the root backend that cannot be handled
@@ -43,14 +54,14 @@ class PythonBackend(QtCore.QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        root_backend = get_qml_root_backend()
+        root_backend = get_root_backend()
         root_backend.unhandledActionStep.connect(self.onUnhandledActionStep)
         self.action_runner = root_backend.actionRunner()
 
     @QtCore.qt_slot('QStringList', str, 'QStringList', QtCore.QByteArray)
     def onUnhandledActionStep(self, gui_run_name, step_type, gui_context_name, serialized_step):
         """The backend has cannot handle an action step"""
-        root_backend = get_qml_root_backend()
+        root_backend = get_root_backend()
         try:
             step_cls = MetaActionStep.action_steps[step_type]
             result = step_cls.gui_run(tuple(gui_context_name), bytes(serialized_step))
@@ -65,11 +76,6 @@ class PythonBackend(QtCore.QObject):
             root_backend.actionStepResultValid(gui_run_name, None, False, str(e))
 
 
-def qml_action_step(gui_context_name, name, step=QtCore.QByteArray()):
-    backend = get_qml_root_backend()
-    response = backend.actionStep(gui_context_name, name, step)
-    return json.loads(response.data())
-
 class PythonConnection(QtCore.QObject):
     """Use python to connect to a server, this is done by using
     the PythonRootBackend, and lister for signals from the action runner
@@ -78,7 +84,7 @@ class PythonConnection(QtCore.QObject):
 
     def __init__(self):
         super().__init__()
-        backend = get_qml_root_backend()
+        backend = get_root_backend()
         dgc = backend.distributedGarbageCollector()
         dgc.request.connect(self.onRequest)
         backend.request.connect(self.onRequest)
@@ -109,7 +115,7 @@ class PythonConnection(QtCore.QObject):
     @classmethod
     def send_response(cls, response):
         print('send response', type(response))
-        backend = get_qml_root_backend()
+        backend = get_root_backend()
         action_runner = backend.actionRunner()
         action_runner.onResponse(QtCore.QByteArray(response._to_bytes()))
 

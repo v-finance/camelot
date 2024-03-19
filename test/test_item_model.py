@@ -31,7 +31,7 @@ from camelot.model.party import Person
 from camelot.test import RunningProcessCase, test_context
 from camelot.core.cache import ValueCache
 from camelot.view import action_steps
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 
 LOGGER = logging.getLogger(__name__)
 context_counter = itertools.count()
@@ -122,10 +122,10 @@ class ItemModelCaseMixin(object):
 
     def _load_data(self, item_model):
         """Trigger the loading of data by the QAbstractItemModel"""
-        item_model.onTimeout()
+        item_model.submit()
         self.process()
         item_model.rowCount()
-        item_model.onTimeout()
+        item_model.submit()
         self.process()
         row_count = item_model.rowCount()
         column_count = item_model.columnCount()
@@ -133,7 +133,7 @@ class ItemModelCaseMixin(object):
         for row in range(row_count):
             for col in range(column_count):
                 self._data(row, col, item_model)
-        item_model.onTimeout()
+        item_model.submit()
         self.process()
 
     def _data(self, row, column, item_model, role=Qt.ItemDataRole.EditRole, validate_index=True):
@@ -149,9 +149,9 @@ class ItemModelCaseMixin(object):
         if validate_index and not index.isValid():
             raise Exception('Index ({0},{1}) is not valid with {2} rows, {3} columns'.format(index.row(), index.column(), item_model.rowCount(), item_model.columnCount()))
         result = item_model.setData( index, value, role )
-        item_model.onTimeout()
+        item_model.submit()
         self.process()
-        item_model.onTimeout()
+        item_model.submit()
         self.process()
         return result
 
@@ -165,7 +165,7 @@ class ItemModelCaseMixin(object):
     def _row_count(self, item_model):
         """Set data to the proxy"""
         item_model.rowCount()
-        item_model.onTimeout()
+        item_model.submit()
         self.process()
         return item_model.rowCount()
 
@@ -824,11 +824,11 @@ class QueryQStandardItemModelMixinCase(ItemModelCaseMixin):
 
     def setup_item_model(self, admin_route, admin_name):
         self.qt_parent = QtCore.QObject()
-        self.item_model = get_qml_root_backend().createModel(get_settings_group(admin_route), self.qt_parent)
+        self.item_model = get_root_backend().create_model(get_settings_group(admin_route), self.qt_parent)
         self.item_model.setValue(self.model_context_name)
         self.columns = ('first_name', 'last_name', 'id',)
         self.item_model.setColumns(self.columns)
-        self.item_model.onTimeout()
+        self.item_model.submit()
 
 
 class QueryQStandardItemModelCase(
@@ -864,7 +864,7 @@ class QueryQStandardItemModelCase(
                 return step[1]['detail']
 
     def test_insert_after_sort(self):
-        self.item_model.onTimeout()
+        self.item_model.submit()
         self.assertTrue( self.item_model.columnCount() > 0 )
         self.item_model.sort( 1, Qt.SortOrder.AscendingOrder )
         # check the query
@@ -873,7 +873,7 @@ class QueryQStandardItemModelCase(
         self.assertGreater(rowcount, 1)
         # check the sorting
         self._load_data(self.item_model)
-        self.item_model.onTimeout()
+        self.item_model.submit()
         self.process()
         data0 = self._data( 0, 1, self.item_model )
         data1 = self._data( 1, 1, self.item_model )
@@ -889,7 +889,7 @@ class QueryQStandardItemModelCase(
             if step[0] == action_steps.UpdateProgress.__name__:
                 person_id = step[1]['detail']
         self.assertTrue(person_id)
-        self.item_model.onTimeout()
+        self.item_model.submit()
         self.process()
         new_rowcount = self.item_model.rowCount()
         self.assertEqual(new_rowcount, rowcount + 1)
@@ -921,7 +921,7 @@ class QueryQStandardItemModelCase(
         # those last 2 are needed for the validation of the compounding objects
         self.gui_run(apply_filter_name, model_context_name=self.model_context_name)
         self.gui_run(start_query_counter_name)
-        item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        item_model = get_root_backend().create_model(get_settings_group(self.admin_route), self.qt_parent)
         item_model.setValue(self.model_context_name)
         item_model.setColumns(self.columns)
         self._load_data(item_model)

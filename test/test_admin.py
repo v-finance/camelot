@@ -31,7 +31,7 @@ from camelot.model.i18n import Translation
 from camelot.model.party import Person, Address
 from camelot.view.controls import delegates
 from camelot.types.typing import Color, Directory, File, Note
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 
 class ApplicationAdminCase(unittest.TestCase):
 
@@ -40,8 +40,7 @@ class ApplicationAdminCase(unittest.TestCase):
         self.assertTrue( app_admin.get_navigation_menu() )
         self.assertTrue( app_admin.get_related_toolbar_actions( 'onetomany' ) )
         self.assertTrue( app_admin.get_related_toolbar_actions( 'manytomany' ) )
-        root_backend = get_qml_root_backend()
-        self.assertTrue( root_backend.buildTag() )
+        self.assertTrue( get_root_backend().build_tag() )
         with self.assertRaises(Exception):
             app_admin.get_related_admin(1)
         self.assertEqual(type(app_admin.get_related_admin(object)), ObjectAdmin)
