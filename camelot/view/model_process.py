@@ -49,7 +49,7 @@ class ModelProcess(spawned_mp.Process):
                 self._response_receiver.recv_bytes()
             )
             root_backend = get_root_backend()
-            root_backend.onResponse(serialized_response)
+            root_backend.action_runner().onResponse(serialized_response)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -58,7 +58,7 @@ class ModelProcess(spawned_mp.Process):
         return state
 
     def start(self):
-        get_root_backend().request.connect(self.post)
+        get_root_backend().action_runner().request.connect(self.post)
         super().start()
 
     def initialize(self):
@@ -88,6 +88,8 @@ class ModelProcess(spawned_mp.Process):
                 LOGGER.error('Unhandled exception in model process', exc_info=e)
                 import traceback
                 traceback.print_exc()
+            except SystemExit:
+                LOGGER.info('Terminating')
             except:
                 LOGGER.error('Unhandled event in model process')
             finally:
@@ -105,7 +107,7 @@ class ModelProcess(spawned_mp.Process):
         """
         Request the worker to finish its ongoing tasks and stop
         """
-        get_root_backend().request.disconnect(self.post)
+        get_root_backend().action_runner().request.disconnect(self.post)
         # make sure no messages can be send to the request queue, after
         # the stop_request was send
         request_queue = self._request_queue

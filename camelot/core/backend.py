@@ -56,7 +56,7 @@ class PythonBackend(QtCore.QObject):
         super().__init__(parent)
         root_backend = get_root_backend()
         root_backend.unhandled_action_step.connect(self.on_unhandled_action_step)
-        self.action_runner = root_backend.actionRunner()
+        self.action_runner = root_backend.action_runner()
 
     @QtCore.qt_slot('QStringList', str, 'QStringList', QtCore.QByteArray)
     def on_unhandled_action_step(self, gui_run_name, step_type, gui_context_name, serialized_step):
@@ -66,14 +66,14 @@ class PythonBackend(QtCore.QObject):
             step_cls = MetaActionStep.action_steps[step_type]
             result = step_cls.gui_run(tuple(gui_context_name), bytes(serialized_step))
             if step_cls.blocking == True:
-                root_backend.actionStepResultValid(gui_run_name, result, False, "")
+                root_backend.action_step_result_valid(gui_run_name, result, False, "")
         except CancelRequest:
-            root_backend.actionStepResultValid(gui_run_name, None, True, "")
+            root_backend.action_step_result_valid(gui_run_name, None, True, "")
         except Exception as e:
             LOGGER.error("Step type {}".format(step_type))
             LOGGER.error("Gui context name {}".format(gui_context_name))
             LOGGER.error("Unhandled action step raised an exception", exc_info=e)
-            root_backend.actionStepResultValid(gui_run_name, None, False, str(e))
+            root_backend.action_step_result_valid(gui_run_name, None, False, str(e))
 
 
 class PythonConnection(QtCore.QObject):
