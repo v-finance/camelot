@@ -108,12 +108,10 @@ class PythonConnection(QtCore.QObject):
 
     @QtCore.qt_slot(QtCore.QByteArray)
     def on_request(self, request):
-        print('Received request', request.data())
         self._execute_serialized_request(request.data(), self)
 
     @classmethod
     def send_response(cls, response):
-        print('send response', type(response))
         backend = get_root_backend()
         action_runner = backend.action_runner()
         action_runner.onResponse(QtCore.QByteArray(response._to_bytes()))
