@@ -2,11 +2,11 @@ import json
 import logging
 import multiprocessing as _mp
 
+from ..core.backend import get_root_backend
 from ..core.qt import QtCore
 from ..core.serializable import NamedDataclassSerializable, DataclassSerializable
 from .responses import ActionStepped, Busy
 from .requests import StopProcess
-from .qml_view import get_qml_root_backend
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class ModelProcess(spawned_mp.Process):
             serialized_response = QtCore.QByteArray(
                 self._response_receiver.recv_bytes()
             )
-            root_backend = get_qml_root_backend()
+            root_backend = get_root_backend()
             root_backend.onResponse(serialized_response)
 
     def __getstate__(self):
@@ -58,7 +58,7 @@ class ModelProcess(spawned_mp.Process):
         return state
 
     def start(self):
-        get_qml_root_backend().request.connect(self.post)
+        get_root_backend().request.connect(self.post)
         super().start()
 
     def initialize(self):
@@ -105,7 +105,7 @@ class ModelProcess(spawned_mp.Process):
         """
         Request the worker to finish its ongoing tasks and stop
         """
-        get_qml_root_backend().request.disconnect(self.post)
+        get_root_backend().request.disconnect(self.post)
         # make sure no messages can be send to the request queue, after
         # the stop_request was send
         request_queue = self._request_queue

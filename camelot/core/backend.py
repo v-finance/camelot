@@ -55,11 +55,11 @@ class PythonBackend(QtCore.QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         root_backend = get_root_backend()
-        root_backend.unhandledActionStep.connect(self.onUnhandledActionStep)
+        root_backend.unhandled_action_step.connect(self.on_unhandled_action_step)
         self.action_runner = root_backend.actionRunner()
 
     @QtCore.qt_slot('QStringList', str, 'QStringList', QtCore.QByteArray)
-    def onUnhandledActionStep(self, gui_run_name, step_type, gui_context_name, serialized_step):
+    def on_unhandled_action_step(self, gui_run_name, step_type, gui_context_name, serialized_step):
         """The backend has cannot handle an action step"""
         root_backend = get_root_backend()
         try:
@@ -85,9 +85,9 @@ class PythonConnection(QtCore.QObject):
     def __init__(self):
         super().__init__()
         backend = get_root_backend()
-        dgc = backend.distributedGarbageCollector()
-        dgc.request.connect(self.onRequest)
-        backend.request.connect(self.onRequest)
+        dgc = backend.distributed_garbage_collector()
+        dgc.request.connect(self.on_request)
+        backend.request.connect(self.on_request)
 
     @classmethod
     def _execute_serialized_request(cls, serialized_request, response_handler):
@@ -108,7 +108,7 @@ class PythonConnection(QtCore.QObject):
             LOGGER.error('Unhandled event in model process')
 
     @QtCore.qt_slot(QtCore.QByteArray)
-    def onRequest(self, request):
+    def on_request(self, request):
         print('Received request', request.data())
         self._execute_serialized_request(request.data(), self)
 
@@ -116,7 +116,7 @@ class PythonConnection(QtCore.QObject):
     def send_response(cls, response):
         print('send response', type(response))
         backend = get_root_backend()
-        action_runner = backend.actionRunner()
+        action_runner = backend.action_runner()
         action_runner.onResponse(QtCore.QByteArray(response._to_bytes()))
 
     def has_cancel_request(self):

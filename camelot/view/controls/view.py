@@ -33,8 +33,8 @@ import itertools
 import logging
 
 from ...admin.action import RenderHint
+from ...core.backend import get_root_backend
 from ...core.qt import QtCore, QtGui, QtWidgets
-from ..qml_view import get_qml_root_backend
 from .action_widget import AbstractActionWidget
 
 LOGGER = logging.getLogger(__name__)
@@ -100,8 +100,8 @@ class ViewWithActionsMixin(object):
     def run_action(self, action_widget, gui_context_name, model_context_name, mode):
         action_name = tuple(action_widget.property('action_route') or [])
         if len(action_name):
-            root_backend = get_qml_root_backend()
-            root_backend.runAction(
+            root_backend = get_root_backend()
+            root_backend.run_action(
                 gui_context_name, action_name, model_context_name, mode
             )
 
