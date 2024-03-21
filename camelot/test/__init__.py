@@ -151,7 +151,7 @@ class ActionMixinCase(object):
             gui_context_name, action_name, model_context_name, mode
         )
         cls._replies[tuple(gui_run_name)] = replies
-        get_root_backend().actionRunner().waitForCompletion()
+        get_root_backend().action_runner().waitForCompletion()
         return cls._recorded_steps[tuple(gui_run_name)]
 
 
