@@ -147,7 +147,7 @@ class ActionMixinCase(object):
         a blocking action step is presented.
         """
 
-        gui_run_name = get_root_backend().runAction(
+        gui_run_name = get_root_backend().run_action(
             gui_context_name, action_name, model_context_name, mode
         )
         cls._replies[tuple(gui_run_name)] = replies
@@ -205,5 +205,5 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     @classmethod
     def process(cls):
         """Wait until all events are processed and the queues of the model thread are empty"""
-        completed = get_root_backend().actionRunner().waitForCompletion()
+        completed = get_root_backend().action_runner().waitForCompletion()
         assert completed

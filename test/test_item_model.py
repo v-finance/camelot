@@ -409,7 +409,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
         self.qt_parent = QtCore.QObject()
-        self.item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        self.item_model = get_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         self.item_model.setValue(self.model_context_name)
         self.columns = self.admin.list_display
         self.item_model.setColumns(self.columns)
@@ -605,7 +605,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         # on this list should be reflected in the original list
         self._load_data(self.item_model)
         attribute_model_context_name = self._data(0, 2, self.item_model)
-        attribute_item_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        attribute_item_model = get_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
         attribute_item_model.setValue(attribute_model_context_name)
         attribute_item_model.setColumns(['value'])
         self._load_data(attribute_item_model)
