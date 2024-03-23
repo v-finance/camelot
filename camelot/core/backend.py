@@ -5,6 +5,7 @@ from camelot.core.qt import QtWidgets, QtCore
 from ..admin.action.base import MetaActionStep
 from ..view.requests import CancelRequest, StopProcess
 from .serializable import NamedDataclassSerializable
+from .singleton import QSingleton
 
 LOGGER = logging.getLogger(__name__)
 
@@ -75,10 +76,12 @@ class PythonBackend(QtCore.QObject):
             root_backend.action_step_result_valid(gui_run_name, None, False, str(e))
 
 
-class PythonConnection(QtCore.QObject):
+class PythonConnection(QtCore.QObject, metaclass=QSingleton):
     """Use python to connect to a server, this is done by using
     the PythonRootBackend, and lister for signals from the action runner
-    and the dgc
+    and the dgc.  As any instance of this class listens to requests for the
+    server, only one instance of this class should exist, to avoid sending
+    multiple responses for the same request to the client.
     """
 
     def __init__(self):
