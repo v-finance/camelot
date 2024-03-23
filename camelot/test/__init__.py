@@ -200,7 +200,7 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
             result = replies.get(step_cls)
             # the result needs to be convertible to a QJsonValue
             assert isinstance(result, (dict, int, float, str, list, type(None)))
-            get_root_backend().actionStepResultValid(gui_run_name, result, False, "")
+            get_root_backend().action_step_result_valid(gui_run_name, result, False, "")
 
     @classmethod
     def process(cls):
