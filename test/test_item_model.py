@@ -409,7 +409,7 @@ class ItemModelCase(RunningProcessCase, ItemModelCaseMixin):
         self.admin = self.app_admin.get_related_admin(A)
         self.admin_route = self.admin.get_admin_route()
         self.qt_parent = QtCore.QObject()
-        self.item_model = get_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        self.item_model = get_root_backend().create_model(get_settings_group(self.admin_route), self.qt_parent)
         self.item_model.setValue(self.model_context_name)
         self.columns = self.admin.list_display
         self.item_model.setColumns(self.columns)
