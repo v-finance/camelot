@@ -45,7 +45,7 @@ from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..core.backend import get_root_backend
 from ..view.model_process import ModelProcess
-from ..view import model_thread, action_steps
+from ..view import action_steps
 
 has_programming_error = False
 
@@ -168,7 +168,6 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     def setUpClass(cls):
         cls.thread = cls.process_cls()
         assert isinstance(cls.thread, ModelProcess)
-        model_thread._model_thread_.insert(0, cls.thread)
         cls._recorded_steps = collections.defaultdict(list)
         cls._replies = collections.defaultdict(dict)
         get_root_backend().actionStepped.connect(cls._record_step)
@@ -180,7 +179,6 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
         try:
             cls.process()
         finally:
-            model_thread._model_thread_.remove(cls.thread)
             cls.thread.stop()
 
     def tearDown(self):

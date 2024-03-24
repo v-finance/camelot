@@ -2,7 +2,6 @@ import logging
 import json
 
 from camelot.core.qt import QtWidgets, QtCore
-from ..admin.action.base import MetaActionStep
 from ..view.requests import CancelRequest, StopProcess
 from .serializable import NamedDataclassSerializable
 from .singleton import QSingleton
@@ -51,6 +50,7 @@ class PythonBackend(QtCore.QObject):
     """
     Dispatch requests from the root backend that cannot be handled
     by the root backend to this python backend object.
+    @todo : move this class to the view classes, as it is part of the ui.
     """
 
     def __init__(self, parent=None):
@@ -61,6 +61,7 @@ class PythonBackend(QtCore.QObject):
     @QtCore.qt_slot('QStringList', str, 'QStringList', QtCore.QByteArray)
     def on_unhandled_action_step(self, gui_run_name, step_type, gui_context_name, serialized_step):
         """The backend has cannot handle an action step"""
+        from ..admin.action.base import MetaActionStep
         root_backend = get_root_backend()
         try:
             step_cls = MetaActionStep.action_steps[step_type]

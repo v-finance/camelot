@@ -423,9 +423,8 @@ with a view.
         objects.  This generator can be called in the *model thread*.
         
         :param context:  An object of type
-            :class:`camelot.admin.action.ModelContext`, which is context 
-            of this action available in the model_thread.  What is in the 
-            context depends on how the action was called.
+            :class:`camelot.admin.action.ModelContext`.
+            What is in the  context depends on how the action was called.
         """
         yield
 

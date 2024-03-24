@@ -29,12 +29,9 @@
 
 import contextlib
 import logging
-import time
 
-from ..core.naming import CompositeName
-from ..core.qt import QtGui, is_deleted
+from ..core.qt import is_deleted
 from . import gui_naming_context
-from camelot.admin.action.base import MetaActionStep
 
 LOGGER = logging.getLogger('camelot.view.action_runner')
 
@@ -73,69 +70,3 @@ def hide_progress_dialog(gui_context_name):
             progress_dialog.setMinimumDuration(original_minimum_duration)
             if original_state == False:
                 progress_dialog.show()
-
-gui_run_names = gui_naming_context.bind_new_context('gui_run')
-
-class GuiRun(object):
-    """
-    Client side information and statistics of an ongoing action run
-    """
-
-    def __init__(
-        self,
-        gui_context_name: CompositeName,
-        action_name: CompositeName,
-        model_context_name: CompositeName,
-        mode
-        ):
-        gui_naming_context.validate_composite_name(gui_context_name)
-        gui_naming_context.validate_composite_name(action_name)
-        gui_naming_context.validate_composite_name(model_context_name)
-        self.gui_context_name = gui_context_name
-        self.action_name = action_name
-        self.model_context_name = model_context_name
-        self.mode = mode
-        self.started_at = time.time()
-        self.last_update = self.started_at
-        self.steps = []
-        self.server = None
-
-    @property
-    def step_count(self):
-        return len(self.steps)
-
-    def time_running(self):
-        """
-        :return: the time the action has been running
-        """
-        return time.time() - self.started_at
-
-    def time_idle(self):
-        """
-        :return: the time the action has been running
-        """
-        return time.time() - self.last_update
-
-    def handle_action_step(self, action_step):
-        self.steps.append(type(action_step).__name__)
-        return action_step.gui_run(self.gui_context_name)
-
-    def handle_serialized_action_step(self, step_type, serialized_step):
-        self.steps.append(step_type)
-        self.last_update = time.time()
-        cls = MetaActionStep.action_steps[step_type]
-        if cls.blocking==True:
-            app = QtGui.QGuiApplication.instance()
-            if app.platformName() == "offscreen":
-                # When running tests in offscreen mode, print the exception and exit with -1 status
-                print("Blocking action step occurred while executing an action:")
-                print()
-                print("======================================================================")
-                print()
-                print("Type: {}".format(step_type))
-                print("Detail: {}".format(serialized_step))
-                print()
-                print("======================================================================")
-                print()
-                app.exit(-1)
-        return cls.gui_run(self.gui_context_name, serialized_step)
