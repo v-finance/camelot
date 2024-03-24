@@ -383,7 +383,6 @@ class Exit( Action ):
     def model_run( self, model_context, mode ):
         from camelot.view.action_steps.application import Exit
         yield Exit()
-        raise SystemExit()
 
 exit_name = application_action_context.bind(Exit.name, Exit(), True)
 

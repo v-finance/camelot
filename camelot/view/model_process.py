@@ -58,7 +58,9 @@ class ModelProcess(spawned_mp.Process):
         return state
 
     def start(self):
-        get_root_backend().action_runner().request.connect(self.post)
+        rb = get_root_backend()
+        rb.action_runner().request.connect(self.post)
+        rb.stop.connect(self.stop)
         super().start()
 
     def initialize(self):
@@ -90,6 +92,7 @@ class ModelProcess(spawned_mp.Process):
                 traceback.print_exc()
             except SystemExit:
                 LOGGER.info('Terminating')
+                raise
             except:
                 LOGGER.error('Unhandled event in model process')
             finally:
