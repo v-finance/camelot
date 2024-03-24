@@ -146,7 +146,6 @@ class ActionMixinCase(object):
         Runs an action and simulates replies by the user each time
         a blocking action step is presented.
         """
-        raise Exception('this does not work yet with blocking steps')
         gui_run_name = get_root_backend().run_action(
             gui_context_name, action_name, model_context_name, mode
         )
