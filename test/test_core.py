@@ -978,8 +978,8 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
             (Decimal('0.0'),  ('constant', 'decimal', '0')), # Should remove trailing zeros.
             (Decimal('3.5'),  ('constant', 'decimal', '3.5')),
             (Decimal('4.7500'),('constant', 'decimal', '4.75')),
-            (obj1,            ('object', str(id(obj1)))),
-            (obj2,            ('object', str(id(obj2)),)),
+            (obj1,            ('object', str(hash(obj1)))),
+            (obj2,            ('object', str(hash(obj2)),)),
             (entity1,         ('entity', 'organization', session_id, str(entity1.id))),
             (entity2,         ('entity', 'person', session_id, str(entity2.id))),
             (self.binary_entity_1, ('entity', 'composite_pk_entity', session_id, str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))),
