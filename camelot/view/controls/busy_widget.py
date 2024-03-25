@@ -27,9 +27,9 @@
 #
 #  ============================================================================
 
+from ...core.backend import get_root_backend
 from ...core.qt import QtCore, QtWidgets
-from camelot.view.art import Pixmap
-from ..action_runner import action_runner
+from ..art import Pixmap
 
 working_pixmap = Pixmap( 'process-working.png' )
 
@@ -49,7 +49,7 @@ class BusyWidget(QtWidgets.QLabel):
         self.highlighted_orb = 0
         self.timer = None
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding )
-        action_runner.busy.connect(self.set_busy)
+        get_root_backend().action_runner().busy.connect(self.set_busy)
 
     @QtCore.qt_slot(bool)
     def set_busy(self, busy_state):

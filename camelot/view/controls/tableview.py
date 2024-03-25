@@ -31,7 +31,6 @@
 
 import logging
 
-from camelot.view.model_thread import object_thread
 from ...core.qt import QtCore, QtGui, QtWidgets, Qt
 
 
@@ -59,7 +58,6 @@ class TableWidget(QtWidgets.QTableView):
     def __init__(self, lines_per_row=1, parent=None):
         QtWidgets.QTableView.__init__(self, parent)
         logger.debug('create TableWidget')
-        assert object_thread(self)
         self._columns_changed = dict()
         self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.SelectedClicked |
@@ -102,7 +100,6 @@ class TableWidget(QtWidgets.QTableView):
 
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
-        assert object_thread(self)
         for logical_index, new_width in self._columns_changed.items():
             if self.horizontalHeader().isSectionHidden(logical_index):
                 # don't save the width of a hidden section, since this will
@@ -141,13 +138,11 @@ class TableWidget(QtWidgets.QTableView):
         # there is no need to start the timer, since this is done by the
         # QAbstractItemView itself for doing the layout, here we only store
         # which column needs to be saved.
-        assert object_thread(self)
         self._columns_changed[logical_index] = new_width
 
     @QtCore.qt_slot(int)
     def horizontal_section_clicked(self, logical_index):
         """Update the sorting of the model and the header"""
-        assert object_thread(self)
         header = self.horizontalHeader()
         order = Qt.SortOrder.AscendingOrder
         if not header.isSortIndicatorShown():
@@ -167,14 +162,12 @@ class TableWidget(QtWidgets.QTableView):
 
         those assertion failures only exist in QT debug builds.
         """
-        assert object_thread(self)
         current_index = self.currentIndex()
         if not current_index.isValid():
             return
         self.closePersistentEditor(current_index)
 
     def setModel(self, model):
-        assert object_thread(self)
         #
         # An editor might be open that is no longer available for the new
         # model.  Not closing this editor, results in assertion failures
@@ -252,7 +245,6 @@ class TableWidget(QtWidgets.QTableView):
         self.model().changeSelection([current.row(), current.row()], current.row(), current.column())
 
     def keyPressEvent(self, e):
-        assert object_thread(self)
         if self.hasFocus() and e.key() in (QtCore.Qt.Key.Key_Enter,
                                            QtCore.Qt.Key.Key_Return):
             self.keyboard_selection_signal.emit()

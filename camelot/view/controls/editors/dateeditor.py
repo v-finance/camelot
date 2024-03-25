@@ -114,7 +114,6 @@ class DateEditor(CustomEditor):
             line_edit.setFocus()
 
     def line_edit_finished(self):
-        self.setProperty( 'value', self.get_value() )
         self.valueChanged.emit()
         self.editingFinished.emit()
 
@@ -122,12 +121,10 @@ class DateEditor(CustomEditor):
         # explicitely set value on focus out to format the date in case
         # it was entered unformatted
         value = self.get_value()
-        self.set_value( value )
+        self.set_value(value)
         self.editingFinished.emit()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
-        self.setProperty( 'value', value )
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             if value:
@@ -143,13 +140,14 @@ class DateEditor(CustomEditor):
 
     def get_value(self):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
+        value = None
         if line_edit is not None:
             try:
                 date = date_from_string( str( line_edit.text() ) )
                 value = QtCore.QDate(date) if date is not None else None
             except ParsingError:
-                value = None
-        return CustomEditor.get_value(self) or value
+                pass
+        return value
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)

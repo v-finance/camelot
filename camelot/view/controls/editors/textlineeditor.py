@@ -84,7 +84,6 @@ class TextLineEditor(CustomEditor):
         self.editingFinished.emit()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         self._value = value
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
@@ -95,10 +94,6 @@ class TextLineEditor(CustomEditor):
         return value
 
     def get_value(self):
-        value_loading = CustomEditor.get_value(self)
-        if value_loading is not None:
-            return value_loading
-
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
             value = str(text_input.text())

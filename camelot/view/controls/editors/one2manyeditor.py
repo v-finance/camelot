@@ -218,9 +218,6 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
                     table.setColumnWidth(i, txtwidth)
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
-        #if collection is None:
-            #collection = ListModelProxy([])
         model = self.get_model()
         if model is not None:
             # even if the collection 'is' the same object as the current

@@ -33,8 +33,7 @@ from .application import (
     StopProfiler,
 )
 from .change_object import ChangeObject, ChangeObjects
-from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
-                        ToPreviousForm, HighlightForm)
+from .form_view import OpenFormView, HighlightForm
 from .gui import (
     CloseView, MessageBox, Refresh, SelectItem
 )
@@ -98,12 +97,8 @@ __all__ = [
     Sort.__name__,
     StartProfiler.__name__,
     StopProfiler.__name__,
-    ToFirstForm.__name__,
     ToFirstRow.__name__,
-    ToLastForm.__name__,
     ToLastRow.__name__,
-    ToNextForm.__name__,
-    ToPreviousForm.__name__,
     Update.__name__,
     UpdateActionsState.__name__,
     UpdateObjects.__name__,

@@ -27,19 +27,12 @@
 #
 #  ============================================================================
 
-"""Camelot includes editors for various types of fields.  Each editor at least supports
-these features :
-
+"""Camelot includes editors for various types of fields.
+Each editor at least supports these features :
 
  * a set_value method to set a python type as the editor's value
 
  * a get_value method to retrieve a python type from the editor
-
- * the ValueLoading state : an editor has as its value ValueLoading upon construction and
-the editor's value can be set to ValueLoading if the value that should be displayed is
-not yet available in the GUI thread, but is still on it's way from the model to the GUI.
-This means that once set_value( ValueLoading ) is called, get_value() will always return
-ValueLoading until set_value is called with another argument.
 
 """
 

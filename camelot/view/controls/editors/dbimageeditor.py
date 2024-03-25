@@ -84,7 +84,7 @@ class DbImageEditor(CustomEditor):
         self.setLayout( layout )
         self.clear_image()
         QtWidgets.QApplication.clipboard().dataChanged.connect( self.clipboard_data_changed )
-        self.clipboard_data_changed()        
+        self.clipboard_data_changed()
         
         if self.preview_width != 0:
             self.label.setMinimumWidth(self.preview_width)
@@ -93,9 +93,9 @@ class DbImageEditor(CustomEditor):
             vertical_size_policy = QtWidgets.QSizePolicy.Policy.Fixed
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, vertical_size_policy)
         self.label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, vertical_size_policy)
+        self.value = None
    
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         self.value = value
         clear_button = self.findChild(QtWidgets.QWidget, 'clear')
         copy_button = self.findChild(QtWidgets.QWidget, 'copy')
@@ -108,11 +108,11 @@ class DbImageEditor(CustomEditor):
             thumbnail = image.scaled(self.preview_width, self.preview_height, Qt.AspectRatioMode.KeepAspectRatio)
             self.set_image(thumbnail)
         else:
-            self.clear_image()               
+            self.clear_image()
         return value
     
     def get_value(self):
-        return CustomEditor.get_value(self) or self.value
+        return self.value
     
     @QtCore.qt_slot()
     def clear(self): 

@@ -93,6 +93,9 @@ class AbstractRequest(NamedDataclassSerializable):
         except NameNotFoundException:
             LOGGER.error('Run name not found : {} for request {}'.format(run_name, request_data))
             return
+        if run is None:
+            LOGGER.error('Request contains no run {}'.format(request_data))
+            return
         gui_run_name = run.gui_run_name
         try:
             result = cls._next(run, request_data)
@@ -230,3 +233,16 @@ class CancelAction(AbstractRequest):
 class StopProcess(AbstractRequest):
     """Sentinel task to end all tasks to be executed by a process"""
     pass
+
+@dataclass
+class Unbind(AbstractRequest):
+
+    names: typing.List[CompositeName]
+
+    @classmethod
+    def execute(cls, request_data, response_handler, cancel_handler):
+        for lease in request_data['names']:
+            try:
+                initial_naming_context.unbind(tuple(lease))
+            except NameNotFoundException:
+                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))

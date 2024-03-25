@@ -105,10 +105,6 @@ shortcut confusion and reduce the number of status updates.
     help_actions = []
     export_actions = [ list_action.export_spreadsheet ]
     form_toolbar_actions = [ form_action.close_form,
-                             form_action.to_first_form,
-                             form_action.to_previous_form,
-                             form_action.to_next_form,
-                             form_action.to_last_form,
                              application_action.refresh,
                              form_action.show_history ]
     onetomany_actions = [

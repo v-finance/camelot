@@ -66,10 +66,11 @@ class NoteEditor(QtWidgets.QLabel, AbstractCustomEditor):
         self.setAutoFillBackground(True)
 
     def set_value( self, value ):
-        value = super( NoteEditor, self ).set_value( value )
-        self.setVisible( value != None )
-        if value:
-            self.setText( str( value ) )
+        self.setVisible( value is not None )
+        if value is not None:
+            self.setText(str(value))
+        else:
+            self.setText('')
 
     def set_background_color(self, background_color):
         super().set_background_color(background_color or color)

@@ -29,8 +29,6 @@
 
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 
-from camelot.view.proxy import ValueLoading
-
 def set_background_color_palette(widget, background_color):
     """
     Set the palette of a widget to have a cerain background color.
@@ -41,7 +39,7 @@ def set_background_color_palette(widget, background_color):
     # WARNING : Changing this code requires extensive testing of all editors
     # in all states on all platforms (Mac, Linux, Win XP, Win Vista, Win 7)
     #
-    if background_color not in (None, ValueLoading):
+    if background_color is not None:
         palette = QtGui.QPalette(widget.palette())
         for x in [QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorGroup.Inactive,
                   QtGui.QPalette.ColorGroup.Disabled]:
@@ -63,8 +61,6 @@ def set_background_color_palette(widget, background_color):
 class AbstractCustomEditor(object):
     """
     Helper class to be used to build custom editors.
-    This class provides functionality to store and retrieve
-    `ValueLoading` as an editor's value.
 
     Guidelines for implementing CustomEditors :
 
@@ -81,7 +77,6 @@ class AbstractCustomEditor(object):
     """
 
     def __init__(self):
-        self.setProperty('value_loading', True)
         # self.isVisible() is not updated directly (e.g. the ancestors are not (yet) visible)
         self._visible = True
         self.nullable = True
@@ -93,19 +88,6 @@ class AbstractCustomEditor(object):
         # immediately update the attributes of the label
         self.field_label.set_visible(self._visible)
         self.field_label.set_nullable(self.nullable)
-
-    def set_value(self, value):
-        if value is ValueLoading:
-            self.setProperty('value_loading', True)
-            return None
-        else:
-            self.setProperty('value_loading', False)
-            return value
-
-    def get_value(self):
-        if self.property('value_loading'):
-            return ValueLoading
-        return None
 
     def set_editable(self, editable):
         pass
@@ -161,9 +143,7 @@ class AbstractCustomEditor(object):
 class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     """
     Base class for implementing custom editor widgets.
-    This class provides dual state functionality.  Each
-    editor should have the posibility to have `ValueLoading`
-    as its value, specifying that no value has been set yet.
+    This class provides dual state functionality.
     """
 
     editingFinished = QtCore.qt_signal()

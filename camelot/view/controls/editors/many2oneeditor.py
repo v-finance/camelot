@@ -175,15 +175,11 @@ class Many2OneEditor(CustomEditor):
         self.search_input.setText(self.verbose_name or u'')
 
     def set_value(self, value):
-        """:param value: either ValueLoading, or a function that returns None
-        or the entity to be shown in the editor"""
         value = list(value if value is not None else none_name)
         self.last_highlighted_name = None
         self.name = value
 
     def get_value(self):
-        """:return: a function that returns the selected entity or ValueLoading
-        or None"""
         return self.name
 
     def set_verbose_name(self, verbose_name):

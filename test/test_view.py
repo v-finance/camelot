@@ -13,13 +13,11 @@ from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
 from .test_item_model import (
-    A, QueryQStandardItemModelMixinCase,
+    A, QueryQStandardItemModelMixinCase, ExampleItemModelProcess,
     setup_query_proxy_name, setup_query_proxy_small_columns_name,
     setup_query_proxy_equal_columns_name
 )
-from .test_model import (
-    ExampleModelMixinCase, load_sample_data_name, setup_sample_model_name
-)
+from .test_model import ExampleModelMixinCase
 from camelot.admin.action import GuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
@@ -43,7 +41,6 @@ from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
 from camelot.core.backend import get_root_backend
-from camelot.view.proxy import ValueLoading
 from camelot.view.utils import get_settings_group
 from camelot_example.application_admin import MyApplicationAdmin
 
@@ -70,7 +67,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
   - get_value
   - set_value
-  - support for ValueLoading
+  - support for None
   """
 
     images_path = static_images_path
@@ -88,11 +85,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         """Test the basic functions of an editor that are needed to integrate
         well with Camelot and Qt
         """
-        #
-        # The editor should remember its when its value is ValueLoading
-        #
-        #editor.set_value( ValueLoading )
-        #self.assertEqual( editor.get_value(), ValueLoading )
         #
         # When a value is set, no editingFinished should be called
         #
@@ -118,7 +110,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_DateEditor(self):
         editor = editors.DateEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         editor.set_value( QtCore.QDate(datetime.date(1980, 12, 31)) )
@@ -126,18 +117,20 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
         self.assert_valid_editor( editor, QtCore.QDate(datetime.date(1980, 12, 31)) )
 
+    def test_DbImageEditor(self):
+        editor = editors.DbImageEditor(parent=None)
+        self.assertEqual(editor.get_value(), None)
+        editor.set_value(None)
+        self.assertEqual(editor.get_value(), None)
+
     def test_TextLineEditor(self):
         editor = editors.TextLineEditor(parent=None, length=10)
-        self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), u'za coś tam' )
-        editor.set_value( ValueLoading )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor = editors.TextLineEditor(parent=None, length=10)
         editor.set_editable( False )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( u'za coś tam' )
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( None )
@@ -176,7 +169,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_LocalFileEditor( self ):
         editor = editors.LocalFileEditor( parent=None )
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( '/home/lancelot/quests.txt' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), '/home/lancelot/quests.txt' )
@@ -185,16 +178,16 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_BoolEditor(self):
         editor = editors.BoolEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( True )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
         self.assertEqual( editor.get_value(), False )
-        editor.set_value( ValueLoading )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
         editor = editors.BoolEditor()
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( True )
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
@@ -286,7 +279,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_FileEditor(self):
         editor = editors.FileEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         self.grab_default_states( editor )
         self.assert_valid_editor( editor, StoredFile( storage, 'test.txt').verbose_name )
 
@@ -308,7 +301,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
@@ -319,7 +312,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_editable(True)
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
@@ -373,7 +366,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0 )
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( 3 )
@@ -428,9 +421,12 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.grab_default_states( editor )
         self.assert_valid_editor(editor, initial_naming_context._bind_object(3))
 
+    def test_One2ManyEditor(self):
+        editors.One2ManyEditor(parent=None, admin_route=['foo', 'bar'])
+
     def test_RichTextEditor(self):
         editor = editors.RichTextEditor(parent=None)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( u'<h1>Rich Text Editor</h1>' )
         self.grab_default_states( editor )
         self.assertTrue( u'Rich Text Editor' in editor.get_value() )
@@ -438,7 +434,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def test_TextEditEditor(self):
         editor = editors.TextEditEditor(parent=None, editable=True)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 'Plain text' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'Plain text' )
@@ -447,7 +443,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_VirtualAddressEditor(self):
         editor = editors.VirtualAddressEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( ('im','test') )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(),  ('im','test') )
@@ -456,7 +452,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_MonthsEditor(self):
         editor = editors.MonthsEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual(editor.get_value(), ValueLoading)
+        self.assertEqual(editor.get_value(), None)
         editor.set_value(12)
         self.grab_default_states( editor )
         self.assertEqual(editor.get_value(),  12)
@@ -470,12 +466,7 @@ class FormTest(
 
     images_path = static_images_path
     model_context_name = ('form_test_model_context',)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
-        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
+    process_cls = ExampleItemModelProcess
 
     def setUp(self):
         super().setUp()
@@ -825,16 +816,11 @@ class ControlsTest(
     ):
     """Test some basic controls"""
 
+    process_cls = ExampleItemModelProcess
+
     images_path = static_images_path
     model_context_name = ('controls_test_model_context',)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name, mode=True)
-        cls.gui_run(load_sample_data_name, mode=True)
-        cls.app_admin = MyApplicationAdmin()
-        cls.process()
+    app_admin = MyApplicationAdmin()
 
     def setUp(self):
         self.gui_run(setup_query_proxy_name, mode=self.model_context_name)
@@ -914,12 +900,11 @@ class SnippetsTest(RunningProcessCase,
 
     images_path = static_images_path
     model_context_name = ('snippets_test_model_context',)
+    process_cls = ExampleItemModelProcess
 
     @classmethod
     def setUpClass(cls):
-        super(SnippetsTest, cls).setUpClass()
-        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
-        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
+        super().setUpClass()
         cls.gui_run(setup_query_proxy_name, mode=cls.model_context_name)
         cls.app_admin = ApplicationAdmin()
         cls.gui_context = GuiContext()

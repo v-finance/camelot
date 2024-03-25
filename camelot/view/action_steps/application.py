@@ -27,11 +27,9 @@
 #
 #  ============================================================================
 
-import cProfile
 from dataclasses import dataclass, field, InitVar
 import json
 import logging
-import pstats
 import typing
 
 from ...admin.action.base import ActionStep, State, ModelContext
@@ -45,7 +43,7 @@ from ...core.serializable import DataclassSerializable
 from ...model.authentication import AuthenticationMechanism
 from .. import gui_naming_context
 from camelot.core.backend import cpp_action_step, is_cpp_gui_context_name
-from .open_file import OpenFile
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -265,30 +263,8 @@ class StartProfiler(ActionStep, DataclassSerializable):
     """Start profiling of the gui
     """
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        gui_profile = cProfile.Profile()
-        gui_naming_context.bind(('gui_profile',), gui_profile)
-        gui_profile.enable()
-        LOGGER.info('Gui profiling started')
 
 @dataclass
 class StopProfiler(ActionStep, DataclassSerializable):
     """Start profiling of the gui
     """
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        gui_profile = gui_naming_context.resolve(('gui_profile',))
-        gui_profile.disable()
-        cls.write_profile(gui_profile, 'gui')
-
-    @classmethod
-    def write_profile(cls, profile, suffix):
-        stats = pstats.Stats(profile)
-        stats.sort_stats('cumulative')
-        LOGGER.info('Begin {} profile info'.format(suffix))
-        stats.print_stats()
-        LOGGER.info('End {} profile info'.format(suffix))
-        filename = OpenFile.create_temporary_file('-{0}.prof'.format(suffix))
-        stats.dump_stats(filename)
