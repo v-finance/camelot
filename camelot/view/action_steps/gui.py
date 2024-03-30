@@ -246,7 +246,11 @@ class MessageBox( ActionStep, DataclassSerializable ):
 
     @classmethod
     def deserialize_result(cls, gui_context_name, result):
-        return QtWidgets.QMessageBox.StandardButton(result["button"])
+        # the result might be empty in case step was send as non-blocking
+        button = result.get("button")
+        if button is None:
+            return
+        return QtWidgets.QMessageBox.StandardButton(button)
 
     @classmethod
     def from_exception(cls, logger, text, exception):
