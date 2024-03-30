@@ -58,15 +58,15 @@ class PythonBackend(QtCore.QObject):
         root_backend = get_root_backend()
         root_backend.unhandled_action_step.connect(self.on_unhandled_action_step)
 
-    @QtCore.qt_slot('QStringList', str, 'QStringList', QtCore.QByteArray)
-    def on_unhandled_action_step(self, gui_run_name, step_type, gui_context_name, serialized_step):
+    @QtCore.qt_slot('QStringList', str, 'QStringList', bool, QtCore.QByteArray)
+    def on_unhandled_action_step(self, gui_run_name, step_type, gui_context_name, blocking, serialized_step):
         """The backend has cannot handle an action step"""
         from ..admin.action.base import MetaActionStep
         root_backend = get_root_backend()
         try:
             step_cls = MetaActionStep.action_steps[step_type]
             result = step_cls.gui_run(tuple(gui_context_name), bytes(serialized_step))
-            if step_cls.blocking == True:
+            if blocking == True:
                 root_backend.action_step_result_valid(gui_run_name, result, False, "")
         except CancelRequest:
             root_backend.action_step_result_valid(gui_run_name, None, True, "")
