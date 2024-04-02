@@ -30,7 +30,6 @@
 
 
 from ...core.qt import QtWidgets, Qt
-from camelot.view.model_thread import object_thread
 from camelot.core.utils import ugettext_lazy as _
 
 
@@ -50,7 +49,6 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         self.set_layouts()
 
     def set_layouts(self):
-        assert object_thread( self )
         self._vlayout = QtWidgets.QVBoxLayout()
         self._vlayout.setSpacing(0)
         self._vlayout.setContentsMargins(0,0,0,0)

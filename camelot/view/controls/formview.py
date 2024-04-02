@@ -35,12 +35,12 @@ import typing
 LOGGER = logging.getLogger('camelot.view.controls.formview')
 
 from ...admin.action import RenderHint
+from ...core.backend import get_root_backend
 from ...core.qt import QtCore, QtWidgets, Qt, is_deleted
 from ...core.serializable import NamedDataclassSerializable
 
 from ...core.item_model import ActionModeRole
 from .. import gui_naming_context
-from ..action_runner import action_runner
 from camelot.admin.action.base import GuiContext
 from camelot.core.item_model import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
@@ -378,9 +378,9 @@ class FormView(AbstractView, GuiContext):
     @QtCore.qt_slot()
     def validate_close( self ):
         self.widget_mapper.submit()
-        action_runner.run_action(
-            self.close_route, self.gui_context_name,
-            self.model.value(), None
+        root_backend = get_root_backend()
+        root_backend.run_action(
+            self.gui_context_name, self.close_route, self.model.value(), None
         )
 
     def close_view( self, accept ):

@@ -31,7 +31,7 @@ import cProfile
 import logging
 import itertools
 
-from ...core.naming import initial_naming_context, NameNotFoundException
+from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from .base import RenderHint
@@ -345,22 +345,6 @@ Restore the database to disk
                 yield step
 
 
-class Unbind(Action):
-
-    name = 'unbind'
-
-    def model_run(self, model_context, mode):
-        from camelot.view.action_steps import UpdateProgress
-        if len(mode) == 0:
-            yield UpdateProgress()
-        for lease in mode:
-            try:
-                initial_naming_context.unbind(tuple(lease))
-            except NameNotFoundException:
-                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))
-
-unbind_name = application_action_context.bind(Unbind.name, Unbind(), True)
-
 class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging
     purposes, to evaluate where an application spends its time.
@@ -399,7 +383,6 @@ class Exit( Action ):
     def model_run( self, model_context, mode ):
         from camelot.view.action_steps.application import Exit
         yield Exit()
-        raise SystemExit()
 
 exit_name = application_action_context.bind(Exit.name, Exit(), True)
 
