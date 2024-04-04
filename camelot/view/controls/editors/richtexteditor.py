@@ -273,10 +273,12 @@ class RichTextEditor(CustomEditor, WideEditor):
             self.textedit.setTextColor(color)
 
     def get_value(self):
+        if self.textedit.toPlainText()=='':
+            return None
         from xml.dom import minidom
         tree = minidom.parseString(str(self.textedit.toHtml()).encode('utf-8'))
         value = u''.join([node.toxml() for node in tree.getElementsByTagName('html')[0].getElementsByTagName('body')[0].childNodes])
-        return CustomEditor.get_value(self) or value
+        return value
 
     def set_document( self, document ):
         """
@@ -285,8 +287,7 @@ class RichTextEditor(CustomEditor, WideEditor):
         self.textedit.setDocument( document )
 
     def set_value( self, value ):
-        value = CustomEditor.set_value(self, value)
-        if value!=None:
+        if value is not None:
             if str(self.textedit.toHtml())!=value:
                 self.textedit.setHtml(value)
         else:

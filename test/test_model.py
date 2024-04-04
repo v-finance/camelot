@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import unittest
 from unittest.mock import Mock, patch
@@ -8,21 +9,31 @@ from sqlalchemy import create_engine, orm, schema, types
 from . import unit_test_context
 from .test_orm import TestMetaData
 
-from camelot.admin.action import Action
+from camelot.admin.action import (
+    Action, Mode, list_action, list_filter, application_action, form_action
+)
+from camelot.admin.action.logging import ChangeLogging
 from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.exception import UserException
+from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, Session
+from camelot.core.qt import QtGui
 from camelot.core.sql import metadata
+from camelot.core.utils import ugettext_lazy as _
 from camelot.model import authentication, memento, party, type_and_status
 from camelot.model.authentication import AuthenticationMechanism, AuthenticationGroup
 from camelot.model.fixture import Fixture, FixtureVersion
 from camelot.model.i18n import Translation
 from camelot.model.party import Person
+from camelot.test import test_context
 from camelot.test.action import MockModelContext
 from camelot.view.import_utils import XlsReader
 from camelot.view import action_steps
 from camelot_example.fixtures import load_movie_fixtures
+
+LOGGER = logging.getLogger(__name__)
 
 app_admin = ApplicationAdmin()
 
@@ -96,11 +107,76 @@ class ExampleModelMixinCase(object):
         AuthenticationMechanism.authenticate(
             metadata.bind, 'database', 'user', ['admin']
         )
+        return model_engine
 
     @classmethod
     def tear_down_sample_model(cls):
         cls.session.expunge_all()
         metadata.bind = None
+
+
+class CustomAction(Action):
+    name = 'custom_test_action'
+    verbose_name = 'Custom Action'
+    shortcut = QtGui.QKeySequence.StandardKey.New
+    modes = [
+        Mode('mode_1', _('First mode')),
+        Mode('mode_2', _('Second mode')),
+    ]
+
+
+custom_action_name = test_context.bind((CustomAction.name,), CustomAction())
+
+group_box_filter_name = unit_test_context.bind(('group_box',), list_filter.GroupBoxFilter(Person.last_name, exclusive=True))
+combo_box_filter_name = unit_test_context.bind(('combo_box',), list_filter.ComboBoxFilter(Person.last_name))
+to_first_row_name = unit_test_context.bind(('to_first_row',), list_action.ToFirstRow())
+to_last_row_name = unit_test_context.bind(('to_last_row',), list_action.ToLastRow())
+export_spreadsheet_name = unit_test_context.bind(('export_spreadsheet',), list_action.ExportSpreadsheet())
+import_from_file_name = unit_test_context.bind(('import_from_file',), list_action.ImportFromFile())
+set_filters_name = unit_test_context.bind(('set_filters',), list_action.SetFilters())
+open_form_view_name = unit_test_context.bind(('open_form_view',), list_action.OpenFormView())
+remove_selection_name = unit_test_context.bind(('remove_selection',), list_action.RemoveSelection())
+close_form_name = unit_test_context.bind(('close_form',), form_action.CloseForm())
+backup_action_name = unit_test_context.bind(('backup',), application_action.Backup())
+restore_action_name = unit_test_context.bind(('restore',), application_action.Restore())
+change_logging_action_name = unit_test_context.bind(('change_logging',), ChangeLogging())
+segmentation_fault_action_name = unit_test_context.bind(('segmentation_fault',), application_action.SegmentationFault())
+refresh_action_name = unit_test_context.bind(('refresh',), application_action.Refresh())
+
+class ModelContextAction(Action):
+    name = 'model_context_action'
+    verbose_name = 'Model context methods'
+
+    def model_run(model_context, mode):
+        for obj in model_context.get_collection():
+            yield action_steps.UpdateProgress('obj in collection {}'.format(obj))
+        for obj in model_context.get_selection():
+            yield action_steps.UpdateProgress('obj in selection {}'.format(obj))
+        model_context.get_object()
+
+model_context_action_name = test_context.bind((ModelContextAction.name,), ModelContextAction())
+
+class SendDocumentAction( Action ):
+
+    def model_run( self, model_context, mode ):
+        methods = [
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By E-mail'),
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By Fax'),
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By postal mail')
+        ]
+        method = yield action_steps.SelectItem(
+            methods,
+            value=initial_naming_context._bind_object('email')
+        )
+        LOGGER.info('selected {}'.format(method))
+
+send_document_action_name = unit_test_context.bind(('send_document_action',), SendDocumentAction())
 
 
 class ModelCase(unittest.TestCase, ExampleModelMixinCase):
@@ -188,10 +264,19 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.session = Session()
         self.session.close()
 
-    def test_party( self ):
+    def test_party(self):
         p = party.Party()
         self.assertFalse(p.name)
-        
+
+    def test_ordering(self):
+        p1 = party.Party()
+        p2 = party.Party()
+        self.assertNotEqual(p1, p2)
+        self.assertTrue((p1 < p2) or (p2 < p1))
+        self.assertTrue((p1 > p2) or (p2 > p1))
+        self.assertTrue(p1 <= p1)
+        self.assertTrue(p1 >= p1)
+
     def test_geographic_boundary( self ):
         belgium = party.Country.get_or_create( code = u'BE', 
                                                name = u'Belgium' )

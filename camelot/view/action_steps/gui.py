@@ -233,7 +233,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
         result = message_box.exec()
         if result == QtWidgets.QMessageBox.StandardButton.Cancel:
             raise CancelRequest()
-        return result
+        return {"button": result}
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
@@ -243,6 +243,14 @@ class MessageBox( ActionStep, DataclassSerializable ):
                 return cls.show_message_box(step)
         else:
             return cls.show_message_box(step)
+
+    @classmethod
+    def deserialize_result(cls, gui_context_name, result):
+        # the result might be empty in case step was send as non-blocking
+        button = result.get("button")
+        if button is None:
+            return
+        return QtWidgets.QMessageBox.StandardButton(button)
 
     @classmethod
     def from_exception(cls, logger, text, exception):

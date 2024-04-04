@@ -75,7 +75,6 @@ class FileEditor(CustomEditor):
         self.setLayout(layout)
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         self.value = value
         if value is not None:
             self.filename.setText(value)
@@ -84,7 +83,7 @@ class FileEditor(CustomEditor):
         return value
 
     def get_value(self):
-        return CustomEditor.get_value(self) or self.value
+        return self.value
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)

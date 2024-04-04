@@ -897,8 +897,6 @@ class SetFilters(Action, AbstractModelFilter):
                 if isinstance(filter_field_strategy, (Many2OneFilter, One2ManyFilter)):
                     admin = filter_field_strategy.admin or model_context.admin.get_related_admin(filter_field_strategy.entity)
                     query = admin.get_query()
-                    if filter_field_strategy.where is not None:
-                        query = query.filter(filter_field_strategy.where)
                     objects = yield action_steps.SelectObjects(query, admin)
                     filter_value.set_operands(*objects)
                 # Other multi-ary operator filter strategies require some filter value(s) from the user to be filled in:
