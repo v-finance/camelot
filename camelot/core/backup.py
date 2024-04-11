@@ -267,9 +267,11 @@ class BackupMechanism(object):
     def update_table_after_restore(self, to_table, to_connection):
         to_dialect = to_connection.engine.url.get_dialect().name
         if to_dialect == 'postgresql':
-            for column in to_table.columns:
+            primary_key_cols = to_table.primary_key.columns.values()
+            if len(primary_key_cols) == 1:
+                column = primary_key_cols[0]
                 if not isinstance(column.type, types.Unicode) and \
-                   column.autoincrement=='auto' and column.primary_key==True and \
+                   column.autoincrement=='auto' and \
                    len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
                     column_name = column.name
                     table_name = to_table.name
