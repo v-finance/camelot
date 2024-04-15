@@ -35,6 +35,7 @@ These classes can be reused if a custom base class is needed.
 """
 
 import datetime
+import functools
 import logging
 import re
 
@@ -653,6 +654,7 @@ def entity_to_dict( entity, deep = {}, exclude = [], deep_primary_key=False ):
 
     return data    
 
+@functools.total_ordering
 class EntityBase( object ):
     """A declarative base class that adds some methods that used to be
     available in Elixir"""
@@ -706,6 +708,9 @@ class EntityBase( object ):
 
     def expunge(self, *args, **kwargs):
         return orm.object_session(self).expunge(self, *args, **kwargs)
+
+    def __lt__(self, other):
+        return id(self) < id(other)
 
     @hybrid.hybrid_property
     def query( self ):
