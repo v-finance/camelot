@@ -29,10 +29,8 @@
 import typing
 
 from camelot.admin.action import ActionStep
-from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
-from camelot.core.backend import cpp_action_step
 
 from dataclasses import dataclass, field
 

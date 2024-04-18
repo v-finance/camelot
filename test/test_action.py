@@ -371,7 +371,7 @@ class ListActionsCase(
 
     def test_import_from_file(self, filename='import_example.csv'):
         replies = {
-            action_steps.SelectFile: [os.path.join(self.example_folder, filename)],
+            action_steps.SelectFile: {'selected': [os.path.join(self.example_folder, filename)]},
             action_steps.MessageBox: {"button": QtWidgets.QMessageBox.StandardButton.Ok,},
         }
         steps = self.gui_run(import_from_file_name, self.gui_context, None, replies, model_context_name=self.model_context_name)
@@ -648,14 +648,14 @@ class ApplicationActionsCase(
         self.assertTrue(profile_selected)
 
     def test_backup_and_restore( self ):
-        replies = {action_steps.SaveFile: 'unittest-backup.db'}
+        replies = {action_steps.SaveFile: {'selected': 'unittest-backup.db'}}
         generator = self.gui_run(backup_action_name, self.gui_context, None, replies)
         file_saved = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SaveFile':
                 file_saved = True
         self.assertTrue(file_saved)
-        replies = {action_steps.SelectFile: ['unittest-backup.db']}
+        replies = {action_steps.SelectFile: {'selected': ['unittest-backup.db']}}
         generator = self.gui_run(restore_action_name, self.gui_context, None, replies)
         file_selected = False
         for step in generator:
