@@ -29,7 +29,6 @@
 
 import datetime
 import logging
-import os
 
 
 LOGGER = logging.getLogger('camelot.core.qt')
