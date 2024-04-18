@@ -108,14 +108,13 @@ class SaveFile( ActionStep, DataclassSerializable ):
     caption = _('Save')
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        with hide_progress_dialog(gui_context):
-            response = cpp_action_step(gui_context, 'SaveFile', serialized_step)
-            selected = response['selected']
-            if selected:
-                return selected
-            else:
-                raise CancelRequest()
+    def deserialize_result(cls, gui_context, response):
+        selected = response['selected']
+        if selected:
+            return selected
+        else:
+            raise CancelRequest()
+
 
 @dataclass
 class SelectDirectory(ActionStep, DataclassSerializable):

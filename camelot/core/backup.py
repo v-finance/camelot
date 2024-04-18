@@ -134,6 +134,8 @@ class BackupMechanism(object):
         """Generator function that yields tuples :
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a backup.
+
+        The reason this yields tuples and not UpdateProgress is to prevent cyclic imports.
         
         :param from_engine: a :class:`sqlalchemy.engine.Connectable` object that
             provides a connection to the database to be backed up.
@@ -200,6 +202,8 @@ class BackupMechanism(object):
         """Generator function that yields tuples :
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a restore.
+
+        The reason this yields tuples and not UpdateProgress is to prevent cyclic imports.
 
         :param to_engine: a :class:`sqlalchemy.engine.Engine` object that
             provides a connection to the database to be backed up.
