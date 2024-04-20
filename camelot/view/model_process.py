@@ -1,12 +1,11 @@
-import json
 import logging
 import multiprocessing as _mp
 
 from ..core.backend import get_root_backend
 from ..core.qt import QtCore
-from ..core.serializable import NamedDataclassSerializable, DataclassSerializable
+from ..core.serializable import DataclassSerializable
 from .responses import ActionStepped, Busy
-from .requests import StopProcess
+from .requests import StopProcess, AbstractRequest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -79,13 +78,9 @@ class ModelProcess(spawned_mp.Process):
             request = self._request_queue.get()
             response_handler.send_response(Busy(True))
             try:
-                request_type_name, request_data = json.loads(request)
-                request_type = NamedDataclassSerializable.get_cls_by_name(
-                    request_type_name
+                AbstractRequest.handle_request(
+                    request, response_handler, response_handler
                 )
-                if request_type == StopProcess:
-                    break
-                request_type.execute(request_data, response_handler, response_handler)
             except Exception as e:
                 LOGGER.error('Unhandled exception in model process', exc_info=e)
                 import traceback
