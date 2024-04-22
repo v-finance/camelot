@@ -232,7 +232,11 @@ class CancelAction(AbstractRequest):
 @dataclass
 class StopProcess(AbstractRequest):
     """Sentinel task to end all tasks to be executed by a process"""
-    pass
+
+    @classmethod
+    def execute(cls, request_data, response_handler, cancel_handler):
+        raise SystemExit(0)
+
 
 @dataclass
 class Unbind(AbstractRequest):

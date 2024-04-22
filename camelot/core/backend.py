@@ -2,8 +2,7 @@ import logging
 import json
 
 from camelot.core.qt import QtWidgets, QtCore
-from ..view.requests import CancelRequest, StopProcess
-from .serializable import NamedDataclassSerializable
+from ..view.requests import AbstractRequest, CancelRequest
 from .singleton import QSingleton
 
 LOGGER = logging.getLogger(__name__)
@@ -61,6 +60,7 @@ class PythonBackend(QtCore.QObject):
     @QtCore.qt_slot('QStringList', str, 'QStringList', bool, QtCore.QByteArray)
     def on_unhandled_action_step(self, gui_run_name, step_type, gui_context_name, blocking, serialized_step):
         """The backend has cannot handle an action step"""
+        LOGGER.debug('Unhandled action step {}, blocking : {}'.format(step_type, blocking))
         from ..admin.action.base import MetaActionStep
         root_backend = get_root_backend()
         try:
@@ -95,14 +95,9 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
     @classmethod
     def _execute_serialized_request(cls, serialized_request, response_handler):
         try:
-            request_type_name, request_data = json.loads(serialized_request)
-            request_type = NamedDataclassSerializable.get_cls_by_name(
-                request_type_name
+            AbstractRequest.handle_request(
+                serialized_request, response_handler, response_handler
             )
-            if request_type == StopProcess:
-                pass
-                #break
-            request_type.execute(request_data, response_handler, response_handler)
         except Exception as e:
             LOGGER.error('Unhandled exception in model process', exc_info=e)
             import traceback
