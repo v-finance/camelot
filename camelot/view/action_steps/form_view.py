@@ -143,6 +143,7 @@ class OpenFormView(AbstractCrudView):
         step = json.loads(serialized_step)
         if step.get("qml", False) == True:
             # Use new QML forms
+            # NOTE: this action step is always dispatched to python since 'qml' is set
             cpp_action_step(gui_context_name, 'OpenFormView', serialized_step)
         else:
             formview = cls.render(gui_context_name, step)

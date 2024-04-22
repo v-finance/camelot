@@ -30,7 +30,6 @@ from dataclasses import dataclass
 
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
-from camelot.core.backend import cpp_action_step
 
 from ...core.serializable import DataclassSerializable
 
@@ -75,10 +74,6 @@ class OpenFile( ActionStep, DataclassSerializable ):
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
         os.close( file_descriptor )
         return file_name
-
-    @classmethod
-    def gui_run( cls, gui_context_name, serialized_step ):
-        cpp_action_step(gui_context_name, 'OpenFile', serialized_step)
 
 class OpenStream( OpenFile ):
     """Write a stream to a temporary file and open that file with the 
