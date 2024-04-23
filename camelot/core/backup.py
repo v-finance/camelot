@@ -134,6 +134,8 @@ class BackupMechanism(object):
         """Generator function that yields tuples :
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a backup.
+
+        The reason this yields tuples and not UpdateProgress is to prevent cyclic imports.
         
         :param from_engine: a :class:`sqlalchemy.engine.Connectable` object that
             provides a connection to the database to be backed up.
@@ -201,6 +203,8 @@ class BackupMechanism(object):
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a restore.
 
+        The reason this yields tuples and not UpdateProgress is to prevent cyclic imports.
+
         :param to_engine: a :class:`sqlalchemy.engine.Engine` object that
             provides a connection to the database to be backed up.
         """
@@ -267,9 +271,11 @@ class BackupMechanism(object):
     def update_table_after_restore(self, to_table, to_connection):
         to_dialect = to_connection.engine.url.get_dialect().name
         if to_dialect == 'postgresql':
-            for column in to_table.columns:
+            primary_key_cols = to_table.primary_key.columns.values()
+            if len(primary_key_cols) == 1:
+                column = primary_key_cols[0]
                 if not isinstance(column.type, types.Unicode) and \
-                   column.autoincrement=='auto' and column.primary_key==True and \
+                   column.autoincrement=='auto' and \
                    len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
                     column_name = column.name
                     table_name = to_table.name

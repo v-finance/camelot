@@ -51,6 +51,8 @@ class Busy(AbstractResponse):
 class ActionStepped(AbstractResponse):
     run_name: CompositeName
     gui_run_name: CompositeName
+    # @todo : blocking should be a correlation id instead of a bool, so
+    # the server can validate if the response is for the correct step
     blocking: bool
     step: NamedDataclassSerializable
 

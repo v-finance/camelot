@@ -102,7 +102,7 @@ class OpenFormView(AbstractCrudView):
         self.close_route = AdminRoute._register_action_route(
             self.admin_route, admin.form_close_action
         )
-        self.title = admin.get_verbose_name()
+        self.title = admin.get_verbose_identifier(value)
         self.form_state = admin.form_state
         self._add_actions(admin, self.actions)
         super().__post_init__(value, admin, proxy)

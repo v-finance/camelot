@@ -29,18 +29,26 @@
 import typing
 
 from camelot.admin.action import ActionStep
-from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
-from camelot.core.backend import cpp_action_step
 
 from dataclasses import dataclass, field
 
 from ...core.serializable import DataclassSerializable
 from ...core.qt import QtWidgets
 
+class SelectActionStep(ActionStep):
+
+    @classmethod
+    def deserialize_result(cls, gui_context, response):
+        selected = response['selected']
+        if selected:
+            return selected
+        else:
+            raise CancelRequest()
+
 @dataclass
-class SelectFile( ActionStep, DataclassSerializable ):
+class SelectFile( SelectActionStep, DataclassSerializable ):
     """Select one or more files to open
     
     :param file_name_filter: Filter on the names of the files that can
@@ -70,18 +78,9 @@ class SelectFile( ActionStep, DataclassSerializable ):
 
     caption = _('Open')
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        with hide_progress_dialog(gui_context):
-            response = cpp_action_step(gui_context, 'SelectFile', serialized_step)
-            selected = response['selected']
-            if selected:
-                return selected
-            else:
-                raise CancelRequest()
 
 @dataclass
-class SaveFile( ActionStep, DataclassSerializable ):
+class SaveFile( SelectActionStep, DataclassSerializable ):
     """Select a file for saving
     
     :param file_name_filter: Filter on the names of the files that can
@@ -107,18 +106,9 @@ class SaveFile( ActionStep, DataclassSerializable ):
 
     caption = _('Save')
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        with hide_progress_dialog(gui_context):
-            response = cpp_action_step(gui_context, 'SaveFile', serialized_step)
-            selected = response['selected']
-            if selected:
-                return selected
-            else:
-                raise CancelRequest()
 
 @dataclass
-class SelectDirectory(ActionStep, DataclassSerializable):
+class SelectDirectory(SelectActionStep, DataclassSerializable):
     """Select a single directory
 
     .. attribute:: caption
@@ -136,13 +126,3 @@ class SelectDirectory(ActionStep, DataclassSerializable):
     options: list = field(default_factory=lambda: [QtWidgets.QFileDialog.Option.ShowDirsOnly])
 
     caption = _('Select directory')
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        with hide_progress_dialog(gui_context):
-            response = cpp_action_step(gui_context, 'SelectDirectory', serialized_step)
-            selected = response['selected']
-            if selected:
-                return selected
-            else:
-                raise CancelRequest()
