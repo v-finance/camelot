@@ -44,7 +44,7 @@ from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
 from ...view.utils import get_settings_group
-from ...core.backend import get_root_backend, cpp_action_step
+from ...core.backend import get_root_backend
 from .item_view import AbstractCrudView
 
 
