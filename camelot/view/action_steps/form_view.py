@@ -141,17 +141,12 @@ class OpenFormView(AbstractCrudView):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        if step.get("qml", False) == True:
-            # Use new QML forms
-            # NOTE: this action step is always dispatched to python since 'qml' is set
-            cpp_action_step(gui_context_name, 'OpenFormView', serialized_step)
-        else:
-            formview = cls.render(gui_context_name, step)
-            if formview is not None:
-                formview.setObjectName('form.{}.{}'.format(
-                    step['admin_route'], id(formview)
-                ))
-                show_top_level(formview, gui_context_name, step['form_state'])
+        formview = cls.render(gui_context_name, step)
+        if formview is not None:
+            formview.setObjectName('form.{}.{}'.format(
+                step['admin_route'], id(formview)
+            ))
+            show_top_level(formview, gui_context_name, step['form_state'])
 
 @dataclass
 class HighlightForm(ActionStep, DataclassSerializable):
