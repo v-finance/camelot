@@ -44,7 +44,7 @@ from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
 from ...view.utils import get_settings_group
-from ...core.backend import get_root_backend, cpp_action_step
+from ...core.backend import get_root_backend
 from .item_view import AbstractCrudView
 
 
@@ -141,16 +141,12 @@ class OpenFormView(AbstractCrudView):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        if step.get("qml", False) == True:
-            # Use new QML forms
-            cpp_action_step(gui_context_name, 'OpenFormView', serialized_step)
-        else:
-            formview = cls.render(gui_context_name, step)
-            if formview is not None:
-                formview.setObjectName('form.{}.{}'.format(
-                    step['admin_route'], id(formview)
-                ))
-                show_top_level(formview, gui_context_name, step['form_state'])
+        formview = cls.render(gui_context_name, step)
+        if formview is not None:
+            formview.setObjectName('form.{}.{}'.format(
+                step['admin_route'], id(formview)
+            ))
+            show_top_level(formview, gui_context_name, step['form_state'])
 
 @dataclass
 class HighlightForm(ActionStep, DataclassSerializable):

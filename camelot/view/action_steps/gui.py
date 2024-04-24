@@ -48,7 +48,6 @@ from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from camelot.view.action_runner import hide_progress_dialog
-from camelot.core.backend import cpp_action_step, is_cpp_gui_context_name
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from .. import gui_naming_context
@@ -166,15 +165,12 @@ class CloseView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            cpp_action_step(gui_context_name, 'CloseView', serialized_step)
-        else:
-            # python implementation, still used for FormView
-            gui_context = gui_naming_context.resolve(gui_context_name)
-            step = json.loads(serialized_step)
-            view = gui_context.view
-            if view is not None and not is_deleted(view):
-                view.close_view(step["accept"])
+        # python implementation, still used for FormView
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        step = json.loads(serialized_step)
+        view = gui_context.view
+        if view is not None and not is_deleted(view):
+            view.close_view(step["accept"])
 
 
 @dataclass

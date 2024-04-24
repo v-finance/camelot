@@ -287,6 +287,10 @@ class ChangeObject(OpenFormView):
     reject: typing.Union[str, ugettext_lazy] = _('Cancel')
     blocking: bool = True
 
+    def __post_init__(self, value, admin, proxy):
+        super().__post_init__(value, admin, proxy)
+        self.title = admin.get_verbose_name()
+
     @staticmethod
     def _add_actions(admin, actions):
         actions.extend(admin.get_form_actions(None))

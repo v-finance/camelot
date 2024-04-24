@@ -50,7 +50,7 @@ from ...core.utils import ugettext_lazy
 from ...view.utils import get_settings_group
 from .. import gui_naming_context
 from ..workspace import show_top_level
-from ...core.backend import cpp_action_step, is_cpp_gui_context_name
+from ...core.backend import cpp_action_step
 from ...view.crud_action import CrudActions
 
 LOGGER = logging.getLogger(__name__)
@@ -69,17 +69,14 @@ class Sort( ActionStep, DataclassSerializable ):
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            cpp_action_step(gui_context_name, 'Sort', serialized_step)
-        else:
-            gui_context = gui_naming_context.resolve(gui_context_name)
-            step = json.loads(serialized_step)
-            model = gui_context.get_model()
-            if model is not None:
-                model.sort(
-                    step["column"],
-                    Qt.SortOrder._value2member_map_[step["order"]]
-                )
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        step = json.loads(serialized_step)
+        model = gui_context.get_model()
+        if model is not None:
+            model.sort(
+                step["column"],
+                Qt.SortOrder._value2member_map_[step["order"]]
+            )
 
 @dataclass
 class AbstractCrudView(ActionStep, DataclassSerializable):
@@ -251,7 +248,6 @@ class OpenTableView( UpdateTableView ):
         table_view.setFocus(Qt.FocusReason.PopupFocusReason)
 
 
-
 @dataclass
 class OpenQmlTableView(OpenTableView):
     """Open a new table view in the workspace.
@@ -273,9 +269,6 @@ class OpenQmlTableView(OpenTableView):
                 serialized_step)
         return response, None
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        cls.render(gui_context, 'OpenTableView', serialized_step)
 
 @dataclass
 class ToFirstRow(ActionStep, DataclassSerializable):
@@ -299,11 +292,8 @@ class ClearSelection(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            cpp_action_step(gui_context_name, 'ClearSelection', serialized_step)
-        else:
-            gui_context = gui_naming_context.resolve(gui_context_name)
-            gui_context.item_view.clearSelection()
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        gui_context.item_view.clearSelection()
 
 
 @dataclass
@@ -325,10 +315,7 @@ class RefreshItemView(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            cpp_action_step(gui_context_name, 'RefreshItemView', serialized_step)
-        else:
-            gui_context = gui_naming_context.resolve(gui_context_name)
-            model = gui_context.get_model()
-            if model is not None:
-                model.refresh()
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        model = gui_context.get_model()
+        if model is not None:
+            model.refresh()
