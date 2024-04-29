@@ -3,6 +3,7 @@ import math
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.view.controls import delegates
 
+
 class Coordinate( object ):
   
   def __init__( self, x = 0, y = 0 ):

@@ -42,14 +42,31 @@ from .query_proxy import QueryModelProxy
 #
 # Custom Roles
 #
-ObjectRole = Qt.UserRole + 1
-PreviewRole = Qt.UserRole + 2
-VerboseIdentifierRole = Qt.UserRole + 3
-ValidRole = Qt.UserRole + 4
-ValidMessageRole = Qt.UserRole + 5
-FieldAttributesRole = Qt.UserRole + 6
-CompletionPrefixRole = Qt.UserRole + 7
-CompletionsRole = Qt.UserRole + 8
+ObjectRole = Qt.ItemDataRole.UserRole + 1
+PreviewRole = Qt.ItemDataRole.UserRole + 2
+VerboseIdentifierRole = Qt.ItemDataRole.UserRole + 3
+ValidRole = Qt.ItemDataRole.UserRole + 4
+ValidMessageRole = Qt.ItemDataRole.UserRole + 5
+CompletionPrefixRole = Qt.ItemDataRole.UserRole + 7
+CompletionsRole = Qt.ItemDataRole.UserRole + 8
+ActionRoutesRole = Qt.ItemDataRole.UserRole + 9
+ActionStatesRole = Qt.ItemDataRole.UserRole + 10
+ActionModeRole = Qt.ItemDataRole.UserRole + 11
+ChoicesRole = Qt.ItemDataRole.UserRole + 12
+ColumnAttributesRole = Qt.ItemDataRole.UserRole + 13
+ValidatorStateRole = Qt.ItemDataRole.UserRole + 14
+VisibleRole = Qt.ItemDataRole.UserRole + 15
+FocusPolicyRole = Qt.ItemDataRole.UserRole + 16
+PrefixRole = Qt.ItemDataRole.UserRole + 17
+SuffixRole = Qt.ItemDataRole.UserRole + 18
+SingleStepRole = Qt.ItemDataRole.UserRole + 19
+PrecisionRole = Qt.ItemDataRole.UserRole + 20
+MinimumRole = Qt.ItemDataRole.UserRole + 21
+MaximumRole = Qt.ItemDataRole.UserRole + 22
+DirectoryRole = Qt.ItemDataRole.UserRole + 23
+CompleterStateRole = Qt.ItemDataRole.UserRole + 24
+NullableRole = Qt.ItemDataRole.UserRole + 25
+EndRoles = Qt.ItemDataRole.UserRole + 26
 
 class ProxyDict(dict):
     """Subclass of dictionary to fool the Qt Variant object and prevent

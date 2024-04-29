@@ -32,21 +32,21 @@ editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """
 
-import inspect
 import os
 
-from ...core.qt import QtWidgets
+from sqlalchemy import orm
+
+from ...core.qt import QtWidgets, QtGui
 from ...core.utils import ugettext_lazy as _
-from ...view.art import FontIcon
+from ...admin.icon import Icon
 from .base import Action, RenderHint
-from .application_action import (ApplicationActionModelContext,
-                                 ApplicationActionGuiContext)
+from .list_action import AddNewObjectMixin
+from .application_action import ApplicationActionModelContext
 
-import six
 
-class FieldActionModelContext( ApplicationActionModelContext ):
+class FieldActionModelContext(ApplicationActionModelContext):
     """The context for a :class:`Action` on a field.  On top of the attributes of the
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`,
+    :class:`camelot.admin.action.application_action.ApplicationActionModelContext`,
     this context contains :
 
     .. attribute:: obj
@@ -68,131 +68,69 @@ class FieldActionModelContext( ApplicationActionModelContext ):
 
     """
 
-    def __init__(self):
-        super( FieldActionModelContext, self ).__init__()
+    def __init__(self, admin):
+        super( FieldActionModelContext, self ).__init__(admin)
         self.obj = None
         self.field = None
         self.value = None
         self.field_attributes = {}
 
-class FieldActionGuiContext( ApplicationActionGuiContext ):
-    """The context for an :class:`Action` on a field.  On top of the attributes of the
-    :class:`camelot.admin.action.application_action.ApplicationActionGuiContext`,
-    this context contains :
 
-    .. attribute:: editor
+class EditFieldAction(Action):
+    """A base class for an action that will modify the model, it will be
+    disabled when the field_attributes for the field are set to  not-editable
+    or the admin is not editable"""
 
-       the editor through which the field is edited.
-
-    """
-
-    model_context = FieldActionModelContext
-
-    def __init__( self ):
-        super( FieldActionGuiContext, self ).__init__()
-        self.editor = None
-
-    def get_window(self):
-        if self.editor is not None:
-            return self.editor.window()
-        return super(FieldActionGuiContext, self).get_window()
-
-    def create_model_context( self ):
-        context = super( FieldActionGuiContext, self ).create_model_context()
-        context.value = self.editor.get_value()
-        context.field_attributes = self.editor.get_field_attributes()
-        return context
-
-    def copy( self, base_class = None ):
-        new_context = super( FieldActionGuiContext, self ).copy( base_class )
-        new_context.editor = self.editor
-        return new_context
-
-class FieldAction(Action):
-    """Action class that renders itself as a toolbutton, small enough to
-    fit in an editor"""
-
-    render_hint = RenderHint.TOOL_BUTTON
-
-
-class ShowFieldAttributes(Action):
-    
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        from camelot.admin.object_admin import ObjectAdmin
-
-        class Attribute(object):
-            """Helper class representing a field attribute's name and its value"""
-            def __init__(self, name, value):
-                self.name = six.text_type(name)
-                if inspect.isclass(value):
-                    self.value = value.__name__
-                else:
-                    self.value = six.text_type(value)
-                        
-            class Admin(ObjectAdmin):
-                list_display = ['name', 'value']
-                field_attributes = {'name':{'minimal_column_width':25},
-                                    'value':{'minimal_column_width':25}}
-        
-        attributes = [Attribute(key,value) for key,value in six.iteritems(model_context.field_attributes)]
-        yield action_steps.ChangeObjects(attributes, 
-                                         model_context.admin.get_related_admin(Attribute))
-
-class SelectObject(FieldAction):
-    """Allows the user to select an object, and set the selected object as
-    the new value of the editor"""
-
-    icon = FontIcon('search') # 'tango/16x16/actions/system-search.png'
-    tooltip = _('select existing')
-
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        admin = model_context.field_attributes.get('admin')
-        if admin is not None:
-            selected_objects = yield action_steps.SelectObjects(admin)
-            for selected_object in selected_objects:
-                yield action_steps.UpdateEditor('selected_object', selected_object)
-                break
+    name = '_edit_field'
 
     def get_state(self, model_context):
-        state = super(SelectObject, self).get_state(model_context)
-        state.visible = (model_context.value is None)
+        assert isinstance(model_context, FieldActionModelContext)
+        state = super().get_state(model_context)
+        # editability at the level of the field
         state.enabled = model_context.field_attributes.get('editable', False)
         return state
 
-class NewObject(SelectObject):
-    """Open a form for the creation of a new object, and set this
-    object as the new value of the editor"""
+class SelectObject(EditFieldAction):
+    """Allows the user to select an object, and set the selected object as
+    the new value of the editor"""
 
-    icon = FontIcon('plus-circle') # 'tango/16x16/actions/document-new.png'
-    tooltip = _('create new')
+    icon = Icon('search') # 'tango/16x16/actions/system-search.png'
+    tooltip = _('select existing')
+    name = 'select_object'
+    render_hint = RenderHint.TOOL_BUTTON
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        admin = model_context.field_attributes['admin']
-        admin = yield action_steps.SelectSubclass(admin)
-        obj = admin.entity()
-        # Give the default fields their value
-        admin.add(obj)
-        admin.set_defaults(obj)
-        yield action_steps.UpdateEditor('new_value', obj)
-        yield action_steps.OpenFormView(obj, admin.get_proxy([obj]), admin)
+        field_admin = model_context.field_attributes.get('admin')
+        if field_admin is not None:
+            selected_object = yield action_steps.SelectObject(field_admin.get_query(), field_admin)
+            if selected_object is not None:
+                model_context.admin.set_field_value(
+                    model_context.obj, model_context.field, selected_object
+                )
+                model_context.admin.set_defaults(model_context.obj)
+                yield None
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        state.visible = (model_context.value is None)
+        return state
 
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
 
-    icon = FontIcon('folder-open') # 'tango/16x16/places/folder.png'
+    icon = Icon('folder-open') # 'tango/16x16/places/folder.png'
     tooltip = _('open')
+    name = 'open_object'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         obj = model_context.value
         # Disregard the case of having no value, or having multiple defined.
         if obj is not None and not isinstance(obj, list):
             admin = model_context.field_attributes['admin']
             admin = admin.get_related_admin(obj.__class__)
-            yield action_steps.OpenFormView(obj, admin.get_proxy([obj]), admin)
+            yield action_steps.OpenFormView(obj, admin)
 
     def get_state(self, model_context):
         state = super(OpenObject, self).get_state(model_context)
@@ -201,29 +139,36 @@ class OpenObject(SelectObject):
         state.enabled = (obj is not None and not isinstance(obj, list))
         return state
 
-class ClearObject(OpenObject):
+class ClearObject(EditFieldAction):
     """Set the new value of the editor to `None`"""
 
-    icon = FontIcon('eraser') # 'tango/16x16/actions/edit-clear.png'
+    icon = Icon('eraser') # 'tango/16x16/actions/edit-clear.png'
     tooltip = _('clear')
+    name = 'clear_object'
 
-    def model_run(self, model_context):
-        from camelot.view import action_steps
-        yield action_steps.UpdateEditor('selected_object', None)
+    def model_run(self, model_context, mode):
+        field_admin = model_context.field_attributes.get('admin')
+        if field_admin is not None:
+            model_context.admin.set_field_value(
+                model_context.obj, model_context.field, None
+            )
+            yield None
 
     def get_state(self, model_context):
         state = super(ClearObject, self).get_state(model_context)
-        state.enabled = model_context.field_attributes.get('editable', False)
+        state.visible = (model_context.value is not None)
         return state
 
-class UploadFile(FieldAction):
+class UploadFile(EditFieldAction):
     """Upload a new file into the storage of the field"""
 
-    icon = FontIcon('plus') # 'tango/16x16/actions/list-add.png'
+    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
     tooltip = _('Attach file')
     file_name_filter = 'All files (*)'
+    name = 'attach_file'
+    render_hint = RenderHint.TOOL_BUTTON
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         filenames = yield action_steps.SelectFile(self.file_name_filter)
         storage = model_context.field_attributes['storage']
@@ -235,57 +180,64 @@ class UploadFile(FieldAction):
             if model_context.field_attributes.get('remove_original'):
                 reply = yield action_steps.MessageBox(
                     text = _('Do you want to remove the original file?'),
-                    icon = QtWidgets.QMessageBox.Warning,
+                    icon = Icon('question'),
                     title = _('The file will be stored.'),
-                    standard_buttons = QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Yes
+                    standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes]
                     )
-                if reply == QtWidgets.QMessageBox.Yes:
+                if reply == QtWidgets.QMessageBox.StandardButton.Yes:
                     remove = True
             yield action_steps.UpdateProgress(text='Attaching file')
             stored_file = storage.checkin(file_name)
-            yield action_steps.UpdateEditor('value', stored_file, propagate=True)
+            model_context.admin.set_field_value(
+                model_context.obj, model_context.field, stored_file
+            )
             if remove:
                 os.remove(file_name)
 
     def get_state(self, model_context):
-        state = super(UploadFile, self).get_state(model_context)
-        state.enabled = model_context.field_attributes.get('editable', False)
+        state = super().get_state(model_context)
         state.enabled = (state.enabled is True) and (model_context.value is None)
         state.visible = (model_context.value is None)
         return state
 
-class DetachFile(FieldAction):
+class DetachFile(EditFieldAction):
     """Set the new value of the editor to `None`, leaving the
     actual file in the storage alone"""
 
-    icon = FontIcon('trash') # 'tango/16x16/actions/edit-delete.png'
+    icon = Icon('trash') # 'tango/16x16/actions/edit-delete.png'
     tooltip = _('Detach file')
     message_title = _('Detach this file ?')
     message_text = _('If you continue, you will no longer be able to open this file.')
+    name = 'detach_file'
+    render_hint = RenderHint.TOOL_BUTTON
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        buttons = QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No
+        buttons = [QtWidgets.QMessageBox.StandardButton.Yes, QtWidgets.QMessageBox.StandardButton.No]
         answer = yield action_steps.MessageBox(title=self.message_title,
                                                text=self.message_text,
                                                standard_buttons=buttons)
-        if answer == QtWidgets.QMessageBox.Yes:
-            yield action_steps.UpdateEditor('value', None, propagate=True)
+        if answer == QtWidgets.QMessageBox.StandardButton.Yes:
+            model_context.admin.set_field_value(
+                model_context.obj, model_context.field, None
+            )
+            yield None
 
     def get_state(self, model_context):
-        state = super(DetachFile, self).get_state(model_context)
-        state.enabled = model_context.field_attributes.get('editable', False)
+        state = super().get_state(model_context)
         state.enabled = (state.enabled is True) and (model_context.value is not None)
         state.visible = (model_context.value is not None)
         return state
 
-class OpenFile(FieldAction):
+class OpenFile(Action):
     """Open the file shown in the editor"""
 
-    icon = FontIcon('folder-open') # 'tango/16x16/actions/document-open.png'
+    icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
     tooltip = _('Open file')
+    name = 'open_file'
+    render_hint = RenderHint.TOOL_BUTTON
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield action_steps.UpdateProgress(text=_('Checkout file'))
         storage = model_context.field_attributes['storage']
@@ -302,10 +254,11 @@ class OpenFile(FieldAction):
 class SaveFile(OpenFile):
     """Copy the file shown in the editor to another location"""
 
-    icon = FontIcon('save') # 'tango/16x16/actions/document-save-as.png'
+    icon = Icon('save') # 'tango/16x16/actions/document-save-as.png'
     tooltip = _('Save as')
+    name = 'file_save_as'
 
-    def model_run(self, model_context):
+    def model_run(self, model_context, mode):
         from camelot.view import action_steps
         stored_file = model_context.value
         storage = model_context.field_attributes['storage']
@@ -315,3 +268,62 @@ class SaveFile(OpenFile):
             destination.write(storage.checkout_stream(stored_file).read())
 
 
+class AddNewObject(AddNewObjectMixin, EditFieldAction):
+    """Add a new object to a collection. Depending on the
+    'create_inline' field attribute, a new form is opened or not.
+
+    This action will also set the default values of the new object, add the
+    object to the session, and flush the object if it is valid.
+    """
+
+    shortcut = QtGui.QKeySequence.StandardKey.New
+    icon = Icon('plus-circle') # 'tango/16x16/actions/document-new.png'
+    tooltip = _('New')
+    verbose_name = _('New')
+    name = 'new_object'
+    render_hint = RenderHint.TOOL_BUTTON
+
+    def get_proxy(self, model_context, admin):
+        return model_context.value
+
+    def get_default_admin(self, model_context, mode=None):
+        return model_context.field_attributes.get('admin')
+
+    def get_state(self, model_context):
+        assert isinstance(model_context, FieldActionModelContext)
+        state = super().get_state(model_context)
+        admin = model_context.field_attributes.get('admin')
+        if (admin is not None) and not admin.is_editable():
+            state.visible = False
+            state.enabled = False
+        return state
+
+add_new_object = AddNewObject()
+
+class AddExistingObject(EditFieldAction):
+    """Add an existing object to a list if it is not yet in the
+    list"""
+    
+    tooltip = _('Add')
+    verbose_name = _('Add')
+    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
+    name = 'add_object'
+    
+    def model_run( self, model_context, mode ):
+        from camelot.view import action_steps
+        super().model_run(model_context, mode)
+        field_admin = model_context.field_attributes.get('admin')
+        if field_admin is not None:
+            objs_to_add = yield action_steps.SelectObjects(field_admin.get_query(), field_admin)
+            # filter out objects already in model_context.value
+            objs_to_add = [obj for obj in objs_to_add if obj not in model_context.value]
+            if not objs_to_add:
+                return
+            for obj_to_add in objs_to_add:
+                model_context.value.append(obj_to_add)
+            yield action_steps.UpdateObjects(objs_to_add)
+            for obj_to_add in objs_to_add:
+                yield action_steps.FlushSession(orm.object_session(obj_to_add))
+                break
+
+add_existing_object = AddExistingObject()

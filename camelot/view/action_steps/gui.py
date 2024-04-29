@@ -30,47 +30,41 @@
 """
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
+import functools
+from io import StringIO
+import json
+import typing
+import traceback
+from typing import List, Union
 
-from ...core.qt import QtCore, QtWidgets, is_deleted
-
-import six
+from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
-from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext_lazy as _
+from camelot.admin.icon import Icon
+from camelot.core.exception import CancelRequest, UserException
+from camelot.core.naming import initial_naming_context
+from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
+from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-
-class UpdateEditor(ActionStep):
-    """This step should be used in the context of an editor action.  It
-    will update an attribute of the editor.
-
-    :param attribute: the name of the attribute of the editor to update
-    :param value: the new value of the attribute
-    :param propagate: set to `True` if the editor should notify the underlying
-       model of it's change, so that the changes can be written to the model
-    """
-
-    def __init__(self, attribute, value, propagate=False):
-        self.attribute = attribute
-        self.value = value
-        self.propagate = propagate
-
-    def gui_run(self, gui_context):
-        if is_deleted(gui_context.editor):
-            return
-        setattr(gui_context.editor, self.attribute, self.value)
-        if self.propagate:
-            gui_context.editor.editingFinished.emit()
+from camelot.view.action_runner import hide_progress_dialog
+from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
+from ...core.qt import QtCore, QtWidgets, is_deleted
+from ...core.serializable import DataclassSerializable
+from .. import gui_naming_context
+from .crud import CompletionValue
 
 
-class Refresh( ActionStep ):
+@dataclass
+class Refresh( ActionStep, DataclassSerializable ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
 
-    def gui_run( self, gui_context ):
-        if gui_context.workspace:
-            gui_context.workspace.refresh()
+    blocking: bool = False
+
+    @classmethod
+    def gui_run(self, gui_context_name, serialized_step):
+        qml_action_step(gui_context_name, 'Refresh')
 
 class ItemSelectionDialog(StandaloneWizardPage):
 
@@ -87,7 +81,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         self.autoaccept = autoaccept
         self.set_default_buttons()
         layout = QtWidgets.QVBoxLayout()
-        combobox = editors.ChoicesEditor()
+        combobox = editors.ChoicesEditor(action_routes=[])
         combobox.setObjectName( 'combobox' )
         combobox.editingFinished.connect( self._combobox_activated )
         layout.addWidget( combobox )
@@ -113,7 +107,8 @@ class ItemSelectionDialog(StandaloneWizardPage):
         if combobox != None:
             return combobox.set_value(value)
 
-class SelectItem(ActionStep):
+@dataclass
+class SelectItem(ActionStep, DataclassSerializable):
     """This action step pops up a single combobox dialog in which the user can
     select one item from a list of items.
 
@@ -125,58 +120,40 @@ class SelectItem(ActionStep):
        :guilabel:`OK` first.
     """
 
-    def __init__( self, items, value=None ):
-        self.items = items
-        self.value = value
-        self.autoaccept = True
-        self.title =  _('Please select')
-        self.subtitle = _('Make a selection and press the OK button')
+    items: List[CompletionValue]
+    value: str = initial_naming_context._bind_object(None)
+    autoaccept: bool = True
 
-    def render(self):
-        dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
-        dialog.set_choices(self.items)
-        dialog.set_value(self.value)
-        dialog.setWindowTitle( six.text_type( self.title ) )
-        dialog.set_banner_title( six.text_type( self.subtitle ) )
+    title: Union[str, ugettext_lazy] = field(init=False, default= _('Please select'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Make a selection and press the OK button.'))
+
+    def __post_init__(self):
+        self.autoaccept = True
+
+    @classmethod
+    def render(cls, step):
+        dialog = ItemSelectionDialog(autoaccept = bool(step['autoaccept']))
+        dialog.set_choices(step['items'])
+        dialog.set_value(step['value'])
+        dialog.setWindowTitle(step['title'])
+        dialog.set_banner_subtitle(step['subtitle'])
         return dialog
 
-    def gui_run(self, gui_context):
-        dialog = self.render()
-        result = dialog.exec_()
-        if result == QtWidgets.QDialog.Rejected:
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        dialog = cls.render(step = json.loads(serialized_step))
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_value()
 
-class SelectSubclass(SelectItem):
-    """Allow the user to select a subclass out of a class hierarchy.  If the
-    hierarch has only one class, this step returns immediately.
+    @classmethod
+    def deserialize_result(cls, gui_context_name, result):
+        if result is not None:
+            return tuple(result)
 
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
-
-    yielding this step will return the admin for the subclass selected by the
-    user.
-    """
-
-    def __init__(self, admin):
-        self.admin = admin
-        items = []
-        self._append_subclass_tree_to_items(items, admin.get_subclass_tree())
-        super().__init__(items)
-
-    def _append_subclass_tree_to_items(self, items, subclass_tree):
-        for admin, tree in subclass_tree:
-            if len(tree):
-                self._append_subclass_tree_to_items(items, tree)
-            else:
-                items.append((admin, admin.get_verbose_name_plural()))
-
-    def gui_run(self, gui_context):
-        if not len(self.items):
-            return self.admin
-        return super().gui_run(gui_context)
-
-
-class CloseView( ActionStep ):
+@dataclass
+class CloseView(ActionStep, DataclassSerializable):
     """
     Close the view that triggered the action, if such a view is available.
 
@@ -188,15 +165,24 @@ class CloseView( ActionStep ):
         the user.
     """
 
-    def __init__( self, accept = True ):
-        self.accept = accept
+    blocking: bool = False
+    accept: bool = True
 
-    def gui_run( self, gui_context ):
-        view = gui_context.view
-        if view != None:
-            view.close_view( self.accept )
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        if is_cpp_gui_context_name(gui_context_name):
+            qml_action_step(gui_context_name, 'CloseView', serialized_step)
+        else:
+            # python implementation, still used for FormView
+            gui_context = gui_naming_context.resolve(gui_context_name)
+            step = json.loads(serialized_step)
+            view = gui_context.view
+            if view is not None and not is_deleted(view):
+                view.close_view(step["accept"])
 
-class MessageBox( ActionStep ):
+
+@dataclass
+class MessageBox( ActionStep, DataclassSerializable ):
     """
     Popup a :class:`QtWidgets.QMessageBox` and send it result back.  The arguments
     of this action are the same as those of the :class:`QtWidgets.QMessageBox`
@@ -216,36 +202,80 @@ class MessageBox( ActionStep ):
 
     """
 
-    default_buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
+    text: typing.Union[str, ugettext_lazy]
+    icon: Icon = Icon('info')
+    title: typing.Union[str, ugettext_lazy] = _('Message')
+    standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
+    informative_text: str = field(init=False)
+    detailed_text: str = field(init=False)
+    hide_progress: bool = False
 
-    def __init__( self,
-                  text,
-                  icon = QtWidgets.QMessageBox.Information,
-                  title = _('Message'),
-                  standard_buttons = default_buttons ):
-        self.icon = icon
-        self.title = six.text_type( title )
-        self.text = six.text_type( text )
-        self.standard_buttons = standard_buttons
+    def __post_init__(self):
+        self.title = str(self.title)
+        self.text = str(self.text)
         self.informative_text = ''
         self.detailed_text = ''
 
-    def render( self ):
+    @classmethod
+    def render(cls, step):
         """create the message box. this method is used to unit test
         the action step."""
-        message_box =  QtWidgets.QMessageBox( self.icon,
-                                          self.title,
-                                          self.text,
-                                          self.standard_buttons )
-        message_box.setInformativeText(six.text_type(self.informative_text))
-        message_box.setDetailedText(six.text_type(self.detailed_text))
+        message_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Icon.NoIcon, step["title"], step["text"],
+            QtWidgets.QMessageBox.StandardButton(
+                functools.reduce(lambda a, b: a | b, step["standard_buttons"])
+            ))
+        if step.get("icon"):
+            message_box.setIconPixmap(from_admin_icon(Icon(**step["icon"])).getQPixmap())
+        message_box.setInformativeText(str(step["informative_text"] or ''))
+        message_box.setDetailedText(str(step["detailed_text"] or ''))
         return message_box
 
-    def gui_run( self, gui_context ):
-        message_box = self.render()
-        result = message_box.exec_()
-        if result == QtWidgets.QMessageBox.Cancel:
+    @classmethod
+    def show_message_box(cls, step):
+        message_box = cls.render(step)
+        result = message_box.exec()
+        if result == QtWidgets.QMessageBox.StandardButton.Cancel:
             raise CancelRequest()
         return result
 
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        step = json.loads(serialized_step)
+        if step['hide_progress']:
+            with hide_progress_dialog(gui_context_name):
+                return cls.show_message_box(step)
+        else:
+            return cls.show_message_box(step)
 
+    @classmethod
+    def from_exception(cls, logger, text, exception):
+        """
+        Turn an exception in a MessageBox action step
+        """
+        if isinstance(exception, UserException):
+            # this exception is not supposed to generate any logging
+            # or inform the developer about something
+            step = cls(
+                title=exception.title,
+                text=exception.text,
+                icon=exception.icon,
+                standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
+            )
+            step.informative_text=exception.resolution
+            step.detailed_text=exception.detail
+        else:
+            logger.error(text, exc_info=exception)
+            sio = StringIO()
+            traceback.print_exc(file=sio)
+            step = cls(
+                title=_('Exception'),
+                text=_('An unexpected event occurred'),
+                icon=None,
+                standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
+            )
+            # chop the size of the text to prevent error dialogs larger than the screen
+            step.informative_text=str(exception)[:1000]
+            step.detailed_text=sio.getvalue()
+            sio.close()
+        return step

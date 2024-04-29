@@ -27,13 +27,13 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtWidgets, q_string_type
+from ...core.qt import QtCore, QtWidgets
 from camelot.view.art import FontIcon
 from camelot.core.utils import ugettext as _
 
 class Calculator(QtWidgets.QDialog):
     
-    calculation_finished_signal = QtCore.qt_signal(q_string_type)
+    calculation_finished_signal = QtCore.qt_signal(str)
     
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
@@ -137,7 +137,7 @@ class Calculator(QtWidgets.QDialog):
         #QtWidgets.QWidget.keyPressEvent(self, event)
 
         key = event.key()
-        if key == QtCore.Qt.Key_S:
+        if key == QtCore.Qt.Key.Key_S:
             self.SaveValue()
             return
         else:
@@ -178,11 +178,11 @@ class Calculator(QtWidgets.QDialog):
                 self,
                 'Message',
                 'Do you want to Save and Quit?',
-                QtWidgets.QMessageBox.Yes,
-                QtWidgets.QMessageBox.No
+                QtWidgets.QMessageBox.StandardButton.Yes,
+                QtWidgets.QMessageBox.StandardButton.No
             )
 
-            if reply == QtWidgets.QMessageBox.Yes:
+            if reply == QtWidgets.QMessageBox.StandardButton.Yes:
                 self.SaveValue()
 
         try:

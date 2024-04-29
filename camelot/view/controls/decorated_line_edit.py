@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ...core.qt import QtCore, QtGui, QtWidgets
 from ..art import ColorScheme
@@ -62,12 +62,12 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
         :param width: the number of characters that should be visible in the
             editor or a string that should fit in the editor
         """
-        if isinstance( width, six.string_types ):
-            self.setMinimumWidth( self._font_metrics.width( width ) )
+        if isinstance( width, str ):
+            self.setMinimumWidth( self._font_metrics.horizontalAdvance( width ) )
         else:
             self.setMinimumWidth( self._font_metrics.averageCharWidth() )
 
-    @QtCore.qt_slot(six.text_type)
+    @QtCore.qt_slot(str)
     def text_changed(self, text):
         self._update_background_color()
 
@@ -88,7 +88,7 @@ class DecoratedLineEdit(QtWidgets.QLineEdit):
         self.setPalette(palette)
         
     def keyPressEvent(self, e):
-        if e.key() == QtCore.Qt.Key_Down:
+        if e.key() == QtCore.Qt.Key.Key_Down:
             self.arrow_down_key_pressed.emit()
         
         QtWidgets.QLineEdit.keyPressEvent(self, e)

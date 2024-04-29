@@ -28,6 +28,10 @@
 #  ============================================================================
 
 
+from ..core.naming import InitialNamingContext
 
+# Naming context living client side
+
+gui_naming_context = InitialNamingContext()
 
 

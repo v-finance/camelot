@@ -27,43 +27,71 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
+from typing import ClassVar, Any
 
-from ....core.qt import py_to_variant, Qt
-from ....core.item_model import PreviewRole
+from ....core.qt import Qt
+from ....core.item_model import (
+    PreviewRole, PrefixRole, SuffixRole, SingleStepRole,
+    MinimumRole, MaximumRole
+)
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.core import constants
+from camelot.core.naming import initial_naming_context
 from camelot.view.controls import editors
 
-if six.PY3:
-    long_int = int
-else:
-    long_int = six.integer_types[-1]
+long_int = int
 
-@six.add_metaclass(DocumentationMetaclass)
-class IntegerDelegate(CustomDelegate):
+@dataclass
+class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
-    editor = editors.IntegerEditor
-    horizontal_align = Qt.AlignRight | Qt.AlignVCenter
+    calculator: bool = True
+    decimal: bool = False
+
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        minimum, maximum = fa_values.get('minimum'), fa_values.get('maximum')
-        fa_values.update({
-            'minimum': minimum if minimum is not None else constants.camelot_minint,
-            'maximum': maximum if maximum is not None else constants.camelot_maxint,
-        })
-        item = super(IntegerDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            value_str = locale.toString(long_int(value))
-            if fa_values.get('suffix') is not None:
-                value_str = value_str + ' ' + six.text_type(fa_values.get('suffix'))
-            if fa_values.get('prefix') is not None:
-                value_str = six.text_type(fa_values.get('prefix')) + ' ' + value_str
-            item.setData(py_to_variant(value_str), PreviewRole)
+    def get_editor_class(cls):
+        return editors.IntegerEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
+        minimum = minimum if minimum is not None else constants.camelot_minfloat
+        maximum = maximum if maximum is not None else constants.camelot_maxfloat
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        item.roles[SuffixRole] = model_context.field_attributes.get('suffix')
+        item.roles[PrefixRole] = model_context.field_attributes.get('prefix')
+        item.roles[SingleStepRole] = model_context.field_attributes.get('single_step')
+        item.roles[MinimumRole] = minimum
+        item.roles[MaximumRole] = maximum
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
+            value_str = locale.toString(long_int(model_context.value))
+            if model_context.field_attributes.get('suffix') is not None:
+                value_str = value_str + ' ' + str(model_context.field_attributes.get('suffix'))
+            if model_context.field_attributes.get('prefix') is not None:
+                value_str = str(model_context.field_attributes.get('prefix')) + ' ' + value_str
+            item.roles[PreviewRole] = value_str
         return item
 
-
-
+    def setEditorData(self, editor, index):
+        if index.model() is None:
+            return
+        self.set_default_editor_data(editor, index)
+        suffix = index.data(SuffixRole)
+        prefix = index.data(PrefixRole)
+        single_step = index.data(SingleStepRole)
+        minimum = index.data(MinimumRole)
+        maximum = index.data(MaximumRole)
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
+        editor.set_suffix(suffix)
+        editor.set_prefix(prefix)
+        editor.set_single_step(single_step)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
+        editor.set_value(value)
+        self.update_field_action_states(editor, index)
 
