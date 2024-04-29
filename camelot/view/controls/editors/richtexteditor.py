@@ -110,8 +110,9 @@ class RichTextEditor(CustomEditor, WideEditor):
         toolbar = self.findChild( QtWidgets.QToolBar )
         if toolbar:
             toolbar.setEnabled(editable)
-        self.textedit.setEnabled(editable)
         self.textedit.setReadOnly( not editable )
+        # Do not disable the textedit when non-editable to allow scrolling and selections to still work.
+        #self.textedit.setEnabled(editable)
 
     def set_toolbar_hidden( self, hidden ):
         """Show or hide the toolbar, by default the toolbar is hidden until
