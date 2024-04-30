@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time
 import os
 import unittest
 from unittest.mock import Mock, patch
@@ -19,7 +20,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, Session
-from camelot.core.qt import QtGui
+from camelot.core.qt import QtCore, QtGui
 from camelot.core.sql import metadata
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model import authentication, memento, party, type_and_status
@@ -41,6 +42,22 @@ app_admin = ApplicationAdmin()
 # This creates an in memory database per thread
 #
 model_engine = create_engine('sqlite://')
+
+
+class CancelableAction(Action):
+
+    iterations = 10
+    steptime = 3 # every <steptime> seconds
+
+    def model_run(self, model_context, mode):
+        timer = QtCore.QElapsedTimer()
+        timer.start()
+        for i in range(self.iterations):
+            time.sleep(self.steptime)
+            yield action_steps.UpdateProgress(i, self.iterations)
+
+cancelable_action_name = unit_test_context.bind(('cancelable_action',), CancelableAction())
+
 
 class SetupSampleModel(Action):
 
