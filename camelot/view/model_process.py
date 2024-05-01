@@ -61,6 +61,7 @@ class ModelProcess(spawned_mp.Process):
         rb.action_runner().request.connect(self.post)
         rb.stop.connect(self.stop)
         super().start()
+        rb.action_runner().onConnected()
 
     def initialize(self):
         """
