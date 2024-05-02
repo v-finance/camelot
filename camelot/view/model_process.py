@@ -43,7 +43,7 @@ class ModelProcess(spawned_mp.Process):
         self.socket_notifier.activated.connect(self._response_socket_notice)
 
     def _response_socket_notice(self, socket):
-        if self._response_receiver.poll():
+        while self._response_receiver.poll():
             serialized_response = QtCore.QByteArray(
                 self._response_receiver.recv_bytes()
             )
@@ -57,6 +57,8 @@ class ModelProcess(spawned_mp.Process):
         return state
 
     def start(self):
+        # as per Qt documentation, explicit enabling of the notifier is advised
+        self.socket_notifier.setEnabled(True)
         rb = get_root_backend()
         rb.action_runner().request.connect(self.post)
         rb.stop.connect(self.stop)
