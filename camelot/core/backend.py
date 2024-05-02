@@ -91,6 +91,8 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
         dgc = backend.distributed_garbage_collector()
         dgc.request.connect(self.on_request)
         backend.action_runner().request.connect(self.on_request)
+        # would this start the main action ?? or only if one was bound ?
+        backend.action_runner().onConnected()
 
     @classmethod
     def _execute_serialized_request(cls, serialized_request, response_handler):
