@@ -1,4 +1,5 @@
 import logging
+from multiprocessing import connection
 import multiprocessing as _mp
 
 from ..core.backend import get_root_backend
@@ -36,14 +37,11 @@ class ModelProcess(spawned_mp.Process):
     def __init__(self):
         super().__init__()
         self._request_queue = spawned_mp.JoinableQueue()
-        self._response_receiver, self._response_sender = spawned_mp.Pipe(duplex=False)
-        self.socket_notifier = QtCore.QSocketNotifier(
-            self._response_receiver.fileno(), QtCore.QSocketNotifier.Type.Read
-        )
-        self.socket_notifier.activated.connect(self._response_socket_notice)
+        self.listener = connection.Listener(('127.0.0.1', 0), 'AF_INET')
+        self._address = self.listener.address
 
     def _response_socket_notice(self, socket):
-        if self._response_receiver.poll():
+        while self._response_receiver.poll():
             serialized_response = QtCore.QByteArray(
                 self._response_receiver.recv_bytes()
             )
@@ -52,8 +50,7 @@ class ModelProcess(spawned_mp.Process):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state.pop('socket_notifier')
-        state.pop('_response_receiver')
+        state.pop('listener')
         return state
 
     def start(self):
@@ -61,6 +58,16 @@ class ModelProcess(spawned_mp.Process):
         rb.action_runner().request.connect(self.post)
         rb.stop.connect(self.stop)
         super().start()
+        # accept blocks until the child process connects
+        self._response_receiver = self.listener.accept()
+        self.socket_notifier = QtCore.QSocketNotifier(
+            self._response_receiver.fileno(), QtCore.QSocketNotifier.Type.Read
+        )
+        self.socket_notifier.activated.connect(self._response_socket_notice)
+        # as per Qt documentation, explicit enabling of the notifier is advised
+        self.socket_notifier.setEnabled(True)
+        rb.action_runner().onConnected()
+        self._response_socket_notice(self._response_receiver.fileno())
 
     def initialize(self):
         """
@@ -72,6 +79,9 @@ class ModelProcess(spawned_mp.Process):
     def run(self):
         LOGGER = logging.getLogger("model_process")
         self.initialize()
+        self._response_sender = connection.Client(
+            self._address, 'AF_INET'
+        )
         response_handler = PipeResponseHandler(self._response_sender)
         while True:
             response_handler.send_response(Busy(False))
