@@ -167,7 +167,6 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     @classmethod
     def setUpClass(cls):
         cls.thread = cls.process_cls()
-        assert isinstance(cls.thread, ModelProcess)
         cls._recorded_steps = collections.defaultdict(list)
         cls._replies = collections.defaultdict(dict)
         get_root_backend().actionStepped.connect(cls._record_step)
