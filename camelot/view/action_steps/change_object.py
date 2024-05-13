@@ -327,7 +327,7 @@ class ChangeObject(OpenFormView):
         dialog = cls.render(gui_context, step)
         apply_form_state(dialog, None, step['form_state'])
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec()
+            result = dialog.async_exec()
             if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
 
@@ -430,6 +430,6 @@ class ChangeObjects(UpdateTableView):
         step = json.loads(serialized_step)
         dialog = cls.render(step)
         with hide_progress_dialog( gui_context ):
-            result = dialog.exec()
+            result = dialog.async_exec()
             if result == QtWidgets.QDialog.DialogCode.Rejected:
                 raise CancelRequest()
