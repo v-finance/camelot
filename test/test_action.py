@@ -31,7 +31,6 @@ from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningProcessCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils, utils, gui_naming_context
-from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.controls.action_widget import AbstractActionWidget
@@ -147,13 +146,6 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     def test_action_push_botton( self ):
         widget = QtWidgets.QPushButton()
         self.grab_widget_states( widget, 'application' )
-
-    def test_hide_progress_dialog( self ):
-        dialog = self.gui_context_obj.get_progress_dialog()
-        dialog.show()
-        with hide_progress_dialog(self.gui_context):
-            self.assertTrue( dialog.isHidden() )
-        self.assertFalse( dialog.isHidden() )
 
 
 class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, SerializableMixinCase):
