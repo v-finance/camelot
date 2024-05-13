@@ -28,15 +28,14 @@
 #  ============================================================================
 
 from dataclasses import dataclass
-import json
+
 import logging
 import typing
 
 from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
 from ...core.serializable import DataclassSerializable
-from .. import gui_naming_context
-from camelot.core.backend import cpp_action_step, is_cpp_gui_context_name
+from camelot.core.backend import cpp_action_step
 
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
@@ -50,17 +49,8 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
-        # @TODO : this needs to be handled in the action runner
-        if is_cpp_gui_context_name(gui_context_name):
-            cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
-            return
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        if gui_context is None:
-            return
-        progress_dialog = gui_context.get_progress_dialog()
-        if progress_dialog is not None:
-            step = json.loads(serialized_step)
-            progress_dialog.push_level(step['verbose_name'])
+        # Always send to C++ (even if gui_context_name comes from python)
+        cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
 
 
 @dataclass
@@ -70,16 +60,9 @@ class PopProgressLevel(ActionStep, DataclassSerializable):
 
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
-        # @TODO : this needs to be handled in the action runner
-        if is_cpp_gui_context_name(gui_context_name):
-            cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
-            return
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        if gui_context is None:
-            return
-        progress_dialog = gui_context.get_progress_dialog()
-        if progress_dialog is not None:
-            progress_dialog.pop_level()
+        # Always send to C++ (even if gui_context_name comes from python)
+        cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
+
 
 @dataclass
 class UpdateProgress(ActionStep, DataclassSerializable):
