@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ...admin.icon import Icon
-from ...core.qt import QtWidgets, QtGui, transferto
+from ...core.qt import QtWidgets, QtGui
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ...view.art import from_admin_icon
@@ -61,23 +61,6 @@ references to widgets and other useful information.  This object cannot
 contain reference to anything database or model related, as those belong
 strictly to the :class:`ModelContext`
     """
-
-    def get_progress_dialog(self):
-        """
-        :return: an instance of :class:`QtWidgets.QProgressDialog`
-                 or :keyword:`None`
-        """
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        from camelot.core.backend import get_root_backend
-        if not get_root_backend().is_visible():
-            return None
-        app = QtWidgets.QApplication.instance()
-        progress_dialog = app.property('application_progress')
-        if progress_dialog is None:
-            progress_dialog = ProgressDialog(None) #(parent=window) FIXME
-            transferto(progress_dialog, progress_dialog) # FIXME -> replace with qml
-            app.setProperty('application_progress', progress_dialog)
-        return progress_dialog
 
     def get_window(self):
         """

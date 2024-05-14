@@ -38,7 +38,6 @@ from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
-from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.formview import FormWidget
@@ -326,10 +325,9 @@ class ChangeObject(OpenFormView):
         step = json.loads(serialized_step)
         dialog = cls.render(gui_context, step)
         apply_form_state(dialog, None, step['form_state'])
-        with hide_progress_dialog( gui_context ):
-            result = dialog.exec()
-            if result == QtWidgets.QDialog.DialogCode.Rejected:
-                raise CancelRequest()
+        result = dialog.async_exec()
+        if result == QtWidgets.QDialog.DialogCode.Rejected:
+            raise CancelRequest()
 
 
 @dataclass
@@ -429,7 +427,6 @@ class ChangeObjects(UpdateTableView):
     def gui_run(cls, gui_context, serialized_step):
         step = json.loads(serialized_step)
         dialog = cls.render(step)
-        with hide_progress_dialog( gui_context ):
-            result = dialog.exec()
-            if result == QtWidgets.QDialog.DialogCode.Rejected:
-                raise CancelRequest()
+        result = dialog.async_exec()
+        if result == QtWidgets.QDialog.DialogCode.Rejected:
+            raise CancelRequest()
