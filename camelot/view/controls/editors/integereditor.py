@@ -166,7 +166,7 @@ class IntegerEditor(CustomEditor):
         calculator = Calculator(self)
         calculator.setValue(value)
         calculator.calculation_finished_signal.connect( self.calculation_finished )
-        calculator.exec()
+        calculator.open()
 
     @QtCore.qt_slot(str)
     def calculation_finished(self, value):

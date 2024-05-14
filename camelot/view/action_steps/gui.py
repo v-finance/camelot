@@ -47,7 +47,6 @@ from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.action_runner import hide_progress_dialog
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from .. import gui_naming_context
@@ -137,7 +136,7 @@ class SelectItem(ActionStep, DataclassSerializable):
     @classmethod
     def gui_run(cls, gui_context_name, serialized_step):
         dialog = cls.render(step = json.loads(serialized_step))
-        result = dialog.exec()
+        result = dialog.async_exec()
         if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_value()
@@ -222,23 +221,6 @@ class MessageBox( ActionStep, DataclassSerializable ):
         message_box.setInformativeText(str(step["informative_text"] or ''))
         message_box.setDetailedText(str(step["detailed_text"] or ''))
         return message_box
-
-    @classmethod
-    def show_message_box(cls, step):
-        message_box = cls.render(step)
-        result = message_box.exec()
-        if result == QtWidgets.QMessageBox.StandardButton.Cancel:
-            raise CancelRequest()
-        return {"button": result}
-
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        step = json.loads(serialized_step)
-        if step['hide_progress']:
-            with hide_progress_dialog(gui_context_name):
-                return cls.show_message_box(step)
-        else:
-            return cls.show_message_box(step)
 
     @classmethod
     def deserialize_result(cls, gui_context_name, result):

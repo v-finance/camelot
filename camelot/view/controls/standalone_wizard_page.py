@@ -29,7 +29,7 @@
 
 
 
-from ...core.qt import QtWidgets, Qt
+from ...core.qt import QtWidgets, Qt, QtCore
 from camelot.core.utils import ugettext_lazy as _
 
 
@@ -45,6 +45,8 @@ class StandaloneWizardPage(QtWidgets.QDialog):
 
     def __init__(self, window_title=None, parent=None, flags=Qt.WindowType.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
+        self._result = None
+        self.finished.connect(self.on_finished)
         self.setWindowTitle( str(window_title or ' ') )
         self.set_layouts()
 
@@ -128,3 +130,13 @@ class StandaloneWizardPage(QtWidgets.QDialog):
         layout.addStretch()
         self.buttons_widget().setLayout( layout )
 
+    @QtCore.qt_slot(int)
+    def on_finished(self, result):
+        self._result = result
+
+    def async_exec(self):
+        self.open()
+        # see also: waiting for QPromise in RootBackend::actionStepsGuiRun
+        while self._result is None:
+            QtCore.QCoreApplication.instance().processEvents()
+        return self._result
