@@ -44,7 +44,6 @@ from ..admin.action.base import Action, MetaActionStep
 from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
 from ..core.backend import get_root_backend
-from ..view.model_process import ModelProcess
 from ..view import action_steps
 
 has_programming_error = False
