@@ -32,7 +32,6 @@ from dataclasses import dataclass, field
 
 from camelot.core.exception import CancelRequest
 from camelot.core.naming import initial_naming_context
-from camelot.view.action_runner import hide_progress_dialog
 
 from .item_view import OpenTableView, OpenQmlTableView
 
@@ -74,11 +73,10 @@ class SelectObjects(OpenTableView):
 
     @classmethod
     def gui_run(cls, gui_context, serialized_step):
-        with hide_progress_dialog(gui_context):
-            response, model = OpenQmlTableView.render(gui_context, 'SelectObjects', serialized_step)
-            if not response['selection_count']:
-                raise CancelRequest()
-            return response
+        response, model = OpenQmlTableView.render(gui_context, 'SelectObjects', serialized_step)
+        if not response['selection_count']:
+            raise CancelRequest()
+        return response
 
     @classmethod
     def deserialize_result(cls, gui_context, response):
