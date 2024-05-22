@@ -38,7 +38,6 @@ from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.delegates import DelegateManager
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.controls.formview import FormEditors
-from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
 from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
@@ -869,14 +868,6 @@ class ControlsTest(
         busy_widget = BusyWidget()
         busy_widget.set_busy( True )
         self.grab_widget( busy_widget )
-
-    def test_progress_dialog( self ):
-        dialog = ProgressDialog(None)
-        dialog.title = 'Import cover images'
-        self.grab_widget(dialog)
-        dialog.add_detail('toy_story.png imported')
-        dialog.add_detail('matrix.png imported')
-        self.grab_widget(dialog, suffix='detail')
 
     def test_user_exception(self):
         exc = None
