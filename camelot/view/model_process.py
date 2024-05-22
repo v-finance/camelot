@@ -41,12 +41,16 @@ class ModelProcess(spawned_mp.Process):
         self._address = self.listener.address
 
     def _response_socket_notice(self, socket):
-        while self._response_receiver.poll():
-            serialized_response = QtCore.QByteArray(
-                self._response_receiver.recv_bytes()
-            )
-            root_backend = get_root_backend()
-            root_backend.action_runner().onResponse(serialized_response)
+        try:
+            while self._response_receiver.poll():
+                serialized_response = QtCore.QByteArray(
+                    self._response_receiver.recv_bytes()
+                )
+                root_backend = get_root_backend()
+                root_backend.action_runner().onResponse(serialized_response)
+        except EOFError:
+            LOGGER.info("Terminated")
+
 
     def __getstate__(self):
         state = self.__dict__.copy()
