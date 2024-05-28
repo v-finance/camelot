@@ -1,9 +1,8 @@
 import time
 
-from camelot.test import RunningProcessCase
+from camelot.test import RunningProcessCase, get_root_backend
 from camelot.core.backend import PythonConnection
 from camelot.core.qt import QtCore
-from camelot.view.model_process import ModelProcess
 from camelot.view.requests import (
     CancelAction, InitiateAction, SendActionResponse, ThrowActionException
 )
@@ -18,7 +17,7 @@ throw_action_exception = ThrowActionException(run_name=['a'], exception=None)
 
 class ModelProcessCase(RunningProcessCase):
 
-    process_cls = ModelProcess
+    process_cls = get_root_backend().create_server_process
 
     def test_execute_request(self):
         CancelAction.execute(cancel_action._to_dict()[1], PythonConnection, None)
