@@ -104,6 +104,9 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
             LOGGER.error('Unhandled exception in model process', exc_info=e)
             import traceback
             traceback.print_exc()
+        except SystemExit:
+            LOGGER.info('Terminating')
+            raise
         except:
             LOGGER.error('Unhandled event in model process')
 
