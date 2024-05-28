@@ -3,7 +3,6 @@ import time
 from camelot.test import RunningProcessCase, get_root_backend
 from camelot.core.backend import PythonConnection
 from camelot.core.qt import QtCore
-from camelot.view.model_process import ModelProcess
 from camelot.view.requests import (
     CancelAction, InitiateAction, SendActionResponse, ThrowActionException
 )
