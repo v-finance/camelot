@@ -29,58 +29,40 @@
 
 from ....core.qt import QtCore, Qt, QtWidgets
 from .customeditor import AbstractCustomEditor
-from camelot.core import constants
 
 class BoolEditor(QtWidgets.QCheckBox, AbstractCustomEditor):
     """Widget for editing a boolean field"""
 
     editingFinished = QtCore.qt_signal()
+    actionTriggered = QtCore.qt_signal(list, object)
     
     def __init__(self,
                  parent=None,
-                 minimum=constants.camelot_minint,
-                 maximum=constants.camelot_maxint,
-                 nullable=True,
-                 field_name = 'boolean',
-                 **kwargs):
+                 field_name = 'boolean'):
         QtWidgets.QCheckBox.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
-        self._nullable = nullable
         self.clicked.connect( self._state_changed )
+        self._value = None
 
     def set_value(self, value):
-        value = AbstractCustomEditor.set_value(self, value)
+        self._value = value
         if value:
             self.setCheckState(Qt.CheckState.Checked)
         else:
             self.setCheckState(Qt.CheckState.Unchecked)
 
     def get_value(self):
-        value_loading = AbstractCustomEditor.get_value(self)
-        if value_loading is not None:
-            return value_loading
         state = self.checkState()
         if state==Qt.CheckState.Unchecked:
-            return False
+            return None if self._value is None else False
         return True
 
-    def set_field_attributes( self, editable = True, **kwargs ):
-        AbstractCustomEditor.set_field_attributes( self, **kwargs )
+    def set_editable(self, editable):
         self.setDisabled( not editable )
         
-    @QtCore.qt_slot( bool )
+    @QtCore.qt_slot(bool)
     def _state_changed(self, value=None):
-        if not self.hasFocus():
-            """
-            Mac OS X's behaviour is not to move focus to a checkbox when it's
-            state is changed. Therefore, the text_input_editing_finished method
-            will not be called on a TextLineEditor when a checkbox is clicked
-            after a text line has been changed, thus leading to a loss of the
-            changes made in the text line. This issue is resolved by forcing
-            the focus to the checkbox here.
-            """
-            self.setFocus()
         self.editingFinished.emit()
 
     def sizeHint(self):

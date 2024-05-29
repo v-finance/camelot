@@ -29,12 +29,10 @@
 
 from math import floor
 
-import six
+
 
 from ....core.qt import QtGui, QtWidgets, QtCore, Qt
 from camelot.view.art import FontIcon
-from camelot.core.constants import camelot_minint
-from camelot.core.constants import camelot_maxint
 
 from .customeditor import CustomEditor, set_background_color_palette
 from camelot.view.controls.editors.floateditor import CustomDoubleSpinBox
@@ -46,14 +44,9 @@ class IntegerEditor(CustomEditor):
     calculator_icon = FontIcon('calculator') # 'tango/16x16/apps/accessories-calculator.png'
     
     def __init__(self, parent = None,
-                       minimum = camelot_minint,
-                       maximum = camelot_maxint,
                        calculator = True,
                        option = None,
-                       decimal = False,
-                       field_name = 'integer',
-                       **kwargs):
-        
+                       field_name = 'integer'):
         CustomEditor.__init__(self, parent)
         self.setObjectName( field_name )
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
@@ -63,9 +56,8 @@ class IntegerEditor(CustomEditor):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         
         spin_box = CustomDoubleSpinBox(option, parent)
-        spin_box.setRange(minimum-1, maximum)
         spin_box.setDecimals(0)
-        spin_box.setAlignment(Qt.Alignment.AlignRight|Qt.Alignment.AlignVCenter)
+        spin_box.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         spin_box.addAction(action)
         spin_box.setObjectName('spin_box')
         
@@ -92,21 +84,51 @@ class IntegerEditor(CustomEditor):
         self.setFocusProxy(spin_box)
         self.setLayout(layout)
         self.option = option
-        self.decimal = decimal
 
-    def set_field_attributes(self, **kwargs):
-        super(IntegerEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
+    def set_suffix(self, suffix):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
-            set_background_color_palette(spin_box.lineEdit(), kwargs.get('background_color', None))
-            spin_box.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
-            spin_box.setPrefix(six.text_type(kwargs.get('prefix', '')))
-            spin_box.setSuffix(six.text_type(kwargs.get('suffix', '')))
-            spin_box.setSingleStep(kwargs.get('single_step', 1))
+            spin_box.setSuffix(str(suffix or ''))
+
+    def set_prefix(self, prefix):
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            spin_box.setPrefix(str(prefix or ''))
+
+    def set_single_step(self, single_step):
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            single_step = single_step if single_step is not None else 1
+            spin_box.setSingleStep(single_step)
+
+    def set_minimum(self, minimum):
+        if minimum is not None:
+            spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+            if spin_box is not None:
+                spin_box.setMinimum(minimum-1)
+
+    def set_maximum(self, maximum):
+        if maximum is not None:
+            spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+            if spin_box is not None:
+                spin_box.setMaximum(maximum)
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            spin_box.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        self.set_enabled(editable)
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
+        if spin_box is not None:
+            set_background_color_palette(spin_box.lineEdit(), background_color)
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             if value is None:
@@ -115,18 +137,12 @@ class IntegerEditor(CustomEditor):
                 spin_box.setValue(value)
 
     def get_value(self):
-        value_loading = CustomEditor.get_value(self)
-        if value_loading is not None:
-            return value_loading
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             spin_box.interpretText()
             value = int(spin_box.value())
             if value==int(spin_box.minimum()):
                 return None
-            elif self.decimal:
-                import decimal
-                return decimal.Decimal(value)
             return value
 
     def set_enabled(self, editable=True):
@@ -150,13 +166,13 @@ class IntegerEditor(CustomEditor):
         calculator = Calculator(self)
         calculator.setValue(value)
         calculator.calculation_finished_signal.connect( self.calculation_finished )
-        calculator.exec()
+        calculator.open()
 
-    @QtCore.qt_slot(six.text_type)
+    @QtCore.qt_slot(str)
     def calculation_finished(self, value):
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
-            spin_box.setValue(floor(float(six.text_type(value))))
+            spin_box.setValue(floor(float(str(value))))
             self.editingFinished.emit()
 
     @QtCore.qt_slot()

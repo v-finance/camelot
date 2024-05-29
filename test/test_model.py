@@ -1,33 +1,39 @@
 import datetime
+import logging
 import os
 import unittest
+from unittest.mock import Mock, patch
 
-import six
+from sqlalchemy import create_engine, orm, schema, types
 
-from sqlalchemy import orm, schema, types, create_engine
-
-from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.orm import Session, process_deferred_properties
-from camelot.core.conf import settings
-from camelot.core.sql import metadata
-
-from camelot.model import party, memento, authentication
-from camelot.model.party import Person
-from camelot.model.authentication import (
-    update_last_login, get_current_authentication
-)
-from camelot.model.batch_job import BatchJob, BatchJobType
-from camelot.model.fixture import Fixture, FixtureVersion
-from camelot.model.i18n import Translation, ExportAsPO
-
-from camelot.test.action import MockModelContext
-
-from camelot_example.fixtures import load_movie_fixtures
-from camelot_example import model
-from camelot_example.view import setup_views
-
+from . import unit_test_context
 from .test_orm import TestMetaData
+
+from camelot.admin.action import (
+    Action, Mode, list_action, list_filter, application_action, form_action
+)
+from camelot.admin.action.logging import ChangeLogging
+from camelot.admin.application_admin import ApplicationAdmin
+from camelot.admin.icon import CompletionValue
+from camelot.admin.entity_admin import EntityAdmin
+from camelot.core.exception import UserException
+from camelot.core.naming import initial_naming_context
+from camelot.core.orm import Entity, Session
+from camelot.core.qt import QtGui
+from camelot.core.sql import metadata
+from camelot.core.utils import ugettext_lazy as _
+from camelot.model import authentication, memento, party, type_and_status
+from camelot.model.authentication import AuthenticationMechanism, AuthenticationGroup
+from camelot.model.fixture import Fixture, FixtureVersion
+from camelot.model.i18n import Translation
+from camelot.model.party import Person
+from camelot.test import test_context
+from camelot.test.action import MockModelContext
+from camelot.view.import_utils import XlsReader
+from camelot.view import action_steps
+from camelot_example.fixtures import load_movie_fixtures
+
+LOGGER = logging.getLogger(__name__)
 
 app_admin = ApplicationAdmin()
 
@@ -36,57 +42,141 @@ app_admin = ApplicationAdmin()
 #
 model_engine = create_engine('sqlite://')
 
-class ExampleModelMixinCase(object):
+class SetupSampleModel(Action):
 
-    @classmethod
-    def setup_sample_model(cls):
-        process_deferred_properties()
-        setup_views()
-        metadata.bind = model_engine
-        metadata.create_all(model_engine)
-        cls.session = Session()
-        cls.session.expunge_all()
-        update_last_login()
+    def model_run(self, model_context, mode):
+        ExampleModelMixinCase.setup_sample_model()
+        yield action_steps.UpdateProgress(detail='Model set up')
 
-    @classmethod
-    def tear_down_sample_model(cls):
-        cls.session.expunge_all()
-        metadata.bind = None
+setup_sample_model_name = unit_test_context.bind(('setup_sample_model',), SetupSampleModel())
 
-    @classmethod
-    def load_example_data(cls):
-        """
-        set cls.first_person_id, to have the id of a person available in the gui
-        """
-        load_movie_fixtures()
-        cls.first_person_id = cls.session.query(Person).first().id
+class LoadSampleData(Action):
 
-    @classmethod
-    def dirty_session(cls):
-        """
-        Create objects in various states to make the session dirty
-        """
-        cls.session.expunge_all()
+    def model_run(self, model_context, mode):
+        if mode in (None, True):
+            load_movie_fixtures(model_engine)
+            yield action_steps.UpdateProgress(detail="samples loaded")
+
+load_sample_data_name = unit_test_context.bind(('load_sample_data',), LoadSampleData())
+
+class SetupSession(Action):
+
+    def model_run(self, model_context, mode):
+        session = Session()
+        session.close()
+        yield action_steps.UpdateProgress(detail='Session closed')
+
+setup_session_name = unit_test_context.bind(('setup_session',), SetupSession())
+
+class DirtySession(Action):
+    
+    def model_run(self, model_context, mode):
+        session = Session()
+        session.expunge_all()
         # create objects in various states
         #
-        p1 = Person(first_name = u'p1', last_name = u'persistent' )
         p2 = Person(first_name = u'p2', last_name = u'dirty' )
         p3 = Person(first_name = u'p3', last_name = u'deleted' )
         p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
-        p5 = Person(first_name = u'p5', last_name = u'detached' )
         p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
-        cls.session.flush()
+        session.flush()
         p3.delete()
-        cls.session.flush()
+        session.flush()
         p4.delete()
         p2.last_name = u'clean'
         #
         # delete p6 without the session being aware
         #
         person_table = Person.table
-        cls.session.execute(
+        session.execute(
             person_table.delete().where( person_table.c.party_id == p6.id )
         )
+        yield action_steps.UpdateProgress(detail='Session dirty')
+
+dirty_session_action_name = unit_test_context.bind(('dirty_session',), DirtySession())
+
+class ExampleModelMixinCase(object):
+
+    @classmethod
+    def setup_sample_model(cls):
+        metadata.bind = model_engine
+        metadata.drop_all(model_engine)
+        metadata.create_all(model_engine)
+        cls.session = Session()
+        cls.session.expunge_all()
+        AuthenticationMechanism.authenticate(
+            metadata.bind, 'database', 'user', ['admin']
+        )
+        return model_engine
+
+    @classmethod
+    def tear_down_sample_model(cls):
+        cls.session.expunge_all()
+        metadata.bind = None
+
+
+class CustomAction(Action):
+    name = 'custom_test_action'
+    verbose_name = 'Custom Action'
+    shortcut = QtGui.QKeySequence.StandardKey.New
+    modes = [
+        Mode('mode_1', _('First mode')),
+        Mode('mode_2', _('Second mode')),
+    ]
+
+
+custom_action_name = test_context.bind((CustomAction.name,), CustomAction())
+
+group_box_filter_name = unit_test_context.bind(('group_box',), list_filter.GroupBoxFilter(Person.last_name, exclusive=True))
+combo_box_filter_name = unit_test_context.bind(('combo_box',), list_filter.ComboBoxFilter(Person.last_name))
+to_first_row_name = unit_test_context.bind(('to_first_row',), list_action.ToFirstRow())
+to_last_row_name = unit_test_context.bind(('to_last_row',), list_action.ToLastRow())
+export_spreadsheet_name = unit_test_context.bind(('export_spreadsheet',), list_action.ExportSpreadsheet())
+import_from_file_name = unit_test_context.bind(('import_from_file',), list_action.ImportFromFile())
+set_filters_name = unit_test_context.bind(('set_filters',), list_action.SetFilters())
+open_form_view_name = unit_test_context.bind(('open_form_view',), list_action.OpenFormView())
+remove_selection_name = unit_test_context.bind(('remove_selection',), list_action.RemoveSelection())
+close_form_name = unit_test_context.bind(('close_form',), form_action.CloseForm())
+backup_action_name = unit_test_context.bind(('backup',), application_action.Backup())
+restore_action_name = unit_test_context.bind(('restore',), application_action.Restore())
+change_logging_action_name = unit_test_context.bind(('change_logging',), ChangeLogging())
+segmentation_fault_action_name = unit_test_context.bind(('segmentation_fault',), application_action.SegmentationFault())
+refresh_action_name = unit_test_context.bind(('refresh',), application_action.Refresh())
+
+class ModelContextAction(Action):
+    name = 'model_context_action'
+    verbose_name = 'Model context methods'
+
+    def model_run(model_context, mode):
+        for obj in model_context.get_collection():
+            yield action_steps.UpdateProgress('obj in collection {}'.format(obj))
+        for obj in model_context.get_selection():
+            yield action_steps.UpdateProgress('obj in selection {}'.format(obj))
+        model_context.get_object()
+
+model_context_action_name = test_context.bind((ModelContextAction.name,), ModelContextAction())
+
+class SendDocumentAction( Action ):
+
+    def model_run( self, model_context, mode ):
+        methods = [
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By E-mail'),
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By Fax'),
+            CompletionValue(
+                initial_naming_context._bind_object('email'),
+                'By postal mail')
+        ]
+        method = yield action_steps.SelectItem(
+            methods,
+            value=initial_naming_context._bind_object('email')
+        )
+        LOGGER.info('selected {}'.format(method))
+
+send_document_action_name = unit_test_context.bind(('send_document_action',), SendDocumentAction())
 
 
 class ModelCase(unittest.TestCase, ExampleModelMixinCase):
@@ -101,11 +191,13 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
         cls.tear_down_sample_model()
 
     def test_memento( self ):
-        m = memento.Memento( primary_key = 1,
-                             model = 'TestCase',
-                             authentication = get_current_authentication(),
-                             memento_type = 1,
-                             previous_attributes = {'name':u'memento'} )
+        m = memento.Memento(
+            primary_key = 1,
+            model = 'TestCase',
+            authentication_id = AuthenticationMechanism.get_current_authentication().authentication_mechanism_id,
+            memento_type = 1,
+            previous_attributes = {'name':u'memento'}
+        )
         self.assertTrue( m.previous )
         
     def test_i18n( self ):
@@ -125,69 +217,33 @@ class ModelCase(unittest.TestCase, ExampleModelMixinCase):
                                    value = 'emmer' )
         orm.object_session( translation ).flush()
         self.assertEqual( Translation.translate( 'bucket', 'nl_BE' ), 'emmer' )
-        export_action = ExportAsPO()
-        model_context = MockModelContext()
-        model_context.obj = translation
-        try:
-            generator = export_action.model_run( model_context )
-            file_step = six.advance_iterator( generator )
-            generator.send('/tmp/test.po')
-        except StopIteration:
-            pass
-        
-    def test_batch_job_example( self ):
-        # begin batch job example
-        synchronize = BatchJobType.get_or_create( u'Synchronize' )
-        with BatchJob.create( synchronize ) as batch_job:
-            batch_job.add_strings_to_message( [ u'Synchronize part A',
-                                                u'Synchronize part B' ] )
-            batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
-        # end batch job example
-            
-    def test_batch_job( self ):
-        batch_job_type = BatchJobType.get_or_create( u'Synchronize' )
-        self.assertTrue( six.text_type( batch_job_type ) )
-        batch_job = BatchJob.create( batch_job_type )
-        self.assertTrue( orm.object_session( batch_job ) )
-        self.assertFalse( batch_job.is_canceled() )
-        batch_job.change_status( 'canceled' )
-        self.assertTrue( batch_job.is_canceled() )
-        # run batch job without exception
-        with batch_job:
-            batch_job.add_strings_to_message( [ u'Doing something' ] )
-            batch_job.add_strings_to_message( [ u'Done' ], color = 'green' )
-        self.assertEqual( batch_job.current_status, 'success' )
-        # run batch job with exception
-        batch_job = BatchJob.create( batch_job_type )
-        with batch_job:
-            batch_job.add_strings_to_message( [ u'Doing something' ] )
-            raise Exception('Something went wrong')
-        self.assertEqual( batch_job.current_status, 'errors' )
-    
+
     def test_current_authentication( self ):
-        authentication.clear_current_authentication()
-        mechanism = authentication.get_current_authentication()
-        # current authentication cache should survive 
-        # a session expire + expunge
-        orm.object_session( mechanism ).expire_all()
-        orm.object_session( mechanism ).expunge_all()
-        mechanism = authentication.get_current_authentication()
-        self.assertTrue( mechanism.username )
-        self.assertTrue( six.text_type( mechanism ) )
+        AuthenticationMechanism.clear_authentication()
+        with self.assertRaises(UserException):
+            AuthenticationMechanism.get_current_authentication()
+        AuthenticationMechanism.authenticate(metadata.bind, 'database', 'user', ['Admin'])
+        authentication = AuthenticationMechanism.get_current_authentication()
+        self.assertTrue(authentication.username)
+        self.assertTrue(str(authentication))
         
     def test_authentication_group( self ):
         # begin roles definition
-        authentication.clear_current_authentication()
-        authentication.roles.extend( [ (1, 'administrator'),
-                                       (2, 'movie_editor') ] )
+        AuthenticationMechanism.clear_authentication()
+        authentication.roles.extend([
+            (1, 'administrator'),
+            (2, 'movie_editor'),
+        ])
         # end roles definition
-        # begin intial group creation
-        authentication.update_last_login( initial_group_name = 'Admin',
-                                          initial_group_roles = ['administrator'] )
-        # end initial group creation
-        auth = authentication.get_current_authentication()
-        self.assertTrue( auth.has_role( 'administrator' ) )
-        self.assertFalse( auth.has_role( 'movie_editor' ) )
+        # begin group definition
+        group = AuthenticationGroup(name='Admin')
+        group.administrator = True
+        self.session.flush()
+        # end group definition
+        AuthenticationMechanism.authenticate(metadata.bind, 'database', 'user', ['Admin'])
+        auth = AuthenticationMechanism.get_current_authentication()
+        self.assertTrue(auth.has_role('administrator'))
+        self.assertFalse(auth.has_role('movie_editor'))
 
 class PartyCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in party - address - contact mechanism model"""
@@ -208,14 +264,23 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.session = Session()
         self.session.close()
 
-    def test_party( self ):
+    def test_party(self):
         p = party.Party()
         self.assertFalse(p.name)
-        
+
+    def test_ordering(self):
+        p1 = party.Party()
+        p2 = party.Party()
+        self.assertNotEqual(p1, p2)
+        self.assertTrue((p1 < p2) or (p2 < p1))
+        self.assertTrue((p1 > p2) or (p2 > p1))
+        self.assertTrue(p1 <= p1)
+        self.assertTrue(p1 >= p1)
+
     def test_geographic_boundary( self ):
         belgium = party.Country.get_or_create( code = u'BE', 
                                                name = u'Belgium' )
-        self.assertTrue( six.text_type( belgium ) )
+        self.assertTrue( str( belgium ) )
         city = party.City.get_or_create( country = belgium,
                                          code = '1000',
                                          name = 'Brussels' )
@@ -225,8 +290,9 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         city = self.test_geographic_boundary()
         address = party.Address.get_or_create( street1 = 'Avenue Louise',
                                                street2 = None,
-                                               city = city )
-        self.assertTrue( six.text_type( address ) )
+                                               city = city,
+                                               zip_code='1000')
+        self.assertTrue( str( address ) )
         return address
 
     def test_party_address( self ):
@@ -258,7 +324,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual( org.street1, 'Avenue Louise 5' )
         self.assertEqual( org.street2, 'Boite 4' )
         self.assertEqual( org.city, city )        
-        self.assertTrue( six.text_type( party_address ) )
+        self.assertTrue( str( party_address ) )
         query = self.session.query( party.PartyAddress )
         self.assertTrue( query.filter( party.PartyAddress.street1 == 'Avenue Louise 5' ).first() )
         self.assertTrue( query.filter( party.PartyAddress.street2 == 'Boite 4' ).first() )
@@ -330,7 +396,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         
     def test_contact_mechanism( self ):
         contact_mechanism = party.ContactMechanism( mechanism = (u'email', u'info@test.be') )
-        self.assertTrue( six.text_type( contact_mechanism ) )
+        self.assertTrue( str( contact_mechanism ) )
         
     def test_person_contact_mechanism( self ):
         # create a new person
@@ -387,7 +453,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         org.phone = ('phone', '1234')
         org.fax = ('fax', '4567')
         self.organization_admin.flush( org )
-        self.assertTrue( six.text_type( org ) )
+        self.assertTrue( str( org ) )
         query = orm.object_session( org ).query( party.Organization )
         self.assertTrue( query.filter( party.Organization.email == ('email', 'info@python.org') ).first() )
         self.assertTrue( query.filter( party.Organization.phone == ('phone', '1234') ).first() )
@@ -405,7 +471,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.person_admin.flush( person )
         self.assertFalse( party_contact_mechanism in self.session.new )
         self.assertFalse( party_contact_mechanism.contact_mechanism in self.session.new )        
-        self.assertTrue( six.text_type( party_contact_mechanism ) )
+        self.assertTrue( str( party_contact_mechanism ) )
         query = self.session.query( party.PartyContactMechanism )
         self.assertTrue( query.filter( party.PartyContactMechanism.mechanism == (u'email', u'info2@test.be') ).first() )
         # party contact mechanism is only valid when contact mechanism is
@@ -429,7 +495,7 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         category.parties.append( org )
         self.session.flush()
         self.assertTrue( list( category.get_contact_mechanisms( u'email') ) )
-        self.assertTrue( six.text_type( category ) )
+        self.assertTrue( str( category ) )
 
 class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
     """Test the build in camelot model for fixtures"""
@@ -484,7 +550,6 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
                                      'import_example.xlsx' )
         person_count_before_import = Person.query.count()
         # begin load csv if fixture version
-        from camelot.view.import_utils import XlsReader
         if FixtureVersion.get_current_version( u'demo_data' ) == 0:
             reader = XlsReader(example_file)
             for line in reader:
@@ -509,7 +574,7 @@ class CustomizationCase(unittest.TestCase, ExampleModelMixinCase):
         party.Person.language = schema.Column( types.Unicode(30) )
         
         metadata.create_all()
-        p = party.Person( first_name = u'Peter', 
+        party.Person( first_name = u'Peter',
                           last_name = u'Principle', 
                           language = u'English' )
         session.flush()
@@ -517,87 +582,56 @@ class CustomizationCase(unittest.TestCase, ExampleModelMixinCase):
         
 class StatusCase( TestMetaData ):
     
-    def test_status_type( self ):
-        Entity, session = self.Entity, self.session
-        
-        #begin status type definition
-        from camelot.model import type_and_status
-        
-        class Invoice( Entity, type_and_status.StatusMixin ):
-            book_date = schema.Column( types.Date(), nullable = False )
-            status = type_and_status.Status()
-            
-        #end status type definition
-        self.create_all()
-        self.assertTrue( issubclass( Invoice._status_type, type_and_status.StatusTypeMixin ) )
-        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
-        #begin status types definition
-        draft = Invoice._status_type( code = 'DRAFT' )
-        ready = Invoice._status_type( code = 'READY' )
-        session.flush()
-        #end status types definition
-        self.assertTrue( six.text_type( ready ) )
-        #begin status type use
-        invoice = Invoice( book_date = datetime.date.today() )
-        self.assertEqual( invoice.current_status, None )
-        invoice.change_status( draft, status_from_date = datetime.date.today() )
-        #end status type use
-        self.assertEqual( invoice.current_status, draft )
-        self.assertEqual( invoice.get_status_from_date( draft ), datetime.date.today() )
-        self.assertTrue( len( invoice.status ) )
-        for history in invoice.status:
-            self.assertTrue( six.text_type( history ) )
-        
     def test_status_enumeration( self ):
-        Entity, session = self.Entity, self.session
+        session = self.session
         
-        #begin status enumeration definition
-        from camelot.model import type_and_status
-        
-        class Invoice( Entity, type_and_status.StatusMixin ):
-            book_date = schema.Column( types.Date(), nullable = False )
-            status = type_and_status.Status( enumeration = [ (1, 'DRAFT'),
-                                                             (2, 'READY'),
-                                                             (3, 'BLOCKED')] )
+        with patch('camelot.core.orm.Entity.metadata') as mock_entity_metadata:
+            mock_entity_metadata.__get__ = Mock(return_value=self.metadata)
             
-            class Admin( EntityAdmin ):
-                list_display = ['book_date', 'current_status']
-                list_actions = [ type_and_status.ChangeStatus( 'DRAFT' ),
-                                 type_and_status.ChangeStatus( 'READY' ) ]
-                form_actions = list_actions
+            class Invoice( Entity, type_and_status.WithStatus, type_and_status.StatusMixin ):
+                status_types = [(1, 'DRAFT'),
+                                (2, 'READY'),
+                                (3, 'BLOCKED')]
+                book_date = schema.Column( types.Date(), nullable = False )
                 
-        #end status enumeration definition
-        self.create_all()
-        self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
-        #begin status enumeration use
-        invoice = Invoice( book_date = datetime.date.today() )
-        self.assertEqual( invoice.current_status, None )
-        invoice.change_status( 'DRAFT', status_from_date = datetime.date(2012,1,1) )
-        session.flush()
-        self.assertEqual( invoice.current_status, 'DRAFT' )
-        self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
-        draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
-        ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
-        #end status enumeration use
-        self.assertEqual( draft_invoices, 1 )
-        self.assertEqual( ready_invoices, 0 )
-        ready_action = Invoice.Admin.list_actions[-1]
-        model_context = MockModelContext()
-        model_context.obj = invoice
-        model_context.admin = app_admin.get_related_admin(Invoice)
-        list( ready_action.model_run( model_context ) )
-        self.assertTrue( invoice.current_status, 'READY' )
-        # changing the status should work without flushing
-        invoice.status.append(Invoice._status_history(
-            status_from_date=datetime.date.today(),
-            status_thru_date=party.end_of_times(),
-            classified_by='DRAFT'))
-        session.flush()
-        self.assertTrue( invoice.current_status, 'DRAFT')
-        invoice.status.append(Invoice._status_history(
-            status_from_date=datetime.date.today(),
-            status_thru_date=party.end_of_times(),
-            classified_by='BLOCKED'))
-        self.assertTrue( invoice.current_status, 'BLOCKED')
-        session.flush()
-        self.assertTrue( invoice.current_status, 'BLOCKED')
+                class Admin( EntityAdmin ):
+                    list_display = ['book_date', 'current_status']
+                    list_actions = [ type_and_status.ChangeStatus( 'DRAFT' ),
+                                     type_and_status.ChangeStatus( 'READY' ) ]
+                    form_actions = list_actions
+                    
+            #end status enumeration definition
+            self.create_all()
+            self.assertTrue( issubclass( Invoice._status_history, type_and_status.StatusHistory ) )
+            #begin status enumeration use
+            invoice = Invoice( book_date = datetime.date.today() )
+            self.assertEqual( invoice.current_status, None )
+            invoice.change_status( 'DRAFT', status_from_date = datetime.date(2012,1,1), session=session)
+            session.flush()
+            self.assertEqual( invoice.current_status, 'DRAFT' )
+            self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
+            draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
+            ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
+            #end status enumeration use
+            self.assertEqual( draft_invoices, 1 )
+            self.assertEqual( ready_invoices, 0 )
+            ready_action = Invoice.Admin.list_actions[-1]
+            model_context = MockModelContext()
+            model_context.obj = invoice
+            model_context.admin = app_admin.get_related_admin(Invoice)
+            list( ready_action.model_run( model_context, None ) )
+            self.assertTrue( invoice.current_status, 'READY' )
+            # changing the status should work without flushing
+            invoice.status.append(Invoice._status_history(
+                status_from_date=datetime.date.today(),
+                status_thru_date=party.end_of_times(),
+                classified_by='DRAFT'))
+            session.flush()
+            self.assertTrue( invoice.current_status, 'DRAFT')
+            invoice.status.append(Invoice._status_history(
+                status_from_date=datetime.date.today(),
+                status_thru_date=party.end_of_times(),
+                classified_by='BLOCKED'))
+            self.assertTrue( invoice.current_status, 'BLOCKED')
+            session.flush()
+            self.assertTrue( invoice.current_status, 'BLOCKED')

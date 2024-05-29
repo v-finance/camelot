@@ -27,29 +27,31 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
 
 from ....core.item_model import PreviewRole
-from ....core.qt import py_to_variant
+from ....core.qt import Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
 
-@six.add_metaclass(DocumentationMetaclass)
-class TextEditDelegate(CustomDelegate):
+@dataclass
+class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for simple string values"""
-  
-    editor = editors.TextEditEditor
-      
-    def __init__( self, 
-                  parent = None,
-                  **kwargs ):
-        CustomDelegate.__init__( self, parent, **kwargs )
+
+    length: int = 20
+    editable: bool = True
 
     @classmethod
-    def get_standard_item(cls, locale, value, fa_values):
-        item = super(TextEditDelegate, cls).get_standard_item(locale, value, fa_values)
-        if value is not None:
-            item.setData(py_to_variant(six.text_type(value)), PreviewRole)
+    def get_editor_class(cls):
+        return editors.TextEditEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        if model_context.value is not None:
+            item.roles[PreviewRole] = str(model_context.value)
+            item.roles[Qt.ItemDataRole.EditRole] = item.roles[PreviewRole]
         return item
 
 

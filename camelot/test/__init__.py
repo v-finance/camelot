@@ -32,22 +32,25 @@ to write unittests for Camelot applications.  These are not the unittests for
 Camelot itself. 
 """
 
+import collections
 import logging
 import unittest
 import sys
 import os
+import json
 
-from ..admin.action.base import ActionStep
+
+from ..admin.action.base import Action, MetaActionStep
+from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
-from ..view.action_steps.orm import AbstractCrudSignal
-from ..view.action_runner import ActionRunner
-from ..view.model_process import ModelProcess
-from ..view import model_thread
-from ..view.model_thread.signal_slot_model_thread import SignalSlotModelThread
+from ..core.backend import get_root_backend
+from ..view import action_steps
 
 has_programming_error = False
 
 LOGGER = logging.getLogger('camelot.test')
+
+test_context = initial_naming_context.bind_new_context('test', immutable=True)
 
 class GrabMixinCase(object):
     """
@@ -98,136 +101,104 @@ class GrabMixinCase(object):
         painter.end()
         outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
+# make sure the name is reserved, so we can unbind it without exception
+test_action_name = test_context.bind(('test_action',), object())
+
+class GetActionState(Action):
+
+    def model_run(self, model_context, mode):
+        action = initial_naming_context.resolve(tuple(mode))
+        yield action_steps.UpdateProgress(
+            'Got state', detail=action.get_state(model_context),
+        )
+
+get_action_state_name = test_context.bind(('get_action_state',), GetActionState())
+
 class ActionMixinCase(object):
     """
     Helper methods to simulate running actions in a different thread
     """
 
-    @classmethod
-    def get_state(cls, action, gui_context):
+    def get_state(self, action_name, gui_context):
         """
         Get the state of an action in the model thread and return
         the result.
         """
-        model_context = gui_context.create_model_context()
-
-        class StateRegister(QtCore.QObject):
-
-            def __init__(self):
-                super(StateRegister, self).__init__()
-                self.state = None
-
-            @QtCore.qt_slot(object)
-            def set_state(self, state):
-                self.state = state
-
-        state_register = StateRegister()
-        cls.thread.post(
-            action.get_state, state_register.set_state, args=(model_context,)
+        recorded_steps = self.gui_run(
+            get_action_state_name, mode=action_name,
+            model_context_name=self.model_context_name
         )
-        cls.process()
-        return state_register.state
+        assert len(recorded_steps)
+        for step_type, step_data in recorded_steps:
+            if step_type == action_steps.UpdateProgress.__name__:
+                return step_data['detail']
+        assert False
 
     @classmethod
-    def gui_run(cls, action, gui_context):
+    def gui_run(cls,
+                action_name,
+                gui_context_name=('constant', 'null'),
+                mode=None,
+                replies={},
+                model_context_name=('constant', 'null')):
         """
-        Simulates the gui_run of an action, but instead of blocking,
-        yields progress each time a message is received from the model.
+        Runs an action and simulates replies by the user each time
+        a blocking action step is presented.
         """
+        gui_run_name = get_root_backend().run_action(
+            gui_context_name, action_name, model_context_name, mode
+        )
+        cls._replies[tuple(gui_run_name)] = replies
+        get_root_backend().action_runner().waitForCompletion()
+        return cls._recorded_steps[tuple(gui_run_name)]
 
-        class IteratingActionRunner(ActionRunner):
-
-            def __init__(self, generator_function, gui_context):
-                super(IteratingActionRunner, self).__init__(
-                    generator_function, gui_context
-                )
-                self.return_queue = []
-                self.exception_queue = []
-                cls.process()
-
-            @QtCore.qt_slot( object )
-            def generator(self, generator):
-                LOGGER.debug('got generator')
-                self._generator = generator
-
-            @QtCore.qt_slot( object )
-            def exception(self, exception_info):
-                LOGGER.debug('got exception {}'.format(exception_info))
-                self.exception_queue.append(exception_info)
-
-            @QtCore.qt_slot( object )
-            def __next__(self, yielded):
-                LOGGER.debug('got step {}'.format(yielded))
-                self.return_queue.append(yielded)
-
-            def run(self):
-                super(IteratingActionRunner, self).generator(self._generator)
-                cls.process()
-                step = self.return_queue.pop()
-                while isinstance(step, ActionStep):
-                    if isinstance(step, AbstractCrudSignal):
-                        LOGGER.debug('crud step, update view')
-                        step.gui_run(gui_context)
-                    LOGGER.debug('yield step {}'.format(step))
-                    gui_result = yield step
-                    LOGGER.debug('post result {}'.format(gui_result))
-                    cls.thread.post(
-                        self._iterate_until_blocking,
-                        self.__next__,
-                        self.exception,
-                        args = (self._generator.send, gui_result,)
-                    )
-                    cls.process()
-                    if len(self.exception_queue):
-                        raise Exception(self.exception_queue.pop().text)
-                    step = self.return_queue.pop()
-                LOGGER.debug("iteration finished")
-                yield None
-
-        runner = IteratingActionRunner(action.model_run, gui_context)
-        yield from runner.run()
-
-
-class RunningThreadCase(unittest.TestCase, ActionMixinCase):
-    """
-    Test case that starts a model thread when setting up the case class
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.thread = SignalSlotModelThread()
-        model_thread._model_thread_.insert(0, cls.thread)
-        cls.thread.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        model_thread._model_thread_.remove(cls.thread)
-        cls.thread.stop()
-
-    @classmethod
-    def process(cls):
-        """Wait until all events are processed and the queues of the model thread are empty"""
-        cls.thread.wait_on_work()
-        QtCore.QCoreApplication.instance().processEvents()
 
 class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     """
-    Test case that starts a model thread when setting up the case class
+    Test case that starts a model thread when setting up the case class.
+
+    Overwrite the process_cls class variable with a ModelProcess subclass
+    that initialized the needed resources to run the test case.
     """
+
+    process_cls = None
 
     @classmethod
     def setUpClass(cls):
-        cls.thread = ModelProcess()
-        model_thread._model_thread_.insert(0, cls.thread)
+        cls.thread = cls.process_cls()
+        cls._recorded_steps = collections.defaultdict(list)
+        cls._replies = collections.defaultdict(dict)
+        get_root_backend().actionStepped.connect(cls._record_step)
         cls.thread.start()
 
     @classmethod
     def tearDownClass(cls):
-        model_thread._model_thread_.remove(cls.thread)
-        cls.thread.stop()
+        get_root_backend().actionStepped.disconnect(cls._record_step)
+        try:
+            cls.process()
+        finally:
+            cls.thread.stop()
+
+    def tearDown(self):
+        self.process()
+        
+
+    @classmethod
+    def _record_step(cls, gui_run_name, action_step_type, gui_context_name, blocking, action_step):
+        step = json.loads(action_step.data())
+        cls._recorded_steps[tuple(gui_run_name)].append(
+            (action_step_type, step)
+        )
+        replies = cls._replies[tuple(gui_run_name)]
+        step_cls = MetaActionStep.action_steps[action_step_type]
+        if blocking:
+            result = replies.get(step_cls)
+            # the result needs to be convertible to a QJsonValue
+            assert isinstance(result, (dict, int, float, str, list, type(None)))
+            get_root_backend().action_step_result_valid(gui_run_name, result, False, "")
 
     @classmethod
     def process(cls):
         """Wait until all events are processed and the queues of the model thread are empty"""
-        cls.thread.wait_on_work()
-        QtCore.QCoreApplication.instance().processEvents()
+        completed = get_root_backend().action_runner().waitForCompletion()
+        assert completed

@@ -38,21 +38,22 @@ customize the look of the print previews or reuse the existing style
 
 The `environment` is a :class:`jinja2.environment.Environment` which uses
 the `loader` and that can be used with
-the :class:`camelot.view.action_steps.print_preview.PrintJinjaTemplate` action
+the :class:`vfinance.view.action_steps.print_notification.PrintNotification` action
 step.
 """
 
 from jinja2.environment import Environment
-from jinja2.loaders import ChoiceLoader, PackageLoader
+from jinja2.loaders import ChoiceLoader
 
-loader = ChoiceLoader( [ PackageLoader( 'camelot.art' ) ] )
+loader = ChoiceLoader([])
 
 class DefaultEnvironment( Environment ):
     
     def __repr__( self ):
         return '<camelot.core.templates.environment>'
     
-environment = DefaultEnvironment( loader = loader )
-
-
+environment = DefaultEnvironment(
+    loader = loader, 
+    extensions=['jinja2.ext.loopcontrols']
+)
 

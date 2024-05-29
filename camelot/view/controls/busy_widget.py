@@ -27,9 +27,9 @@
 #
 #  ============================================================================
 
+from ...core.backend import get_root_backend
 from ...core.qt import QtCore, QtWidgets
-from camelot.view.art import Pixmap
-from camelot.view.model_thread import get_model_thread
+from ..art import Pixmap
 
 working_pixmap = Pixmap( 'process-working.png' )
 
@@ -49,10 +49,7 @@ class BusyWidget(QtWidgets.QLabel):
         self.highlighted_orb = 0
         self.timer = None
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding )
-        mt = get_model_thread()
-        mt.thread_busy_signal.connect( self.set_busy )
-        # the model thread might already be busy before we connected to it
-        self.set_busy( mt.busy() )
+        get_root_backend().action_runner().busy.connect(self.set_busy)
 
     @QtCore.qt_slot(bool)
     def set_busy(self, busy_state):

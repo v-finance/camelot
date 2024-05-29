@@ -1,54 +1,38 @@
-from camelot.test import RunningThreadCase, RunningProcessCase
-from camelot.view.model_thread.signal_slot_model_thread import (
-    Task, TaskHandler
+import time
+
+from camelot.test import RunningProcessCase, get_root_backend
+from camelot.core.backend import PythonConnection
+from camelot.core.qt import QtCore
+from camelot.view.requests import (
+    CancelAction, InitiateAction, SendActionResponse, ThrowActionException
 )
 
-class ModelThreadCase(RunningThreadCase):
+cancel_action = CancelAction(run_name=['d'])
+initiate_action = InitiateAction(
+    gui_run_name=['a'], action_name=['b'], model_context=['c'], mode=None,
+)
+send_action_response = SendActionResponse(run_name=['a'], response=None)
+throw_action_exception = ThrowActionException(run_name=['a'], exception=None)
 
-    def test_task( self ):
-
-        def normal_request():
-            pass
-
-        task = Task( normal_request )
-        task.execute()
-
-        def exception_request():
-            raise Exception()
-
-        task = Task( exception_request )
-        task.execute()
-
-        def iterator_request():
-            raise StopIteration()
-
-        task = Task( iterator_request )
-        task.execute()
-
-        def unexpected_request():
-            raise SyntaxError()
-
-        task = Task( unexpected_request )
-        task.execute()
-
-    def test_handle_tasks(self):
-        task_queue = [None, Task( lambda:None )]
-        task_handler = TaskHandler(task_queue)
-        task_handler.handle_task()
-        self.assertFalse(len(task_queue))
-
-    def test_post_task(self):
-        self.thread.post(lambda:None)
-        self.thread.wait_on_work()
-        self.assertFalse(len(self.thread._request_queue))
 
 class ModelProcessCase(RunningProcessCase):
 
-    @staticmethod
-    def _request():
-        pass
+    process_cls = get_root_backend().create_server_process
+
+    def test_execute_request(self):
+        CancelAction.execute(cancel_action._to_dict()[1], PythonConnection, None)
+        InitiateAction.execute(
+            initiate_action._to_dict()[1], PythonConnection, None
+        )
+        SendActionResponse.execute(
+            send_action_response._to_dict()[1], PythonConnection, None
+        )
+        ThrowActionException.execute(
+            send_action_response._to_dict()[1], PythonConnection, None
+        )
 
     def test_post_task(self):
-        self.thread.post(self._request)
-        self.thread.wait_on_work()
-        self.assertFalse(self.thread._request_queue.qsize())
+        self.thread.post(QtCore.QByteArray(cancel_action._to_bytes()))
+        time.sleep(1)
+        # qsize is not reliable according to multiprocessing docs
+        # self.assertFalse(self.thread._request_queue.qsize())

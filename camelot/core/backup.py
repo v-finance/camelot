@@ -28,8 +28,7 @@
 #  ============================================================================
 import logging
 
-import six
-from camelot.types import PrimaryKey
+
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
 from .qt import QtCore
@@ -62,7 +61,7 @@ class BackupMechanism(object):
             this defaults to the `metadata` object of :module:`camelot.core.sql`.
             This metadata object should not contain any dialect specific constructs.
         """
-        self.filename = six.text_type(filename)
+        self.filename = str(filename)
         self.storage = storage
         self.metadata = metadata or default_metadata
 
@@ -88,7 +87,7 @@ class BackupMechanism(object):
         By default, this will return a Storage that puts the backup files
         in the DataLocation as specified by the QDesktopServices
         """
-        apps_folder = six.text_type(
+        apps_folder = str(
             QtCore.QStandardPaths.writableLocation(
                 QtCore.QStandardPaths.DataLocation
             )
@@ -135,6 +134,8 @@ class BackupMechanism(object):
         """Generator function that yields tuples :
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a backup.
+
+        The reason this yields tuples and not UpdateProgress is to prevent cyclic imports.
         
         :param from_engine: a :class:`sqlalchemy.engine.Connectable` object that
             provides a connection to the database to be backed up.
@@ -202,14 +203,11 @@ class BackupMechanism(object):
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a restore.
 
+        The reason this yields tuples and not UpdateProgress is to prevent cyclic imports.
+
         :param to_engine: a :class:`sqlalchemy.engine.Engine` object that
             provides a connection to the database to be backed up.
         """
-        #
-        # The restored database may contain different AuthenticationMechanisms
-        #
-        from camelot.model.authentication import clear_current_authentication
-        clear_current_authentication()
         #
         # Proceed with the restore
         #
@@ -257,6 +255,7 @@ class BackupMechanism(object):
                     yield (number_of_tables+i, steps, _('Copy data from table %s')%to_table.name)
                     self.copy_table_data(from_meta_data.tables[to_table.name], to_table,
                                          from_connection, to_connection)
+                    self.update_table_after_restore(to_table, to_connection)
                     
             yield (number_of_tables * 2 + 1, steps, _('Update schema after restore'))
             self.update_schema_after_restore(from_connection, to_connection)
@@ -269,21 +268,22 @@ class BackupMechanism(object):
         """This method might be subclassed to turn off/on foreign key checks"""
         to_connection.execute(to_table.delete())
 
+    def update_table_after_restore(self, to_table, to_connection):
+        to_dialect = to_connection.engine.url.get_dialect().name
+        if to_dialect == 'postgresql':
+            primary_key_cols = to_table.primary_key.columns.values()
+            if len(primary_key_cols) == 1:
+                column = primary_key_cols[0]
+                if not isinstance(column.type, types.Unicode) and \
+                   column.autoincrement=='auto' and \
+                   len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
+                    column_name = column.name
+                    table_name = to_table.name
+                    seq_name = table_name + "_" + column_name + "_seq"
+                    to_connection.execute("select setval('%s', coalesce(max(%s),1)) from %s" % (seq_name, column_name, table_name))
+
     def copy_table_data(self, from_table, to_table, from_connection, to_connection):
         query = sql.select([from_table])
-        to_dialect = to_connection.engine.url.get_dialect().name
         table_data = [row for row in from_connection.execute(query).fetchall()]
         if len(table_data):
             to_connection.execute(to_table.insert(), table_data)
-            if to_dialect == 'postgresql':
-                for column in to_table.columns:
-                    # Support both sqlalchemy's as Camelot's primary key type.
-                    if (isinstance(column.type, types.Integer) or isinstance(column.type, PrimaryKey)) and \
-                       column.autoincrement=='auto' and column.primary_key==True and \
-                       len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
-                        column_name = column.name
-                        table_name = to_table.name
-                        seq_name = table_name + "_" + column_name + "_seq"
-                        to_connection.execute("select setval('%s', max(%s)) from %s" % (seq_name, column_name, table_name))
-
-

@@ -29,8 +29,6 @@
 
 import os.path
 
-import six
-
 from ....core.qt import QtCore, QtWidgets, Qt
 from .customeditor import CustomEditor, set_background_color_palette
 
@@ -46,11 +44,10 @@ class LocalFileEditor( CustomEditor ):
 
     def __init__(self,
                  parent = None,
-                 field_name = 'local_file',
                  directory = False,
                  save_as = False,
                  file_filter = 'All files (*)',
-                 **kwargs):
+                 field_name = 'local_file'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
                             QtWidgets.QSizePolicy.Policy.Fixed )
@@ -102,31 +99,36 @@ class LocalFileEditor( CustomEditor ):
                                                           directory = current_directory,
                                                           filter = self._file_filter)
         if value!='':
-            value = os.path.abspath( six.text_type( value ) )
+            value = os.path.abspath( str( value ) )
             self.filename.setText( value )
             self.valueChanged.emit()
             self.editingFinished.emit()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         if value:
-            self.filename.setText( value )
+            self.filename.setText(value)
         else:
-            self.filename.setText( '' )
+            self.filename.setText('')
         self.valueChanged.emit()
         return value
 
     def get_value(self):
-        return CustomEditor.get_value(self) or six.text_type( self.filename.text() )
+        return str(self.filename.text()) or None
 
     value = QtCore.qt_property( str, get_value, set_value )
 
-    def set_field_attributes( self, **kwargs):
-        super(LocalFileEditor, self).set_field_attributes(**kwargs)
-        self.setEnabled(kwargs.get('editable', False))
-        self._directory=kwargs.get('directory',False)
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
         if self.filename:
-            set_background_color_palette(self.filename, kwargs.get('background_color', None))
-            self.filename.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            self.filename.setToolTip(str(tooltip or ''))
 
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        if self.filename:
+            set_background_color_palette(self.filename, background_color)
 
+    def set_editable(self, editable):
+        self.setEnabled(editable)
+
+    def set_directory(self, directory):
+        self._directory = directory

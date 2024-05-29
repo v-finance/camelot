@@ -26,66 +26,88 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import six
+
+import itertools
 
 from .customeditor import AbstractCustomEditor
-from ....core.qt import QtCore, QtWidgets, py_to_variant, variant_to_py
+from ....core.utils import ugettext
+from ....core.qt import QtCore, QtGui, QtWidgets, Qt
 
 class LanguageEditor(QtWidgets.QComboBox, AbstractCustomEditor):
     """A ComboBox that shows a list of languages, the editor takes
     as its value the ISO code of the language"""
 
     editingFinished = QtCore.qt_signal()
-    language_choices = []
+    actionTriggered = QtCore.qt_signal(list, object)
     
-    def __init__(self, parent=None, languages=[], field_name='language', **kwargs):
+    def __init__(self, parent=None, field_name='language'):
         """
         :param languages: a list of ISO codes with languages
         that are allowed in the combo box, if the list is empty, all languages
         are allowed (the default)
         """
         QtWidgets.QComboBox.__init__(self, parent)
+        self.setEditable(True)
         AbstractCustomEditor.__init__(self)
-        self.setObjectName( field_name )
-        self.index_by_language = dict()
-        languages = [QtCore.QLocale(lang).language() for lang in languages]
-        if not self.language_choices:
-            for i in range(QtCore.QLocale.Language.C.value, QtCore.QLocale.Language.Chewa.value + 1):
-                language = QtCore.QLocale.Language(i)
-                if languages and (language not in languages):
-                    continue
-                language_name = six.text_type(QtCore.QLocale.languageToString(language))
-                self.language_choices.append( (language, language_name ) )
-            self.language_choices.sort(key=lambda x:x[1])
-        for i, (language, language_name) in enumerate( self.language_choices ):
-            self.addItem( language_name, py_to_variant(language) )
-            self.index_by_language[ language ] = i
+        self.setObjectName(field_name)
+        self.setModel(self.get_locale_model())
+        self.lineEdit().setPlaceholderText(ugettext('Search'))
+        self.setCurrentIndex(-1)
         self.activated.connect( self._activated )
+
+    @staticmethod
+    def get_locale_model():
+        app = QtCore.QCoreApplication.instance()
+        localeModel = app.findChild(QtGui.QStandardItemModel, 'localeModel')
+        if localeModel is None:
+            rows = itertools.count()
+            localeModel = QtGui.QStandardItemModel(0, 1, app)
+            localeModel.setObjectName('localeModel')
+            if localeModel.rowCount() == 0:
+                for language in QtCore.QLocale.Language._member_map_.values():
+                    countries = set()
+                    for locale in QtCore.QLocale.matchingLocales(language, QtCore.QLocale.Script.AnyScript, QtCore.QLocale.Country.AnyCountry):
+                        country = locale.country()
+                        if country not in countries:
+                            countries.add(country)
+                    localeModel.insertRows(localeModel.rowCount(), len(countries))
+                    for country in countries:
+                        language_name = QtCore.QLocale.languageToString(language)
+                        country_name = QtCore.QLocale.countryToString(country)
+                        row = next(rows)
+                        localeModel.setData(localeModel.index(row, 0), '{} {}'.format(language_name, country_name))
+                        localeModel.setData(localeModel.index(row, 0), language, Qt.ItemDataRole.UserRole)
+                        localeModel.setData(localeModel.index(row, 0), country, Qt.ItemDataRole.UserRole+1)
+        return localeModel
 
     @QtCore.qt_slot(int)
     def _activated(self, _index):
         self.editingFinished.emit()
-            
-    def set_field_attributes(self, **kwargs):
-        super(LanguageEditor, self).set_field_attributes(**kwargs)
-        self.setEnabled(kwargs.get('editable', False))
-        
+
+    def set_editable(self, editable):
+        self.setEnabled(editable)
+
     def set_value(self, value):
-        value = AbstractCustomEditor.set_value(self, value)
-        if value:
-            locale = QtCore.QLocale( value )
-            self.setCurrentIndex( self.index_by_language[locale.language()] )
-            
+        self.setCurrentIndex(-1)
+        if value is None:
+            return
+        if value.strip() == '':
+            return
+        locale = QtCore.QLocale(value)
+        localeModel = self.get_locale_model()
+        for row in range(localeModel.rowCount()):
+            index = localeModel.index(row, 0)
+            if localeModel.data(index, Qt.ItemDataRole.UserRole)==locale.language():
+                if localeModel.data(index, Qt.ItemDataRole.UserRole+1)==locale.country():
+                    self.setCurrentIndex(row)
+                    return
+
     def get_value(self):
         current_index = self.currentIndex()
         if current_index >= 0:
-            language = variant_to_py(self.itemData(self.currentIndex()))
-            locale = QtCore.QLocale( language )
-            value = six.text_type( locale.name() )
-        else:
-            value = None
-        return AbstractCustomEditor.get_value(self) or value
-
-
-
-
+            localeModel = self.get_locale_model()
+            language = localeModel.data(localeModel.index(self.currentIndex(), 0), Qt.ItemDataRole.UserRole)
+            country = localeModel.data(localeModel.index(self.currentIndex(), 0), Qt.ItemDataRole.UserRole+1)
+            locale = QtCore.QLocale(language, country)
+            return locale.name()
+        return None

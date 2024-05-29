@@ -1,6 +1,7 @@
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.view import forms
 from camelot.core.utils import ugettext_lazy as _
+from camelot.view import forms
+
 
 class Admin(EntityAdmin):
     verbose_name = _('person')

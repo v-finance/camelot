@@ -37,7 +37,7 @@ class ColorEditor(CustomEditor):
     completely transparent, the value of the editor will be None.
     """
 
-    def __init__(self, parent=None, editable=True, field_name='color', **kwargs):
+    def __init__(self, parent=None, field_name='color'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Preferred,
@@ -54,9 +54,12 @@ class ColorEditor(CustomEditor):
         color_button.clicked.connect(self.buttonClicked)
         self.setLayout(layout)
         self._color = None
+        self._editable = None
 
     @classmethod
     def to_qcolor(self, value, invalid):
+        if isinstance(value, QtGui.QColor):
+            return value
         if (value is not None) and QtGui.QColor.isValidColor(value):
             return QtGui.QColor(value)
         return QtGui.QColor(invalid)
@@ -74,9 +77,14 @@ class ColorEditor(CustomEditor):
             if color_button is not None:
                 color_button.setIcon(QtGui.QIcon(pixmap))
 
+    def set_editable(self, editable):
+        self._editable = editable
+
     @QtCore.qt_slot(bool)
     def buttonClicked(self, raised):
-        options = QtWidgets.QColorDialog.ColorDialogOptions.ShowAlphaChannel
+        if self._editable != True:
+            return
+        options = QtWidgets.QColorDialog.ColorDialogOption.ShowAlphaChannel
         qcolor = self.to_qcolor(self.get_value(), 'white')
         qcolor = QtWidgets.QColorDialog.getColor(
             qcolor, self.parent(), ugettext('Select Color'), options,
@@ -88,8 +96,3 @@ class ColorEditor(CustomEditor):
             else:
                 self.set_value(qcolor.name())
         self.editingFinished.emit()
-
-
-
-
-

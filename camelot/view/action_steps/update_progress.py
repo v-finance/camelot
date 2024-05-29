@@ -27,19 +27,45 @@
 #
 #  ============================================================================
 
-import json
+from dataclasses import dataclass
 
-from camelot.core.qt import QtCore, QtWidgets
+import logging
+import typing
+
+from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
-from camelot.core.exception import CancelRequest
-from camelot.core.serializable import Serializable
+from ...core.serializable import DataclassSerializable
+from camelot.core.backend import cpp_action_step
 
-import io
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
 
-class UpdateProgress(ActionStep, Serializable):
+@dataclass
+class PushProgressLevel(ActionStep, DataclassSerializable):
+
+    verbose_name: str
+    blocking: bool = False
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
+
+
+@dataclass
+class PopProgressLevel(ActionStep, DataclassSerializable):
+
+    blocking: bool = False
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
+
+
+@dataclass
+class UpdateProgress(ActionStep, DataclassSerializable):
     """
 Inform the user about the progress the application is making
 while executing an action.  This ActionStep is not blocking.  So it can
@@ -62,80 +88,29 @@ updated.
     details.
 :param enlarge: increase the size of the window to two thirds of the screen,
     useful when there are a lot of details displayed.
+:param detail_level: maps to the loglevels from the logging module and indicates the cause for the message.
 """
-    
-    def __init__(self, value=None, maximum=None, text=None, detail=None, 
-                 clear_details=False, title=None, blocking=False, enlarge=False
-                 ):
-        super(UpdateProgress, self).__init__()
-        self.value = value
-        self.maximum = maximum
-        self.text = str(text) if (text is not None) else None
-        self.detail = str(detail) if (detail is not None) else None
-        self.clear_details = clear_details
-        self.title = str(title) if (title is not None) else None
-        self.blocking = blocking
-        self.enlarge = enlarge
+
+    value: typing.Optional[int] = None
+    maximum: typing.Optional[int] = None
+    text: typing.Union[str, ugettext_lazy, None] = None
+    detail: typing.Union[str, ugettext_lazy, None] = None
+    clear_details: bool = False
+    title: typing.Union[str, ugettext_lazy, None] = None
+    enlarge: bool = False
+    blocking: bool = False
+    cancelable: bool = True
+    detail_level: int = logging.INFO # To be determined - we currently map to the loglevels from the logging module
 
     def __str__(self):
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
 
-    def write_object(self, stream):
-        stream.write(json.dumps({
-            'blocking': self.blocking,
-            'value': self.value,
-            'maximum': self.maximum,
-            'text': self.text,
-            'detail': self.detail,
-            'clear_details': self.clear_details,
-            'title': self.title,
-            'enlarge': self.enlarge,
-            'cancelable': self.cancelable
-        }).encode())
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        return cpp_action_step(gui_context_name, 'UpdateProgress', serialized_step)
 
-    def gui_run(self, gui_context):
-        """This method will update the progress dialog, if such dialog exists
-        within the GuiContext
-        
-        :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
-        """
-        progress_dialog = gui_context.get_progress_dialog()
-        if progress_dialog:
-            if isinstance(progress_dialog, QtWidgets.QProgressDialog):
-                # QProgressDialog
-                if self.maximum is not None:
-                    progress_dialog.setMaximum(self.maximum)
-                if self.value is not None:
-                    progress_dialog.setValue(self.value)
-                progress_dialog.set_cancel_hidden(not self.cancelable)
-                if self.text is not None:
-                    progress_dialog.setLabelText(self.text)
-                if self.clear_details is True:
-                    progress_dialog.clear_details()
-                if self.detail is not None:
-                    progress_dialog.add_detail(self.detail)
-                if self.title is not None:
-                    progress_dialog.title = self.title
-                if self.enlarge:
-                    progress_dialog.enlarge()
-                if self.blocking:
-                    progress_dialog.set_ok_hidden(False)
-                    progress_dialog.set_cancel_hidden(True)
-                    progress_dialog.exec()
-                    progress_dialog.set_ok_hidden(True)
-                    progress_dialog.set_cancel_hidden(False)
-                if progress_dialog.wasCanceled():
-                    progress_dialog.reset()
-                    raise CancelRequest()
-            else:
-                # C++ QmlProgressDialog
-                stream = io.BytesIO()
-                self.write_object(stream)
-                obj = QtCore.QByteArray(stream.getvalue())
-                result_json = progress_dialog.render([], obj)
-                # process returned json
-                result = json.loads(result_json.data())
-                if result.get('was_canceled', False):
-                    # reset progress dialog
-                    progress_dialog.render([], QtCore.QByteArray(json.dumps({ 'reset': True }).encode()))
-                    raise CancelRequest()
+@dataclass
+class SetProgressAnimate(ActionStep, DataclassSerializable):
+
+    animate: bool
