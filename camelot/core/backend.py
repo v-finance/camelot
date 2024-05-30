@@ -65,7 +65,7 @@ class PythonBackend(QtCore.QObject):
         root_backend = get_root_backend()
         try:
             step_cls = MetaActionStep.action_steps[step_type]
-            result = step_cls.gui_run(tuple(gui_context_name), bytes(serialized_step))
+            result = step_cls.gui_run(tuple(gui_run_name), tuple(gui_context_name), bytes(serialized_step))
             if blocking == True:
                 root_backend.action_step_result_valid(gui_run_name, result, False, "")
         except CancelRequest:
@@ -119,6 +119,10 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
         backend = get_root_backend()
         action_runner = backend.action_runner()
         action_runner.onResponse(QtCore.QByteArray(response._to_bytes()))
+
+    @classmethod
+    def send_action_step(cls, gui_context_name, step):
+        return cpp_action_step(gui_context_name, type(step).__name__, step._to_bytes())
 
     def has_cancel_request(self):
         return False

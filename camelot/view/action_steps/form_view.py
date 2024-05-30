@@ -139,7 +139,7 @@ class OpenFormView(AbstractCrudView):
         return form
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
         formview = cls.render(gui_context_name, step)
         if formview is not None:

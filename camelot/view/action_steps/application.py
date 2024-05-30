@@ -28,7 +28,6 @@
 #  ============================================================================
 
 from dataclasses import dataclass, field, InitVar
-import json
 import logging
 import typing
 
@@ -38,11 +37,8 @@ from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.naming import initial_naming_context
-from ...core.qt import QtCore, QtQuick
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import AuthenticationMechanism
-from .. import gui_naming_context
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -235,25 +231,6 @@ class UpdateActionsState(ActionStep, DataclassSerializable):
             for action, state in actions_state.items():
                 action_route = AdminRoute._register_list_action_route(model_context.admin.get_admin_route(), action)
                 self.action_states.append((action_route, state._to_dict()))
-
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        step = json.loads(serialized_step)
-        for action_route, action_state in step['action_states']:
-            action = initial_naming_context.resolve(tuple(action_route))
-            rendered_action_route = gui_context.action_routes.get(action)
-            if rendered_action_route is None:
-                LOGGER.warn('Cannot update rendered action, rendered_action_route is unknown')
-                continue
-            qobject = gui_context.view.findChild(QtCore.QObject, rendered_action_route)
-            if qobject is None:
-                LOGGER.warn('Cannot update rendered action, QObject child {} not found'.format(rendered_action_route))
-                continue
-            if isinstance(qobject, QtQuick.QQuickItem):
-                qobject.setProperty('state', action_state._to_dict())
-            else:
-                qobject.set_state(action_state)
 
 @dataclass
 class StartProfiler(ActionStep, DataclassSerializable):

@@ -134,7 +134,7 @@ class SelectItem(ActionStep, DataclassSerializable):
         return dialog
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         dialog = cls.render(step = json.loads(serialized_step))
         result = dialog.async_exec()
         if result == QtWidgets.QDialog.DialogCode.Rejected:
@@ -163,7 +163,7 @@ class CloseView(ActionStep, DataclassSerializable):
     accept: bool = True
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         # python implementation, still used for FormView
         gui_context = gui_naming_context.resolve(gui_context_name)
         step = json.loads(serialized_step)
