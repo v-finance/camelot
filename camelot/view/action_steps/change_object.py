@@ -419,8 +419,8 @@ class ChangeObjects(UpdateTableView):
         #
         screen = dialog.screen()
         available_geometry = screen.availableGeometry()
-        dialog.resize( available_geometry.width() * 0.75,
-                       available_geometry.height() * 0.75 )
+        dialog.resize( int(available_geometry.width() * 0.75),
+                       int(available_geometry.height() * 0.75) )
         return dialog
 
     @classmethod
