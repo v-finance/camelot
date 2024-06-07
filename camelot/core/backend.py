@@ -65,9 +65,7 @@ class PythonBackend(QtCore.QObject):
         root_backend = get_root_backend()
         try:
             step_cls = MetaActionStep.action_steps[step_type]
-            result = step_cls.gui_run(tuple(gui_run_name), tuple(gui_context_name), bytes(serialized_step))
-            if blocking == True:
-                root_backend.action_step_result_valid(gui_run_name, result, False, "")
+            step_cls.gui_run(tuple(gui_run_name), tuple(gui_context_name), bytes(serialized_step))
         except CancelRequest:
             root_backend.action_step_result_valid(gui_run_name, None, True, "")
         except Exception as e:

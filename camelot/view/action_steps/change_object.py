@@ -34,7 +34,6 @@ from typing import List, Union
 
 from camelot.admin.action.base import GuiContext
 from camelot.admin.icon import Icon
-from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
@@ -325,10 +324,7 @@ class ChangeObject(OpenFormView):
         step = json.loads(serialized_step)
         dialog = cls.render(gui_context, step)
         apply_form_state(dialog, None, step['form_state'])
-        result = dialog.async_exec()
-        if result == QtWidgets.QDialog.DialogCode.Rejected:
-            raise CancelRequest()
-
+        dialog.async_exec(gui_run)
 
 @dataclass
 class ChangeObjects(UpdateTableView):
@@ -427,6 +423,4 @@ class ChangeObjects(UpdateTableView):
     def gui_run(cls, gui_run, gui_context, serialized_step):
         step = json.loads(serialized_step)
         dialog = cls.render(step)
-        result = dialog.async_exec()
-        if result == QtWidgets.QDialog.DialogCode.Rejected:
-            raise CancelRequest()
+        dialog.async_exec(gui_run)
