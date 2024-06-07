@@ -80,10 +80,10 @@ def apply_form_state(view, parent, state):
         view.resize(geometry.width()-decoration_width, geometry.height()-decoration_height)
         view.move(geometry.topLeft())
     else:
-        point = QtCore.QPoint(geometry.x() + geometry.width()/2,
-                              geometry.y() + geometry.height()/2)
-        point = QtCore.QPoint(point.x()-view.width()/2,
-                              point.y()-view.height()/2)
+        point = QtCore.QPoint(int(geometry.x() + geometry.width()/2),
+                              int(geometry.y() + geometry.height()/2))
+        point = QtCore.QPoint(int(point.x()-view.width()/2),
+                              int(point.y()-view.height()/2))
         view.move(point)
 
 def show_top_level(view, gui_context_name, state=None):
