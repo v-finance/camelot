@@ -41,7 +41,7 @@ from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
 from camelot.admin.icon import Icon
-from camelot.core.exception import CancelRequest, UserException
+from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.art import from_admin_icon
@@ -134,12 +134,9 @@ class SelectItem(ActionStep, DataclassSerializable):
         return dialog
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         dialog = cls.render(step = json.loads(serialized_step))
-        result = dialog.async_exec()
-        if result == QtWidgets.QDialog.DialogCode.Rejected:
-            raise CancelRequest()
-        return dialog.get_value()
+        dialog.async_exec(gui_run)
 
     @classmethod
     def deserialize_result(cls, gui_context_name, result):
@@ -163,7 +160,7 @@ class CloseView(ActionStep, DataclassSerializable):
     accept: bool = True
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         # python implementation, still used for FormView
         gui_context = gui_naming_context.resolve(gui_context_name)
         step = json.loads(serialized_step)

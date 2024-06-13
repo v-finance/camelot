@@ -82,9 +82,9 @@ class BusyWidget(QtWidgets.QLabel):
         pixmap = working_pixmap.getQPixmap()
         row, col = divmod(self.highlighted_orb, self.cols)
         self.setPixmap(pixmap.copy(
-            self.frame_width * col,
-            self.frame_height * row,
-            self.frame_width,self.frame_height
+            int(self.frame_width * col),
+            int(self.frame_height * row),
+            int(self.frame_width),int(self.frame_height)
         ))
 
 

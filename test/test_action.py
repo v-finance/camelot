@@ -203,7 +203,7 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
         )
         self.assertTrue( str( update_progress ) )
         update_progress = self._write_read(update_progress)
-        update_progress.gui_run(self.gui_context, update_progress._to_bytes())
+        self.assertEqual(update_progress.value, 20)
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')

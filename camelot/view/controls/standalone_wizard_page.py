@@ -28,8 +28,8 @@
 #  ============================================================================
 
 
-
-from ...core.qt import QtWidgets, Qt, QtCore
+from ...core.backend import get_root_backend
+from ...core.qt import QtWidgets, Qt, QtCore, transferto
 from camelot.core.utils import ugettext_lazy as _
 
 
@@ -45,7 +45,7 @@ class StandaloneWizardPage(QtWidgets.QDialog):
 
     def __init__(self, window_title=None, parent=None, flags=Qt.WindowType.Dialog):
         super(StandaloneWizardPage, self).__init__(parent, flags)
-        self._result = None
+        self.gui_run_name = None
         self.finished.connect(self.on_finished)
         self.setWindowTitle( str(window_title or ' ') )
         self.set_layouts()
@@ -132,11 +132,15 @@ class StandaloneWizardPage(QtWidgets.QDialog):
 
     @QtCore.qt_slot(int)
     def on_finished(self, result):
-        self._result = result
+        get_root_backend().action_step_result_valid(
+            self.gui_run_name, self.get_value(),
+            result == QtWidgets.QDialog.DialogCode.Rejected, ""
+        )
 
-    def async_exec(self):
+    def get_value(self):
+        return
+
+    def async_exec(self, gui_run_name):
+        self.gui_run_name = gui_run_name
         self.open()
-        # see also: waiting for QPromise in RootBackend::actionStepsGuiRun
-        while self._result is None:
-            QtCore.QCoreApplication.instance().processEvents()
-        return self._result
+        transferto(self, self)
