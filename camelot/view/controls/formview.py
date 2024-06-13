@@ -68,10 +68,11 @@ class FormEditors(QtCore.QObject):
             # a form view and not on a table view
             self.option.version = 5
 
-        self._fields = fields
-        self._index = dict(
-            (field_name, i) for i, field_name in enumerate(fields.keys())
-        )
+        self._fields = dict()
+        self._index = dict()
+        for i, (field_name, column_attributes) in enumerate(fields):
+            self._fields[field_name] = column_attributes
+            self._index[field_name] = i
 
     def create_editor( self, field_name, parent ):
         """

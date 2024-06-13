@@ -126,11 +126,10 @@ class OpenFormView(AbstractCrudView):
         model.setValue(step['model_context_name'])
         columns = [ fn for fn, fa in step['fields']]
         model.setColumns(columns)
-
         form.setup(
             title=step['title'], admin_route=step['admin_route'],
             close_route=tuple(step['close_route']), model=model,
-            fields=dict(step['fields']), form_display=step['form'],
+            fields=step['fields'], form_display=step['form'],
             index=step['row']
         )
         form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
