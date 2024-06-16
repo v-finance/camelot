@@ -136,6 +136,7 @@ class StandaloneWizardPage(QtWidgets.QDialog):
             self.gui_run_name, self.get_value(),
             result == QtWidgets.QDialog.DialogCode.Rejected, ""
         )
+        self.deleteLater()
 
     def get_value(self):
         return

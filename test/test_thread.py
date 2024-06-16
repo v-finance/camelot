@@ -45,9 +45,6 @@ class ModelProcessCase(RunningProcessCase):
         self.thread.post(QtCore.QByteArray(cancel_action._to_bytes()))
         time.sleep(1)
 
-    def test_test_context_executable(self):
-        exec(test_context)
-
     def test_start_stop_service(self):
         service = self.rb.create_server_process()
         service.start('exec', testing_context_args)

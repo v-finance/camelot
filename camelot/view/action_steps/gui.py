@@ -64,14 +64,12 @@ class ItemSelectionDialog(StandaloneWizardPage):
 
     def __init__( self,
                   window_title=None,
-                  autoaccept=False,
-                  parent=None):
+                  autoaccept=False):
         """
         :param autoaccept: if True, the value of the ComboBox is immediately
         accepted after selecting it.
         """
-        super(ItemSelectionDialog, self).__init__( window_title = window_title,
-                                                   parent = parent )
+        super(ItemSelectionDialog, self).__init__(window_title = window_title)
         self.autoaccept = autoaccept
         self.set_default_buttons()
         layout = QtWidgets.QVBoxLayout()
