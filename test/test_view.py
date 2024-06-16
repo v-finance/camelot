@@ -484,7 +484,7 @@ class FormTest(
         widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
         widget_mapper.setModel( self.person_model )
         widget_mapper.setItemDelegate(delegate)
-        fields = dict((f, {
+        fields = list((f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
             }) for f, fa in self.person_admin.get_fields())

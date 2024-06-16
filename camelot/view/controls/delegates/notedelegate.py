@@ -43,3 +43,6 @@ class NoteDelegate(TextEditDelegate, metaclass=DocumentationMetaclass):
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         return item
+
+    def setModelData(self, editor, model, index):
+        pass
