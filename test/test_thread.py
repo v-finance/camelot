@@ -1,6 +1,8 @@
+import json
+import os
 import time
 
-from camelot.test import RunningProcessCase, get_root_backend
+from camelot.test import RunningProcessCase
 from camelot.core.backend import PythonConnection
 from camelot.core.qt import QtCore
 from camelot.view.requests import (
@@ -14,10 +16,18 @@ initiate_action = InitiateAction(
 send_action_response = SendActionResponse(run_name=['a'], response=None)
 throw_action_exception = ThrowActionException(run_name=['a'], exception=None)
 
+test_context = """
+
+import sys
+sys.path.append('{}')
+
+import testing_context
+
+""".format(os.path.join(os.path.dirname(__file__)))
+
+testing_context_args = json.dumps([test_context])
 
 class ModelProcessCase(RunningProcessCase):
-
-    process_cls = get_root_backend().create_server_process
 
     def test_execute_request(self):
         CancelAction.execute(cancel_action._to_dict()[1], PythonConnection, None)
@@ -34,5 +44,13 @@ class ModelProcessCase(RunningProcessCase):
     def test_post_task(self):
         self.thread.post(QtCore.QByteArray(cancel_action._to_bytes()))
         time.sleep(1)
-        # qsize is not reliable according to multiprocessing docs
-        # self.assertFalse(self.thread._request_queue.qsize())
+
+    def test_test_context_executable(self):
+        exec(test_context)
+
+    def test_start_stop_service(self):
+        service = self.rb.create_server_process()
+        service.start('exec', testing_context_args)
+        service.waitForConnected(10000)
+        service.stop()
+        service.waitForFinished(10000)

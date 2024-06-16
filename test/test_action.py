@@ -42,18 +42,21 @@ from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.core.backend import get_root_backend
 from camelot_example.importer import ImportCovers
-from camelot_example.model import Movie, Tag
 
 from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
-from . import app_admin, test_core, test_view
+from . import test_core, test_view
 from .test_item_model import (
-    QueryQStandardItemModelMixinCase, setup_query_proxy_name, ExampleItemModelProcess
+    QueryQStandardItemModelMixinCase, setup_query_proxy_name,
 )
 from .test_orm import TestMetaData, EntityMetaMock
 from .test_model import (
-    ExampleModelMixinCase, LoadSampleData,
+    ExampleModelMixinCase, 
+)
+from .test_thread import testing_context_args
+from .testing_context import (
+    Movie, Tag, app_admin, LoadSampleData,
     setup_session_name, dirty_session_action_name,
     custom_action_name, send_document_action_name,
     model_context_action_name, to_first_row_name, to_last_row_name,
@@ -86,7 +89,7 @@ class SerializableMixinCase(object):
 class ActionBaseCase(RunningProcessCase, SerializableMixinCase):
 
     model_context_name = ('constant', 'null')
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp(self):
         super().setUp()
@@ -155,7 +158,7 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
 
     model_context_name = ('constant', 'null')
     images_path = test_view.static_images_path
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
@@ -220,7 +223,7 @@ class ListActionsCase(
     """
 
     images_path = test_view.static_images_path
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
@@ -576,7 +579,7 @@ class FormActionsCase(
     """
 
     images_path = test_view.static_images_path
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
@@ -608,7 +611,7 @@ class ApplicationActionsCase(
 
     images_path = test_view.static_images_path
     model_context_name = ('constant', 'null')
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
