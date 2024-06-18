@@ -32,17 +32,26 @@
 import inspect
 import logging
 logger = logging.getLogger('camelot.view.object_admin')
+import typing
 
+from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
+from .admin_route import Route, AdminRoute, register_list_actions, register_form_actions
+from camelot.admin.action import field_action, list_filter
 from camelot.admin.action.list_action import OpenFormView
 from camelot.admin.action.form_action import CloseForm
-from camelot.view.controls.tableview import TableView
+from camelot.admin.not_editable_admin import ReadOnlyAdminDecorator
+from camelot.core.exception import UserException
+from camelot.core.naming import initial_naming_context
+from camelot.core.orm import Entity, EntityMeta
 from camelot.view.utils import to_string
 from camelot.core.utils import ugettext_lazy, ugettext as _
-from camelot.view.proxy.collection_proxy import CollectionProxy
+from camelot.types.typing import is_optional_type
+from camelot.view.field_attributes import _typing_to_python_type
+from camelot.view.controls import delegates
 from .validator.object_validator import ObjectValidator
 
-import six
+
 
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
@@ -68,10 +77,13 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'precision',
                                                 'directory',
                                                 'visible',
-                                                'validator'])
+                                                'validator_state',
+                                                'completer_state',
+                                                'minimum',
+                                                'maximum'])
 
 
-class ObjectAdmin(object):
+class ObjectAdmin(AdminRoute):
     """The ObjectAdmin class describes the interface that will be used
 to interact with objects of a certain class.  The behaviour of this class
 and the resulting interface can be tuned by specifying specific class
@@ -102,7 +114,11 @@ be specified using the verbose_name attribute.
 
 .. attribute:: list_display
 
-    a list with the fields that should be displayed in a table view
+    A list with the fields that should be displayed in a table view by default.
+
+.. attribute:: extra_display
+
+    A list with additional fields that can be displayed in a table view.
 
 .. attribute:: lines_per_row
 
@@ -162,7 +178,7 @@ be specified using the verbose_name attribute.
         class Admin( EntityAdmin ):
             form_actions = [CloseForm()]
 
-    These actions will be triggered with a :class:`camelot.admin.action.form_action.FormActionModelContext` as the `model_context` parameter
+    These actions will be triggered with a :class:`camelot.admin.action.base.ObjectsModelContext` as the `model_context` parameter
     in the :meth:`camelot.admin.action.base.Action.model_run` method.
 
 .. attribute:: related_toolbar_actions
@@ -237,12 +253,13 @@ be specified using the verbose_name attribute.
     verbose_name = None
     verbose_name_plural = None
     list_display = []
+    extra_display = []
     lines_per_row = 1
     validator = ObjectValidator
-    model = CollectionProxy
     fields = []
     form_display = []
     form_close_action = CloseForm()
+    field_filter = []
     list_filter = []
     list_action = OpenFormView()
     list_actions = []
@@ -252,15 +269,12 @@ be specified using the verbose_name attribute.
     form_size = None
     form_actions = []
     related_toolbar_actions = []
+    onetomany_field_actions = [field_action.add_new_object]
+    manytomany_field_actions = [field_action.add_existing_object]
     field_attributes = {}
     form_state = None
     icon = None # Default
-    #
-    # Behavioral attributes
-    # 
-    drop_action = None
-
-    TableView = TableView
+    qml_form = False # Use new QML forms
 
     def __init__( self, app_admin, entity ):
         """
@@ -275,12 +289,16 @@ be specified using the verbose_name attribute.
         #
         self._field_attributes = dict()
         self._subclasses = None
+        self._admin_route = super()._register_admin_route(self)
+
+    def get_admin_route(self):
+        return self._admin_route
 
     def __str__(self):
         return 'Admin %s' % str(self.entity.__name__)
 
     def __repr__(self):
-        return 'ObjectAdmin(%s)' % str(self.entity.__name__)
+        return '{0.__name__}({1.__name__})'.format(type(self), self.entity)
 
     def get_name(self):
         """ The name of the group in settings in which user dependent settings 
@@ -293,12 +311,12 @@ be specified using the verbose_name attribute.
 
     def get_verbose_name(self):
         """ The name of the associated entity. """
-        return six.text_type(
+        return str(
             self.verbose_name or _(self.entity.__name__.capitalize())
         )
 
     def get_verbose_name_plural(self):
-        return six.text_type(
+        return str(
             self.verbose_name_plural
             or (self.get_verbose_name() + u's')
         )
@@ -318,36 +336,31 @@ be specified using the verbose_name attribute.
         """
         Textual representation of the current object.
         """
-        return six.text_type(obj)
+        return str(obj)
 
-    def get_search_identifiers(self, obj):
-        """Create a dict of identifiers to be used in search boxes.
-        The keys are Qt roles."""
-        search_identifiers = {} 
+    def get_verbose_search_identifier(self, obj):
+        """
+        Create an identifier for an object that is interpretable when
+        searching; e.g. : the primary key of an object.
+        By default, this returns the same value as ´get_verbose_identifier´.
+        """
+        return self.get_verbose_identifier(obj)
 
-        search_identifiers[Qt.DisplayRole] = u'%s : %s' % (self.get_verbose_name(), six.text_type(obj))
-        search_identifiers[Qt.EditRole] = obj
-        search_identifiers[Qt.ToolTipRole] = u'id: %s' % (self.primary_key(obj))
-
-        return search_identifiers
+    def get_proxy(self, objects):
+        """
+        :return: a :class:`camelot.core.item_model.proxy.AbstractModelProxy`
+            instance for the given objects.
+        """
+        return ListModelProxy(objects)
 
     def get_entity_admin(self, entity):
         """deprecated : use get_related_admin"""
         return self.app_admin.get_related_admin(entity)
 
-    def get_settings( self ):
-        """A settings object in which settings related to this admin can be
-        stored.
-
-        :return: a :class:`QtCore.QSettings` object
-        """
-        settings = self.app_admin.get_settings()
-        settings.beginGroup( self.get_name()[:255] )
-        return settings
-
     def get_memento( self ):
         return self.app_admin.get_memento()
 
+    @register_form_actions('_admin_route', '_form_actions')
     def get_form_actions( self, obj=None ):
         """Specify the list of action buttons that should appear on the side
         of the form view.
@@ -357,27 +370,41 @@ be specified using the verbose_name attribute.
         :return: a list of :class:`camelot.admin.action.base.Action` objects
         """
         app_admin = self.get_application_admin()
-        from camelot.admin.action.form_action import structure_to_form_actions
-        return app_admin.get_form_actions() + structure_to_form_actions( self.form_actions )
+        return app_admin.get_form_actions() + list(self.form_actions)
 
-    def get_form_toolbar_actions( self, toolbar_area ):
+    def get_form_toolbar_actions( self ):
         """
         By default this function will return the same as :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
-
-        :param toolbar_area: an instance of :class:`Qt.ToolBarArea` indicating
-            where the toolbar actions will be positioned
 
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of a form view.  return
             None if no toolbar should be created.
         """        
         app_admin = self.get_application_admin()
-        return app_admin.get_form_toolbar_actions( toolbar_area )
+        return app_admin.get_form_toolbar_actions()
 
-    def get_related_toolbar_actions( self, toolbar_area, direction ):
+    def get_list_toolbar_actions( self ):
+        """
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        app_admin = self.get_application_admin()
+        return app_admin.get_list_toolbar_actions()
+
+    def get_select_list_toolbar_actions( self ):
+        """
+        :return: a list of :class:`camelot.admin.action.base.Action` objects
+            that should be displayed on the toolbar of the application.  return
+            None if no toolbar should be created.
+        """
+        app_admin = self.get_application_admin()
+        return app_admin.get_select_list_toolbar_actions()
+
+    @register_list_actions('_admin_route')
+    def get_related_toolbar_actions( self, direction ):
         """Specify the toolbar actions that should appear in a OneToMany editor.
 
-        :param toolbar_area: the position of the toolbar
         :param direction: the direction of the relation : 'onetomany' or 
             'manytomany'
 
@@ -385,18 +412,22 @@ be specified using the verbose_name attribute.
         """
         app_admin = self.get_application_admin()
         return self.related_toolbar_actions or \
-               app_admin.get_related_toolbar_actions( toolbar_area, direction )
+               app_admin.get_related_toolbar_actions( direction )
 
+    @register_list_actions('_admin_route', '_list_actions')
     def get_list_actions(self):
         return self.list_actions
 
-    def get_list_action(self):
-        """Get the action that should be triggered when an object is selected
+    def get_list_action(self) -> Route:
+        """Get the route for the action that should be triggered when an object is selected
         in a table of objects.
 
-        :return: by default returns the `list_action` attribute
+        :return: by default returns the route for the `list_action` attribute
         """
-        return self.list_action
+        if self.list_action is not None:
+            return AdminRoute._register_list_action_route(
+                self._admin_route, self.list_action
+            )
 
     def get_depending_objects(self, obj):
         """Overwrite this function to generate a list of objects that depend on a given
@@ -460,6 +491,11 @@ be specified using the verbose_name attribute.
             logger.warn('no related admin found for %s' % (cls.__name__))
         return related_admin
 
+    def _static_attributes(self, field_attributes):
+        for name, value in field_attributes.items():
+            if name not in DYNAMIC_FIELD_ATTRIBUTES or not callable(value):
+                yield name, value
+
     def get_static_field_attributes(self, field_names):
         """
         Convenience function to get all the field attributes
@@ -476,9 +512,8 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             static_field_attributes = {}
-            for name, value in six.iteritems(field_attributes):
-                if name not in DYNAMIC_FIELD_ATTRIBUTES or not six.callable(value):
-                    static_field_attributes[name] = value
+            for name, value in self._static_attributes(field_attributes):
+                static_field_attributes[name] = value
             yield static_field_attributes
 
     def get_dynamic_field_attributes(self, obj, field_names):
@@ -507,7 +542,7 @@ be specified using the verbose_name attribute.
         for field_name in field_names:
             field_attributes = self.get_field_attributes(field_name)
             dynamic_field_attributes = {'obj':obj}
-            for name, value in six.iteritems(field_attributes):
+            for name, value in field_attributes.items():
                 if name not in DYNAMIC_FIELD_ATTRIBUTES:
                     continue
                 if name in ('default',):
@@ -515,15 +550,58 @@ be specified using the verbose_name attribute.
                     # and the continuous evaluation of it might be expensive,
                     # as it might be the max of a column
                     continue
-                if six.callable(value):
-                    return_value = None
+                if callable(value):
                     try:
                         return_value = value(obj)
                     except (ValueError, Exception, RuntimeError, TypeError, NameError) as exc:
                         logger.error(u'error in field_attribute function of %s'%name, exc_info=exc)
-                    finally:
-                        dynamic_field_attributes[name] = return_value
+                        # dont inject dummy field attributes, as the delegate logic
+                        # might assume the attributes having a specific type
+                        continue
+                    dynamic_field_attributes[name] = return_value
             yield dynamic_field_attributes
+
+    def get_completions(self, obj, field_name, prefix, **kwargs):
+        """
+        Generate autocompletion possibilities for a specific field.
+        Autocompletion differs from dynamic field attributes such as choices :
+
+        - The possible autocompletion values are not needed to display
+          the content of a field.
+        - The autocompletion process depends on a text entered by the user
+          to guide the process.
+
+        :param obj: the instance of the object on which to do autocompletion.
+        :param field_name: the field of the object on which to do autocompletion.
+        :param prefix: text entered by the user to guide the autocompletion.
+        :param kwargs: optional completion context kwargs that will be passed to the related search filter's query decoration.
+
+        :return: `None` if the field does not support autocompletion, an empty
+            list if there are no possible values for the requested prefix,
+            otherwise a list of possible values for the field.
+            If the field is a property which is typing decorated to have an Entity returned, 
+            the get_completions are expanded to have the first 20 query results displayed.
+        """
+        field_type = self.get_typing(field_name)
+        field_type = field_type.__args__[0] if is_optional_type(field_type) else field_type
+        if field_type is not None and issubclass(field_type, Entity):
+            all_attributes = self.get_field_attributes(field_name)
+            admin = all_attributes.get('admin')
+            session = self.get_session(obj)
+            if (admin is not None) and (session is not None):
+                query = admin.get_query(session)
+                if not (prefix is None or len(prefix.strip())==0):
+                    for action_route in admin.get_list_toolbar_actions():
+                        search_filter = initial_naming_context.resolve(action_route.route)
+                        if isinstance(search_filter, list_filter.SearchFilter):
+                            query = search_filter.decorate_query(query, (prefix, *[search_strategy for search_strategy in admin._get_search_fields(prefix)]), **kwargs)
+                return [e for e in query.limit(20).all()]
+
+    def get_session(self, obj):
+        """
+        Return the session based on the given object
+        """
+        raise NotImplementedError    
 
     def get_descriptor_field_attributes(self, field_name):
         """
@@ -543,14 +621,40 @@ be specified using the verbose_name attribute.
         # See if there is a descriptor
         #
         attributes = dict()
-        for cls in self.entity.__mro__:
-            descriptor = cls.__dict__.get(field_name, None)
-            if descriptor is not None:
-                if isinstance(descriptor, property):
-                    attributes['editable'] = (descriptor.fset is not None)
-                break
+        field_type = self.get_typing(field_name)
+        if field_type is not None:
+            attributes['nullable'] = is_optional_type(field_type)
+            attributes.update(self.get_typing_attributes(field_type)) 
+            
+        descriptor = self._get_entity_descriptor(field_name)
+        if descriptor is not None:
+            if isinstance(descriptor, property):
+                attributes['editable'] = (descriptor.fset is not None)         
         return attributes
 
+    def get_typing(self, field_name):
+        descriptor = self._get_entity_descriptor(field_name)
+        if descriptor is not None:
+            if isinstance(descriptor, property):
+                return typing.get_type_hints(descriptor.fget).get('return')
+    
+    def get_typing_attributes(self, field_type):
+        if field_type in _typing_to_python_type:
+            dataclass_attributes = _typing_to_python_type.get(field_type)
+            return dataclass_attributes
+        elif is_optional_type(field_type):
+            return self.get_typing_attributes(field_type.__args__[0])
+        elif issubclass(field_type.__class__, EntityMeta):
+            return {'delegate':delegates.Many2OneDelegate,
+                    'target':field_type,
+                    }
+        elif isinstance(field_type, typing._GenericAlias) and field_type.__origin__ == list:
+            return {'delegate':delegates.One2ManyDelegate,
+                    'target':field_type.__args__[0],
+                    'python_type': list,
+                    }
+        return {}
+    
     def get_field_attributes(self, field_name):
         """
         Get the attributes needed to visualize the field field_name.  This
@@ -590,11 +694,16 @@ be specified using the verbose_name attribute.
                 background_color=None,
                 editable=False,
                 nullable=True,
+                focus_policy=Qt.FocusPolicy.StrongFocus,
                 widget='str',
                 blank=True,
                 delegate=delegates.PlainTextDelegate,
                 validator_list=[],
-                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize())
+                name=ugettext_lazy(field_name.replace( '_', ' ' ).capitalize()),
+                search_strategy=list_filter.NoFilter,
+                filter_strategy=list_filter.NoFilter,
+                action_routes=[],
+                hide_title=False,
             )
             descriptor_attributes = self.get_descriptor_field_attributes(field_name)
             attributes.update(descriptor_attributes)
@@ -605,12 +714,30 @@ be specified using the verbose_name attribute.
             self._field_attributes[field_name] = attributes
             forced_attributes = self.field_attributes.get(field_name, {})
             attributes.update(forced_attributes)
+            #
+            # If there is an `admin` field attribute, instantiate it
+            #            
+            admin = forced_attributes.get('admin')
+            target = attributes.get('target', None)
+            if target is not None and admin is not None:
+                attributes['admin'] = admin(self, target)
+
+            # The filter strategy can only be overruled when it has a valid filter strategy introspected from the descriptor,
+            # and its not overruled explicitly already in the forced attributes.
+            filter_strategy_overrulable = ('filter_strategy' not in forced_attributes) and (attributes['filter_strategy'] != list_filter.NoFilter)
             if 'choices' in forced_attributes:
                 from camelot.view.controls import delegates
-                attributes['delegate'] = delegates.ComboBoxDelegate
+                if 'delegate' not in forced_attributes:
+                    attributes['delegate'] = delegates.ComboBoxDelegate
                 if isinstance(forced_attributes['choices'], list):
                     choices_dict = dict(forced_attributes['choices'])
-                    attributes['to_string'] = lambda x : choices_dict.get(x, '')
+                    attributes['to_string'] = lambda x : str(choices_dict.get(x, ''))
+                    if filter_strategy_overrulable:
+                        # Only overrule the filter strategy to ChoicesFilter if the choices are non-dynamic,
+                        # as the choices needed for filtering should apply for all entities.
+                        attributes['filter_strategy'] = list_filter.ChoicesFilter
+            if attributes.get('delegate') == delegates.MonthsDelegate and filter_strategy_overrulable:
+                attributes['filter_strategy'] = list_filter.MonthsFilter
             self._expand_field_attributes(attributes, field_name)
             return attributes
 
@@ -619,34 +746,62 @@ be specified using the verbose_name attribute.
         derived from the given attributes.
         """
         column_width = field_attributes.get('column_width', None)
-        #
-        # If there is an `admin` field attribute, instantiate it
-        #
+
+        related_admin = None
         target = field_attributes.get('target', None)
         if target is not None:
-            admin = field_attributes.get('admin', None)
-            direction = field_attributes.get('direction', '')
-            if admin is not None:
-                related_admin = admin(self, target)
-            #
-            # In case of a 'target' field attribute, add an appropriate
-            # 'admin' attribute
-            #
-            else:
-                related_admin = self.get_related_admin(target)
+            # If there is a `target` field attribute, verify the `admin` attribute has been instantiated
+            related_admin = field_attributes.get('admin', self.get_related_admin(target))
+            assert isinstance(related_admin, ObjectAdmin) or isinstance(related_admin, ReadOnlyAdminDecorator)
             #
             # for an xtomany field, calculate the sum of the column widths, as
             # an estimate for the width of the table widget
             #
-            if column_width is None and direction.endswith('many') and related_admin:
-                table = related_admin.get_table()
-                fields = table.get_fields(column_group=0)
-                related_field_attributes = related_admin.get_field_attributes
-                related_column_widths = (
-                    related_field_attributes(field).get('column_width', 0) for 
-                    field in fields)
-                column_width = sum(related_column_widths, 0)
+            # if no direction specified, assume onetomany to have the aditional
+            # field attributes available in case a OneToMany editor needs to
+            # constructed
+            #
+            direction = field_attributes.get('direction', 'onetomany')
+            python_type = field_attributes.get('python_type')
+            if direction.endswith('many') and python_type == list and related_admin:
+                field_attributes['columns'] = related_admin.get_columns()
+                # the xtomany field has 2 kinds of actions
+                #
+                #  * the field actions, as every other field, these have access
+                #    to the FieldActionModelContext (parent object, dynamid field attributes etc.)
+                #    and their state is updated when the parent object is updated
+                #
+                #  * the list_actions, that operate on a selection of rows, these
+                #    actions have access to the ObjectsActionModelContext (selection)
+                #    and their state is updated when the selection changes.
+                #
+                if field_attributes.get('actions') is None:
+                    if direction == 'onetomany':
+                        field_attributes['actions'] = self.onetomany_field_actions
+                    if direction == 'manytomany':
+                        field_attributes['actions'] = self.manytomany_field_actions
+                if field_attributes.get('list_actions') is None:
+                    field_attributes['list_actions'] = [
+                        route_with_render_hint for route_with_render_hint in related_admin.get_related_toolbar_actions(direction)
+                    ]
+                if field_attributes.get('list_action') is None:
+                    field_attributes['list_action'] = related_admin.get_list_action()
+                if column_width is None:
+                    fields = related_admin.get_columns()
+                    related_field_attributes = related_admin.get_field_attributes
+                    related_column_widths = (
+                        related_field_attributes(field).get('column_width', 0) for 
+                        field in fields)
+                    column_width = sum(related_column_widths, 0)
+            elif (direction.startswith('many') or direction.endswith('many') and python_type != list) and (field_attributes.get('actions') is None):
+                field_attributes['actions'] = [
+                    field_action.ClearObject(),
+                    field_action.SelectObject(),
+                    field_action.OpenObject()
+                ]
             field_attributes['admin'] = related_admin
+            field_attributes['admin_route'] = related_admin.get_admin_route()
+            field_attributes['admin_name'] = related_admin.get_name()
         #
         # If no column_width is specified, try to derive one
         #
@@ -657,12 +812,70 @@ be specified using the verbose_name attribute.
                 length = 10
             column_width = max( 
                 minimal_column_width or 0,
-                2 + len(six.text_type(field_attributes['name'])),
+                2 + len(str(field_attributes['name'])),
                 min(length or 0, 50),
             )
         field_attributes['column_width'] = column_width
+        #
+        # If no admin is defined to change the value of the field, define one
+        #
+        if (field_attributes.get('change_value_admin') is None) and \
+           (field_attributes.get('direction', None) not in ('onetomany', 'manytomany')) and \
+           (field_attributes.get('editable', False) != False):
 
-    def get_search_fields(self, substring):
+            value_attributes = dict(self._static_attributes(field_attributes))
+            value_attributes.update({
+                'field_name': 'value',
+                'editable': True,
+                # actions on the field would expect another model context
+                'actions': [],
+                'filter_strategy': None,
+                'search_strategy': None,
+            })
+
+            if related_admin is not None:
+                value_attributes['admin'] = type(related_admin)
+                value_attributes['actions'].append(field_action.SelectObject())
+
+            class ChangeValueAdmin(ObjectAdmin):
+                verbose_name = ugettext_lazy('Change')
+                list_display = ['value']
+                field_attributes = {'value': value_attributes}
+
+            field_attributes['change_value_admin'] = ChangeValueAdmin(
+                self, object
+            )
+
+        #
+        # Convert field actions to action routes
+        #
+        field_attributes['action_routes'] = [
+            AdminRoute._register_field_action_route(
+                self.get_admin_route(),
+                field_name,
+                action,
+            ) for action in field_attributes.get('actions', [])
+        ]
+        
+        # Initialize search & filter strategies with the retrieved corresponding attribute.
+        # We take the field_name as the default, to handle properties that do not exist on the admin's entity class.
+        # This handles regular object properties that may only be defined at construction time, as long as they have a NoFilter strategy,
+        # which is the default for the ObjectAdmin. Using concrete strategies requires the retrieved attribute to be a queryable attribute, 
+        # which is enforced by the strategy constructor.
+
+        descriptor = self._get_entity_descriptor(field_name)
+        attribute =  descriptor if descriptor is not None else field_name
+        filter_strategy = field_attributes['filter_strategy']
+        if isinstance(filter_strategy, type) and issubclass(filter_strategy, list_filter.AbstractFilterStrategy):
+            field_attributes['filter_strategy'] = filter_strategy(attribute, **field_attributes)
+        search_strategy = field_attributes['search_strategy']
+        if isinstance(search_strategy, type) and issubclass(search_strategy, list_filter.AbstractFilterStrategy):
+            field_attributes['search_strategy'] = search_strategy(attribute, **field_attributes)
+
+    def _get_entity_descriptor(self, field_name):
+        return getattr(self.entity, field_name, None)
+    
+    def _get_search_fields(self, substring):
         """
         Generate a list of fields in which to search.  By default this method
         returns the `list_search` attribute.
@@ -675,41 +888,24 @@ be specified using the verbose_name attribute.
         """
         return self.list_search
 
-    def get_table( self ):
-        """The definition of the table to be used in a list view
-        :return: a `camelot.admin.table.Table` object
-        """
-        from camelot.admin.table import structure_to_table
-        if self.list_display == []:
-            # take a copy to prevent contamination
-            self.list_display = list()
-            # no fields were defined, see if there are properties
-            for cls in inspect.getmro(self.entity):
-                for desc_name, desc in six.iteritems(cls.__dict__):
-                    if desc_name.startswith('__'):
-                        continue
-                    if len(self.get_descriptor_field_attributes(desc_name)):
-                        self.list_display.insert(0, desc_name)
-        table = structure_to_table(self.list_display)
-        return table
-
     def get_columns(self):
         """
-        The columns to be displayed in the list view, returns a list of pairs
-        of the name of the field and its attributes needed to display it
-        properly
+        The columns to be displayed in the list view by default, returns a list of field names.
 
-        :return: [(field_name,
-                  {'widget': widget_type,
-                   'editable': True or False,
-                   'blank': True or False,
-                   'validator_list':[...],
-                   'name':'Field name'}),
-                 ...]
+        :return: [field_name, ...]
         """
-        table = self.get_table()
-        return [(field, self.get_field_attributes(field))
-                for field in table.get_fields() ]
+        # take a copy to prevent contamination
+        return [field for field in self.list_display]
+
+    def get_extra_columns(self):
+        """
+        The additional columns that are available to be displayed in the list view, returns a list of field names.
+
+        :return: [field_name, ...]
+        """
+        # TODO: Create list using introspection?
+        # take a copy to prevent contamination
+        return [field for field in self.extra_display]
 
     def get_validator( self, model = None):
         """Get a validator object
@@ -742,16 +938,16 @@ be specified using the verbose_name attribute.
         """
         fields = {}
         # capture all properties
-        for cls in inspect.getmro(self.entity):
-            for desc_name, desc in six.iteritems(cls.__dict__):
-                if desc_name.startswith('__'):
-                    continue
-                if len(self.get_descriptor_field_attributes(desc_name)):
-                    fields[desc_name] = self.get_field_attributes(desc_name)
-        fields.update(self.get_columns())
+        for desc_name, _desc_value in inspect.getmembers(self.entity):
+            if desc_name.startswith('__'):
+                continue
+            if len(self.get_descriptor_field_attributes(desc_name)):
+                fields[desc_name] = self.get_field_attributes(desc_name)
+        fields.update([(field, self.get_field_attributes(field)) for field in self.get_columns()])
         fields.update(self.get_fields())
         return fields
 
+    @register_list_actions('_admin_route', '_filter_actions')
     def get_filters(self):
         return []
 
@@ -759,9 +955,7 @@ be specified using the verbose_name attribute.
         from camelot.view.forms import Form, structure_to_form
         if self.form_display:
             return structure_to_form(self.form_display)
-        if self.list_display:
-            return Form( self.get_table().get_fields() )
-        return Form([])
+        return Form(self.get_columns())
 
     def set_field_value(self, obj, field_name, value):
         """Set the value of a field on an object.  By default this method calls
@@ -774,21 +968,29 @@ be specified using the verbose_name attribute.
         """
         setattr(obj, field_name, value)
 
-    def set_defaults(self, object_instance, include_nullable_fields=True):
+    def set_defaults(self, obj):
         """Set the defaults of an object
-        :param include_nullable_fields: also set defaults for nullable fields, 
-        depending on the context, this should be set to False to allow the user 
-        to set the field to None
+    
+        :return: `True` if a default value was set, `False` otherwise
         """
-        from sqlalchemy.schema import ColumnDefault
+        iterations = 0
+        while self._set_defaults(obj) == True:
+            iterations += 1
+            if iterations > 10:
+                raise Exception('More than 10 iterations while setting defaults')
+        return iterations > 0
+
+    def _set_defaults(self, object_instance):
+        from sqlalchemy.schema import ColumnDefault, Sequence
         from sqlalchemy import orm
 
         if self.is_deleted( object_instance ):
             return False
 
+        default_set = False
         # set defaults for all fields, also those that are not displayed, since
         # those might be needed for validation or other logic
-        for field, attributes in six.iteritems(self.get_all_fields_and_attributes()):
+        for field, attributes in self.get_all_fields_and_attributes().items():
             default = attributes.get('default')
             if default is None:
                 continue
@@ -811,7 +1013,11 @@ be specified using the verbose_name attribute.
                     session = orm.object_session(object_instance)
                     bind = session.get_bind(mapper=self.mapper)
                     default_value = bind.execute(default)
-            elif six.callable(default):
+            elif isinstance(default, Sequence):
+                # Skip if the column default is a sequence, as setting it will cause an SQLA exception.
+                # The column should remain unset and will be set by the compilation to the next_val of the sequence automatically. 
+                continue
+            elif callable(default):
                 import inspect
                 args, _varargs, _kwargs, _defs = \
                     inspect.getargspec(default)
@@ -821,26 +1027,32 @@ be specified using the verbose_name attribute.
                     default_value = default()
             else:
                 default_value = default
-            logger.debug(
-                'set default for %s to %s' % (
-                    field,
-                    six.text_type(default_value)
-                )
-            )
-            try:
-                setattr(object_instance, field, default_value)
-            except AttributeError as exc:
-                logger.error(
-                    'Programming Error : could not set'
-                    ' attribute %s to %s on %s' % (
+            if default_value is not None:
+                logger.debug(
+                    u'set default for %s to %s'%(
                         field,
-                        default_value,
-                        object_instance.__class__.__name__
-                        ),
-                    exc_info=exc
+                        str(default_value)
+                    )
                 )
+                try:
+                    setattr(object_instance, field, default_value)
+                    default_set = True
+                except AttributeError as exc:
+                    logger.error(
+                        u'Programming Error : could not set'
+                        u' attribute %s to %s on %s' % (
+                            field,
+                            default_value,
+                            object_instance.__class__.__name__
+                            ),
+                        exc_info=exc
+                    )
         for compounding_object in self.get_compounding_objects( object_instance ):
-            self.get_related_admin( type( compounding_object ) ).set_defaults( compounding_object )
+            compound_admin = self.get_related_admin( type( compounding_object ) )
+            compound_default_set = compound_admin.set_defaults(compounding_object)
+            default_set = default_set or compound_default_set
+
+        return default_set
 
     def primary_key( self, obj ):
         """Get the primary key of an object
@@ -860,6 +1072,7 @@ be specified using the verbose_name attribute.
 
     def delete(self, entity_instance):
         """Delete an entity instance"""
+        self.deletable_or_raise(entity_instance)
         del entity_instance
 
     def flush(self, entity_instance):
@@ -885,12 +1098,77 @@ be specified using the verbose_name attribute.
             state, False otherwise"""
         return False
 
+    def is_readable(self, _obj):
+        """
+        :return: True if the object is readable, False otherwise.
+            Deleted objects are not considered to be readable."""
+        return not self.is_deleted(_obj)
+
     def is_persistent(self, _obj):
         """:return: True if the object has a persisted state, False otherwise"""
         return False
+
+    def is_dirty(self, _obj):
+        """:return: True if the object might have been modified"""
+        return True
 
     def copy(self, entity_instance):
         """Duplicate this entity instance"""
         new_entity_instance = entity_instance.__class__()
         return new_entity_instance
 
+    def is_editable(self):
+        """
+        Return whether this admin globally allows instances being edited.
+        """
+        return True
+
+    def is_obj_editable(self, obj):
+        """
+        Return whether the given instance may be edited within the context of this admin.
+        Defaults to True if this admin is globally editable, False otherwise.
+        """
+        return self.is_editable()
+
+    def is_obj_deletable(self, obj):
+        """
+        Return whether the given instance is allowed to be deleted within the context of this admin.
+        Defaults to True.
+        """
+        return True
+
+    def deletable_or_raise(self, obj):
+        """
+        Check the given instance is allowed to be deleted within the context of this
+        admin or raise a UserException otherwise.
+        """
+        if not self.is_obj_deletable(obj):
+            raise UserException(_('{} is not permitted to be deleted'), obj)
+
+    def get_subsystem_object(self, obj):
+        """Return the given object's applicable subsystem object."""
+        return obj
+
+    def get_discriminator_value(self, obj):
+        """return the given object's discriminator value."""
+        pass
+
+    def set_discriminator_value(self, obj, primary_discriminator_value, *secondary_discriminator_values):
+        """Set the given discriminator value on the provided obj."""
+        pass
+
+    def get_field_filters(self, priority_level=None):
+        """
+        Compose a field filter dictionary consisting of this admin's available concrete field filter strategies, identified by their names.
+        This should return the empty dictionary for ObjectAdmins by default, as this conversion excludes NoFilter strategies and concrete field strategies are not applicable for regular objects.
+        The resulting dictionary is cached so that the conversion is not executed needlessly.
+        """
+        if self._field_filters is None:
+            self._field_filters =  {strategy.key: strategy for strategy in self._get_field_strategies(priority_level) if not isinstance(strategy, list_filter.NoFilter)}
+        return self._field_filters
+
+    def _get_field_strategies(self, priority_level=None):
+        """Return this admins available field filter strategies. By default, this returns the ´field_filter´ attribute."""
+        if priority_level is not None:
+            return [strategy for strategy in self.field_filter if strategy.priority_level == priority_level]
+        return self.field_filter

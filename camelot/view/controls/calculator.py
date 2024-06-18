@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,13 +27,13 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, QtWidgets
-from camelot.view.art import Icon
+from ...core.qt import QtCore, QtWidgets
+from camelot.view.art import FontIcon
 from camelot.core.utils import ugettext as _
 
 class Calculator(QtWidgets.QDialog):
     
-    calculation_finished_signal = QtCore.qt_signal(QtCore.QString)
+    calculation_finished_signal = QtCore.qt_signal(str)
     
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
@@ -41,7 +41,7 @@ class Calculator(QtWidgets.QDialog):
         topLeftLayout = QtWidgets.QVBoxLayout()
         topRightLayout = QtWidgets.QHBoxLayout()
         bottomRightLayout = QtWidgets.QHBoxLayout()
-        bottomLayout = QtGui.QGridLayout()
+        bottomLayout = QtWidgets.QGridLayout()
 
         self.setWindowTitle(_('Calculator'))
         self.input = QtWidgets.QLineEdit(self)
@@ -68,7 +68,7 @@ class Calculator(QtWidgets.QDialog):
         self.clear = QtWidgets.QPushButton('&Clear', self)
 
         self.backspace = QtWidgets.QToolButton()
-        icon = Icon('tango/16x16/actions/go-previous.png').getQIcon()
+        icon = FontIcon('backspace').getQIcon() # 'tango/16x16/actions/go-previous.png'
         self.backspace.setIcon(icon)
         self.backspace.setAutoRaise(True)
 
@@ -137,7 +137,7 @@ class Calculator(QtWidgets.QDialog):
         #QtWidgets.QWidget.keyPressEvent(self, event)
 
         key = event.key()
-        if key == QtCore.Qt.Key_S:
+        if key == QtCore.Qt.Key.Key_S:
             self.SaveValue()
             return
         else:
@@ -178,11 +178,11 @@ class Calculator(QtWidgets.QDialog):
                 self,
                 'Message',
                 'Do you want to Save and Quit?',
-                QtWidgets.QMessageBox.Yes,
-                QtWidgets.QMessageBox.No
+                QtWidgets.QMessageBox.StandardButton.Yes,
+                QtWidgets.QMessageBox.StandardButton.No
             )
 
-            if reply == QtWidgets.QMessageBox.Yes:
+            if reply == QtWidgets.QMessageBox.StandardButton.Yes:
                 self.SaveValue()
 
         try:
@@ -206,7 +206,7 @@ class Calculator(QtWidgets.QDialog):
 
         #self.input.setText(str(eval(self.output.text())))
 
-        text, ok = QtGui.QInputDialog.getText(
+        text, ok = QtWidgets.QInputDialog.getText(
             self, 'Input Dialog', 'Enter percentage'
         )
 

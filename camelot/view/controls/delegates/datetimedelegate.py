@@ -27,41 +27,26 @@
 #
 #  ============================================================================
 
-from ....core.qt import variant_to_py, QtCore, Qt
-from .customdelegate import CustomDelegate, DocumentationMetaclass, ValueLoading
-from camelot.view.controls import editors
+from dataclasses import dataclass
 
-import six
+from camelot.core.qt import Qt
+from camelot.core.naming import initial_naming_context
+from .customdelegate import DocumentationMetaclass
+from .datedelegate import DateDelegate
 
-@six.add_metaclass(DocumentationMetaclass)
-class DateTimeDelegate(CustomDelegate):
-    
-    editor = editors.DateTimeEditor
-    
-    def __init__(self, parent=None, editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable=editable, **kwargs)
-        locale = QtCore.QLocale()
-        self.datetime_format = locale.dateTimeFormat(locale.ShortFormat)
-        
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
-        
-        value_str = u''
-        if value not in (None, ValueLoading):
-            date_time = QtCore.QDateTime(
-                value.year, 
-                value.month, 
-                value.day,
-                value.hour, 
-                value.minute, 
-                value.second
-            )
-            value_str = date_time.toString(self.datetime_format)
-            
-        self.paint_text(painter, option, index, value_str, horizontal_align=Qt.AlignRight)
-        painter.restore()
+
+@dataclass
+class DateTimeDelegate(DateDelegate, metaclass=DocumentationMetaclass):
+
+    editable: bool = True
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
+        return item
 
 
 

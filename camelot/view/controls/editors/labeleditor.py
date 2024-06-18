@@ -27,40 +27,25 @@
 #
 #  ============================================================================
 
-import six
+
 
 from ....core.qt import QtCore, QtWidgets
-from .customeditor import AbstractCustomEditor, draw_tooltip_visualization
+from .customeditor import AbstractCustomEditor
 
 class LabelEditor(QtWidgets.QLabel, AbstractCustomEditor):
 
     editingFinished = QtCore.qt_signal()
+    actionTriggered = QtCore.qt_signal(list, object)
     
     def __init__(self, 
-                 parent = None, 
-                 text = "<loading>", 
-                 field_name = 'label',
-                 **kwargs):
+                 parent = None,
+                 field_name = 'label'):
         QtWidgets.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
 
-        self.text = text
-
     def set_value(self, value):
-        value = AbstractCustomEditor.set_value(self, value)
-        if value:
+        if value is not None:
             self.setText(value)
-            
-    def set_field_attributes(self, **kwargs):
-        super(LabelEditor, self).set_field_attributes(**kwargs)
-        self.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
-            
-    def paintEvent(self, event):
-        if self.toolTip():
-            draw_tooltip_visualization(self)
-
-
-
-
-
+        else:
+            self.setText('')

@@ -30,74 +30,35 @@
 """
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
+import functools
+from io import StringIO
+import json
+import typing
+import traceback
+from typing import List, Union
 
-from ...core.qt import QtCore, QtWidgets
-
-import six
+from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
-from camelot.core.exception import CancelRequest
-from camelot.core.utils import ugettext, ugettext_lazy as _
+from camelot.admin.icon import Icon
+from camelot.core.exception import CancelRequest, UserException
+from camelot.core.naming import initial_naming_context
+from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
+from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
-from camelot.view.controls.inheritance import SubclassDialog
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from ...core.qt import QtCore, QtWidgets, is_deleted
+from ...core.serializable import DataclassSerializable
+from .. import gui_naming_context
+from .crud import CompletionValue
 
-class UpdateEditor(ActionStep):
-    """This step should be used in the context of an editor action.  It
-    will update an attribute of the editor.
 
-    :param attribute: the name of the attribute of the editor to update
-    :param value: the new value of the attribute
-    :param propagate: set to `True` if the editor should notify the underlying
-       model of it's change, so that the changes can be written to the model
-    """
-
-    def __init__(self, attribute, value, propagate=False):
-        self.attribute = attribute
-        self.value = value
-        self.propagate = propagate
-
-    def gui_run(self, gui_context):
-        setattr(gui_context.editor, self.attribute, self.value)
-        if self.propagate:
-            gui_context.editor.editingFinished.emit()
-
-class SelectSubclass(ActionStep):
-    """Allow the user to select a subclass out of a class hierarchy.  If the
-    hierarch has only one class, this step returns immediately.
-
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
-
-    yielding this step will return the admin for the subclass selected by the
-    user.
-    """
-
-    def __init__(self, admin):
-        self.admin = admin
-        self.subclass_tree = admin.get_subclass_tree()
-
-    def render(self):
-        subclass_dialog = SubclassDialog(admin=self.admin,
-                                         subclass_tree=self.subclass_tree)
-        subclass_dialog.setWindowTitle(ugettext('Select'))
-        return subclass_dialog
-
-    def gui_run(self, gui_context):
-        if not len(self.subclass_tree):
-            return self.admin
-        dialog = self.render()
-        result = dialog.exec_()
-        if result == QtWidgets.QDialog.Rejected:
-            raise CancelRequest()
-        return dialog.selected_subclass
-
-class Refresh( ActionStep ):
+@dataclass
+class Refresh( ActionStep, DataclassSerializable ):
     """Refresh all the open screens on the desktop, this will reload queries
     from the database"""
 
-    def gui_run( self, gui_context ):
-        if gui_context.workspace:
-            gui_context.workspace.refresh()
+    blocking: bool = False
 
 class ItemSelectionDialog(StandaloneWizardPage):
 
@@ -114,7 +75,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         self.autoaccept = autoaccept
         self.set_default_buttons()
         layout = QtWidgets.QVBoxLayout()
-        combobox = editors.ChoicesEditor()
+        combobox = editors.ChoicesEditor(action_routes=[])
         combobox.setObjectName( 'combobox' )
         combobox.editingFinished.connect( self._combobox_activated )
         layout.addWidget( combobox )
@@ -140,7 +101,8 @@ class ItemSelectionDialog(StandaloneWizardPage):
         if combobox != None:
             return combobox.set_value(value)
 
-class SelectItem( ActionStep ):
+@dataclass
+class SelectItem(ActionStep, DataclassSerializable):
     """This action step pops up a single combobox dialog in which the user can
     select one item from a list of items.
 
@@ -152,59 +114,40 @@ class SelectItem( ActionStep ):
        :guilabel:`OK` first.
     """
 
-    def __init__( self, items, value=None ):
-        self.items = items
-        self.value = value
-        self.autoaccept = True
-        self.title =  _('Please select')
-        self.subtitle = _('Make a selection and press the OK button')
+    items: List[CompletionValue]
+    value: str = initial_naming_context._bind_object(None)
+    autoaccept: bool = True
 
-    def render(self):
-        dialog = ItemSelectionDialog( autoaccept = self.autoaccept )
-        dialog.set_choices(self.items)
-        dialog.set_value(self.value)
-        dialog.setWindowTitle( six.text_type( self.title ) )
-        dialog.set_banner_subtitle( six.text_type( self.subtitle ) )
+    title: Union[str, ugettext_lazy] = field(init=False, default= _('Please select'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Make a selection and press the OK button.'))
+
+    def __post_init__(self):
+        self.autoaccept = True
+
+    @classmethod
+    def render(cls, step):
+        dialog = ItemSelectionDialog(autoaccept = bool(step['autoaccept']))
+        dialog.set_choices(step['items'])
+        dialog.set_value(step['value'])
+        dialog.setWindowTitle(step['title'])
+        dialog.set_banner_subtitle(step['subtitle'])
         return dialog
 
-    def gui_run(self, gui_context):
-        dialog = self.render()
-        result = dialog.exec_()
-        if result == QtWidgets.QDialog.Rejected:
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        dialog = cls.render(step = json.loads(serialized_step))
+        result = dialog.async_exec()
+        if result == QtWidgets.QDialog.DialogCode.Rejected:
             raise CancelRequest()
         return dialog.get_value()
 
-class ShowChart( ActionStep ):
-    """Show a full screen chart.
+    @classmethod
+    def deserialize_result(cls, gui_context_name, result):
+        if result is not None:
+            return tuple(result)
 
-    :param chart: a :class:`camelot.container.chartcontainer.FigureContainer` or
-        :class:`camelot.container.chartcontainer.AxesContainer`
-    """
-
-    def __init__( self, chart ):
-        self.chart = chart
-
-    def gui_run( self, gui_context ):
-        from camelot.view.controls.editors import ChartEditor
-        ChartEditor.show_fullscreen_chart( self.chart,
-                                           gui_context.workspace )
-
-
-class ShowPixmap( ActionStep ):
-    """Show a full screen pixmap
-
-    :param pixmap: a :class:`camelot.view.art.Pixmap` object
-    """
-
-    def __init__( self, pixmap ):
-        self.pixmap = pixmap
-
-    def gui_run( self, gui_context ):
-        from camelot.view.controls.liteboxview import LiteBoxView
-        litebox = LiteBoxView( parent = gui_context.workspace )
-        litebox.show_fullscreen_pixmap( self.pixmap.getQPixmap() )
-
-class CloseView( ActionStep ):
+@dataclass
+class CloseView(ActionStep, DataclassSerializable):
     """
     Close the view that triggered the action, if such a view is available.
 
@@ -216,15 +159,21 @@ class CloseView( ActionStep ):
         the user.
     """
 
-    def __init__( self, accept = True ):
-        self.accept = accept
+    blocking: bool = False
+    accept: bool = True
 
-    def gui_run( self, gui_context ):
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # python implementation, still used for FormView
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        step = json.loads(serialized_step)
         view = gui_context.view
-        if view != None:
-            view.close_view( self.accept )
+        if view is not None and not is_deleted(view):
+            view.close_view(step["accept"])
 
-class MessageBox( ActionStep ):
+
+@dataclass
+class MessageBox( ActionStep, DataclassSerializable ):
     """
     Popup a :class:`QtWidgets.QMessageBox` and send it result back.  The arguments
     of this action are the same as those of the :class:`QtWidgets.QMessageBox`
@@ -244,36 +193,71 @@ class MessageBox( ActionStep ):
 
     """
 
-    default_buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
+    text: typing.Union[str, ugettext_lazy]
+    icon: Icon = Icon('info')
+    title: typing.Union[str, ugettext_lazy] = _('Message')
+    standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
+    informative_text: str = field(init=False)
+    detailed_text: str = field(init=False)
+    hide_progress: bool = False
 
-    def __init__( self,
-                  text,
-                  icon = QtWidgets.QMessageBox.Information,
-                  title = _('Message'),
-                  standard_buttons = default_buttons ):
-        self.icon = icon
-        self.title = six.text_type( title )
-        self.text = six.text_type( text )
-        self.standard_buttons = standard_buttons
+    def __post_init__(self):
+        self.title = str(self.title)
+        self.text = str(self.text)
         self.informative_text = ''
         self.detailed_text = ''
 
-    def render( self ):
+    @classmethod
+    def render(cls, step):
         """create the message box. this method is used to unit test
         the action step."""
-        message_box =  QtWidgets.QMessageBox( self.icon,
-                                          self.title,
-                                          self.text,
-                                          self.standard_buttons )
-        message_box.setInformativeText(six.text_type(self.informative_text))
-        message_box.setDetailedText(six.text_type(self.detailed_text))
+        message_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Icon.NoIcon, step["title"], step["text"],
+            QtWidgets.QMessageBox.StandardButton(
+                functools.reduce(lambda a, b: a | b, step["standard_buttons"])
+            ))
+        if step.get("icon"):
+            message_box.setIconPixmap(from_admin_icon(Icon(**step["icon"])).getQPixmap())
+        message_box.setInformativeText(str(step["informative_text"] or ''))
+        message_box.setDetailedText(str(step["detailed_text"] or ''))
         return message_box
 
-    def gui_run( self, gui_context ):
-        message_box = self.render()
-        result = message_box.exec_()
-        if result == QtWidgets.QMessageBox.Cancel:
-            raise CancelRequest()
-        return result
+    @classmethod
+    def deserialize_result(cls, gui_context_name, result):
+        # the result might be empty in case step was send as non-blocking
+        button = result.get("button")
+        if button is None:
+            return
+        return QtWidgets.QMessageBox.StandardButton(button)
 
-
+    @classmethod
+    def from_exception(cls, logger, text, exception):
+        """
+        Turn an exception in a MessageBox action step
+        """
+        if isinstance(exception, UserException):
+            # this exception is not supposed to generate any logging
+            # or inform the developer about something
+            step = cls(
+                title=exception.title,
+                text=exception.text,
+                icon=exception.icon,
+                standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
+            )
+            step.informative_text=exception.resolution
+            step.detailed_text=exception.detail
+        else:
+            logger.error(text, exc_info=exception)
+            sio = StringIO()
+            traceback.print_exc(file=sio)
+            step = cls(
+                title=_('Exception'),
+                text=_('An unexpected event occurred'),
+                icon=None,
+                standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
+            )
+            # chop the size of the text to prevent error dialogs larger than the screen
+            step.informative_text=str(exception)[:1000]
+            step.detailed_text=sio.getvalue()
+            sio.close()
+        return step

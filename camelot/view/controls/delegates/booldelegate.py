@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,105 +27,28 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
 
-from ....core.qt import variant_to_py, Qt, QtCore, QtGui, QtWidgets
+from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.core.utils import ugettext as _
-from camelot.view.proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class BoolDelegate(CustomDelegate):
+@dataclass
+class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for boolean values"""
-    
-    editor = editors.BoolEditor
-  
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground( painter, option, index )
-        checked = variant_to_py(index.model().data(index, Qt.EditRole))
-        
-        check_option = QtGui.QStyleOptionButton()
-        
-        rect = QtCore.QRect(option.rect.left(),
-                            option.rect.top(),
-                            option.rect.width(),
-                            option.rect.height())
-        
-        check_option.rect = rect
-        check_option.palette = option.palette
-        if (option.state & QtGui.QStyle.State_Selected):
-            painter.fillRect(option.rect, option.palette.highlight())
-        elif not self.editable:
-            painter.fillRect(option.rect, option.palette.window())
 
-        if checked in (ValueLoading, None):
-            check_option.state = option.state | QtGui.QStyle.State_Off
-        elif checked:
-            check_option.state = option.state | QtGui.QStyle.State_On
-        else:
-            check_option.state = option.state | QtGui.QStyle.State_Off
-            
+    @classmethod
+    def get_editor_class(cls):
+        return editors.BoolEditor
 
-        QtWidgets.QApplication.style().drawControl(QtGui.QStyle.CE_CheckBox,
-                                               check_option,
-                                               painter)
-                
-        painter.restore()
-    
-class TextBoolDelegate(CustomDelegate):
-
-    editor = editors.TextBoolEditor
-    def __init__(self, parent=None, editable=True, yes='Yes', no='No', color_yes=None, color_no=None, **kwargs):
-        CustomDelegate.__init__(self, parent, editable, **kwargs)
-        self.yes = yes
-        self.no = no
-        self.color_no = color_no
-        self.color_yes = color_yes
-
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        field_attributes = variant_to_py(index.data(Qt.UserRole))
-        editable, background_color = True, None
-        if field_attributes != ValueLoading:
-            editable = field_attributes.get( 'editable', True )
-            background_color = field_attributes.get( 'background_color', None )
-
-        rect = option.rect
-        
-        value = variant_to_py(index.model().data(index, Qt.EditRole))
-        font_color = QtGui.QColor()
-        if value:
-            text = self.yes
-            if self.color_yes:
-                color = self.color_yes
-        else:
-            text = self.no
-            if self.color_no:
-                color = self.color_no
-        font_color.setRgb(color.red(), color.green(), color.blue()) 
-
-        if( option.state & QtGui.QStyle.State_Selected ):
-            painter.fillRect(option.rect, option.palette.highlight())
-        else:
-            if editable:
-                painter.fillRect(option.rect, background_color or option.palette.base())
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, True)
+        if model_context.value is not None:
+            if model_context.value == True:
+                value_str = '\u2611' # checkmark
             else:
-                painter.fillRect(option.rect, background_color or option.palette.window())
-              
-        painter.setPen(font_color.toRgb())
-        painter.drawText(
-            rect.x() + 2,
-            rect.y(),
-            rect.width() - 4,
-            rect.height(),
-            Qt.AlignVCenter | Qt.AlignLeft,
-            _(text)
-        )
-        painter.restore()
-
-
-
-
+                value_str = '\u2610' # checkbox
+            item.roles[PreviewRole] = value_str
+        return item

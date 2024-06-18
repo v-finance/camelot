@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,12 +27,11 @@
 #
 #  ============================================================================
 
-import six
 
-from ....core.qt import QtGui, QtCore, Qt, QtWidgets
+
+from ....core.qt import QtCore, Qt, QtWidgets
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors import CustomEditor
-from camelot.view.controls.editors.customeditor import ValueLoading
 from camelot.view.controls.editors.integereditor import CustomDoubleSpinBox
 
 class MonthsEditor(CustomEditor):
@@ -41,26 +40,33 @@ class MonthsEditor(CustomEditor):
     composite months and years editor
     """
 
-    def __init__(self, parent=None, editable=True, field_name='months', **kw):
+    def __init__(self,
+                 parent=None,
+                 # Min & max, defined in years.
+                 minimum = 0,
+                 maximum = 10000,
+                 field_name='months'):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )        
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self.years_spinbox = CustomDoubleSpinBox()
         self.months_spinbox = CustomDoubleSpinBox()
-        self.years_spinbox.setRange(-1, 10000)
-        self.months_spinbox.setRange(-1, 12)
+        self.years_spinbox.setRange(minimum-1, maximum)
+        self.months_spinbox.setRange(-1, 11)
         self.years_spinbox.setSuffix(_(' years'))
         self.months_spinbox.setSuffix(_(' months'))
         
         self.years_spinbox.setDecimals(0)
-        self.years_spinbox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        self.years_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.years_spinbox.setSingleStep(1)
+        self.years_spinbox.setValue(self.years_spinbox.minimum())
         
         self.months_spinbox.setDecimals(0)
-        self.months_spinbox.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+        self.months_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.months_spinbox.setSingleStep(1)
-
+        self.months_spinbox.setValue(self.months_spinbox.minimum())
+        
         self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         self.months_spinbox.editingFinished.connect( self._spinbox_editing_finished )
         
@@ -73,12 +79,13 @@ class MonthsEditor(CustomEditor):
     @QtCore.qt_slot()
     def _spinbox_editing_finished(self):
         self.editingFinished.emit()
-        
-    def set_field_attributes(self, **kwargs):
-        super(MonthsEditor, self).set_field_attributes(**kwargs)
-        self.set_enabled(kwargs.get('editable', False))
-        self.set_background_color(kwargs.get('background_color', None))
-        self.years_spinbox.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        self.years_spinbox.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        self.set_enabled(editable)
 
     def set_enabled(self, editable=True):
         self.years_spinbox.setReadOnly(not editable)
@@ -86,15 +93,14 @@ class MonthsEditor(CustomEditor):
         self.months_spinbox.setReadOnly(not editable)
         self.months_spinbox.setEnabled(editable)
         if not editable:
-            self.years_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-            self.months_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+            self.years_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+            self.months_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
         else:
-            self.years_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
-            self.months_spinbox.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+            self.years_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.months_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
 
     def set_value(self, value):
         # will set privates value_is_none and _value_loading
-        value = CustomEditor.set_value(self, value)
         if value is None:
             self.years_spinbox.setValue(self.years_spinbox.minimum())
             self.months_spinbox.setValue(self.months_spinbox.minimum())
@@ -105,8 +111,6 @@ class MonthsEditor(CustomEditor):
             self.months_spinbox.setValue(months)
 
     def get_value(self):
-        if CustomEditor.get_value(self) is ValueLoading:
-            return ValueLoading
         self.years_spinbox.interpretText()
         years = int(self.years_spinbox.value())
         self.months_spinbox.interpretText()

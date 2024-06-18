@@ -32,46 +32,29 @@ to write unittests for Camelot applications.  These are not the unittests for
 Camelot itself. 
 """
 
+import collections
 import logging
 import unittest
-import six
+import sys
+import os
+import json
 
-from ..admin.action.application_action import ApplicationActionGuiContext
-from ..admin.entity_admin import EntityAdmin
-from ..core.orm import Session
+
+from ..admin.action.base import Action, MetaActionStep
+from ..core.naming import initial_naming_context
 from ..core.qt import Qt, QtCore, QtGui, QtWidgets
+from ..core.backend import get_root_backend
 from ..view import action_steps
 
 has_programming_error = False
-_application_ = []
-
 
 LOGGER = logging.getLogger('camelot.test')
 
-def get_application():
-    """Get the singleton QApplication"""
-    if not len(_application_):
-        #
-        # Uniform style for screenshot generation
-        #
-        application = QtWidgets.QApplication.instance()
-        if not application:
-            import sys
-            from camelot.view import art
-            QtWidgets.QApplication.setStyle('cleanlooks')
-            application = QtWidgets.QApplication(sys.argv)
-            application.setStyleSheet( art.read('stylesheet/office2007_blue.qss').decode('utf-8') )
-            QtCore.QLocale.setDefault( QtCore.QLocale('nl_BE') )
-            #try:
-            #    from PyTitan import QtnOfficeStyle
-            #    QtnOfficeStyle.setApplicationStyle( QtnOfficeStyle.Windows7Scenic )
-            #except:
-            #    pass 
-        _application_.append( application )
-    return _application_[0]
+test_context = initial_naming_context.bind_new_context('test', immutable=True)
 
-class ModelThreadTestCase(unittest.TestCase):
-    """Base class for implementing test cases that need a running model_thread.
+class GrabMixinCase(object):
+    """
+    Methods to grab views to pixmaps during unittests
     """
 
     images_path = ''
@@ -85,8 +68,6 @@ class ModelThreadTestCase(unittest.TestCase):
     - the name of the png file is the name of the test case, without 'test_'
     - it is stored in the directory with the same name as the class, without 'test'
         """
-        import sys
-        import os
         if not subdir:
             images_path = os.path.join(self.images_path, self.__class__.__name__.lower()[:-len('Test')])
         else:
@@ -105,13 +86,13 @@ class ModelThreadTestCase(unittest.TestCase):
             image_name = '%s_%s.png'%(test_case_name, suffix)
         widget.adjustSize()
         widget.repaint()
-        QtWidgets.QApplication.flush()
+        QtWidgets.QApplication.sendPostedEvents()
         widget.repaint()
-        inner_pixmap = QtGui.QPixmap.grabWidget(widget, 0, 0, widget.width(), widget.height())
+        inner_pixmap = QtWidgets.QWidget.grab(widget)
         # add a border to the image
         border = 4
-        outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format_RGB888)
-        outer_image.fill(Qt.gray)
+        outer_image = QtGui.QImage(inner_pixmap.width()+2*border, inner_pixmap.height()+2*border, QtGui.QImage.Format.Format_RGB888)
+        outer_image.fill(Qt.GlobalColor.gray)
         painter = QtGui.QPainter()
         painter.begin(outer_image)
         painter.drawPixmap(QtCore.QRectF(border, border, inner_pixmap.width(), inner_pixmap.height()), 
@@ -120,148 +101,104 @@ class ModelThreadTestCase(unittest.TestCase):
         painter.end()
         outer_image.save(os.path.join(images_path, image_name), 'PNG')
 
-    def process(self):
-        """Wait until all events are processed and the queues of the model thread are empty"""
-        self.mt.wait_on_work()
+# make sure the name is reserved, so we can unbind it without exception
+test_action_name = test_context.bind(('test_action',), object())
 
-    def setUp(self):
-        from camelot.core.conf import settings
-        self.app = get_application()
-        from camelot.view import model_thread
-        from camelot.view.model_thread.no_thread_model_thread import NoThreadModelThread
-        from camelot.view.model_thread import get_model_thread, has_model_thread
-        from camelot.view.remote_signals import construct_signal_handler, has_signal_handler
-        if not has_model_thread():
-            #
-            # Run the tests without real threading, to avoid timing problems with screenshots etc.
-            #
-            model_thread._model_thread_.insert( 0, NoThreadModelThread() )
-        if not has_signal_handler():
-            construct_signal_handler()
-        self.mt = get_model_thread()
-        if not self.mt.isRunning():
-            self.mt.start()
-        # make sure the startup sequence has passed
-        self.mt.post( settings.setup_model )
-        self.process()
+class GetActionState(Action):
+
+    def model_run(self, model_context, mode):
+        action = initial_naming_context.resolve(tuple(mode))
+        yield action_steps.UpdateProgress(
+            'Got state', detail=action.get_state(model_context),
+        )
+
+get_action_state_name = test_context.bind(('get_action_state',), GetActionState())
+
+class ActionMixinCase(object):
+    """
+    Helper methods to simulate running actions in a different thread
+    """
+
+    def get_state(self, action_name, gui_context):
+        """
+        Get the state of an action in the model thread and return
+        the result.
+        """
+        recorded_steps = self.gui_run(
+            get_action_state_name, mode=action_name,
+            model_context_name=self.model_context_name
+        )
+        assert len(recorded_steps)
+        for step_type, step_data in recorded_steps:
+            if step_type == action_steps.UpdateProgress.__name__:
+                return step_data['detail']
+        assert False
+
+    @classmethod
+    def gui_run(cls,
+                action_name,
+                gui_context_name=('constant', 'null'),
+                mode=None,
+                replies={},
+                model_context_name=('constant', 'null')):
+        """
+        Runs an action and simulates replies by the user each time
+        a blocking action step is presented.
+        """
+        gui_run_name = get_root_backend().run_action(
+            gui_context_name, action_name, model_context_name, mode
+        )
+        cls._replies[tuple(gui_run_name)] = replies
+        get_root_backend().action_runner().waitForCompletion()
+        return cls._recorded_steps[tuple(gui_run_name)]
+
+
+class RunningProcessCase(unittest.TestCase, ActionMixinCase):
+    """
+    Test case that starts a model thread when setting up the case class.
+
+    Overwrite the process_cls class variable with a ModelProcess subclass
+    that initialized the needed resources to run the test case.
+    """
+
+    process_cls = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.thread = cls.process_cls()
+        cls._recorded_steps = collections.defaultdict(list)
+        cls._replies = collections.defaultdict(dict)
+        get_root_backend().actionStepped.connect(cls._record_step)
+        cls.thread.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        get_root_backend().actionStepped.disconnect(cls._record_step)
+        try:
+            cls.process()
+        finally:
+            cls.thread.stop()
 
     def tearDown(self):
         self.process()
-        #self.mt.exit(0)
-        #self.mt.wait()
-
-class ApplicationViewsTest(ModelThreadTestCase):
-    """Test various application level views, like the main window, the
-    sidepanel"""
-    
-    def setUp(self):
-        super(ApplicationViewsTest, self).setUp()
-        self.gui_context = ApplicationActionGuiContext()
-
-    def get_application_admin(self):
-        """Overwrite this method to make use of a custom application admin"""
-        from camelot.admin.application_admin import ApplicationAdmin
-        return ApplicationAdmin()
-    
-    def install_translators(self, app_admin):
-        for translator in app_admin.get_translator():
-            QtCore.QCoreApplication.installTranslator(translator)
-
-    def test_navigation_pane(self):
-        from camelot.view.controls.section_widget import NavigationPane
-        app_admin = self.get_application_admin()
-        self.install_translators(app_admin)
-        nav_pane = NavigationPane(None, None)
-        nav_pane.set_sections(app_admin.get_sections())
-        self.grab_widget(nav_pane, subdir='applicationviews')
-      
-    def test_main_window(self):
-        app_admin = self.get_application_admin()
-        self.gui_context.admin = app_admin
-        self.install_translators(app_admin)
-        step = action_steps.MainWindow(app_admin)
-        widget = step.render(self.gui_context)
-        self.grab_widget(widget, subdir='applicationviews')
-    
-class EntityViewsTest(ModelThreadTestCase):
-    """Test the views of all the Entity subclasses, subclass this class to test all views
-    in your application.  This is done by calling the create_table_view and create_new_view
-    on a set of admin objects.  To tell the test case which admin objects should be tested,
-    overwrite the get_admins method.
-    """
-
-    def setUp(self):
-        super(EntityViewsTest, self).setUp()
-        global has_programming_error
-        translators = self.get_application_admin().get_translator()
-        for translator in translators:
-            QtCore.QCoreApplication.installTranslator(translator)
-        has_programming_error = False
-        self.session = Session()
-
-    def get_application_admin(self):
-        """Overwrite this method to make use of a custom application admin"""
-        from camelot.admin.application_admin import ApplicationAdmin
-        return ApplicationAdmin()
-            
-    def get_admins(self):
-        """Should return all admin for which a table and a form view should be displayed,
-        by default, returns for all entities their default admin"""
-        from sqlalchemy.orm.mapper import _mapper_registry
-         
-        classes = []
-        for mapper in six.iterkeys(_mapper_registry):
-            if hasattr(mapper, 'class_'):
-                classes.append( mapper.class_ )
-            else:
-                raise Exception()
-            
-        app_admin = self.get_application_admin()
         
-        for cls in classes:
-            admin = app_admin.get_related_admin(cls)
-            if admin is not None:
-                yield admin
 
-    def test_table_view(self):
-        from camelot.admin.action.base import GuiContext
-        from camelot.view.action_steps import OpenTableView
-        gui_context = GuiContext()
-        for admin in self.get_admins():
-            if isinstance(admin, EntityAdmin):
-                step = OpenTableView(admin, admin.get_query())
-                widget = step.render(gui_context)
-                self.grab_widget(widget, suffix=admin.entity.__name__.lower(),
-                                 subdir='entityviews')
-                self.assertFalse( has_programming_error )
+    @classmethod
+    def _record_step(cls, gui_run_name, action_step_type, gui_context_name, blocking, action_step):
+        step = json.loads(action_step.data())
+        cls._recorded_steps[tuple(gui_run_name)].append(
+            (action_step_type, step)
+        )
+        replies = cls._replies[tuple(gui_run_name)]
+        step_cls = MetaActionStep.action_steps[action_step_type]
+        if blocking:
+            result = replies.get(step_cls)
+            # the result needs to be convertible to a QJsonValue
+            assert isinstance(result, (dict, int, float, str, list, type(None)))
+            get_root_backend().action_step_result_valid(gui_run_name, result, False, "")
 
-    def test_new_view(self):
-        from camelot.admin.action.base import GuiContext
-        from camelot.admin.entity_admin import EntityAdmin
-        from ..view.action_steps import OpenFormView
-        gui_context = GuiContext()
-        for admin in self.get_admins():
-            verbose_name = six.text_type(admin.get_verbose_name())
-            LOGGER.debug('create new view for admin {0}'.format(verbose_name))
-            # create an object or take one from the db
-            obj = None
-            new_obj = False
-            if isinstance(admin, EntityAdmin):
-                obj = admin.get_query().first()
-            if obj is None:
-                obj = admin.entity()
-                new_obj = True
-            # create a form view
-            form_view_step = OpenFormView([obj], admin)
-            widget = form_view_step.render(gui_context)
-            mapper = widget.findChild(QtGui.QDataWidgetMapper, 'widget_mapper')
-            mapper.revert()
-            self.process()
-            if admin.form_state != None:
-                # virtually maximize the widget
-                widget.setMinimumSize(1200, 800)
-            self.grab_widget(widget, suffix=admin.entity.__name__.lower(), subdir='entityviews')
-            self.assertFalse( has_programming_error )
-            if new_obj:
-                self.session.expunge(obj)
-
+    @classmethod
+    def process(cls):
+        """Wait until all events are processed and the queues of the model thread are empty"""
+        completed = get_root_backend().action_runner().waitForCompletion()
+        assert completed

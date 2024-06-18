@@ -28,22 +28,17 @@
 #  ============================================================================
 """Helper functions for the view subpackage"""
 
-from six.moves import html_parser
+import html.parser as html_parser
 
-import six
 
 from datetime import datetime, time, date
 import decimal
 import re
 import string
 import logging
-import operator
 
-from ..core.qt import QtCore, QtWidgets
-from camelot.core.sql import like_op
-from sqlalchemy.sql.operators import between_op
+from ..core.qt import QtCore
 from camelot.core.utils import ugettext
-from camelot.core.utils import ugettext_lazy as _
 
 logger = logging.getLogger('camelot.view.utils')
 
@@ -67,10 +62,10 @@ def local_date_format():
     global _local_date_format
     if not _local_date_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', six.text_type(locale.dateFormat(locale.ShortFormat)))
+        format_sequence = re.split('y*', str(locale.dateFormat(locale.FormatType.ShortFormat)))
         # make sure a year always has 4 numbers
         format_sequence.insert(-1, 'yyyy')
-        _local_date_format = six.text_type(u''.join(format_sequence))
+        _local_date_format = str(u''.join(format_sequence))
     return _local_date_format
 
 def local_datetime_format():
@@ -78,10 +73,8 @@ def local_datetime_format():
     global _local_datetime_format
     if not _local_datetime_format:
         locale = QtCore.QLocale()
-        format_sequence = re.split('y*', six.text_type(locale.dateTimeFormat(locale.ShortFormat)))
         # make sure a year always has 4 numbers
-        format_sequence.insert(-1, 'yyyy')
-        _local_datetime_format = six.text_type(u''.join(format_sequence))
+        _local_datetime_format = re.sub('y+', 'yyyy', str(locale.dateTimeFormat(locale.FormatType.ShortFormat)))
     return _local_datetime_format
 
 def local_time_format():
@@ -89,21 +82,21 @@ def local_time_format():
     global _local_time_format
     if not _local_time_format:
         locale = QtCore.QLocale()
-        _local_time_format = six.text_type(locale.timeFormat(locale.ShortFormat) )
+        _local_time_format = str(locale.timeFormat(locale.FormatType.ShortFormat) )
     return _local_time_format
 
 def default_language(*args):
     """takes arguments, to be able to use this function as a
     default field attribute"""
     locale = QtCore.QLocale()
-    return six.text_type(locale.name())
+    return str(locale.name())
 
 class ParsingError(Exception): pass
 
 def string_from_string(s):
     if not s:
         return None
-    return six.text_type(s)
+    return str(s)
 
 def bool_from_string(s):
     if s is None: raise ParsingError()
@@ -167,7 +160,7 @@ def time_from_string(s):
     if not s:
         return None
     f = local_time_format()
-    tm = QtCore.QTime.fromString(s, f)
+    tm = locale().toTime(s, f)
     if not tm.isValid():
         raise ParsingError()
     return time( tm.hour(), tm.minute(), tm.second() )
@@ -177,14 +170,11 @@ def datetime_from_string(s):
     if not s:
         return None
     f = local_datetime_format()
-    dt = QtCore.QDateTime.fromString(s, f)
+    dt = locale().toDateTime(s, f)
     if not dt.isValid():
         raise ParsingError()
     return datetime(dt.date().year(), dt.date().month(), dt.date().day(), 
                     dt.time().hour(), dt.time().minute(), dt.time().second())
-
-def code_from_string(s, separator):
-    return s.split(separator)
 
 def int_from_string(s):
     value = float_from_string(s)
@@ -212,8 +202,8 @@ def decimal_from_string(s):
 def pyvalue_from_string(pytype, s):
     if pytype is str:
         return str(s)
-    elif pytype is six.text_type:
-        return six.text_type(s)
+    elif pytype is str:
+        return str(s)
     elif pytype is bool:
         return bool_from_string(s)
     elif pytype is date:
@@ -230,21 +220,10 @@ def pyvalue_from_string(pytype, s):
 def to_string( value ):
     if value == None:
         return u''
-    return six.text_type( value )
+    return str( value )
 
 def enumeration_to_string(value):
-    return ugettext(six.text_type(value or u'').replace('_', ' ')).capitalize()
-
-operator_names = {
-    operator.eq : _( u'=' ),
-    operator.ne : _( u'!=' ),
-    operator.lt : _( u'<' ),
-    operator.le : _( u'<=' ),
-    operator.gt : _( u'>' ),
-    operator.ge : _( u'>=' ),
-    like_op : _( u'like' ),
-    between_op: _( u'between' ),
-}
+    return ugettext(str(value or u'').replace('_', ' ').capitalize())
 
 def text_from_richtext( unstripped_text ):
     """function that returns a list of lines with escaped data, to be used in 
@@ -269,21 +248,47 @@ def text_from_richtext( unstripped_text ):
                 strings.append(escape(data))
 
     parser = HtmlToTextParser()
-    try:
-        parser.feed(unstripped_text.strip())
-    except html_parser.HTMLParseError:
-        logger.warn('html parse error')
+    #TODO parser error only thrown when using strict mode https://stackoverflow.com/a/59968964
+
+    # try:
+    #     parser.feed(unstripped_text.strip())
+    # except html_parser.HTMLParseError: # HTMLParseError doesn't exist anymore
+    #     logger.debug('html parse error')
+    parser.feed(unstripped_text.strip())
 
     return strings
 
-def resize_widget_to_screen( widget, fraction = 0.75 ):
+def richtext_to_string(value):
+    if value is None:
+        return u''
+    return u'\n'.join([line for line in text_from_richtext(value)])
+
+def resize_widget_to_screen( widget_or_window, fraction = 0.75 ):
     """Resize a widget to fill a certain fraction of the screen
 
     :param widget: the widget to resize
     :param fraction: the fraction of the screen to fill after the resize
     """
-    desktop = QtWidgets.QApplication.desktop()
-    available_geometry = desktop.availableGeometry( widget )
+    screen = widget_or_window.screen()
+    available_geometry = screen.availableGeometry()
     # use the size of the screen instead to set the dialog size
-    widget.resize( available_geometry.width() * 0.75, 
-                   available_geometry.height() * 0.75 )    
+    widget_or_window.resize(
+        available_geometry.width() * fraction, 
+        available_geometry.height() * fraction
+    )
+
+def get_settings_group(admin_route):
+    assert len(admin_route) >= 2
+    return [admin_route[-2][:255]]
+
+def get_settings(group):
+    """A :class:`QtCore.QSettings` object in which Camelot related settings
+    can be stored.  This object is intended for Camelot internal use.  If an
+    application specific settings object is needed, simply construct one.
+
+    :return: a :class:`QtCore.QSettings` object
+    """
+    settings = QtCore.QSettings()
+    settings.beginGroup('Camelot')
+    settings.beginGroup(group[:255])
+    return settings

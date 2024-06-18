@@ -27,50 +27,30 @@
 #
 #  ============================================================================
 
-from ..core.qt import QtWidgets
+from dataclasses import dataclass, field
+import typing
 
-import six
+from .admin_route import Route
+from .icon import Icon
+from ..core.serializable import DataclassSerializable
+from ..core.utils import ugettext_lazy
 
-class Menu( object ):
-    """A menu is a part of the main menu shown on the main window.  Each Menu
-contains a list of items the user select.  Such a menu item is either a Menu
-itself, an Action object or None to insert a separator.
+@dataclass
+class MenuItem(DataclassSerializable):
+    """A MenuItem is a part of a menu. A MenuItem can either have a verbose_name
+    and an icon and be a menu in itself, or it can have an action.  If the
+    MenuItem has neither of those, it acts as a separator.
+
+    Using subclasses is avoided here to to keep serializability of nested
+    menu items straightforward.
     """
-        
-    def __init__( self, 
-                  verbose_name,
-                  items,
-                  icon=None ):
-        self.verbose_name = verbose_name
-        self.icon = icon
-        self.items = items
 
-    def get_verbose_name( self ):
-        return self.verbose_name
+    verbose_name: typing.Union[str, ugettext_lazy, None] = None
+    icon: typing.Union[Icon, None] = None
+    action_route: typing.Union[Route, None] = None
+    role: typing.Optional[str] = None
+    items: typing.List['MenuItem'] = field(default_factory=list)
+    open: bool = False
 
-    def get_icon( self ):
-        return self.icon
-
-    def get_items( self ):
-        return self.items
-    
-    def render( self, gui_context, parent ):
-        """
-        :return: a :class:`QtWidgets.QMenu` object
-        """
-        menu = QtWidgets.QMenu( six.text_type( self.get_verbose_name() ), parent )
-        for item in self.get_items():
-            if item == None:
-                menu.addSeparator()
-                continue
-            rendered_item = item.render( gui_context, menu )
-            if isinstance( rendered_item, QtWidgets.QMenu ):
-                menu.addMenu( rendered_item )
-            elif isinstance( rendered_item, QtWidgets.QAction ):
-                menu.addAction( rendered_item )
-            else:
-                raise Exception( 'Cannot handle menu items of type %s'%type( rendered_item ) )
-        return menu
-
-
-
+    def __post_init__(self, ):
+        assert (self.action_route is None) or ((self.verbose_name is None) and (self.icon is None))

@@ -29,11 +29,12 @@
 
 """Utility functions"""
 
+import collections
+import enum
 import logging
 
-import six
-
 from .qt import QtCore, qtranslate
+from sqlalchemy import sql
 
 logger = logging.getLogger('camelot.core.utils')
 
@@ -76,36 +77,32 @@ def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
 
-def load_translations():
+def load_translations(connectable):
     """Fill the global dictionary of translations with all data from the
     database, to be able to do fast gui thread lookups of translations"""
-    language = six.text_type(QtCore.QLocale().name())
-    from sqlalchemy import sql
+    language = str(QtCore.QLocale().name())
     from camelot.model.i18n import Translation
-    # only load translations when the camelot model is active
-    if not hasattr(Translation, 'query'):
-        return
-    query = sql.select( [Translation.source, Translation.value],
-                        whereclause = sql.and_(Translation.language==language,
-                                               Translation.value!=None,
-                                               Translation.value!=u'') )
-    for source, value in Translation.query.session.execute(query):
+    query = sql.select([Translation.source, Translation.value],
+                       whereclause = sql.and_(Translation.language==language,
+                                              Translation.value!=None,
+                                              Translation.value!=u''))
+    for source, value in connectable.execute(query):
         _translations_[source] = value
 
-def ugettext(string_to_translate):
+def ugettext(string_to_translate, msgctxt=None):
     """Translate the string_to_translate to the language of the current locale.
     This is a two step process.  First the function will try to get the
     translation out of the Translation entity, if this is not successfull, the
     function will ask QCoreApplication to translate string_to_translate (which
     tries to get the translation from the .qm files)"""
-    assert isinstance(string_to_translate, six.string_types)
+    assert isinstance(string_to_translate, str)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = qtranslate( string_to_translate )
+        result = qtranslate( string_to_translate, msgctxt=msgctxt)
         #print string_to_translate, result
         # try one more time with string_to_translate capitalized
         if result is string_to_translate:
-            result2 = qtranslate( string_to_translate.capitalize() )
+            result2 = qtranslate( string_to_translate.capitalize(), msgctxt=msgctxt)
             if result2 is not string_to_translate.capitalize():
                 result = result2
 
@@ -115,7 +112,7 @@ def dgettext(domain, message):
     """Like ugettext but look the message up in the specified domain.
     This uses the Translation table.
     """
-    assert isinstance(message, six.string_types)
+    assert isinstance(message, str)
     from camelot.model.i18n import Translation
     from sqlalchemy import sql
     query = sql.select( [Translation.value],
@@ -131,21 +128,24 @@ class ugettext_lazy(object):
     the string.
     """
 
-    def __init__(self, string_to_translate):
-        assert isinstance(string_to_translate, six.string_types)
+    def __init__(self, string_to_translate, *args, **kwargs):
+        assert isinstance(string_to_translate, str)
         self._string_to_translate = string_to_translate
+        self._args = args
+        self._kwargs = kwargs
 
     def __str__(self):
-        return ugettext(self._string_to_translate)
+        return ugettext(self._string_to_translate).format(*self._args, **self._kwargs)
 
     def __unicode__(self):
-        return ugettext(self._string_to_translate)
+        return ugettext(self._string_to_translate).format(*self._args, **self._kwargs)
     
     def __eq__(self, other_string):
-        if isinstance(other_string, six.string_types):
-            return other_string == self._string_to_translate
+        if isinstance(other_string, str):
+            return other_string == self._string_to_translate.format(*self._args, **self._kwargs)
         if isinstance(other_string, ugettext_lazy):
-            return other_string._string_to_translate == self._string_to_translate
+            return other_string._string_to_translate == self._string_to_translate and \
+                   other_string._args == self._args and other_string._kwargs == self._kwargs
         return False
     
     def __ne__(self, other_string):
@@ -157,3 +157,32 @@ class ugettext_lazy(object):
 def format_float(value, precision=3):
     return QtCore.QString("%L1").arg(float(value), 0, 'f', precision)
 
+arity = collections.namedtuple('arity', ('minimum', 'maximum'))
+
+class Arity(enum.Enum):
+    """
+    Enum that represents the arity (e.g. number of arguments or operands) of a certain operation or function.
+    To support operations with a varying arity that accept a variable number of arguments, the arity values
+    are composed of a minimum and a maximum arity, with None representing a varyable value.
+    """
+
+    nullary =    arity(0, 0)
+    unary =      arity(1, 1)
+    binary =     arity(2, 2)
+    ternary =    arity(3, 3)
+    quaternary = arity(4, 4)
+    quinary =    arity(5, 5)
+    senary =     arity(6, 6)
+    septenary =  arity(7, 7)
+    octonary =   arity(8, 8)
+    novenary =   arity(9, 9)
+    denary =     arity(10, 10)
+    multiary =   arity(2, None)
+
+    @property
+    def minimum(self):
+        return self._value_.minimum
+
+    @property
+    def maximum(self):
+        return self._value_.maximum

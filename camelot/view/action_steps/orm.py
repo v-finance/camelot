@@ -45,11 +45,47 @@ Or use introspection of the SQLAlchemy session to update the GUI :
    :end-before: end auto update
    
 """
+from dataclasses import dataclass, field, InitVar
+import itertools
+import logging
+import typing
 
-from camelot.admin.action.base import ActionStep
-from camelot.view.remote_signals import get_signal_handler
+from ...admin.action.base import ActionStep
+from ...core.naming import CompositeName, initial_naming_context
+from ...core.serializable import DataclassSerializable
 
-class FlushSession( ActionStep ):
+leases = initial_naming_context.resolve_context('leases')
+
+LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class CreateUpdateDelete(ActionStep, DataclassSerializable):
+
+    _lease_counter = itertools.count()
+
+    blocking: bool = False
+
+    objects_deleted: InitVar[tuple] = tuple()
+    objects_updated: InitVar[tuple] = tuple()
+    objects_created: InitVar[tuple] = tuple()
+
+    deleted: typing.Union[CompositeName, None] = field(init=False, default=None)
+    updated: typing.Union[CompositeName, None] = field(init=False, default=None)
+    created: typing.Union[CompositeName, None] = field(init=False, default=None)
+
+    def __post_init__(self, objects_deleted, objects_updated, objects_created):
+        if len(objects_deleted):
+            self.deleted = leases.bind(str(next(self._lease_counter)), objects_deleted)
+        if len(objects_updated):
+            self.updated = leases.bind(str(next(self._lease_counter)), objects_updated)
+        if len(objects_created):
+            self.created = leases.bind(str(next(self._lease_counter)), objects_created)
+        if len(leases) > 10:
+            LOGGER.warn('Number of leases is growing to {}'.format(len(leases)))
+
+
+class FlushSession(CreateUpdateDelete):
     """Flushes the session and informs the GUI about the
     changes.
     
@@ -59,84 +95,74 @@ class FlushSession( ActionStep ):
         This will make the flushing faster, but the GUI might become
         inconsistent.
     """
-        
-    def __init__( self, session, update_depending_objects = True ):
+
+    def __init__(self, session, update_depending_objects = True):
         #
         # @todo : deleting of objects should be moved from the collection_proxy
         #         to here, once deleting rows is reimplemented as an action
         #
         # @todo : handle the creation of new objects
         #
-        signal_handler = get_signal_handler()
         # list of objects that need to receive an update signal
-        dirty_objects = set( session.dirty )
+        dirty_objects = set(session.dirty)
         
         #for dirty_object in session.dirty:
         #    obj_admin = admin.get_related_admin( type( dirty_object ) )
         #    if obj_admin:
         #        dirty_objects.update( obj_admin.get_depending_objects( dirty_object ) )
-        
-        for obj_to_delete in session.deleted:
-        #    obj_admin = admin.get_related_admin( type( obj_to_delete ) )
-        #    if obj_admin:
-        #        dirty_objects.update( obj_admin.get_depending_objects( obj_to_delete ) )
-            signal_handler.sendEntityDelete( self, obj_to_delete )
+        objects_deleted = tuple(session.deleted)
         #
         # Only now is the full list of dirty objects available, so the deleted
         # can be removed from them
         #
         for obj_to_delete in session.deleted:
             try:
-                dirty_objects.remove( obj_to_delete )
+                dirty_objects.remove(obj_to_delete)
             except KeyError:
                 pass
         
         session.flush()
-        for obj in dirty_objects:
-            signal_handler.sendEntityUpdate( self, obj )
-    
-    def gui_run( self, gui_context ):
-        pass
-    
-class UpdateObject( ActionStep ):
-    """Inform the GUI that obj has changed.
+        super(FlushSession, self).__init__(
+            objects_deleted=objects_deleted,
+            objects_updated=tuple(dirty_objects),
+        )
 
-    :param obj: the object that has changed
+
+class UpdateObjects(CreateUpdateDelete):
+    """Inform the GUI that objects have changed.
+
+    :param objects: the objects that have changed
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityUpdate( self, self.obj )
-    
-    def get_object(self):
-        return self.obj
 
-class DeleteObject( UpdateObject ):
-    """Inform the GUI that obj is going to be deleted.
+    def __init__(self, objects):
+        super(UpdateObjects, self).__init__(objects_updated=tuple(objects))
 
-    :param obj: the object that is going to be deleted
+    def get_objects(self):
+        """Use this method to get access to the objects to change in unit tests"""
+        return initial_naming_context.resolve(self.updated)
+
+class DeleteObjects(CreateUpdateDelete):
+    """Inform the GUI that objects are going to be deleted.
+
+    :param objects: the objects that are going to be deleted
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityDelete( self, self.obj )
-    
-class CreateObject( UpdateObject ):
-    """Inform the GUI that obj was created.
 
-    :param obj: the object that was created
+    def __init__( self, objects ):
+        super(DeleteObjects, self).__init__(objects_deleted=tuple(objects))
+
+    def get_objects(self):
+        """Use this method to get access to the objects to change in unit tests"""
+        return initial_naming_context.resolve(self.deleted)
+
+class CreateObjects(CreateUpdateDelete):
+    """Inform the GUI that objects were created.
+
+    :param objects: the objects that were created
     """
-    
-    def __init__( self, obj ):
-        self.obj = obj
-        signal_handler = get_signal_handler()
-        if self.obj != None:
-            signal_handler.sendEntityCreate( self, self.obj )
 
+    def __init__( self, objects ):
+        super(CreateObjects, self).__init__(objects_created=tuple(objects))
 
-
-
+    def get_objects(self):
+        """Use this method to get access to the objects to change in unit tests"""
+        return initial_naming_context.resolve(self.created)

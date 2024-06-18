@@ -31,9 +31,8 @@ import logging
 
 logger = logging.getLogger( 'camelot.core.files.storage' )
 
-import six
 
-from ..qt import Qt, QtGui
+
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
 from camelot.core.utils import ugettext
@@ -62,49 +61,8 @@ class StoredFile( object ):
         object"""
         return dict( name = self.name )
     
-    def __unicode__( self ):
+    def __str__( self ):
         return self.verbose_name
-
-class StoredImage( StoredFile ):
-    """Helper class for the Image field type Class linking an image and the
-    location and filename where the image is stored"""
-
-    def __init__( self, storage, name ):
-        super(StoredImage, self).__init__( storage, name )
-        self._thumbnails = dict()
-        
-    def checkout_image( self ):
-        """Checkout the image from the storage, this function is only to be
-        used in the model thread.
-        
-        :return: a QImage
-        """
-        p = self.storage.checkout( self )
-        image = QtGui.QImage(p)
-        
-        if image.isNull():
-            return QtGui.QImage(':/image_not_found.png')
-        else:
-            return image
-
-    def checkout_thumbnail( self, width, height ):
-        """Checkout a thumbnail for this image from the storage, this function
-        is only to be used in the model thread
-        :param width: the requested width of the thumbnail
-
-        
-        :return: a QImage
-        """
-        key = (width, height)
-        try:
-            thumbnail_image = self._thumbnails[key]
-            return thumbnail_image
-        except KeyError:
-            pass
-        original_image = self.checkout_image()
-        thumbnail_image = original_image.scaled( width, height, Qt.KeepAspectRatio )
-        self._thumbnails[key] = thumbnail_image
-        return thumbnail_image
 
 class Storage( object ):
     """Helper class that opens and saves StoredFile objects
@@ -145,7 +103,7 @@ class Storage( object ):
         if self._upload_to == None:
             root = self._root or settings.CAMELOT_MEDIA_ROOT
             import os
-            if six.callable( root ):
+            if callable( root ):
                 root = root()
             self._upload_to = os.path.join( root, self._subfolder )
         return self._upload_to
@@ -221,7 +179,7 @@ class Storage( object ):
         :param local_path: the path to the local file that needs to be checked in
         :param filename: a hint for the filename to be given to the checked in file, if None
         is given, the filename from the local path will be taken.
-        
+
         The stored file is not guaranteed to have the filename asked, since the
         storage might not support this filename, or another file might be named
         like that.  In each case the storage will choose the filename.
@@ -229,12 +187,12 @@ class Storage( object ):
         self.available()
         import shutil
         import os
-        to_path = os.path.join( self.upload_to, filename or os.path.basename( local_path ) )
-        if os.path.exists(to_path):
-            # only if the default to_path exists, we'll give it a new name
-            root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
-            ( handle, to_path ) = self._create_tempfile( extension, root )
-            os.close( handle )
+        if filename is None and len(os.path.basename( local_path )) > 100:
+            raise UserException( text = ugettext('The filename of the selected file is too long'),
+                                     resolution = ugettext( 'Please rename the file' ) )
+        root, extension = os.path.splitext( filename or os.path.basename( local_path ) )
+        ( handle, to_path ) = self._create_tempfile( extension, root )
+        os.close( handle )
         logger.debug( u'copy file from %s to %s', local_path, to_path )
         shutil.copy( local_path, to_path )
         return self.stored_file_implementation( self, os.path.basename( to_path ) )
@@ -263,9 +221,13 @@ class Storage( object ):
         ( handle, to_path ) = self._create_tempfile( suffix, prefix )
         logger.debug(u'checkin stream to %s'%to_path)
         file = os.fdopen( handle, 'wb' )
+        logger.debug('opened file')
         file.write( stream.read() )
+        logger.debug('written contents to file')
         file.flush()
+        logger.debug('flushed file')
         file.close()
+        logger.debug('closed file')
         return self.stored_file_implementation( self, os.path.basename( to_path ) )
 
     def checkout( self, stored_file ):

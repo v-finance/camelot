@@ -28,36 +28,123 @@
 #  ============================================================================
 
 """
-Various ``ActionStep`` subclasses that manipulate the `item_view` of 
-the `ListActionGuiContext`.
+Various ``ActionStep`` subclasses that manipulate the `item_view`
 """
 
-from sqlalchemy.orm import Query
+from dataclasses import dataclass, InitVar, field
+from typing import Union, List, Tuple, Any
+import json
+import logging
 
-from ...admin.action.base import ActionStep
-from ...core.qt import Qt
-from ...view.proxy.collection_proxy import CollectionProxy
-from ...view.proxy.queryproxy import QueryTableProxy
+from ...admin.admin_route import Route, RouteWithRenderHint
+from ...admin.action import ActionStep, State
+from ...admin.action.list_filter import SearchFilter, Filter, All
+from ...admin.action.application_action import model_context_naming, model_context_counter
+from ...admin.model_context import ObjectsModelContext
+from ...admin.object_admin import ObjectAdmin
+from ...core.item_model import AbstractModelProxy
+from ...core.naming import initial_naming_context
+from ...core.qt import Qt, QtCore
+from ...core.serializable import DataclassSerializable
+from ...core.utils import ugettext_lazy
+from ...view.utils import get_settings_group
+from .. import gui_naming_context
 from ..workspace import show_top_level
+from ...core.backend import cpp_action_step
+from ...view.crud_action import CrudActions
 
+LOGGER = logging.getLogger(__name__)
 
-class Sort( ActionStep ):
-    
-    def __init__( self, column, order = Qt.AscendingOrder ):
-        """Sort the items in the item view ( list, table or tree )
-        
-        :param column: the index of the column on which to sort
-        :param order: a :class:`Qt.SortOrder`
+@dataclass
+class Sort( ActionStep, DataclassSerializable ):
+    """Sort the items in the item view ( list, table or tree )
+
+            :param column: the index of the column on which to sort
+            :param order: a :class:`Qt.SortOrder`
+    """
+
+    column: int
+    order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
+    blocking: bool = False
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        step = json.loads(serialized_step)
+        model = gui_context.get_model()
+        if model is not None:
+            model.sort(
+                step["column"],
+                Qt.SortOrder._value2member_map_[step["order"]]
+            )
+
+@dataclass
+class AbstractCrudView(ActionStep, DataclassSerializable):
+    """Abstract action step to define attributes common to all item view
+    based action steps
+    """
+
+    value: InitVar[Any]
+    admin: InitVar[ObjectAdmin]
+    proxy: InitVar[AbstractModelProxy] = None
+
+    title: Union[str, ugettext_lazy] = field(init=False)
+    model_context_name: Route = field(init=False)
+    actions: List[RouteWithRenderHint] = field(init=False, default_factory=list)
+    action_states: List[Tuple[Route, State]] = field(default_factory=list)
+    crud_actions: CrudActions = field(init=False)
+    close_route: Route = field(init=False)
+    group: List[str] = field(init=False)
+
+    def __post_init__(self, value, admin, proxy):
+        assert value is not None
+        assert isinstance(proxy, AbstractModelProxy)
+        self.crud_actions = CrudActions(admin)
+        # Create the model_context for the table view
+        model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+        self._add_action_states(model_context, self.actions, self.action_states)
+        self.set_filters(self.action_states, proxy)
+        self.group = get_settings_group(admin.get_admin_route())
+
+    @staticmethod
+    def _add_action_states(model_context, actions, action_states):
+        for action_route in actions:
+            action = initial_naming_context.resolve(action_route.route)
+            state = action.get_state(model_context)
+            action_states.append((action_route.route, state))
+
+    @staticmethod
+    def set_filters(action_states, model):
+        for action_state in action_states:
+            route = tuple(action_state[0])
+            action = initial_naming_context.resolve(route)
+            if not isinstance(action, Filter):
+                continue
+            state = action_state[1]
+            values = [mode.value for mode in state.modes if mode.checked]
+            # if all modes are checked, replace with [All]
+            if len(values) == len(state.modes):
+                values = [All]
+            model.filter(action, values)
+
+    def get_objects(self):
+        """Use this method to get access to the objects to change in unit tests
+
+        :return: the list of objects to display in the form view
         """
-        self.column = column
-        self.order = order
-        
-    def gui_run( self, gui_context ):
-        if gui_context.item_view != None:
-            model = gui_context.item_view.model()
-            model.sort( self.column, self.order )
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        return model_context.proxy.get_model()
 
-class UpdateTableView( ActionStep ):
+@dataclass
+class Column(DataclassSerializable):
+
+    name: str
+    verbose_name: str
+    default_visible: bool
+
+@dataclass
+class UpdateTableView(AbstractCrudView):
     """Change the admin and or value of an existing table view
     
     :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
@@ -65,35 +152,53 @@ class UpdateTableView( ActionStep ):
     
     """
 
-    def __init__( self, admin, value ):
-        self.admin = admin
-        self.value = value
+    search_text: InitVar[Union[str, None]] = None
+
+    columns: List[Column] = field(init=False, default_factory=list)
+    list_action: Union[Route, None] = field(init=False)
+
+    def __post_init__(self, value, admin, proxy, search_text):
+        assert (search_text is None) or isinstance(search_text, str)
         self.title = admin.get_verbose_name_plural()
-        if isinstance(value, list):
-            self.proxy = CollectionProxy
-        elif isinstance(value, Query):
-            self.proxy = QueryTableProxy
-        else:
-            raise Exception('Unhandled value type : {0}'.format(type(value)))
-        self.filters = admin.get_filters()
-        self.list_actions = admin.get_list_actions()
-        self.columns = self.admin.get_columns()
-    
-    def update_table_view(self, table_view):
-        table_view.set_admin(self.admin)
-        model = table_view.get_model()
-        model.set_columns(self.columns)
-        table_view.set_columns(self.columns)
-        # filters can have default values, so they need to be set before
-        # the value is set
-        table_view.set_filters(self.filters)
-        table_view.set_value(self.value)
-        table_view.set_list_actions(self.list_actions)
+        self._add_actions(admin, self.actions)
+        for field_name in admin.get_columns():
+            fa = list(admin.get_static_field_attributes([field_name]))
+            self.columns.append(Column(field_name, fa[0]['name'], True))
+        for field_name in admin.get_extra_columns():
+            fa = list(admin.get_static_field_attributes([field_name]))
+            self.columns.append(Column(field_name, fa[0]['name'], False))
+        self.list_action = admin.get_list_action()
+        self.close_route = None
+        if proxy is None:
+            proxy = admin.get_proxy(value)
+        if search_text is not None:
+            for action_route in self.actions:
+                action = initial_naming_context.resolve(action_route.route)
+                if isinstance(action, SearchFilter):
+                    search_strategies = list(admin._get_search_fields(search_text))
+                    search_value = (search_text, *search_strategies)
+                    proxy.filter(action, search_value)
+                    break
+            else:
+                LOGGER.warn('No SearchFilter found to apply search text')
+        super().__post_init__(value, admin, proxy)
 
-    def gui_run(self, gui_context):
-        self.update_table_view(gui_context.view)
-        gui_context.view.change_title(self.title)
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_list_actions())
+        actions.extend(admin.get_filters())
+        actions.extend(admin.get_list_toolbar_actions())
 
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        cls.update_table_view(gui_context.view, step)
+        gui_context.view.change_title(step['title'])
+
+        gui_context.view.findChild(Qt)
+
+
+@dataclass
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
     
@@ -110,40 +215,107 @@ class OpenTableView( UpdateTableView ):
         open the view in a new tab instead of the current tab
         
     """
-    
-    def __init__( self, admin, value ):
-        super(OpenTableView, self).__init__(admin, value)
-        self.subclasses = admin.get_subclass_tree()
-        self.search_text = ''
-        self.new_tab = False
+    new_tab: bool = False
+    admin_route: Route = field(init=False)
+    blocking: bool = False
 
-    def render(self, gui_context):
+    def __post_init__(self, value, admin, proxy, search_text):
+        super().__post_init__(value, admin, proxy, search_text)
+        self.admin_route = admin.get_admin_route()
+
+    @classmethod
+    def render(cls, gui_context, step):
         from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, 
-                               self.admin, 
-                               self.search_text,
-                               proxy = self.proxy)
-        table_view.set_subclass_tree(self.subclasses)
-        self.update_table_view(table_view)
+        table_view = TableView(gui_context, tuple(step['admin_route']))
+        cls.update_table_view(table_view, step)
         return table_view
         
-    def gui_run( self, gui_context ):
-        table_view = self.render(gui_context)
+    @classmethod
+    def gui_run(cls, gui_context, serialized_step):
+        step = json.loads(serialized_step)
+        table_view = cls.render(gui_context, step)
         if gui_context.workspace is not None:
-            if self.new_tab == True:
+            if step['new_tab'] == True:
                 gui_context.workspace.add_view(table_view)
             else:
                 gui_context.workspace.set_view(table_view)
         else:
+            table_view.setObjectName('table.{}.{}'.format(
+                step['admin_name'], id(table_view)
+            ))
             show_top_level(table_view, None)
-        table_view.change_title(self.title)
-        table_view.setFocus(Qt.PopupFocusReason)
+        table_view.change_title(step['title'])
+        table_view.setFocus(Qt.FocusReason.PopupFocusReason)
 
 
-class ClearSelection(ActionStep):
+@dataclass
+class OpenQmlTableView(OpenTableView):
+    """Open a new table view in the workspace.
+    
+    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param value: a list of objects or a query
+
+    .. attribute:: title
+        the title of the the new view
+
+    .. attribute:: new_tab
+        open the view in a new tab instead of the current tab
+        
+    """
+
+    @classmethod
+    def render(cls, gui_context, action_step_name, serialized_step):
+        response = cpp_action_step(gui_context, action_step_name,
+                serialized_step)
+        return response, None
+
+
+@dataclass
+class ToFirstRow(ActionStep, DataclassSerializable):
+    """Move to the first row in a table"""
+
+    blocking: bool = False
+
+
+@dataclass
+class ToLastRow(ActionStep, DataclassSerializable):
+    """Move to the last row in a table"""
+
+    blocking: bool = False
+    wait_for_new_row: bool = False
+
+@dataclass
+class ClearSelection(ActionStep, DataclassSerializable):
     """Deselect all selected items."""
 
-    def gui_run(self, gui_context):
-        if gui_context.item_view is not None:
-            gui_context.item_view.clearSelection()
+    blocking: bool = False
 
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        gui_context.item_view.clearSelection()
+
+
+@dataclass
+class SetSelection(ActionStep, DataclassSerializable):
+    """Set selection."""
+
+    blocking: bool = False
+
+    rows: List[int] = field(default_factory=list)
+
+
+@dataclass
+class RefreshItemView(ActionStep, DataclassSerializable):
+    """
+    Refresh only the current item view
+    """
+
+    blocking: bool = False
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        model = gui_context.get_model()
+        if model is not None:
+            model.refresh()

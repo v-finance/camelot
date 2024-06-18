@@ -27,42 +27,35 @@
 #
 #  ============================================================================
 
-from ....core.qt import Qt, variant_to_py
+from dataclasses import dataclass
 
-import six
+from ....core.item_model import PreviewRole
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from .. import editors
 from ...utils import text_from_richtext
-from ...proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class RichTextDelegate(CustomDelegate):
+@dataclass
+class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for rich text (HTML) string values
   """
     
-    editor = editors.RichTextEditor
-    
-    def __init__(self, parent=None, editable=True, **kwargs):
-        CustomDelegate.__init__(self, parent, editable)
-        self.editable = editable
+    def __post_init__(self, parent):
+        super().__post_init__(parent)
         self._height = self._height * 10
         self._width = self._width * 3
-    
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = six.text_type(variant_to_py(index.model().data(index, Qt.EditRole)))
 
-        value_str = u''
-        if value not in (None, ValueLoading):
-            value_str = ' '.join(text_from_richtext(value))[:256]
+    @classmethod
+    def get_editor_class(cls):
+        return editors.RichTextEditor
 
-        self.paint_text(painter, option, index, value_str)
-        painter.restore()
-    
-
-
-
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        if model_context.value is not None:
+            value_str = u' '.join(text_from_richtext(model_context.value))[:256]
+            item.roles[PreviewRole] = str(value_str)
+        return item
 
 

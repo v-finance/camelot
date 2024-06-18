@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,29 +27,28 @@
 #
 #  ============================================================================
 
+import json
 import logging
 
-from camelot.admin.action.list_action import ListActionGuiContext
-from camelot.view.model_thread import object_thread, post
-from camelot.view import register
-from ....core.qt import Qt, QtCore, QtWidgets, QtGui, variant_to_py
-from ..action_widget import ActionAction
+from ....admin.action.base import GuiContext
+from ....admin.admin_route import RouteWithRenderHint
+from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
+from ....core.item_model import ActionModeRole
+from ... import gui_naming_context
+from ..view import ViewWithActionsMixin
+from camelot.core.backend import get_root_backend
+from camelot.view.utils import get_settings_group
+from ..tableview import TableWidget
 from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
 
 
-class One2ManyEditor(CustomEditor, WideEditor):
+class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext):
     """
     :param admin: the Admin interface for the objects on the one side of the
     relation
-
-    :param create_inline: if False, then a new entity will be created within a
-    new window, if True, it will be created inline
-
-    :param proxy: the proxy class to use to present the data in the list or
-        the query to the table view
 
     :param column_width: the width of the editor in number of characters
 
@@ -60,91 +59,126 @@ class One2ManyEditor(CustomEditor, WideEditor):
     """
 
     def __init__(self,
-                 admin=None,
                  parent=None,
-                 create_inline=False,
-                 direction='onetomany',
-                 field_name='onetomany',
+                 admin_route=None,
                  column_width=None,
-                 proxy=None,
+                 columns=[],
                  rows=5,
-                 **kw):
+                 action_routes=[],
+                 list_actions=[],
+                 list_action=None,
+                 field_name='onetomany'):
         CustomEditor.__init__(self, parent, column_width=column_width)
         self.setObjectName(field_name)
+        self.setProperty('action_route', list_action)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         #
         # Setup table
         #
-        from camelot.view.controls.tableview import AdminTableWidget
-        from camelot.view.proxy.collection_proxy import CollectionProxy
         # parent set by layout manager
-        table = AdminTableWidget(admin, self)
+        table = TableWidget(parent=self)
         table.setObjectName('table')
-        layout.setSizeConstraint(QtGui.QLayout.SetNoConstraint)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                           QtGui.QSizePolicy.Expanding)
+        layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                           QtWidgets.QSizePolicy.Policy.Expanding)
         self.setMinimumHeight((self._font_height + 5) * rows)
         table.verticalHeader().sectionClicked.connect(
             self.trigger_list_action
         )
-        model = (proxy or CollectionProxy)(admin)
+        self.action_routes = dict()
+        model = get_root_backend().create_model(get_settings_group(admin_route), table)
+        model.actionStateChanged.connect(self.action_state_changed)
         table.setModel(model)
-        register.register(model, table)
-        self.admin = admin
-        self.direction = direction
-        self.create_inline = create_inline
+        self.admin_route = admin_route
         layout.addWidget(table)
+        toolbar = QtWidgets.QToolBar(self)
+        toolbar.setIconSize(QtCore.QSize(16, 16))
+        toolbar.setOrientation(Qt.Orientation.Vertical)
+        layout.addWidget(toolbar)
         self.setLayout(layout)
         self._new_message = None
-        self.gui_context = ListActionGuiContext()
-        self.gui_context.view = self
-        self.gui_context.admin = self.admin
-        self.gui_context.item_view = table
-        post(self.admin.get_related_toolbar_actions,
-             self.set_right_toolbar_actions,
-             args=(Qt.RightToolBarArea, self.direction))
-        post(self.get_columns, self.set_columns)
+        self.list_gui_context_name = gui_naming_context.bind(
+            ('transient', str(id(self))), self
+        )
+        self.add_actions(action_routes, toolbar)
+        self.set_right_toolbar_actions(list_actions, toolbar)
+        self.set_columns(columns)
+
+        selection_model = table.selectionModel()
+        if selection_model is not None:
+            # a queued connection, since the selection of the selection model
+            # might not be up to date at the time the currentRowChanged
+            # signal is emitted
+            selection_model.currentRowChanged.connect(
+                self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
+            )
+
+    @property
+    def item_view(self):
+        return self.findChild(QtWidgets.QWidget, 'table')
+
+    @property
+    def view(self):
+        return self
+
+    def get_window(self):
+        return self.window()
+
+    def _run_list_context_action(self, action_widget, mode):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        model = table.model()
+        self.run_action(
+            action_widget, self.list_gui_context_name, model.value(), mode
+        )
+
+    @QtCore.qt_slot(int)
+    def combobox_activated(self, index):
+        combobox = self.sender()
+        mode = [combobox.itemData(index)]
+        self._run_list_context_action(combobox, mode)
+
+    @QtCore.qt_slot(bool)
+    def button_clicked(self, checked):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        # close the editor to prevent certain Qt crashes
+        table.close_editor()
+        self._run_list_context_action(self.sender(), None)
 
     @QtCore.qt_slot(object)
-    def set_right_toolbar_actions(self, toolbar_actions):
-        if toolbar_actions is not None:
-            toolbar = QtWidgets.QToolBar(self)
-            toolbar.setOrientation(Qt.Vertical)
-            for action in toolbar_actions:
-                qaction = action.render(self.gui_context, toolbar)
+    def set_right_toolbar_actions(self, action_routes, toolbar):
+        if action_routes is not None:
+            for route_with_render_hint in action_routes:
+                if not isinstance(route_with_render_hint, RouteWithRenderHint):
+                    route_with_render_hint = RouteWithRenderHint.from_dict(route_with_render_hint)
+                action_route = route_with_render_hint.route
+                self.item_view.model().add_action_route(action_route)
+                qaction = self.render_action(
+                    route_with_render_hint.render_hint, action_route,
+                    self, toolbar
+                )
+                qaction.action_route = action_route
                 if isinstance(qaction, QtWidgets.QWidget):
                     toolbar.addWidget(qaction)
                 else:
-                    qaction.triggered.connect(self.action_triggered)
                     toolbar.addAction(qaction)
-            self.layout().addWidget(toolbar)
             # set field attributes might have been called before the
             # toolbar was created
-            self.update_action_status()
+            self.update_list_action_states()
 
-    @QtCore.qt_slot(bool)
-    def action_triggered(self, _checked=False):
-        action_action = self.sender()
-        action_action.action.gui_run(self.gui_context)
+    def update_list_action_states(self):
+        table = self.item_view
+        selection_model = table.selectionModel()
+        current_index = table.currentIndex()
+        table.model().change_selection(selection_model, current_index)
 
-    def set_field_attributes(self, **kwargs):
-        super(One2ManyEditor, self).set_field_attributes(**kwargs)
-        self.gui_context.field_attributes = kwargs
-        self.update_action_status()
+    def current_row_changed(self, current=None, previous=None):
+        self.update_list_action_states()
 
-    def get_columns(self):
-        return self.admin.get_columns()
-
-    def update_action_status(self):
-        toolbar = self.findChild(QtWidgets.QToolBar)
-        if toolbar:
-            model_context = self.gui_context.create_model_context()
-            for qaction in toolbar.actions():
-                if isinstance(qaction, ActionAction):
-                    post(qaction.action.get_state,
-                         qaction.set_state,
-                         args=(model_context, ))
+    @QtCore.qt_slot('QStringList', QtCore.QByteArray)
+    def action_state_changed(self, action_route, serialized_state):
+        action_state = json.loads(serialized_state.data())
+        self.set_action_state(self, tuple(action_route), action_state)
 
     def get_model(self):
         """
@@ -154,59 +188,60 @@ class One2ManyEditor(CustomEditor, WideEditor):
         if table is not None:
             return table.model()
 
+    @QtCore.qt_slot(list, object)
+    def editorActionTriggered(self, route, mode):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        if table is not None:
+            model = table.model()
+            if model is None:
+                return
+            if is_deleted(model):
+                return
+            index = table.currentIndex()
+            model.setData(index, json.dumps([route, mode]), ActionModeRole)
+
     @QtCore.qt_slot(object)
     def set_columns(self, columns):
         from ..delegates.delegatemanager import DelegateManager
         table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
-            delegate = DelegateManager(columns, parent=self)
+            delegate = DelegateManager(parent=self)
+            delegate.actionTriggered.connect(self.editorActionTriggered)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
-                model.set_columns(columns)
+                model.setColumns(columns)
+                # this code should be useless, since at this point, the
+                # column count is still 0 ??
                 for i in range(model.columnCount()):
-                    txtwidth = variant_to_py(
-                        model.headerData(i, Qt.Horizontal, Qt.SizeHintRole)
-                    ).width()
+                    txtwidth = model.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole).width()
                     table.setColumnWidth(i, txtwidth)
 
-    def set_value(self, collection):
-        collection = CustomEditor.set_value(self, collection)
+    def set_value(self, value):
         model = self.get_model()
         if model is not None:
             # even if the collection 'is' the same object as the current
             # one, still need to set it, since the content of the collection
             # might have changed.
-            model.set_value(collection)
-            model_context = self.gui_context.create_model_context()
-            for toolbar in self.findChildren(QtWidgets.QToolBar):
-                for qaction in toolbar.actions():
-                    post(qaction.action.get_state,
-                         qaction.set_state,
-                         args=(model_context, ))
-            #post( model._extend_cache, self.update_delegates )
+            if value is not None:
+                model.setValue(tuple(value))
+            self.update_list_action_states()
 
-    def activate_editor(self, number_of_rows):
-        assert object_thread(self)
-#        return
-# Activating this code can cause segfaults
-# see ticket 765 in web issues
-#
-# The segfault seems no longer there after disabling the
-# editor before setting a new model, but the code below
-# seems to have no effect.
-        table = self.findChild(QtWidgets.QWidget, 'table')
-        if table is not None:
-            index = table.model().index(max(0, number_of_rows - 1), 0)
-            table.scrollToBottom()
-            table.setCurrentIndex(index)
-            table.edit(index)
+    def get_value(self):
+        model = self.get_model()
+        if model is not None:
+            return model.value()
 
     @QtCore.qt_slot(int)
     def trigger_list_action(self, index):
         table = self.findChild(QtWidgets.QWidget, 'table')
         # close the editor to prevent certain Qt crashes
         table.close_editor()
-        if self.admin.list_action:
-            self.admin.list_action.gui_run(self.gui_context)
+        # make sure ChangeSelection action is executed before list action
+        table.model().submit()
+        self._run_list_context_action(self, None)
 
+    @QtCore.qt_slot()
+    def menu_triggered(self):
+        qaction = self.sender()
+        self._run_list_context_action(qaction, qaction.data())

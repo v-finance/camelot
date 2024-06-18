@@ -36,13 +36,11 @@ in the development cycle.
 
 from camelot.core.orm import Entity, Session
 from camelot.core.utils import ugettext_lazy as _
-from camelot.admin.action import Action
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.view.art import Icon
 from camelot.view.utils import default_language
 import camelot.types
 
-import six
+
 
 from sqlalchemy import sql
 from sqlalchemy.schema import Column
@@ -51,20 +49,7 @@ from sqlalchemy.types import Unicode
 import logging
 logger = logging.getLogger( 'camelot.model.i18n' )
 
-class ExportAsPO( Action ):
 
-    verbose_name = _('PO Export')
-    icon = Icon('tango/16x16/actions/document-save.png')
-
-    def model_run( self, model_context ):
-        from camelot.view.action_steps import SaveFile
-        filename = yield SaveFile()
-        file = open(filename, 'w')
-        for translation in model_context.get_collection():
-                file.write( u'msgid  "%s"\n'%translation.source )
-                file.write( u'msgstr "%s"\n\n'%translation.value )
-                
-        
 class Translation( Entity ):
     """Table to store user generated translations or customization.
     """
@@ -82,14 +67,6 @@ class Translation( Entity ):
     # cache, to prevent too much of the same sql queries
     _cache = dict()
 
-    class Admin( EntityAdmin ):
-        verbose_name_plural = _( 'Translations' )
-        form_size = ( 700, 150 )
-        list_display = ['source', 'language', 'value']#, 'uid']
-        list_filter = ['language']
-        list_actions = [ExportAsPO()]
-        field_attributes = { 'language':{ 'default':default_language } }
-
     @classmethod
     def translate( cls, source, language ):
         """Translate source to language, return None if no translation is found"""
@@ -98,7 +75,7 @@ class Translation( Entity ):
             if key in cls._cache:
                 return cls._cache[key]
             query = Session().query( cls )
-            query = query.filter( sql.and_( cls.source == six.text_type( source ),
+            query = query.filter( sql.and_( cls.source == str( source ),
                                             cls.language == language,
                                             cls.value != None,
                                             cls.value != '' ) )
@@ -114,7 +91,7 @@ class Translation( Entity ):
         """Translate source to language, if no translation is found, register the
         source as to be translated and return the source"""
         if source:
-            source = six.text_type( source )
+            source = str( source )
             translation = cls.translate( source, language )
             if not translation:
                 session = Session()
@@ -132,4 +109,11 @@ class Translation( Entity ):
             return translation
         return ''
 
+class TranslationAdmin( EntityAdmin ):
+    verbose_name_plural = _( 'Translations' )
+    form_state = 'right'
+    list_display = ['source', 'language', 'value']#, 'uid']
+    list_filter = [Translation.language]
+    field_attributes = { 'language':{ 'default':default_language } }
 
+Translation.Admin = TranslationAdmin

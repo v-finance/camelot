@@ -27,27 +27,43 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass, field
+from typing import List
 
-from ....core.qt import variant_to_py, QtGui, Qt
+from camelot.core.qt import Qt
+from ....admin.admin_route import Route
+from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class FileDelegate(CustomDelegate):
+@dataclass
+class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for :class:`camelot.types.File` columns.  Expects values of type 
     :class:`camelot.core.files.storage.StoredFile`.
     """
     
-    editor = editors.FileEditor
-    
-    def paint(self, painter, option, index, background_color=QtGui.QColor("white")):
-        value =  variant_to_py(index.model().data(index, Qt.EditRole))
-        text = ''
-        if value not in (None, ValueLoading):
-            text = value.verbose_name
-        self.paint_text(painter, option, index, text)
+    action_routes: List[Route] = field(default_factory=list)
+
+    @classmethod
+    def get_editor_class(cls):
+        return editors.FileEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        if model_context.value is not None:
+            # FIXME: bind an object to the EditoRole
+            # this is not so trivial as a file, is a key in a storage,
+            # and the storage itself is not known in the naming contexts.
+            # so enabling this might require making the storage itself available
+            # as a naming context, which might be a good idea ...
+            item.roles[Qt.ItemDataRole.EditRole] = model_context.value.verbose_name 
+            item.roles[PreviewRole] = model_context.value.verbose_name
+        else:
+            item.roles[PreviewRole] = str()
+        return item
+
 
 
 

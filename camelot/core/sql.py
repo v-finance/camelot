@@ -44,11 +44,30 @@ LOGGER = logging.getLogger('camelot.core.sql')
 # Singleton metadata object, to be used in SQLAlchemy
 # setups with only a single database
 #
-metadata = MetaData()
+
+# For foreign key constraints, we leave out the referred table name as a third pattern parameter,
+# to reduce the amount of generated constraint names that are too long (max. 63 characters in Postgres)
+
+convention={
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s",
+    "pk": "pk_%(table_name)s"
+}
+metadata = MetaData(naming_convention=convention)
 metadata.autoflush = False
 metadata.transactional = False
 
-def like_op(column, string):
-    return sqlalchemy.sql.operators.like_op(column, '%%%s%%'%string)
+def ilike_op(column, string):
+    return sqlalchemy.sql.operators.ilike_op(column, '%%%s%%'%string)
 
+def is_none(column):
+    return sqlalchemy.sql.operators.is_(column, None)
 
+def is_not_none(column):
+    return sqlalchemy.sql.operators.isnot(column, None)
+
+def in_op(column, *values):
+    assert len(values) >= 1
+    return sqlalchemy.sql.operators.in_op(column, values)

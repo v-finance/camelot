@@ -26,124 +26,180 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from ..workspace import DesktopBackground
-from ...admin.action.base import ActionStep
-from ...core.qt import QtCore, Qt
 
-class Exit( ActionStep ):
+from dataclasses import dataclass, field, InitVar
+import json
+import logging
+import typing
+
+from ...admin.action.base import ActionStep, State, ModelContext
+from ...admin.action.application_action import model_context_naming, model_context_counter, exit_name
+from ...admin.admin_route import AdminRoute, Route
+from ...admin.application_admin import ApplicationAdmin
+from ...admin.menu import MenuItem
+from ...core.naming import initial_naming_context
+from ...core.qt import QtCore, QtQuick
+from ...core.serializable import DataclassSerializable
+from ...model.authentication import AuthenticationMechanism
+from .. import gui_naming_context
+
+
+LOGGER = logging.getLogger(__name__)
+
+@dataclass
+class Exit(ActionStep, DataclassSerializable):
     """
     Stop the event loop, and exit the application
     """
-    
-    def __init__( self, return_code=0 ):
-        self.return_code = return_code
-        
-    def gui_run( self, gui_context ):
-        QtCore.QCoreApplication.exit(self.return_code)
-        
-class MainWindow( ActionStep ):
+
+    return_code: int = 0
+    blocking: bool = False
+
+
+@dataclass
+class SetThemeColors(ActionStep, DataclassSerializable):
     """
-    Open a top level application window
-    
-    :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
-        object
-
-    .. attribute:: window_title
-
-        The title of the main window, defaults to the application name if `None`
-        is given
-
+    This action step sets the theme colors.
     """
-    
-    def __init__( self,
-                  admin ):
-        self.admin = admin
+
+    primary_color: str
+    accent_color: str
+    blocking: bool = False
+
+
+@dataclass
+class Authenticate(ActionStep, DataclassSerializable):
+    """
+    Request client side credentials
+    """
+
+@dataclass
+class MainWindow(ActionStep, DataclassSerializable):
+    """
+    This action step also takes care of other python stuff for now
+    (e.g. stopping the model thread).
+    """
+
+    admin: InitVar[ApplicationAdmin]
+    model_context: InitVar(ModelContext) = None
+    window_title: str = field(init=False)
+    blocking: bool = False
+    admin_route: Route = field(init=False)
+    model_context_name: Route = field(default_factory=list)
+    exit_action: Route = field(init=False)
+
+    def __post_init__(self, admin, model_context):
         self.window_title = admin.get_name()
-        self.sections = admin.get_sections()
-        self.main_menu = admin.get_main_menu()
-        self.left_toolbar_actions = admin.get_toolbar_actions(Qt.LeftToolBarArea)
-        self.right_toolbar_actions = admin.get_toolbar_actions(Qt.RightToolBarArea)
-        self.top_toolbar_actions = admin.get_toolbar_actions(Qt.TopToolBarArea)
-        self.bottom_toolbar_actions = admin.get_toolbar_actions(Qt.BottomToolBarArea)
-        self.hidden_actions = admin.get_hidden_actions()
+        self.admin_route = admin.get_admin_route()
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+        self.exit_action = exit_name
 
-    def render( self, gui_context ):
-        """create the main window. this method is used to unit test
-        the action step."""
-        from ..mainwindow import MainWindow
-        main_window_context = gui_context.copy()
-        main_window_context.progress_dialog = None
-        main_window_context.admin = self.admin
-        main_window = MainWindow( gui_context=main_window_context )
-        gui_context.workspace = main_window_context.workspace
-        main_window.setWindowTitle( self.window_title )
-        main_window.set_sections(self.sections)
-        main_window.set_main_menu(self.main_menu)
-        main_window.set_toolbar_actions(Qt.LeftToolBarArea,
-                                        self.left_toolbar_actions)
-        main_window.set_toolbar_actions(Qt.RightToolBarArea,
-                                        self.right_toolbar_actions)
-        main_window.set_toolbar_actions(Qt.TopToolBarArea,
-                                        self.top_toolbar_actions)
-        main_window.set_toolbar_actions(Qt.BottomToolBarArea,
-                                        self.bottom_toolbar_actions)
-        return main_window
-        
-    def gui_run( self, gui_context ):
-        from camelot.view.register import register
-        main_window = self.render( gui_context )
-        register( main_window, main_window )
-        main_window.show()
 
-class ActionView( ActionStep ):
+@dataclass
+class NavigationPanel(ActionStep, DataclassSerializable):
     """
-    Open a new view which presents the user with a number of actions
-    to trigger.
+    Create a panel to navigate the application
     
-    :param title: the tile of the view
-    :param actions: a list of actions
+    :param sections: a list of :class:`camelot.admin.section.Section'
+        objects, with the sections of the navigation panel
+
     """
 
-    def __init__(self, title, actions):
-        self.title = title
-        self.actions = actions
+    # this could be non-blocking, but that causes unittest segmentation
+    # fault issues which are not worth investigating
+    menu: MenuItem
+    model_context_name: Route = field(default_factory=list)
+    action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
+    model_context: InitVar(ModelContext) = None
+    blocking: bool = False
 
-    def render(self, gui_context):
-        view = DesktopBackground(gui_context)
-        view.set_actions(self.actions)
-        return view
+    # noinspection PyDataclass
+    def __post_init__(self, model_context):
+        self.menu = self._filter_items(self.menu, AuthenticationMechanism.get_current_authentication())
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+        self._add_action_states(model_context, self.menu.items, self.action_states)
 
-    def gui_run(self, gui_context):
-        workspace = gui_context.workspace
-        view = self.render(gui_context)
-        workspace.set_view(view, title=self.title)
+    @classmethod
+    def _filter_items(cls, menu: MenuItem, auth) -> MenuItem:
+        """
+        Create a new menu item with only child items with a role hold by
+        the authentication
+        """
+        new_menu = MenuItem(
+            verbose_name=menu.verbose_name,
+            icon=menu.icon,
+            role=menu.role,
+            action_route=menu.action_route,
+        )
+        new_menu.items.extend(
+            cls._filter_items(item, auth) for item in menu.items if (
+                    (item.role is None) or auth.has_role(item.role)
+            )
+        )
+        return new_menu
+
+    @classmethod
+    def _add_action_states(self, model_context, items, action_states):
+        """
+        Recurse through a menu and get the state for all actions in the menu
+        """
+        for item in items:
+            self._add_action_states(model_context, item.items, action_states)
+            action_route = item.action_route
+            if action_route is not None:
+                action = initial_naming_context.resolve(action_route)
+                state = action.get_state(model_context)
+                action_states.append((action_route, state))
 
 
-class InstallTranslator(ActionStep):
+@dataclass
+class MainMenu(ActionStep, DataclassSerializable):
+    """
+    Create a main menu for the application window.
+    
+    :param menu: a list of :class:`camelot.admin.menu.Menu' objects
+
+    """
+
+    blocking = False
+    menu: MenuItem
+    model_context_name: Route = field(default_factory=list)
+    action_states: typing.List[typing.Tuple[Route, State]] = field(default_factory=list)
+    model_context: InitVar(ModelContext) = None
+
+    def __post_init__(self, model_context):
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+        self._add_action_states(model_context, self.menu.items, self.action_states)
+
+    @classmethod
+    def _add_action_states(self, model_context, items, action_states):
+        """
+        Recurse through a menu and get the state for all actions in the menu
+        """
+        for item in items:
+            self._add_action_states(model_context, item.items, action_states)
+            action_route = item.action_route
+            if action_route is not None:
+                action = initial_naming_context.resolve(action_route)
+                state = action.get_state(model_context)
+                action_states.append((action_route, state))
+
+
+@dataclass
+class InstallTranslator(ActionStep, DataclassSerializable):
     """
     Install a translator in the application.  Ownership of the translator will
     be moved to the application.
 
-    :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
-        object
-
+    :param language: The two-letter, ISO 639 language code (e.g. 'nl').
     """
 
-    def __init__(self, admin):
-        self.admin = admin
-
-    def gui_run(self, gui_context):
-        app = QtCore.QCoreApplication.instance()
-        translator = self.admin.get_translator()
-        if isinstance(translator, list):
-            for t in translator:
-                t.setParent(app)
-                app.installTranslator(t)
-        else:
-            app.installTranslator(translator)
+    blocking = False
+    language: str
 
 
-class RemoveTranslators(ActionStep):
+@dataclass
+class RemoveTranslators(ActionStep, DataclassSerializable):
     """
     Unregister all previously installed translators from the application.
 
@@ -151,11 +207,61 @@ class RemoveTranslators(ActionStep):
         object
     """
 
-    def __init__(self, admin):
-        self.admin = admin
+    admin: InitVar[ApplicationAdmin]
+    admin_route: AdminRoute = field(init=False)
 
-    def gui_run(self, gui_context):
-        app = QtCore.QCoreApplication.instance()
-        for active_translator in app.findChildren(QtCore.QTranslator):
-            app.removeTranslator(active_translator)
+    def __post_init__(self, admin):
+        self.admin_route = admin.get_admin_route()
 
+@dataclass
+class UpdateActionsState(ActionStep, DataclassSerializable):
+    """
+    Update the the state of a list of `Actions`
+
+    :param action_states: a `dict` mapping the action_routes to their
+        updated state.
+
+    """
+
+    model_context: InitVar[ModelContext]
+    actions_state: InitVar[dict]
+
+    action_states: typing.List[typing.Tuple[Route, State]] = field(init=False)
+
+    # noinspection PyDataclass
+    def __post_init__(self, model_context, actions_state):
+        self.action_states = []
+        if actions_state is not None:
+            for action, state in actions_state.items():
+                action_route = AdminRoute._register_list_action_route(model_context.admin.get_admin_route(), action)
+                self.action_states.append((action_route, state._to_dict()))
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        step = json.loads(serialized_step)
+        for action_route, action_state in step['action_states']:
+            action = initial_naming_context.resolve(tuple(action_route))
+            rendered_action_route = gui_context.action_routes.get(action)
+            if rendered_action_route is None:
+                LOGGER.warn('Cannot update rendered action, rendered_action_route is unknown')
+                continue
+            qobject = gui_context.view.findChild(QtCore.QObject, rendered_action_route)
+            if qobject is None:
+                LOGGER.warn('Cannot update rendered action, QObject child {} not found'.format(rendered_action_route))
+                continue
+            if isinstance(qobject, QtQuick.QQuickItem):
+                qobject.setProperty('state', action_state._to_dict())
+            else:
+                qobject.set_state(action_state)
+
+@dataclass
+class StartProfiler(ActionStep, DataclassSerializable):
+    """Start profiling of the gui
+    """
+
+
+@dataclass
+class StopProfiler(ActionStep, DataclassSerializable):
+    """Start profiling of the gui
+    """

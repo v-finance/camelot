@@ -27,45 +27,47 @@
 #
 #  ============================================================================
 
+from dataclasses import dataclass
+
 import logging
 logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
 
-import six
-
-from ....core.qt import variant_to_py, Qt
+from ....core.item_model import PreviewRole, DirectoryRole
+from ....core.qt import Qt
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
 
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
-@six.add_metaclass(DocumentationMetaclass)
-class LocalFileDelegate(CustomDelegate):
+@dataclass
+class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Delegate for displaying a path on the local file system.  This path can
     either point to a file or a directory
     """
 
-    editor = editors.LocalFileEditor
+    directory: bool = False
+    save_as: bool = False
+    file_filter: str = 'All files (*)'
 
-    def __init__(
-        self, 
-        parent=None,
-        **kw
-    ):
-        CustomDelegate.__init__(self, parent, **kw)
+    @classmethod
+    def get_editor_class(cls):
+        return editors.LocalFileEditor
 
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py( index.model().data( index, Qt.EditRole ) )
-        
-        value_str = u''
-        if value not in (None, ValueLoading):
-            value_str = six.text_type(value)
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        item.roles[DirectoryRole] = model_context.field_attributes.get('directory', False)
+        if model_context.value is not None:
+            item.roles[PreviewRole] = str(model_context.value)
+        return item
 
-        self.paint_text(painter, option, index, value_str)
-        painter.restore()
-
-
-
-
+    def setEditorData(self, editor, index):
+        if index.model() is None:
+            return
+        self.set_default_editor_data(editor, index)
+        directory = bool(index.data(DirectoryRole))
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
+        editor.set_directory(directory)
+        editor.set_value(value)
+        self.update_field_action_states(editor, index)

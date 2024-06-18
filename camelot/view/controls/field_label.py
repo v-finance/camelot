@@ -27,14 +27,11 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtCore, QtGui, QtWidgets, Qt
-from camelot.core.utils import ugettext as _
-from camelot.admin.action.field_action import (ShowFieldAttributes,
-                                               FieldActionGuiContext)
-from .user_translatable_label import UserTranslatableLabel
+
+from ...core.qt import QtGui, QtWidgets, Qt
 
 
-class FieldLabel(UserTranslatableLabel):
+class FieldLabel(QtWidgets.QLabel):
     """A Label widget used to display the name of a field on a form.
     This label provides the user with the possibility to change the translation
     of the label and review its field attributes.
@@ -44,60 +41,27 @@ class FieldLabel(UserTranslatableLabel):
     font = None
     bold_font = None
     
-    def __init__(self, field_name, text, admin, parent):
+    def __init__(self, text, parent):
         """
-        :param field_name: the name of the field
         :param text: user translatable string to be used as field label
-        :param admin: the admin of the object of the field
         :param parent: the parent widget
         
         Field labels should be created with a parent since setting the
         field attributes might 'visualize' them, so they could appear as
         'ghost' windows when they have no parent
         """
-        super(FieldLabel, self).__init__(text, parent)
+        super().__init__(str(text), parent)
         if FieldLabel.font_width == None:
             FieldLabel.font = QtWidgets.QApplication.font()
             FieldLabel.bold_font = QtWidgets.QApplication.font()
             FieldLabel.bold_font.setBold(True)
-            FieldLabel.font_width = QtGui.QFontMetrics(FieldLabel.font).size( Qt.TextSingleLine, 'A' ).width()
-        show_field_attributes_action = QtWidgets.QAction(_('View attributes'), self)
-        show_field_attributes_action.triggered.connect( self.show_field_attributes )
-        self.addAction(show_field_attributes_action)
-        self._field_name = field_name
-        self._admin = admin
-        self._field_attributes = dict()
-        
-    #def sizeHint( self ):
-        #size_hint = super(FieldLabel, self).sizeHint()
-        #size_hint.setWidth( self.font_width * max( 20, len( self._field_name ) ) )
-        #return size_hint
-    
-    def get_value(self):
-        return None
-    
-    def get_field_attributes(self):
-        return self._field_attributes
-    
-    def set_field_attributes(self, **kwargs):
-        self._field_attributes = kwargs
-        # required fields font is bold
-        nullable = kwargs.get('nullable', True)
-        self.setVisible(kwargs.get('visible', True))
+            FieldLabel.font_width = QtGui.QFontMetrics(FieldLabel.font).size( Qt.TextFlag.TextSingleLine, 'A' ).width()
+
+    def set_visible(self, visible):
+        self.setVisible(visible)
+
+    def set_nullable(self, nullable):
         if not nullable:
             self.setFont(self.bold_font)
         else:
             self.setFont(self.font)
-
-    @QtCore.qt_slot()
-    def show_field_attributes(self):
-        action = ShowFieldAttributes()
-        gui_context = FieldActionGuiContext()
-        gui_context.editor = self
-        gui_context.admin = self._admin
-        action.gui_run(gui_context)
-
-
-
-
-

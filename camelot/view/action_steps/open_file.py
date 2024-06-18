@@ -26,15 +26,16 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from dataclasses import dataclass
 
-from ...core.qt import QtCore, QtGui
-  
 from camelot.admin.action import ActionStep
 from camelot.core.templates import environment
 
-from six import BytesIO
+from ...core.serializable import DataclassSerializable
 
-class OpenFile( ActionStep ):
+
+@dataclass
+class OpenFile( ActionStep, DataclassSerializable ):
     """
     Open a file with the preferred application from the user.  The absolute
     path is preferred, as this is most likely to work when running from an
@@ -45,11 +46,11 @@ class OpenFile( ActionStep ):
     The :keyword:`yield` statement will return :const:`True` if the file was
     opend successfull.
     """
-        
-    def __init__( self, path ):
-        self.path = path
 
-    def __unicode__( self ):
+    path: str
+    blocking: bool = False
+
+    def __str__( self ):
         return u'Open file {}'.format( self.path )
     
     def get_path( self ):
@@ -60,7 +61,7 @@ class OpenFile( ActionStep ):
         return self.path
 
     @classmethod
-    def create_temporary_file( self, suffix ):
+    def create_temporary_file( cls, suffix ):
         """
         Create a temporary filename that can be used to write to, and open
         later on.
@@ -73,17 +74,7 @@ class OpenFile( ActionStep ):
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
         os.close( file_descriptor )
         return file_name
-        
-    def gui_run( self, gui_context ):
-        #
-        # support for windows shares
-        #
-        if not self.path.startswith(r'\\'):
-            url = QtCore.QUrl.fromLocalFile( self.path )
-        else:
-            url = QtCore.QUrl( self.path, QtCore.QUrl.TolerantMode )
-        return QtGui.QDesktopServices.openUrl( url )
-    
+
 class OpenStream( OpenFile ):
     """Write a stream to a temporary file and open that file with the 
     preferred application of the user.
@@ -117,35 +108,6 @@ class OpenString( OpenFile ):
         output_stream.write( string )
         output_stream.close()
         super( OpenString, self ).__init__( file_name )
-        
-class OpenJinjaTemplate( OpenStream ):
-    """Render a jinja template into a temporary file and open that
-    file with the prefered application of the user.
-    
-    :param environment: a :class:`jinja2.Environment` object to be used
-        to load templates from.
-        
-    :param template: the name of the template as it can be fetched from
-        the Jinja environment.
-    
-    :param suffix: the suffix of the temporary file to create, this will
-        determine the application used to open the file.
-        
-    :param context: a dictionary with objects to be used when rendering
-        the template
-    """
-    
-    def __init__( self,
-                  template, 
-                  context={},
-                  environment = environment,
-                  suffix='.txt' ):
-        template = environment.get_template( template )
-        template_stream = template.stream( context )
-        output_stream = BytesIO()
-        template_stream.dump( output_stream, encoding='utf-8' )
-        output_stream.seek( 0 )
-        super( OpenJinjaTemplate, self).__init__( output_stream, suffix=suffix )
 
 class WordJinjaTemplate( OpenFile ):
     """Render a jinja template into a temporary file and open that
@@ -175,7 +137,7 @@ class WordJinjaTemplate( OpenFile ):
         template_stream.dump( open( path, 'wb' ), encoding='utf-8' )
         super( WordJinjaTemplate, self ).__init__( path )
         
-    def gui_run( self, gui_context ):
+    def gui_run( self, gui_context_name ):
         try:
             import pythoncom
             import win32com.client
@@ -187,7 +149,7 @@ class WordJinjaTemplate( OpenFile ):
             word_app.Activate()
         # fallback in case of not on windows
         except ImportError:
-            super( WordJinjaTemplate, self ).gui_run( gui_context )
+            super( WordJinjaTemplate, self ).gui_run( gui_context_name )
 
 
 

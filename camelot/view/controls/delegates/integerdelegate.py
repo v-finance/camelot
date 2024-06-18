@@ -27,48 +27,71 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
+from typing import ClassVar, Any
 
-from ....core.qt import variant_to_py, Qt, QtCore
+from ....core.qt import Qt
+from ....core.item_model import (
+    PreviewRole, PrefixRole, SuffixRole, SingleStepRole,
+    MinimumRole, MaximumRole
+)
 from .customdelegate import CustomDelegate, DocumentationMetaclass
+from camelot.core import constants
+from camelot.core.naming import initial_naming_context
 from camelot.view.controls import editors
-from camelot.view.proxy import ValueLoading
 
-if six.PY3:
-    long_int = int
-else:
-    long_int = six.integer_types[-1]
+long_int = int
 
-@six.add_metaclass(DocumentationMetaclass)
-class IntegerDelegate(CustomDelegate):
+@dataclass
+class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     """Custom delegate for integer values"""
     
-    editor = editors.IntegerEditor
-  
-    def __init__(self,
-                 parent=None,
-                 unicode_format = None,
-                 **kwargs):
-  
-        CustomDelegate.__init__(self, parent=parent, **kwargs)
-        self.unicode_format = unicode_format
-        self.locale = QtCore.QLocale()
-        
-    def paint(self, painter, option, index):
-        painter.save()
-        self.drawBackground(painter, option, index)
-        value = variant_to_py(index.model().data(index, Qt.EditRole))
-          
-        if value in (None, ValueLoading):
-            value_str = ''
-        else:
-            value_str = self.locale.toString( long_int(value) )
+    calculator: bool = True
+    decimal: bool = False
 
-        if self.unicode_format is not None:
-            value_str = self.unicode_format(value)
-        
-        self.paint_text(painter, option, index, value_str,
-                        horizontal_align=Qt.AlignRight)
-        painter.restore()
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
+    @classmethod
+    def get_editor_class(cls):
+        return editors.IntegerEditor
+
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
+        minimum = minimum if minimum is not None else constants.camelot_minfloat
+        maximum = maximum if maximum is not None else constants.camelot_maxfloat
+        item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
+        item.roles[SuffixRole] = model_context.field_attributes.get('suffix')
+        item.roles[PrefixRole] = model_context.field_attributes.get('prefix')
+        item.roles[SingleStepRole] = model_context.field_attributes.get('single_step')
+        item.roles[MinimumRole] = minimum
+        item.roles[MaximumRole] = maximum
+        if model_context.value is not None:
+            item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
+            value_str = locale.toString(long_int(model_context.value))
+            if model_context.field_attributes.get('suffix') is not None:
+                value_str = value_str + ' ' + str(model_context.field_attributes.get('suffix'))
+            if model_context.field_attributes.get('prefix') is not None:
+                value_str = str(model_context.field_attributes.get('prefix')) + ' ' + value_str
+            item.roles[PreviewRole] = value_str
+        return item
+
+    def setEditorData(self, editor, index):
+        if index.model() is None:
+            return
+        self.set_default_editor_data(editor, index)
+        suffix = index.data(SuffixRole)
+        prefix = index.data(PrefixRole)
+        single_step = index.data(SingleStepRole)
+        minimum = index.data(MinimumRole)
+        maximum = index.data(MaximumRole)
+        value = index.model().data(index, Qt.ItemDataRole.EditRole)
+        editor.set_suffix(suffix)
+        editor.set_prefix(prefix)
+        editor.set_single_step(single_step)
+        editor.set_minimum(minimum)
+        editor.set_maximum(maximum)
+        editor.set_value(value)
+        self.update_field_action_states(editor, index)
 

@@ -31,18 +31,29 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
+from typing import Dict, Optional
+from dataclasses import dataclass, field
+import json
 
-from ...admin.action.base import ActionStep
-from ...core.qt import Qt
+from ..controls.formview import FormView
+from ..forms import AbstractForm
 from ..workspace import show_top_level
+from ...admin.action.base import ActionStep, RenderHint
+from ...admin.admin_route import Route, AdminRoute
+from ...core.item_model import AbstractModelProxy
+from ...core.naming import initial_naming_context
+from ...core.serializable import DataclassSerializable
+from ...view.utils import get_settings_group
+from ...core.backend import get_root_backend
+from .item_view import AbstractCrudView
 
-class OpenFormView( ActionStep ):
+
+@dataclass
+class OpenFormView(AbstractCrudView):
     """Open the form view for a list of objects, in a non blocking way.
 
-    :param objects: the list of objects to display in the form view, if objects
-        is set to `None`, the model of the item view of the gui context is
-        reused
-        
+    :param object: the object to display in the form view.
+    :param proxy: a model proxy that represents the underlying collection where the given object is part of.
     :param admin: the admin class to use to display the form
 
     .. attribute:: row
@@ -61,106 +72,97 @@ class OpenFormView( ActionStep ):
         A list of `camelot.admin.action.base.Action` objects to be displayed
         at the top toolbar of the form, this defaults to the ones returned by the
         admin
+
     """
 
-    def __init__( self, objects, admin ):
-        self.objects = objects
-        self.admin = admin
-        self.row = 0
-        self.actions = admin.get_form_actions(None)
-        get_form_toolbar_actions = admin.get_form_toolbar_actions
-        self.top_toolbar_actions = get_form_toolbar_actions(Qt.TopToolBarArea)
-        self.title = u' '
-        self._columns = admin.get_fields()
-        self._form_display = admin.get_form_display()
+    fields: Dict[str, dict] = field(init=False)
+    form: AbstractForm = field(init=False)
+    admin_route: AdminRoute = field(init=False)
+    row: int = field(init=False)
+    form_state: str = field(init=False)
+    blocking: bool = False
+    qml: bool = False
+    auto_update: bool = True
 
-    def get_objects( self ):
-        """Use this method to get access to the objects to change in unit tests
-
-        :return: the list of objects to display in the form view
-        """
-        return self.objects
-
-    def render(self, gui_context):
-        from camelot.view.proxy.queryproxy import QueryTableProxy
-        from camelot.view.proxy.collection_proxy import CollectionProxy
-        from camelot.view.controls.formview import FormView
-
-        if self.objects is None:
-            related_model = gui_context.item_view.model()
-            #
-            # depending on the type of related model, create a new model
-            #
-            row = gui_context.item_view.currentIndex().row()
-            if isinstance( related_model, QueryTableProxy ):
-                # here the query and the cache are passed to the proxy
-                # constructor to prevent an additional query when a
-                # form is opened to look for an object that was in the list
-                model = QueryTableProxy(
-                    gui_context.admin,
-                    query = related_model.get_query(),
-                    max_number_of_rows = 1,
-                    cache_collection_proxy = related_model,
-                )
-            else:
-                # no cache or sorting information is transferred
-                model = CollectionProxy(
-                    gui_context.admin,
-                    max_number_of_rows = 1,
-                )
-                # get the unsorted row
-                row = related_model.map_to_source( row )
-                model.set_value(related_model.get_value())
+    def __post_init__(self, value, admin, proxy):
+        assert value is not None
+        assert (proxy is None) or (isinstance(proxy, AbstractModelProxy))
+        self.fields = [[f, {
+            'hide_title':fa.get('hide_title', False),
+            'verbose_name':str(fa['name']),
+            }] for f, fa in admin.get_fields()]
+        self.form = admin.get_form_display()
+        self.admin_route = admin.get_admin_route()
+        self.qml = admin.qml_form
+        if proxy is None:
+            proxy = admin.get_proxy([value])
+            self.row = 0
         else:
-            row = self.row
-            model = CollectionProxy(
-                self.admin,
-                max_number_of_rows=10
-            )
-            model.set_value(self.objects)
-        model.set_columns(self._columns)
+            self.row = proxy.index(value)
+        self.close_route = AdminRoute._register_action_route(
+            self.admin_route, admin.form_close_action
+        )
+        self.title = admin.get_verbose_identifier(value)
+        self.form_state = admin.form_state
+        self._add_actions(admin, self.actions)
+        super().__post_init__(value, admin, proxy)
+        model_context = initial_naming_context.resolve(self.model_context_name)
+        model_context.current_row = self.row
+        model_context.selection_count = 1
 
-        form = FormView(title=self.title, admin=self.admin, model=model,
-                        columns=self._columns, form_display=self._form_display,
-                        index=row)
-        form.set_actions(self.actions)
-        form.set_toolbar_actions(self.top_toolbar_actions)
+    @staticmethod
+    def _add_actions(admin, actions):
+        actions.extend(admin.get_form_actions(None))
+        actions.extend(admin.get_form_toolbar_actions())
+
+    def get_admin(self):
+        """Use this method to get access to the admin in unit tests"""
+        return initial_naming_context.resolve(self.admin_route)
+
+    @classmethod
+    def render(self, gui_context_name, step):
+        form = FormView()
+        model = get_root_backend().create_model(get_settings_group(step['admin_route']), form)
+        model.setValue(step['model_context_name'])
+        columns = [ fn for fn, fa in step['fields']]
+        model.setColumns(columns)
+
+        form.setup(
+            title=step['title'], admin_route=step['admin_route'],
+            close_route=tuple(step['close_route']), model=model,
+            fields=dict(step['fields']), form_display=step['form'],
+            index=step['row']
+        )
+        form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
+        for action_route, action_state in step['action_states']:
+            form.set_action_state(form, tuple(action_route), action_state)
         return form
 
-    def gui_run( self, gui_context ):
-        window = gui_context.get_window()
-        formview = self.render(gui_context)
-        show_top_level(formview, window, self.admin.form_state)
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        step = json.loads(serialized_step)
+        formview = cls.render(gui_context_name, step)
+        if formview is not None:
+            formview.setObjectName('form.{}.{}'.format(
+                step['admin_route'], id(formview)
+            ))
+            show_top_level(formview, gui_context_name, step['form_state'])
 
-class ToFirstForm( ActionStep ):
-    """
-    Show the first object in the collection in the current form
-    """
+@dataclass
+class HighlightForm(ActionStep, DataclassSerializable):
 
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.toFirst()
+    tab: Optional[str] = None # The form tab
+    label: Optional[str] = None # A field label to highlight
+    label_delegate: bool = False # Highlight delegate associated with label
+    label_delegate_focus: bool = False # Focus delegate associated with label
+    table_label: Optional[str] = None # Label of the table for table_row and table_column
+    table_row: Optional[int] = None # Table row to highlight
+    table_column: Optional[str] = None # Table column to highlight
+    action_route: Optional[Route] = None # Action to highlight
+    action_menu_route: Optional[Route] = None # Menu to open
+    action_menu_mode: Optional[str] = None # Menu mode (verbose name) to highlight
 
-class ToNextForm( ActionStep ):
-    """
-    Show the next object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.toNext()
-        
-class ToLastForm( ActionStep ):
-    """
-    Show the last object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.toLast()
-        
-class ToPreviousForm( ActionStep ):
-    """
-    Show the previous object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        gui_context.widget_mapper.toPrevious()
-
+    #action_cls_state: Optional[?] = None
+    #group_box: Optional[?] = None
+    form_state: Optional[str] = None
+    field_name: Optional[str] = None

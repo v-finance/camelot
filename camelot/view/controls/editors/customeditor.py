@@ -27,13 +27,7 @@
 #
 #  ============================================================================
 
-from ....core.qt import QtGui, QtCore, QtWidgets, variant_to_py
-
-from camelot.admin.action import FieldActionGuiContext
-from camelot.view.proxy import ValueLoading
-from ...model_thread import post
-from ..action_widget import ActionToolbutton
-
+from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 
 def set_background_color_palette(widget, background_color):
     """
@@ -45,40 +39,28 @@ def set_background_color_palette(widget, background_color):
     # WARNING : Changing this code requires extensive testing of all editors
     # in all states on all platforms (Mac, Linux, Win XP, Win Vista, Win 7)
     #
-    if background_color not in (None, ValueLoading):
+    if background_color is not None:
         palette = QtGui.QPalette(widget.palette())
-        for x in [QtGui.QPalette.Active, QtGui.QPalette.Inactive,
-                  QtGui.QPalette.Disabled]:
+        for x in [QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorGroup.Inactive,
+                  QtGui.QPalette.ColorGroup.Disabled]:
             #
             # backgroundRole : role that is used to render the background, If
-            #                  role is QPalette.NoRole, then the widget
+            #                  role is QPalette.ColorRole.NoRole, then the widget
             #                  inherits its parent's background role
             # Window : general background color
             # Base : background color for text entry widgets
             #
-            for y in [widget.backgroundRole(), QtGui.QPalette.Window,
-                      QtGui.QPalette.Base]:
+            for y in [widget.backgroundRole(), QtGui.QPalette.ColorRole.Window,
+                      QtGui.QPalette.ColorRole.Base]:
                 palette.setColor(x, y, background_color)
         widget.setPalette(palette)
     else:
         widget.setPalette(QtWidgets.QApplication.palette())
 
 
-def draw_tooltip_visualization(widget):
-    """
-    Draws a small visual indication in the top-left corner of a widget.
-    :param widget: a QWidget
-    """
-    painter = QtGui.QPainter(widget)
-    painter.drawPixmap(QtCore.QPoint(0, 0),
-                       QtGui.QPixmap(':/tooltip_visualization_7x7_glow.png'))
-
-
 class AbstractCustomEditor(object):
     """
     Helper class to be used to build custom editors.
-    This class provides functionality to store and retrieve
-    `ValueLoading` as an editor's value.
 
     Guidelines for implementing CustomEditors :
 
@@ -87,57 +69,72 @@ class AbstractCustomEditor(object):
       the user single clicks in the table view.
 
     * When an editor has widgets that should not get selected when the user
-      tabs through the editor, setFocusPolicy(Qt.ClickFocus) should be called
+      tabs through the editor, setFocusPolicy(Qt.FocusPolicy.ClickFocus) should be called
       on those widgets.
 
     * Editor should set their size policy, for most editor this means their
-      vertical size policy should be  `QtGui.QSizePolicy.Fixed`
+      vertical size policy should be  `QtWidgets.QSizePolicy.Policy.Fixed`
     """
 
     def __init__(self):
-        self.setProperty('value_loading', True)
-        self.field_attributes = {}
+        # self.isVisible() is not updated directly (e.g. the ancestors are not (yet) visible)
+        self._visible = True
+        self.nullable = True
         self.field_label = None
 
     def set_label(self, label):
         self.field_label = label
-        # set label might be called after a set_field_attributes, so
+        # set label might be called after a set_visible/set_nullable, so
         # immediately update the attributes of the label
-        self.field_label.set_field_attributes(**self.field_attributes)
+        self.field_label.set_visible(self._visible)
+        self.field_label.set_nullable(self.nullable)
 
-    def set_value(self, value):
-        if value is ValueLoading:
-            self.setProperty('value_loading', True)
-            return None
-        else:
-            self.setProperty('value_loading', False)
-            return value
+    def set_editable(self, editable):
+        pass
 
-    def get_value(self):
-        if variant_to_py(self.property('value_loading')):
-            return ValueLoading
-        return None
-
-    def get_field_attributes(self):
-        return self.field_attributes
-
-    def set_field_attributes(self, **kwargs):
-        self.set_background_color(kwargs.get('background_color', None))
-        self.field_attributes = kwargs
-        self.setVisible(kwargs.get('visible', True))
+    def set_nullable(self, nullable):
+        self.nullable = nullable
         if self.field_label is not None:
-            self.field_label.set_field_attributes(**kwargs)
+            self.field_label.set_nullable(nullable)
 
-    """
-    Get the 'standard' height for a cell
-    """
-    def get_height(self):
-        return max(QtWidgets.QLineEdit().sizeHint().height(),
-                   QtGui.QDateEdit().sizeHint().height(),
-                   QtGui.QDateTimeEdit().sizeHint().height(),
-                   QtGui.QSpinBox().sizeHint().height(),
-                   QtGui.QDateEdit().sizeHint().height(),
-                   QtWidgets.QComboBox().sizeHint().height())
+    def set_tooltip(self, tooltip):
+        self.setToolTip(str(tooltip or ''))
+
+    def set_visible(self, visible):
+        self._visible = visible
+        self.setVisible(visible)
+        if self.field_label is not None:
+            self.field_label.set_visible(visible)
+
+    def set_focus_policy(self, focus_policy):
+        pass
+
+    def set_prefix(self, prefix):
+        pass
+
+    def set_suffix(self, suffix):
+        pass
+
+    def set_single_step(self, single_step):
+        pass
+
+    def set_precision(self, precision):
+        pass
+
+    def set_minimum(self, minimum):
+        pass
+
+    def set_maximum(self, maximum):
+        pass
+
+    def set_directory(self, directory):
+        pass
+
+    def set_completer_state(self, completer_state):
+        pass
+
+    def set_validator_state(self, validator_state):
+        pass
 
     def set_background_color(self, background_color):
         set_background_color_palette(self, background_color)
@@ -146,13 +143,13 @@ class AbstractCustomEditor(object):
 class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     """
     Base class for implementing custom editor widgets.
-    This class provides dual state functionality.  Each
-    editor should have the posibility to have `ValueLoading`
-    as its value, specifying that no value has been set yet.
+    This class provides dual state functionality.
     """
 
     editingFinished = QtCore.qt_signal()
     valueChanged = QtCore.qt_signal()
+    completionPrefixChanged = QtCore.qt_signal(str)
+    actionTriggered = QtCore.qt_signal(list, object)
 
     _font_height = None
     _font_width = None
@@ -160,8 +157,6 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
     def __init__(self, parent, column_width=None):
         QtWidgets.QWidget.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
-        self.gui_context = FieldActionGuiContext()
-        self.gui_context.editor = self
 
         if CustomEditor._font_width is None:
             font_metrics = QtGui.QFontMetrics(self.font())
@@ -173,26 +168,34 @@ class CustomEditor(QtWidgets.QWidget, AbstractCustomEditor):
         else:
             self.size_hint_width = column_width * CustomEditor._font_width
 
-    def paintEvent(self, event):
-        super(CustomEditor, self).paintEvent(event)
-        if self.toolTip():
-            draw_tooltip_visualization(self)
+    def get_height(self):
+        """
+        Get the 'standard' height for a cell
+        """
+        return self.contentsRect().height()
 
-    def add_actions(self, actions, layout):
-        for action in actions:
-            action_widget = action.render(self.gui_context, self)
-            action_widget.setFixedHeight(self.get_height())
+    @QtCore.qt_slot()
+    def action_button_clicked(self):
+        self.actionTriggered.emit(self.sender().property('action_route'), None)
+
+    @QtCore.qt_slot(bool)
+    def action_menu_triggered(self, checked):
+        mode = self.sender().data()
+        action_route = self.sender().property('action_route')
+        self.actionTriggered.emit(action_route, mode)
+
+    def add_actions(self, action_routes, layout):
+        for action_route in action_routes:
+            action_widget = QtWidgets.QToolButton(parent=self)
+            action_widget.setAutoRaise(True)
+            action_widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+            action_widget.setProperty('action_route', action_route)
+            action_widget.setFixedHeight(min(action_widget.height(), self.get_height()))
+            action_widget.clicked.connect(self.action_button_clicked)
             layout.addWidget(action_widget)
-
-    def update_actions(self):
-        model_context = self.gui_context.create_model_context()
-        for action_action in self.findChildren(ActionToolbutton):
-            post(action_action.action.get_state, action_action.set_state,
-                 args=(model_context,))
 
     def sizeHint(self):
         size_hint = super(CustomEditor, self).sizeHint()
         if self.size_hint_width is not None:
             size_hint.setWidth(max(size_hint.width(), self.size_hint_width))
         return size_hint
-

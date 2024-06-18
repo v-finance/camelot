@@ -26,24 +26,34 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
-import os
-
-from ...core.qt import QtGui, QtCore, variant_to_py, py_to_variant
-
-import six
+import typing
 
 from camelot.admin.action import ActionStep
-from camelot.view.action_runner import hide_progress_dialog
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 
-class SelectFile( ActionStep ):
+from dataclasses import dataclass, field
+
+from ...core.serializable import DataclassSerializable
+from ...core.qt import QtWidgets
+
+class SelectActionStep(ActionStep):
+
+    @classmethod
+    def deserialize_result(cls, gui_context, response):
+        selected = response['selected']
+        if selected:
+            return selected
+        else:
+            raise CancelRequest()
+
+@dataclass
+class SelectFile( SelectActionStep, DataclassSerializable ):
     """Select one or more files to open
     
     :param file_name_filter: Filter on the names of the files that can
         be selected, such as 'All files (*)'.  
-        See :class:`QtGui.QFileDialog` for more documentation.
+        See :class:`QtWidgets.QFileDialog` for more documentation.
     
     .. attribute:: single
     
@@ -62,41 +72,20 @@ class SelectFile( ActionStep ):
     This action step stores its last location into the :class:`QtCore.QSettings` 
     and uses it as the initial location the next time it is invoked.
     """
-    
-    def __init__( self, file_name_filter = ''):
-        self.file_name_filter = six.text_type(file_name_filter)
-        self.single = True
-        self.caption = _('Open')
 
-    def gui_run(self, gui_context):
-        settings = QtCore.QSettings()
-        directory = six.text_type(variant_to_py(settings.value('datasource')))
-        directory = os.path.dirname(directory)
-        if self.single:
-            get_filename = QtGui.QFileDialog.getOpenFileName
-        else:
-            get_filename = QtGui.QFileDialog.getOpenFileNames
-        with hide_progress_dialog( gui_context ):
-            selected = get_filename(parent=gui_context.workspace,
-                                    caption=six.text_type(self.caption),
-                                    directory=directory,
-                                    filter=self.file_name_filter)
-            if selected:
-                if self.single:
-                    settings.setValue( 'datasource', py_to_variant(selected))
-                    return [six.text_type(selected)]
-                else:
-                    settings.setValue( 'datasource', py_to_variant(selected[0]))
-                    return [six.text_type(fn) for fn in selected]
-            else:
-                raise CancelRequest()
+    file_name_filter: str = ''
+    single: bool = True
 
-class SaveFile( ActionStep ):
+    caption = _('Open')
+
+
+@dataclass
+class SaveFile( SelectActionStep, DataclassSerializable ):
     """Select a file for saving
     
     :param file_name_filter: Filter on the names of the files that can
         be selected, such as 'All files (*)'.  
-        See :class:`QtGui.QFileDialog` for more documentation.
+        See :class:`QtWidgets.QFileDialog` for more documentation.
 
     :param file_name: `None` or the default filename to use
 
@@ -112,56 +101,28 @@ class SaveFile( ActionStep ):
     and uses it as the initial location the next time it is invoked.
     """
 
-    def __init__(self, file_name_filter='', file_name=None):
-        self.file_name_filter = six.text_type(file_name_filter)
-        self.file_name = file_name
-        self.caption = _('Save')
-        
-    def gui_run(self, gui_context):
-        settings = QtCore.QSettings()
-        directory = six.text_type(variant_to_py(settings.value('datasource')))
-        directory = os.path.dirname(directory)
-        if self.file_name is not None:
-            directory = os.path.join(directory, self.file_name)
-        get_filename = QtGui.QFileDialog.getSaveFileName
-        with hide_progress_dialog( gui_context ):
-            selected = get_filename(parent=gui_context.workspace,
-                                    caption=six.text_type(self.caption),
-                                    directory=directory,
-                                    filter=self.file_name_filter)
-            if selected:
-                settings.setValue('datasource', py_to_variant(selected))
-                return six.text_type(selected)
-            else:
-                raise CancelRequest()
+    file_name_filter: str = ''
+    file_name: typing.Optional[str] = None
 
-class SelectDirectory(ActionStep):
+    caption = _('Save')
+
+
+@dataclass
+class SelectDirectory(SelectActionStep, DataclassSerializable):
     """Select a single directory
 
     .. attribute:: caption
-    
+
         The text to display to the user
 
     .. attribute:: options
-    
-        options to pass to :meth:`QtGui.QFileDialog.getExistingDirectory`,
-        defaults to :const:`QtGui.QFileDialog.ShowDirsOnly`
+
+        options to pass to :meth:`QtWidgets.QFileDialog.getExistingDirectory`,
+        defaults to :const:`QtWidgets.QFileDialog.Options.ShowDirsOnly`
 
     """
-    
-    def __init__(self):
-        self.caption = _('Select directory')
-        self.options = QtGui.QFileDialog.ShowDirsOnly
-        
-    def gui_run(self, gui_context):
-        settings = QtCore.QSettings()
-        directory = six.text_type(variant_to_py(settings.value('datasource')))
-        get_directory = QtGui.QFileDialog.getExistingDirectory
-        with hide_progress_dialog( gui_context ):
-            selected = get_directory(parent=gui_context.workspace,
-                                     caption=six.text_type(self.caption),
-                                     directory=directory,
-                                     options=self.options)
-            if selected:
-                settings.setValue('datasource', py_to_variant(selected))
-            return six.text_type(selected)
+
+    directory: typing.Optional[str] = None
+    options: list = field(default_factory=lambda: [QtWidgets.QFileDialog.Option.ShowDirsOnly])
+
+    caption = _('Select directory')

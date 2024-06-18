@@ -27,15 +27,45 @@
 #
 #  ============================================================================
 
-import six
+from dataclasses import dataclass
 
+import logging
+import typing
+
+from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
-from camelot.core.exception import CancelRequest
+from ...core.serializable import DataclassSerializable
+from camelot.core.backend import cpp_action_step
 
-_detail_format = u'Update Progress {0:03d}/{1:03d} {2._text} {2._detail}'
 
-@six.python_2_unicode_compatible
-class UpdateProgress( ActionStep ):
+_detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
+
+
+@dataclass
+class PushProgressLevel(ActionStep, DataclassSerializable):
+
+    verbose_name: str
+    blocking: bool = False
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
+
+
+@dataclass
+class PopProgressLevel(ActionStep, DataclassSerializable):
+
+    blocking: bool = False
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
+
+
+@dataclass
+class UpdateProgress(ActionStep, DataclassSerializable):
     """
 Inform the user about the progress the application is making
 while executing an action.  This ActionStep is not blocking.  So it can
@@ -58,58 +88,29 @@ updated.
     details.
 :param enlarge: increase the size of the window to two thirds of the screen,
     useful when there are a lot of details displayed.
+:param detail_level: maps to the loglevels from the logging module and indicates the cause for the message.
 """
-    
-    def __init__( self,
-                  value=None, 
-                  maximum=None, 
-                  text=None, 
-                  detail=None, 
-                  clear_details=False,
-                  title=None,
-                  blocking=False,
-                  enlarge=False):
-        super(UpdateProgress, self).__init__()
-        self._value = value
-        self._maximum = maximum
-        self._text = text
-        self._detail = detail
-        self._clear_details = clear_details
-        self._title = title
-        self.blocking = blocking
-        self.enlarge = enlarge
-        
-    def __str__( self ):
-        return _detail_format.format(self._value or 0, self._maximum or 0, self)
-    
-    def gui_run( self, gui_context ):
-        """This method will update the progress dialog, if such dialog exists
-        within the GuiContext
-        
-        :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
-        """
-        progress_dialog = gui_context.progress_dialog
-        if progress_dialog:
-            if self._maximum is not None:
-                progress_dialog.setMaximum( self._maximum )
-            if self._value is not None:
-                progress_dialog.setValue( self._value )
-            progress_dialog.set_cancel_hidden(not self.cancelable)
-            if self._text is not None:
-                progress_dialog.setLabelText( six.text_type(self._text) )
-            if self._clear_details is True:
-                progress_dialog.clear_details()
-            if self._detail is not None:
-                progress_dialog.add_detail( self._detail )
-            if self._title is not None:
-                progress_dialog.title = self._title
-            if self.enlarge:
-                progress_dialog.enlarge()
-            if self.blocking:
-                progress_dialog.set_ok_hidden( False )
-                progress_dialog.exec_()
-                progress_dialog.set_ok_hidden( True )
-            if progress_dialog.wasCanceled():
-                progress_dialog.reset()
-                raise CancelRequest()
 
+    value: typing.Optional[int] = None
+    maximum: typing.Optional[int] = None
+    text: typing.Union[str, ugettext_lazy, None] = None
+    detail: typing.Union[str, ugettext_lazy, None] = None
+    clear_details: bool = False
+    title: typing.Union[str, ugettext_lazy, None] = None
+    enlarge: bool = False
+    blocking: bool = False
+    cancelable: bool = True
+    detail_level: int = logging.INFO # To be determined - we currently map to the loglevels from the logging module
+
+    def __str__(self):
+        return _detail_format.format(self.value or 0, self.maximum or 0, self)
+
+    @classmethod
+    def gui_run(cls, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        return cpp_action_step(gui_context_name, 'UpdateProgress', serialized_step)
+
+@dataclass
+class SetProgressAnimate(ActionStep, DataclassSerializable):
+
+    animate: bool

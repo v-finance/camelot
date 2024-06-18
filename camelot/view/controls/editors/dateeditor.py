@@ -29,39 +29,36 @@
 
 import datetime
 
-import six
 
-from ....core.qt import QtGui, QtCore, QtWidgets, Qt, py_to_variant
+
+from ....core.qt import QtCore, QtWidgets, Qt
 
 from .customeditor import CustomEditor, set_background_color_palette
 
 from ...validator import DateValidator
-from camelot.view.art import Icon
+from camelot.view.art import FontIcon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
-from camelot.core.utils import ugettext as _
+from camelot.core.utils import ugettext
 
 class DateEditor(CustomEditor):
     """Widget for editing date values"""
 
     calendar_action_trigger = QtCore.qt_signal()
-    special_date_icon = Icon('tango/16x16/apps/office-calendar.png')
+    special_date_icon = FontIcon('calendar-alt') # 'tango/16x16/apps/office-calendar.png'
     
     def __init__(self, parent = None,
-                       editable = True,
-                       nullable = True, 
-                       field_name = 'date',
-                       validator = DateValidator(),
-                       **kwargs):
+                       nullable = True,
+                       field_name = 'date'):
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
-        line_edit.setValidator(validator)
+        line_edit.setValidator(DateValidator())
         line_edit.setObjectName('date_line_edit')
-        line_edit.set_minimum_width(six.text_type(QtCore.QDate(2000,12,22).toString(self.date_format)))
+        line_edit.set_minimum_width(str(QtCore.QDate(2000,12,22).toString(self.date_format)))
         line_edit.setPlaceholderText(QtCore.QDate(2000,1,1).toString(self.date_format))
 
         # The order of creation of this widgets and their parenting
@@ -69,35 +66,34 @@ class DateEditor(CustomEditor):
         # so don't change this without extensive testing on windows
         special_date_menu = QtWidgets.QMenu(self)
         calendar_widget_action = QtWidgets.QWidgetAction(special_date_menu)
-        self.calendar_widget = QtGui.QCalendarWidget(special_date_menu)
+        self.calendar_widget = QtWidgets.QCalendarWidget(special_date_menu)
         self.calendar_widget.activated.connect(self.calendar_widget_activated)
         self.calendar_widget.clicked.connect(self.calendar_widget_activated)
         calendar_widget_action.setDefaultWidget(self.calendar_widget)
 
         self.calendar_action_trigger.connect( special_date_menu.hide )
         special_date_menu.addAction(calendar_widget_action)
-        special_date_menu.addAction(_('Today'))
-        special_date_menu.addAction(_('Far future'))
+        special_date_menu.addAction(ugettext('Today'))
+        special_date_menu.addAction(ugettext('Far future'))
         self.special_date = QtWidgets.QToolButton(self)
         self.special_date.setIcon( self.special_date_icon.getQIcon() )
         self.special_date.setAutoRaise(True)
-        self.special_date.setToolTip(_('Calendar and special dates'))
+        self.special_date.setToolTip(ugettext('Calendar and special dates'))
         self.special_date.setMenu(special_date_menu)
-        self.special_date.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+        self.special_date.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
         self.special_date.setFixedHeight(self.get_height())
-        self.special_date.setFocusPolicy(Qt.ClickFocus)
+        self.special_date.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         # end of sensitive part
 
         if nullable:
-            special_date_menu.addAction(_('Clear'))
+            special_date_menu.addAction(ugettext('Clear'))
 
         self.hlayout = QtWidgets.QHBoxLayout()
         self.hlayout.addWidget(line_edit)
-        self.hlayout.addWidget(self.special_date)
+        self.hlayout.addWidget(self.special_date, Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
 
         self.hlayout.setContentsMargins(0, 0, 0, 0)
         self.hlayout.setSpacing(0)
-        self.hlayout.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
         
         self.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.hlayout)
@@ -118,7 +114,6 @@ class DateEditor(CustomEditor):
             line_edit.setFocus()
 
     def line_edit_finished(self):
-        self.setProperty( 'value', py_to_variant( self.get_value() ) )
         self.valueChanged.emit()
         self.editingFinished.emit()
 
@@ -126,38 +121,42 @@ class DateEditor(CustomEditor):
         # explicitely set value on focus out to format the date in case
         # it was entered unformatted
         value = self.get_value()
-        self.set_value( value )
+        self.set_value(value)
         self.editingFinished.emit()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
-        self.setProperty( 'value', py_to_variant( value ) )
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             if value:
-                qdate = QtCore.QDate(value)
-                formatted_date = qdate.toString(self.date_format)
+                if isinstance(value, QtCore.QDateTime):
+                    value = value.date()
+                assert isinstance(value, QtCore.QDate)
+                formatted_date = value.toString(self.date_format)
                 line_edit.setText(formatted_date)
-                self.calendar_widget.setSelectedDate(qdate)
+                self.calendar_widget.setSelectedDate(value)
             else:
                 line_edit.setText('')
             self.valueChanged.emit()
 
     def get_value(self):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
+        value = None
         if line_edit is not None:
             try:
-                value = date_from_string( six.text_type( line_edit.text() ) )
+                date = date_from_string( str( line_edit.text() ) )
+                value = QtCore.QDate(date) if date is not None else None
             except ParsingError:
-                value = None
-        return CustomEditor.get_value(self) or value
+                pass
+        return value
 
-    def set_field_attributes(self, **kwargs):
-        super(DateEditor, self).set_field_attributes(**kwargs)
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
-            self.set_enabled(kwargs.get('editable', False))
-            line_edit.setToolTip(six.text_type(kwargs.get('tooltip') or ''))
+            line_edit.setToolTip(str(tooltip or ''))
+
+    def set_editable(self, editable):
+        self.set_enabled(editable)
 
     def set_background_color(self, background_color):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
@@ -176,11 +175,11 @@ class DateEditor(CustomEditor):
     def set_special_date(self, action):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
-            if action.text().compare(_('Today')) == 0:
-                self.set_value(datetime.date.today())
-            elif action.text().compare(_('Far future')) == 0:
-                self.set_value(datetime.date( year = 2400, month = 12, day = 31 ))
-            elif action.text().compare(_('Clear')) == 0:
+            if str(action.text()) == ugettext('Today'):
+                self.set_value(QtCore.QDate.currentDate())
+            elif str(action.text()) == ugettext('Far future'):
+                self.set_value(QtCore.QDate(2400, 12, 31))
+            elif str(action.text()) == ugettext('Clear'):
                 self.set_value(None)
             line_edit.setFocus()
             self.editingFinished.emit()

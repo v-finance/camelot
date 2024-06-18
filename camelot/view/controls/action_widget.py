@@ -27,295 +27,114 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, QtCore, QtWidgets, variant_to_py, is_deleted
+from ...core.qt import QtGui, QtWidgets
 
-import six
+from ...admin.icon import Icon
+from ...admin.action import Mode
+from camelot.view.art import from_admin_icon
 
-from ...admin.action import State
-from ...admin.action.form_action import FormActionGuiContext
-from ...admin.action.list_action import ListActionGuiContext
-from camelot.core.utils import ugettext
-from camelot.view.model_thread import post
+class AbstractActionWidget(object):
 
-class AbstractActionWidget( object ):
+    @classmethod
+    def set_widget_state(cls, widget, state):
+        widget.setEnabled(state['enabled'])
+        widget.setVisible(state['visible'])
 
-    def init( self, action, gui_context ):
-        """Helper class to construct widget that when triggered run an action.
-        This class exists as a base class for custom ActionButton implementations.
+    @classmethod
+    def set_label_state(cls, label, state):
+        cls.set_widget_state(label, state)
+        label.setText(state.get('verbose_name') or '')
+
+    @classmethod
+    def set_toolbutton_state(cls, toolbutton, state, slot):
+        # warning, this method does not set the menu, so does not work for
+        # modes.
+        cls.set_widget_state(toolbutton, state)
+        cls._set_menu(toolbutton, state, toolbutton, slot)
+        if state['verbose_name'] is not None:
+            toolbutton.setText( str( state['verbose_name'] ) )
+        if state['icon'] is not None:
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            toolbutton.setIcon( from_admin_icon(icon).getQIcon() )
+        else:
+            toolbutton.setIcon( QtGui.QIcon() )
+        if state['tooltip'] is not None:
+            toolbutton.setToolTip( str( state['tooltip'] ) )
+        else:
+            toolbutton.setToolTip( '' )
+        if state['modes']:
+            toolbutton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        if state['shortcut'] is not None:
+            toolbutton.setShortcut(state['shortcut'])
+
+    @classmethod
+    def set_pushbutton_state(cls, push_button, state, parent, slot):
+        cls.set_widget_state(push_button, state)
+        if state['verbose_name'] is not None:
+            push_button.setText( str( state['verbose_name'] ) )
+        if state['icon'] is not None:
+            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+            push_button.setIcon( from_admin_icon(icon).getQIcon() )
+        else:
+            push_button.setIcon( QtGui.QIcon() )
+        if state['tooltip'] is not None:
+            push_button.setToolTip( str( state['tooltip'] ) )
+        else:
+            push_button.setToolTip( '' )
+        if state['shortcut'] is not None:
+            push_button.setShortcut(state['shortcut'])
+        cls._set_menu(push_button, state, parent, slot)
+
+    @classmethod
+    def set_combobox_state(cls, combobox, state):
+        cls.set_widget_state(combobox, state)
+        combobox.clear()
+        current_index = 0
+        for i, mode in enumerate(state['modes']):
+            if mode['checked'] == True:
+                current_index = i
+            combobox.insertItem(
+                i, mode['verbose_name'], mode['value']
+            )
+        # setting the current index will trigger the run of the action to
+        # apply the initial filter
+        combobox.setCurrentIndex(current_index)
+
+    @classmethod
+    def _set_menu(cls, widget, state, parent, slot):
         """
-        self.action = action
-        self.gui_context = gui_context
-        self.state = State()
-        if isinstance( gui_context, FormActionGuiContext ):
-            gui_context.widget_mapper.model().dataChanged.connect( self.data_changed )
-            gui_context.widget_mapper.currentIndexChanged.connect( self.current_row_changed )
-        if isinstance( gui_context, ListActionGuiContext ):
-            gui_context.item_view.model().dataChanged.connect(self.data_changed)
-            #gui_context.item_view.model().modelReset.connect(self.model_reset)
-            selection_model = gui_context.item_view.selectionModel()
-            if selection_model is not None:
-                selection_model.currentRowChanged.connect(self.current_row_changed)
-        post( action.get_state, self.set_state, args = (self.gui_context.create_model_context(),) )
-
-    def set_state(self, state):
-        self.state = state
-        self.setEnabled(state.enabled)
-        self.setVisible(state.visible)
-
-    def current_row_changed( self, index1=None, index2=None ):
-        post( self.action.get_state,
-              self.set_state,
-              args = (self.gui_context.create_model_context(),) )
-
-    def data_changed(self, index1, index2):
-        if isinstance(self.gui_context, FormActionGuiContext):
-            # the model might emit a dataChanged signal, while the widget mapper
-            # has been deleted
-            if not is_deleted(self.gui_context.widget_mapper):
-                self.current_row_changed( index1.row() )
-        if isinstance(self.gui_context, ListActionGuiContext):
-            if not is_deleted(self.gui_context.item_view):
-                selection_model = self.gui_context.item_view.selectionModel()
-                if (selection_model is not None) and selection_model.hasSelection():
-                    parent = QtCore.QModelIndex()
-                    for row in six.moves.range(index1.row(), index2.row()+1):
-                        if selection_model.rowIntersectsSelection(row, parent):
-                            self.current_row_changed(row)
-                            return
-
-    def run_action( self, mode=None ):
-        gui_context = self.gui_context.copy()
-        gui_context.mode_name = mode
-        self.action.gui_run( gui_context )
-
-    def set_menu( self, state ):
-        """This method creates a menu for an object with as its menu items
-        the different modes in which an action can be triggered.
-
-        :param state: a `camelot.admin.action.State` object
+        slot can be None for use in unittests where the action wont be
+        triggered
         """
-        if state.modes:
-            # self is not always a QWidget, so QMenu is created without
+        if state['modes']:
+            # widget is not always a QWidget, so QMenu is created without
             # parent
-            menu = QtWidgets.QMenu()
-            for mode in state.modes:
-                mode_action = mode.render(menu)
-                mode_action.triggered.connect(self.action_triggered)
-                menu.addAction(mode_action)
-            self.setMenu( menu )
-
-    # not named triggered to avoid confusion with standard Qt slot
-    def action_triggered_by(self, sender):
-        """
-        action_triggered should be a slot, so it cannot be defined in the
-        abstract widget, the slot should get the sender and call
-        action_triggered_by
-        """
-        mode = None
-        if isinstance( sender, QtWidgets.QAction ):
-            mode = six.text_type( variant_to_py(sender.data()) )
-        self.run_action( mode )
-
-HOVER_ANIMATION_DISTANCE = 20
-NOTIFICATION_ANIMATION_DISTANCE = 8
-
-class ActionLabel( QtWidgets.QLabel, AbstractActionWidget ):
-
-    entered = QtCore.qt_signal()
-    left = QtCore.qt_signal()
-
-    """
-    A custom interactive desktop button for the desktop. Each 'button' is
-    actually an animated label.
-    """
-    def __init__( self, action, gui_context, parent ):
-        QtWidgets.QLabel.__init__( self, parent )
-        AbstractActionWidget.init( self, action, gui_context )
-
-        self.setObjectName('ActionButton')
-        self.setMouseTracking(True)
-
-        # This property holds if this button reacts to mouse events.
-        self.interactive = False
-
-        # This property is used to store the original position of this label
-        # so it can be visually reset when the user leaves before the ongoing
-        # animation has finished.
-        self.originalPosition = None
-        self.setMaximumHeight(160)
-
-
-    def set_state( self, state ):
-        AbstractActionWidget.set_state( self, state )
-        if state.icon:
-            self.setPixmap( state.icon.getQPixmap() )
-            self.resize( self.pixmap().width(), self.pixmap().height() )
-        self.resetLayout()
-
-    def resetLayout(self):
-        if self.sender() and self.originalPosition:
-            self.move(self.originalPosition)
-        self.setScaledContents(False)
-        if self.pixmap():
-            self.resize(self.pixmap().width(), self.pixmap().height())
-
-    def setInteractive(self, interactive):
-        self.interactive = interactive
-        self.originalPosition = self.mapToParent(QtCore.QPoint(0, 0))# + QtCore.QPoint(NOTIFICATION_ANIMATION_DISTANCE, HOVER_ANIMATION_DISTANCE)
-
-    def enterEvent(self, event):
-        if self.interactive:
-            self.entered.emit()
-        event.ignore()
-
-    def leaveEvent(self, event):
-        if self.interactive:
-            self.left.emit()
-        event.ignore()
-
-    def onContainerMousePressEvent(self, event):
-        self.run_action()
-        event.ignore()
-
-class ActionAction( QtWidgets.QAction, AbstractActionWidget ):
-
-    def __init__( self, action, gui_context, parent ):
-        QtWidgets.QAction.__init__( self, parent )
-        AbstractActionWidget.init( self, action, gui_context )
-        if action.shortcut != None:
-            self.setShortcut( action.shortcut )
-
-    @QtCore.qt_slot()
-    def action_triggered(self):
-        self.action_triggered_by(self.sender())
-
-    @QtCore.qt_slot( object )
-    def set_state( self, state ):
-        if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
-        else:
-            self.setText( '' )
-        if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
-        else:
-            self.setIcon( QtGui.QIcon() )
-        if state.tooltip != None:
-            self.setToolTip( six.text_type( state.tooltip ) )
-        else:
-            self.setToolTip( '' )
-        self.setEnabled( state.enabled )
-        self.setVisible( state.visible )
-        self.set_menu( state )
-
-class ActionPushButton( QtWidgets.QPushButton, AbstractActionWidget ):
-
-    def __init__( self, action, gui_context, parent ):
-        """A :class:`QtWidgets.QPushButton` that when pressed, will run an
-        action.
-
-        .. image:: /_static/actionwidgets/action_push_botton_application_enabled.png
-
-        """
-        QtWidgets.QPushButton.__init__( self, parent )
-        AbstractActionWidget.init( self, action, gui_context )
-        self.clicked.connect(self.action_triggered)
-
-    @QtCore.qt_slot( QtCore.QModelIndex, QtCore.QModelIndex )
-    def data_changed( self, index1, index2 ):
-        AbstractActionWidget.data_changed( self, index1, index2 )
-
-    def set_state( self, state ):
-        super( ActionPushButton, self ).set_state( state )
-        if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
-        if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
-        else:
-            self.setIcon( QtGui.QIcon() )
-        self.set_menu( state )
-
-    @QtCore.qt_slot()
-    def action_triggered(self):
-        self.action_triggered_by(self.sender())
-
-class ActionToolbutton(QtWidgets.QToolButton, AbstractActionWidget):
-
-    def __init__( self, action, gui_context, parent ):
-        """A :class:`QtWidgets.QToolButton` that when pressed, will run an
-        action."""
-        QtWidgets.QToolButton.__init__( self, parent )
-        AbstractActionWidget.init( self, action, gui_context )
-        self.clicked.connect(self.run_action)
-
-    def set_state( self, state ):
-        AbstractActionWidget.set_state(self, state)
-        if state.verbose_name != None:
-            self.setText( six.text_type( state.verbose_name ) )
-        if state.icon != None:
-            self.setIcon( state.icon.getQIcon() )
-        else:
-            self.setIcon( QtGui.QIcon() )
-        if state.tooltip != None:
-            self.setToolTip( six.text_type( state.tooltip ) )
-        else:
-            self.setToolTip( '' )
-        self.set_menu( state )
-
-    @QtCore.qt_slot()
-    def action_triggered(self):
-        self.action_triggered_by(self.sender())
-
-class AuthenticationWidget(QtWidgets.QFrame, AbstractActionWidget):
-    """Widget that displays information on the active user"""
-
-    def __init__(self, action, gui_context, parent):
-        from ..remote_signals import get_signal_handler
-        QtWidgets.QFrame.__init__(self, parent)
-        AbstractActionWidget.init(self, action, gui_context)
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        face = QtWidgets.QToolButton()
-        face.setObjectName('face')
-        face.setAutoRaise(True)
-        face.clicked.connect(self.face_clicked)
-        face.setToolTip(ugettext('Change avatar'))
-        layout.addWidget(face)
-        info_layout = QtWidgets.QVBoxLayout()
-        user_name = QtWidgets.QLabel()
-        font = user_name.font()
-        font.setBold(True)
-        font.setPointSize(10)
-        user_name.setFont(font)
-        user_name.setObjectName('user_name')
-        info_layout.addWidget(user_name)
-        groups = QtWidgets.QLabel()
-        font = groups.font()
-        font.setPointSize(8)
-        groups.setFont(font)
-        groups.setObjectName('groups')
-        info_layout.addWidget(groups)
-        info_layout.setSpacing(0)
-        info_layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(info_layout)
-        self.setLayout(layout)
-        signal_handler = get_signal_handler()
-        signal_handler.entity_update_signal.connect(self.entity_update)
-
-    @QtCore.qt_slot(object, object)
-    def entity_update(self, sender, entity):
-        from ...model.authentication import AuthenticationMechanism
-        if isinstance(entity, AuthenticationMechanism):
-            self.current_row_changed(0)
-
-    @QtCore.qt_slot(bool)
-    def face_clicked(self, state):
-        self.run_action()
-
-    def set_state(self, state):
-        user_name = self.findChild(QtWidgets.QLabel, 'user_name')
-        user_name.setText(state.verbose_name)
-        groups = self.findChild(QtWidgets.QLabel, 'groups')
-        groups.setText(state.tooltip)
-        face = self.findChild(QtWidgets.QToolButton, 'face')
-        face.setIcon(state.icon.getQIcon())
+            menu = widget.menu()
+            if menu is None:
+                menu = QtWidgets.QMenu(parent=parent)
+                # setMenu does not transfer ownership
+                widget.setMenu(menu)
+            menu.clear()
+            for mode_data in state['modes']:
+                icon = Icon(mode_data['icon']['name'], mode_data['icon']['pixmap_size'], mode_data['icon']['color']) if mode_data['icon'] is not None else None
+                if mode_data['modes']:
+                    submodes = []
+                    for submode_data in mode_data['modes']:
+                        submode_icon = Icon(submode_data['icon']['name'], submode_data['icon']['pixmap_size'], submode_data['icon']['color']) if submode_data['icon'] is not None else None
+                        submodes.append(Mode(submode_data['value'], submode_data['verbose_name'], submode_icon))
+                    mode = Mode(mode_data['value'], mode_data['verbose_name'], submode_icon, submodes)
+                    mode_menu = mode.render(menu)
+                    for submode in mode.modes:
+                        submode_action = submode.render(mode_menu)
+                        if slot is not None:
+                            submode_action.triggered.connect(slot)
+                        submode_action.setProperty('action_route', widget.property('action_route'))
+                        mode_menu.addAction(submode_action)
+                else:
+                    mode = Mode(mode_data['value'], mode_data['verbose_name'], icon)
+                    mode_action = mode.render(menu)
+                    if slot is not None:
+                        mode_action.triggered.connect(slot)
+                    mode_action.setProperty('action_route', widget.property('action_route'))
+                    menu.addAction(mode_action)
 

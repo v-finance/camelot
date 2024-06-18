@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,80 +27,63 @@
 #
 #  ============================================================================
 
-from functools import update_wrapper, partial
+import logging
 
-import six
-
-from ....core.qt import QtGui, QtCore, Qt, QtWidgets, py_to_variant, variant_to_py
-
-from ....admin.action import field_action
-from camelot.view.model_thread import post, object_thread
-from camelot.view.search import create_entity_search_query_decorator
-from camelot.view.remote_signals import get_signal_handler
-from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
-from camelot.core.utils import ugettext as _
+from ....core.naming import initial_naming_context
+from ....core.qt import QtGui, QtCore, Qt, QtWidgets
+from ....core.utils import ugettext as _
+from ..decorated_line_edit import DecoratedLineEdit
 
 from .customeditor import CustomEditor, set_background_color_palette
 
-import logging
 logger = logging.getLogger('camelot.view.controls.editors.many2oneeditor')
 
-class Many2OneEditor( CustomEditor ):
+# since this is gui code, we assume all names are lists,
+# as the original tuple has been serialized/deserialized
+
+none_name = list(initial_naming_context._bind_object(None))
+
+class Many2OneEditor(CustomEditor):
     """Widget for editing many 2 one relations"""
 
     arrow_down_key_pressed = QtCore.qt_signal()
 
-    class CompletionsModel(QtCore.QAbstractListModel):
-
-        def __init__(self, parent=None):
-            QtCore.QAbstractListModel.__init__(self, parent)
-            self._completions = []
-
-        def setCompletions(self, completions):
-            self._completions = completions
-            self.layoutChanged.emit()
-
-        def data(self, index, role):
-            return py_to_variant(self._completions[index.row()].get(role))
-
-        def rowCount(self, index=None):
-            return len(self._completions)
-
-        def columnCount(self, index=None):
-            return 1
-
     def __init__(self,
-                 admin=None,
                  parent=None,
-                 editable=True,
-                 field_name='manytoone',
-                 actions = [field_action.ClearObject(),
-                            field_action.SelectObject(),
-                            field_action.NewObject(),
-                            field_action.OpenObject()],
-                 **kwargs):
+                 action_routes = [],
+                 field_name='manytoone'):
         """
         :param entity_admin : The Admin interface for the object on the one
         side of the relation
         """
         CustomEditor.__init__(self, parent)
-        self.setSizePolicy( QtGui.QSizePolicy.Preferred,
-                            QtGui.QSizePolicy.Fixed )
+        self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
+                            QtWidgets.QSizePolicy.Policy.Fixed )
         self.setObjectName( field_name )
-        self.admin = admin
-        self.new_value = None
-        self._entity_representation = ''
-        self.obj = None
-        self._last_highlighted_entity_getter = None
+        self.verbose_name = ''
+        self.name = none_name
+        self.last_highlighted_name = None
 
-        self.layout = QtWidgets.QHBoxLayout()
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins( 0, 0, 0, 0)
-
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins( 0, 0, 0, 0)
+        #
+        # The search timer reduced the number of search signals that are
+        # emitted, by waiting for the next keystroke before emitting the
+        # search signal
+        #
+        timer = QtCore.QTimer( self )
+        timer.setInterval( 300 )
+        timer.setSingleShot( True )
+        timer.setObjectName( 'timer' )
+        timer.timeout.connect(self.start_search)
+        
         # Search input
         self.search_input = DecoratedLineEdit(self)
         self.search_input.setPlaceholderText(_('Search...'))
-        self.search_input.textEdited.connect(self.textEdited)
+        # Replaced by timer start, which will call textEdited if it runs out.
+        #self.search_input.textEdited.connect(self.textEdited)
+        self.search_input.textEdited.connect(self._start_search_timer)
         self.search_input.set_minimum_width( 20 )
         self.search_input.arrow_down_key_pressed.connect(self.on_arrow_down_key_pressed)
         # suppose garbage was entered, we need to refresh the content
@@ -108,149 +91,98 @@ class Many2OneEditor( CustomEditor ):
         self.setFocusProxy(self.search_input)
 
         # Search Completer
-        self.completer = QtGui.QCompleter()
-        self.completions_model = self.CompletionsModel(self.completer)
-        self.completer.setModel(self.completions_model)
-        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer = QtWidgets.QCompleter()
+        self.completer.setModel(QtGui.QStandardItemModel(self.completer))
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.completer.setCompletionMode(
-            QtGui.QCompleter.UnfilteredPopupCompletion
+            QtWidgets.QCompleter.CompletionMode.UnfilteredPopupCompletion
         )
         self.completer.activated[QtCore.QModelIndex].connect(self.completionActivated)
         self.completer.highlighted[QtCore.QModelIndex].connect(self.completion_highlighted)
         self.search_input.setCompleter(self.completer)
-
+        
         # Setup layout
-        self.layout.addWidget(self.search_input)
-        self.setLayout(self.layout)
-        self.add_actions(actions, self.layout)
-        get_signal_handler().connect_signals(self)
+        layout.addWidget(self.search_input)
+        self.setLayout(layout)
+        self.add_actions(action_routes, layout)
 
-    def set_field_attributes(self, **kwargs):
-        super(Many2OneEditor, self).set_field_attributes(**kwargs)
-        set_background_color_palette(self.search_input, kwargs.get('background_color'))
-        self.search_input.setToolTip(kwargs.get('tooltip') or '')
-        self.search_input.setEnabled(kwargs.get('editable', False))
-        self.update_actions()
+    @QtCore.qt_slot()
+    @QtCore.qt_slot(str)
+    def _start_search_timer(self, str=''):
+        timer = self.findChild( QtCore.QTimer, 'timer' )
+        if timer is not None:
+            timer.start()
+
+    @QtCore.qt_slot()
+    @QtCore.qt_slot(str)
+    def start_search(self, str=''):
+        timer = self.findChild( QtCore.QTimer, 'timer' )
+        if timer is not None:
+            timer.stop()
+        self.textEdited(self.search_input.text())
+
+    def set_tooltip(self, tooltip):
+        super().set_tooltip(tooltip)
+        self.search_input.setToolTip(str(tooltip or ''))
+
+    def set_background_color(self, background_color):
+        super().set_background_color(background_color)
+        set_background_color_palette(self.search_input, background_color)
+
+    def set_editable(self, editable):
+        self.search_input.setEnabled(editable)
 
     def on_arrow_down_key_pressed(self):
         self.arrow_down_key_pressed.emit()
 
     def textEdited(self, text):
-        self._last_highlighted_entity_getter = None
-        text = six.text_type( self.search_input.text() )
+        self.last_highlighted_name = None
+        self.completer.setCompletionPrefix(text)
+        self.completionPrefixChanged.emit(str(text))
 
-        def create_search_completion(text):
-            return lambda: self.search_completions(text)
-
-        post(
-            create_search_completion(six.text_type(text)),
-            self.display_search_completions
-        )
-        self.completer.complete()
-
-    def search_completions(self, text):
-        """Search for object that match text, to fill the list of completions
-
-        :return: a list of tuples of (dict_of_object_representation, object)
-        """
-        search_decorator = create_entity_search_query_decorator(
-            self.admin, text
-        )
-        if search_decorator:
-            sresult = [
-                self.admin.get_search_identifiers(e)
-                for e in search_decorator(self.admin.get_query()).limit(20)
-            ]
-            return text, sresult
-        return text, []
-
-    def display_search_completions(self, prefix_and_completions):
-        assert object_thread( self )
-        prefix, completions = prefix_and_completions
-        self.completions_model.setCompletions(completions)
-        self.completer.setCompletionPrefix(prefix)
+    def display_search_completions(self, completions):
+        # this might interrupt with the user typing
+        model = self.completer.model()
+        model.setColumnCount(1)
+        model.setRowCount(len(completions))
+        for row, completion in enumerate(completions):
+            index = model.index(row, 0)
+            for role, data in completion.items():
+                model.setData(index, data, int(role))
         self.completer.complete()
 
     def completionActivated(self, index):
-        obj = index.data(Qt.EditRole)
-        self.set_object(variant_to_py(obj))
+        self.name = index.data(Qt.ItemDataRole.UserRole)
+        self.editingFinished.emit()
 
-    def completion_highlighted(self, index ):
-        obj = index.data(Qt.EditRole)
-        self._last_highlighted_entity_getter = variant_to_py(obj)
-
-    @QtCore.qt_slot( object, object )
-    def handle_entity_update( self, sender, entity ):
-        if entity is self.get_value():
-            self.set_object(entity, False)
-
-    @QtCore.qt_slot( object, object )
-    def handle_entity_delete( self, sender, entity ):
-        if entity is self.get_value():
-            self.set_object(None, False)
-
-    @QtCore.qt_slot( object, object )
-    def handle_entity_create( self, sender, entity ):
-        if entity is self.new_value:
-            self.new_value = None
-            self.set_object(entity)
+    def completion_highlighted(self, index):
+        self.last_highlighted_name = index.data(Qt.ItemDataRole.UserRole)
 
     def search_input_editing_finished(self):
-        if self.obj is None:
+        if self.name == none_name:
             # Only try to 'guess' what the user meant when no entity is set
             # to avoid inappropriate removal of data, (eg when the user presses
             # Esc, editingfinished will be called as well, and we should not
             # overwrite the current entity set)
-            if self._last_highlighted_entity_getter:
-                self.set_object(self._last_highlighted_entity_getter)
-            elif self.completions_model.rowCount()==1:
+            if self.last_highlighted_name is not None:
+                self.name = self.last_highlighted_name
+                self.editingFinished.emit()
+            elif self.completer.model().rowCount()==1:
                 # There is only one possible option
-                index = self.completions_model.index(0,0)
-                entity_getter = variant_to_py(index.data(Qt.EditRole))
-                self.set_object(entity_getter)
-        self.search_input.setText(self._entity_representation or u'')
+                index = self.completer.model().index(0,0)
+                self.name = index.data(Qt.ItemDataRole.UserRole)
+                self.editingFinished.emit()
+        self.search_input.setText(self.verbose_name or u'')
 
     def set_value(self, value):
-        """:param value: either ValueLoading, or a function that returns None
-        or the entity to be shown in the editor"""
-        self._last_highlighted_entity_getter = None
-        self.new_value = None
-        value = CustomEditor.set_value(self, value)
-        self.set_object(value, propagate = False)
-        self.update_actions()
+        value = list(value if value is not None else none_name)
+        self.last_highlighted_name = None
+        self.name = value
 
     def get_value(self):
-        """:return: a function that returns the selected entity or ValueLoading
-        or None"""
-        value = CustomEditor.get_value(self)
-        if value is not None:
-            return value
-        return self.obj
+        return self.name
 
-    @QtCore.qt_slot(tuple)
-    def set_instance_representation(self, representation_and_propagate):
+    def set_verbose_name(self, verbose_name):
         """Update the gui"""
-        (desc, propagate) = representation_and_propagate
-        self._entity_representation = desc
-        self.search_input.setText(desc or u'')
-
-        if propagate:
-            self.editingFinished.emit()
-
-    def set_object(self, obj, propagate=True):
-        self.obj = obj
-
-        def get_instance_representation( obj, propagate ):
-            """Get a representation of the instance"""
-            if obj is not None:
-                return (self.admin.get_verbose_object_name(obj), propagate)
-            return (None, propagate)
-
-        post( update_wrapper( partial( get_instance_representation,
-                                       obj,
-                                       propagate ),
-                              get_instance_representation ),
-              self.set_instance_representation)
-
-    selected_object = property(fset=set_object)
-
+        self.verbose_name = verbose_name
+        self.search_input.setText(verbose_name or u'')
