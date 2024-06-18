@@ -30,10 +30,13 @@
 """:class:`QtGui.QValidator` subclasses to be used in the
 editors or other widgets.
 """
+import collections
 
 from camelot.core.qt import QtGui
 
 from .utils import date_from_string, ParsingError
+
+data_validity = collections.namedtuple('data_validity', ['valid', 'value', 'formatted_value', 'error_msg', 'info'])
 
 class AbstractValidator:
     """
