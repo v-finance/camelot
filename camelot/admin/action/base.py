@@ -235,27 +235,6 @@ return immediately and the :meth:`model_run` will not be blocked.
     blocking = True
     cancelable = True
 
-    @classmethod
-    def gui_run( cls, gui_context_name, serialized_step=b'' ):
-        """This method is called in the *GUI thread* upon execution of the
-        action step.  The return value of this method is the result of the
-        :keyword:`yield` statement in the *model thread*.
-        
-        The default behavior of this method is to call the cpp_action_step
-        function.
-        
-        :param gui_context:  An object of type 
-            :class:`camelot.admin.action.GuiContext`, which is the context 
-            of this action available in the *GUI thread*.  What is in the 
-            context depends on how the action was called.
-        :param serialized_step: The serialized action step.
-            
-        this method will raise a :class:`camelot.core.exception.CancelRequest`
-        exception, if the user canceled the operation.
-        """
-        from camelot.core.backend import cpp_action_step
-        return cpp_action_step(gui_context_name, cls.__name__, serialized_step)
-
     def model_run( self, model_context, mode ):
         raise Exception('This should not happen')
 
