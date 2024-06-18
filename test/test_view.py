@@ -13,7 +13,6 @@ from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
 from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
-from camelot.admin.action import GuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
@@ -490,8 +489,7 @@ class FormTest(
             }) for f, fa in self.person_admin.get_fields())
         self.widgets = FormEditors(self.qt_parent, fields)
         self.person_entity = Person
-        self.gui_context = GuiContext()
-        
+
     def _get_serialized_form_display_data(self, form_display):
         serialized_form_display = form_display._to_bytes()
         form_data = json.loads(serialized_form_display)
@@ -552,7 +550,7 @@ class FormTest(
         person = self.person_entity()
         open_form_view = OpenFormView(person, person_admin)
         self.grab_widget(
-            open_form_view.render(self.gui_context, open_form_view._to_dict())
+            open_form_view.render(open_form_view._to_dict())
         )
 
 class DelegateCase(unittest.TestCase, GrabMixinCase):
@@ -899,21 +897,20 @@ class SnippetsTest(RunningProcessCase,
         super().setUpClass()
         cls.gui_run(setup_query_proxy_name, mode=cls.model_context_name)
         cls.app_admin = ApplicationAdmin()
-        cls.gui_context = GuiContext()
         cls.process()
 
     def test_fields_with_actions(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView(coordinate, admin)
-        form = open_form_view.render(self.gui_context, open_form_view._to_dict())
+        form = open_form_view.render(open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView(coordinate, admin)
-        form = open_form_view.render(self.gui_context, open_form_view._to_dict())
+        form = open_form_view.render(open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_background_color(self):
