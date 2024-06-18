@@ -30,7 +30,6 @@
 import json
 import logging
 
-from ....admin.action.base import GuiContext
 from ....admin.admin_route import RouteWithRenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
 from ....core.item_model import ActionModeRole
@@ -45,7 +44,7 @@ from .customeditor import CustomEditor
 LOGGER = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
 
 
-class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext):
+class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     """
     :param admin: the Admin interface for the objects on the one side of the
     relation

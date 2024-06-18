@@ -42,7 +42,7 @@ from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
 
-"""ModelContext, GuiContext and Actions that run in the context of an 
+"""ModelContext and Actions that run in the context of an 
 application.
 """
 
