@@ -59,6 +59,7 @@ from camelot.types.typing import Note
 from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
+from camelot.view.validator import ZipcodeValidator
 
 from ..core.sql import metadata
 
@@ -69,7 +70,7 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
 
-    code = schema.Column( QuasiIdentifyingUnicode(length=10) )
+    code = schema.Column('code', QuasiIdentifyingUnicode(length=10) )
     name = schema.Column( QuasiIdentifyingUnicode(length=40), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
@@ -416,7 +417,11 @@ class City(GeographicBoundary, WithCountry):
 
         field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
         attributes_dict = {
-            'code': {'name': _('Postal code')},
+            'code': {
+                'name': _('Postal code'),
+                'validator_type': ZipcodeValidator.__name__,
+                'validator_state': lambda c: c.zip_code_type,
+            },
             'administrative_name_NL': {'name': _('Administrative name')},
             'administrative_name_FR': {'name': _('Administrative name')},
             'administrative_division': {'name': _('Administrative division (NUTS)')},
