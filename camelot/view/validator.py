@@ -31,8 +31,13 @@
 editors or other widgets.
 """
 import collections
+import re
+import stdnum.util
 
 from camelot.core.qt import QtGui
+from camelot.data.types import zip_code_types
+
+from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
 
@@ -74,3 +79,12 @@ class DateValidator(QtGui.QValidator):
         except ParsingError:
             return (QtGui.QValidator.State.Intermediate, input_, pos)
         return (QtGui.QValidator.State.Acceptable, input_, pos)
+
+def sanitize_zip_code(zip_code):
+    """
+    Sanitizes the given zip code by stripping whitespace and delimeters,
+    and capitilizing the result. If the stripped form becomes the empty string,
+    None will be returned.
+    """
+    if isinstance(zip_code, str):
+        return stdnum.util.clean(zip_code, ' -./#,').strip().upper() or None
