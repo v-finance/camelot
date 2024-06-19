@@ -114,3 +114,28 @@ def validate_zip_code(zip_code_type, zip_code):
                 formatted_zip_code = zip_code
 
     return data_validity(True, zip_code, formatted_zip_code, None, info)
+
+class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
+
+    def __init__(self, parent=None):
+        QtGui.QValidator.__init__(self, parent)
+        self.zip_code_type = None
+
+    def set_state(self, QValidator):
+        self.QValidator = QValidator
+
+    def validate(self, qtext, position):
+        ptext = str(qtext).upper()
+
+        if not ptext:
+            return (QtGui.QValidator.State.Acceptable, qtext, 0)
+
+        validity = validate_zip_code(self.QValidator, ptext)
+        if validity.valid:
+            return (QtGui.QValidator.State.Acceptable, validity.formatted_value, len(validity.formatted_value or ''))
+        return (QtGui.QValidator.State.Intermediate, qtext, position)
+
+    def format_value(self, zip_code):
+        return validate_zip_code(self.QValidator, zip_code).formatted_value
+
+zipcode_validator = ZipcodeValidator()
