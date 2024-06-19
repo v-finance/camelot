@@ -380,10 +380,11 @@ class City(GeographicBoundary, WithCountry):
     def __str__(self):
         if None not in (self.name, self.country):
             if self.code is not None:
-                return u'{0.code} {0.name} [{1.code}]'.format(self, self.country)
+                formatted_zipcode = validate_zip_code(self.zip_code_type, self.code).formatted_value
+                return u'{0} {1} [{2.code}]'.format(formatted_zipcode, self.name, self.country)
             return u'{0.name} [{1.code}]'.format(self, self.country)
         return u''
-    
+
     @classmethod
     def get_or_create( cls, country, code, name ):
         city = City.query.filter_by( code = code, country = country ).first()
@@ -492,10 +493,12 @@ class Address( Entity ):
         return self._zip_code
 
     @zip_code.setter
-    def zip_code(self, value):
+    def zip_code(self, code):
         # Only allow to overrule the address' zip code if its city's code is undefined.
         if self.city is not None and not self.city.code:
-            self._zip_code = value
+            # Set the zip code to its compact and sanitized representation defined by the validation.
+            # If its invalid, the value will remain untouched.
+            self._zip_code = validate_zip_code(self.city.zip_code_type, code).value
 
     @property
     def zip_code_type(self):
@@ -519,15 +522,17 @@ class Address( Entity ):
             yield from self.city.get_messages()
 
             if None not in (self._zip_code, self.city.zip_code_type):
-                if not re.fullmatch(re.compile(self.city.zip_code_type.regex), self._zip_code):
-                    yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country)
+                validity = validate_zip_code(self.city.zip_code_type, self._zip_code)
+                if not validity.valid:
+                    yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country, ugettext(validity.error_msg))
 
             if self.administrative_division is not None and self.city.country != self.administrative_division.country:
                 yield _(City.Message.invalid_administrative_division.value, self.administrative_division, self.city.country)
 
     def __str__(self):
         city_name = self.city.name if self.city is not None else ''
-        return u'%s, %s %s' % ( self.street1 or '', self.zip_code or '', city_name or '' )
+        formatted_zipcode = validate_zip_code(self.zip_code_type, self.zip_code).formatted_value
+        return u'%s, %s %s' % ( self.street1 or '', formatted_zipcode or '', city_name or '' )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
@@ -537,7 +542,13 @@ class Address( Entity ):
         form_state = 'right'
         field_attributes = {
             'street1': {'minimal_column_width':30},
-            'zip_code': {'editable': lambda o: o.city is not None and not o.city.code},
+            'zip_code': {
+                'editable': lambda o: o.city is not None and not o.city.code,
+                'tooltip': lambda o: zip_code_types[o.zip_code_type].tooltip if o.zip_code_type is not None else None,
+                'validator_type': ZipcodeValidator.__name__,
+                'validator_state': lambda o: o.zip_code_type,
+                'background_color': lambda o: ColorScheme.VALIDATION_ERROR if not validate_zip_code(o.zip_code_type, o.zip_code).valid else None,
+                },
             'administrative_division': {
                 'delegate':delegates.Many2OneDelegate,
                 'target': AdministrativeDivision,
