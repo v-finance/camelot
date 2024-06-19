@@ -2,7 +2,6 @@ import collections
 import re
 
 from camelot.core.utils import ugettext_lazy
-from camelot.admin.action import Mode
 
 from sqlalchemy import util
 
@@ -77,6 +76,7 @@ class Types(util.OrderedProperties):
         return [(feature_type.id, self.get_verbose_name(feature_type.name)) for feature_type in self]
 
     def get_modes(self):
+        from camelot.admin.action import Mode
         return [Mode(*choice) for choice in self.get_choices()]
 
     def get_by_id(self, type_id):
