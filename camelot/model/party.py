@@ -52,14 +52,16 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action.list_filter import StringFilter
 from camelot.admin.action import list_filter
 from camelot.core.orm import Entity
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import zip_code_types
 import camelot.types
 from camelot.types.typing import Note
 from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
+
+from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
-from camelot.view.validator import ZipcodeValidator
+from camelot.view.validator import ZipcodeValidator, validate_zip_code
 
 from ..core.sql import metadata
 
@@ -70,10 +72,18 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
 
-    code = schema.Column('code', QuasiIdentifyingUnicode(length=10) )
+    _code = schema.Column('code', QuasiIdentifyingUnicode(length=10) )
     name = schema.Column( QuasiIdentifyingUnicode(length=40), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
+
+    @hybrid.hybrid_property
+    def code(cls):
+        return cls._code
+
+    @code.setter
+    def code(self, code):
+        self._code = code
 
     @hybrid.hybrid_method
     def translation(self, language='nl_BE'):
@@ -119,7 +129,7 @@ class GeographicBoundary( Entity ):
         'editable': False
     }
 
-    full_name = orm.column_property(code + ' ' + name)
+    full_name = orm.column_property(_code + ' ' + name)
 
     def __str__(self):
         return u'%s %s' % ( self.code, self.name )
@@ -309,9 +319,15 @@ class City(GeographicBoundary, WithCountry):
     def zip_code_type(self):
         if self.country is not None:
             try:
-                return zip_code_types[self.country.code]
+                return zip_code_types[self.country.code].name
             except KeyError:
                 return
+
+    @GeographicBoundary.code.setter
+    def code(self, code):
+        # Set the city's zip code to its compact and sanitized representation defined by the validation.
+        # If its invalid, the value will remain untouched.
+        self._code = validate_zip_code(self.zip_code_type, code).value
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
@@ -380,14 +396,15 @@ class City(GeographicBoundary, WithCountry):
     class Message(enum.Enum):
 
         invalid_administrative_division = "{} is geen geldige administratieve indeling voor {}"
-        invalid_zip_code =                "{} is not a valid zip code for {}"
+        invalid_zip_code =                "{} is not a valid zip code for {}: {}"
 
     def get_messages(self):
         if self.country is not None:
 
-            if None not in (self.code, self.zip_code_type):
-                if not re.fullmatch(re.compile(self.zip_code_type.regex), self.code):
-                    yield _(self.Message.invalid_zip_code.value, self.code, self.country)
+            if self.zip_code_type is not None:
+                validity = validate_zip_code(self.zip_code_type, self.code)
+                if not validity.valid:
+                    yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(validity.error_msg))
 
             if self.administrative_division is not None:
                 if self.country != self.administrative_division.country:
@@ -419,8 +436,10 @@ class City(GeographicBoundary, WithCountry):
         attributes_dict = {
             'code': {
                 'name': _('Postal code'),
+                'tooltip': lambda c: zip_code_types[c.zip_code_type].tooltip if c.zip_code_type is not None else None,
                 'validator_type': ZipcodeValidator.__name__,
                 'validator_state': lambda c: c.zip_code_type,
+                'background_color': lambda c: ColorScheme.VALIDATION_ERROR if not validate_zip_code(c.zip_code_type, c.code).valid else None,
             },
             'administrative_name_NL': {'name': _('Administrative name')},
             'administrative_name_FR': {'name': _('Administrative name')},
