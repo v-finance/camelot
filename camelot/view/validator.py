@@ -88,3 +88,29 @@ def sanitize_zip_code(zip_code):
     """
     if isinstance(zip_code, str):
         return stdnum.util.clean(zip_code, ' -./#,').strip().upper() or None
+
+def validate_zip_code(zip_code_type, zip_code):
+    # First sanitize the zip code.
+    zip_code = sanitize_zip_code(zip_code)
+    formatted_zip_code = zip_code
+    info = {}
+    if zip_code is not None and zip_code_type in zip_code_types:
+        zip_code_type = zip_code_types[zip_code_type]
+
+        # Check if the zip code matches the zip code type's regex.
+        # This is done as the regex may enforce additional constraints in some cases
+        # e.g. the module validate a broader range of identifiers that is used for both legal and natural party identifiers.
+        if zip_code_type.regex is not None:
+            regex = re.compile(zip_code_type.regex)
+            if not regex.fullmatch(zip_code):
+                return data_validity(False, zip_code, zip_code, InvalidFormat.message, info)
+            # If the zip code type has regex replacement patterns defined, use them construct
+            # both the compact as the formatted value:
+            if zip_code_type.format_repl:
+                formatted_zip_code = re.sub(regex, zip_code_type.format_repl, zip_code)
+                zip_code = re.sub(regex, zip_code_type.compact_repl, zip_code)
+            # If no replacement is defined, the formatted zip code should be equal to the formatted one:
+            else:
+                formatted_zip_code = zip_code
+
+    return data_validity(True, zip_code, formatted_zip_code, None, info)
