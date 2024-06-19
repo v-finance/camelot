@@ -37,7 +37,6 @@ by Len Silverston, Chapter 2
 import copy
 import datetime
 import enum
-import re
 
 import sqlalchemy.types
 
