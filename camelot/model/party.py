@@ -60,7 +60,7 @@ from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first
 from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
-from camelot.view.validator import ZipcodeValidator, validate_zip_code
+from camelot.view.validator import ZipcodeValidator
 
 from ..core.sql import metadata
 
@@ -326,7 +326,7 @@ class City(GeographicBoundary, WithCountry):
     def code(self, code):
         # Set the city's zip code to its compact and sanitized representation defined by the validation.
         # If its invalid, the value will remain untouched.
-        self._code = validate_zip_code(self.zip_code_type, code).value
+        self._code = ZipcodeValidator.for_city(self).validity(code).value
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
@@ -379,7 +379,7 @@ class City(GeographicBoundary, WithCountry):
     def __str__(self):
         if None not in (self.name, self.country):
             if self.code is not None:
-                formatted_zipcode = validate_zip_code(self.zip_code_type, self.code).formatted_value
+                formatted_zipcode = ZipcodeValidator.for_city(self).format_value(self.code)
                 return u'{0} {1} [{2.code}]'.format(formatted_zipcode, self.name, self.country)
             return u'{0.name} [{1.code}]'.format(self, self.country)
         return u''
@@ -401,10 +401,9 @@ class City(GeographicBoundary, WithCountry):
     def get_messages(self):
         if self.country is not None:
 
-            if self.zip_code_type is not None:
-                validity = validate_zip_code(self.zip_code_type, self.code)
-                if not validity.valid:
-                    yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(validity.error_msg))
+            validity = ZipcodeValidator.for_city(self).validity(self.code)
+            if not validity.valid:
+                yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(validity.error_msg))
 
             if self.administrative_division is not None:
                 if self.country != self.administrative_division.country:
@@ -439,7 +438,7 @@ class City(GeographicBoundary, WithCountry):
                 'tooltip': lambda c: zip_code_types[c.zip_code_type].tooltip if c.zip_code_type is not None else None,
                 'validator_type': ZipcodeValidator.__name__,
                 'validator_state': lambda c: c.zip_code_type,
-                'background_color': lambda c: ColorScheme.VALIDATION_ERROR if not validate_zip_code(c.zip_code_type, c.code).valid else None,
+                'background_color': lambda c: ColorScheme.VALIDATION_ERROR if not ZipcodeValidator.for_city(c).validity(c.code).valid else None,
             },
             'administrative_name_NL': {'name': _('Administrative name')},
             'administrative_name_FR': {'name': _('Administrative name')},
@@ -497,7 +496,7 @@ class Address( Entity ):
         if self.city is not None and not self.city.code:
             # Set the zip code to its compact and sanitized representation defined by the validation.
             # If its invalid, the value will remain untouched.
-            self._zip_code = validate_zip_code(self.city.zip_code_type, code).value
+            self._zip_code = ZipcodeValidator.for_city(self.city).validity(code).value
 
     @property
     def zip_code_type(self):
@@ -520,8 +519,8 @@ class Address( Entity ):
         if self.city is not None:
             yield from self.city.get_messages()
 
-            if None not in (self._zip_code, self.city.zip_code_type):
-                validity = validate_zip_code(self.city.zip_code_type, self._zip_code)
+            if self._zip_code is not None:
+                validity = ZipcodeValidator.for_addressable(self).validity(self._zip_code)
                 if not validity.valid:
                     yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country, ugettext(validity.error_msg))
 
@@ -530,7 +529,7 @@ class Address( Entity ):
 
     def __str__(self):
         city_name = self.city.name if self.city is not None else ''
-        formatted_zipcode = validate_zip_code(self.zip_code_type, self.zip_code).formatted_value
+        formatted_zipcode = ZipcodeValidator.for_addressable(self).format_value(self.zip_code)
         return u'%s, %s %s' % ( self.street1 or '', formatted_zipcode or '', city_name or '' )
 
     class Admin( EntityAdmin ):
@@ -546,7 +545,7 @@ class Address( Entity ):
                 'tooltip': lambda o: zip_code_types[o.zip_code_type].tooltip if o.zip_code_type is not None else None,
                 'validator_type': ZipcodeValidator.__name__,
                 'validator_state': lambda o: o.zip_code_type,
-                'background_color': lambda o: ColorScheme.VALIDATION_ERROR if not validate_zip_code(o.zip_code_type, o.zip_code).valid else None,
+                'background_color': lambda o: ColorScheme.VALIDATION_ERROR if not ZipcodeValidator.for_addressable(o).validate(o.zip_code).valid else None,
                 },
             'administrative_division': {
                 'delegate':delegates.Many2OneDelegate,
