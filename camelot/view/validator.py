@@ -34,9 +34,11 @@ import collections
 import re
 import stdnum.util
 
-from camelot.core.qt import QtGui
+from camelot.core.qt import QtCore, QtGui
+from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
+from dataclasses import dataclass
 from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
@@ -80,49 +82,78 @@ class DateValidator(QtGui.QValidator):
             return (QtGui.QValidator.State.Intermediate, input_, pos)
         return (QtGui.QValidator.State.Acceptable, input_, pos)
 
-def sanitize_zip_code(zip_code):
-    """
-    Sanitizes the given zip code by stripping whitespace and delimeters,
-    and capitilizing the result. If the stripped form becomes the empty string,
-    None will be returned.
-    """
-    if isinstance(zip_code, str):
-        return stdnum.util.clean(zip_code, ' -./#,').strip().upper() or None
+class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
 
-def validate_zip_code(zip_code_type, zip_code):
-    # First sanitize the zip code.
-    zip_code = sanitize_zip_code(zip_code)
-    formatted_zip_code = zip_code
-    info = {}
-    if zip_code is not None and zip_code_type in zip_code_types:
-        zip_code_type = zip_code_types[zip_code_type]
+    @dataclass    
+    class State(DataclassSerializable):
 
+        regex: str = None
+        regex_repl: str = None
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.regex = None
+        self.regex_repl = None
+
+    def set_state(self, state):
+        state = state or self.State()
+        assert isinstance(state, self.State)
+        self.regex = QtCore.QRegularExpression(state.regex) if state.regex else None
+        self.regex_repl = QtCore.QRegularExpression(state.regex_repl) if state.regex_repl else None
+
+    @classmethod
+    def sanitize(cls, zip_code):
+        """
+        Sanitizes the given zip code by stripping whitespace and delimeters,
+        and capitilizing the result. If the stripped form becomes the empty string,
+        None will be returned.
+        """
+        if isinstance(zip_code, str):
+            return stdnum.util.clean(zip_code, ' -./#,').strip().upper() or None
+
+    @property
+    def compact_repl(self):
+        if self.regex_repl is not None:
+            if '|' in self.regex_repl:
+                def multi_repl(m):
+                    for i, repl in enumerate(self.regex_repl.split('|'), start=1):
+                        if m.group(i) is not None:
+                            return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
+                return multi_repl
+            return ''.join(re.findall('\\\\\d+', self.regex_repl))
+
+    @property
+    def format_repl(self):
+        if self.regex_repl is not None and '|' in self.regex_repl:
+            def multi_repl(m):
+                for i, repl in enumerate(self.regex_repl.split('|'), start=1):
+                    if m.group(i) is not None:
+                        return re.sub(m.re, repl, m.string)
+            return multi_repl
+        return self.regex_repl
+
+    def validity(self, zip_code):
+        info = {}
+        # First sanitize the zip code.
+        zip_code = self.sanitize(zip_code)
+        formatted_zip_code = zip_code
         # Check if the zip code matches the zip code type's regex.
         # This is done as the regex may enforce additional constraints in some cases
         # e.g. the module validate a broader range of identifiers that is used for both legal and natural party identifiers.
-        if zip_code_type.regex is not None:
-            regex = re.compile(zip_code_type.regex)
+        if self.regex is not None:
+            regex = re.compile(self.regex)
             if not regex.fullmatch(zip_code):
                 return data_validity(False, zip_code, zip_code, InvalidFormat.message, info)
             # If the zip code type has regex replacement patterns defined, use them construct
             # both the compact as the formatted value:
-            if zip_code_type.format_repl:
-                formatted_zip_code = re.sub(regex, zip_code_type.format_repl, zip_code)
-                zip_code = re.sub(regex, zip_code_type.compact_repl, zip_code)
+            if self.format_repl:
+                formatted_zip_code = re.sub(regex, self.format_repl, zip_code)
+                zip_code = re.sub(regex, self.compact_repl, zip_code)
             # If no replacement is defined, the formatted zip code should be equal to the formatted one:
             else:
                 formatted_zip_code = zip_code
 
-    return data_validity(True, zip_code, formatted_zip_code, None, info)
-
-class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
-
-    def __init__(self, parent=None):
-        QtGui.QValidator.__init__(self, parent)
-        self.zip_code_type = None
-
-    def set_state(self, QValidator):
-        self.QValidator = QValidator
+        return data_validity(True, zip_code, formatted_zip_code, None, info)
 
     def validate(self, qtext, position):
         ptext = str(qtext).upper()
@@ -130,12 +161,12 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
         if not ptext:
             return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
-        validity = validate_zip_code(self.QValidator, ptext)
+        validity = self.validity(ptext)
         if validity.valid:
             return (QtGui.QValidator.State.Acceptable, validity.formatted_value, len(validity.formatted_value or ''))
         return (QtGui.QValidator.State.Intermediate, qtext, position)
 
     def format_value(self, zip_code):
-        return validate_zip_code(self.QValidator, zip_code).formatted_value
+        return self.validity(zip_code).formatted_value
 
 zipcode_validator = ZipcodeValidator()
