@@ -437,7 +437,7 @@ class City(GeographicBoundary, WithCountry):
                 'name': _('Postal code'),
                 'tooltip': lambda c: zip_code_types[c.zip_code_type].tooltip if c.zip_code_type is not None else None,
                 'validator_type': ZipcodeValidator.__name__,
-                'validator_state': lambda c: c.zip_code_type,
+                'validator_state': ZipcodeValidator.state_for_city,
                 'background_color': lambda c: ColorScheme.VALIDATION_ERROR if not ZipcodeValidator.for_city(c).validity(c.code).valid else None,
             },
             'administrative_name_NL': {'name': _('Administrative name')},
@@ -544,7 +544,7 @@ class Address( Entity ):
                 'editable': lambda o: o.city is not None and not o.city.code,
                 'tooltip': lambda o: zip_code_types[o.zip_code_type].tooltip if o.zip_code_type is not None else None,
                 'validator_type': ZipcodeValidator.__name__,
-                'validator_state': lambda o: o.zip_code_type,
+                'validator_state': ZipcodeValidator.state_for_addressable,
                 'background_color': lambda o: ColorScheme.VALIDATION_ERROR if not ZipcodeValidator.for_addressable(o).validate(o.zip_code).valid else None,
                 },
             'administrative_division': {
