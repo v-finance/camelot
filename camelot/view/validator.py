@@ -34,7 +34,7 @@ import collections
 import re
 import stdnum.util
 
-from camelot.core.qt import QtCore, QtGui
+from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
