@@ -54,8 +54,9 @@ from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import zip_code_types
 import camelot.types
-from camelot.types.typing import Note
+from camelot.sql import is_postgres, is_sqlite
 from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
+from camelot.types.typing import Note
 
 from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates
@@ -122,6 +123,8 @@ class GeographicBoundary( Entity ):
             postgresql_ops={"name": "gin_trgm_ops"},
             postgresql_using='gin'
         ),
+        schema.CheckConstraint("code !~ '[-\\s\\./#,]'", name='code', _create_rule=is_postgres),
+        schema.CheckConstraint("code GLOB '*[^-. /#,]*'", name='code', _create_rule=is_sqlite),
     )
 
     __entity_args__ = {
