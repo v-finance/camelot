@@ -545,7 +545,7 @@ class Address( Entity ):
                 'tooltip': lambda o: zip_code_types[o.zip_code_type].tooltip if o.zip_code_type is not None else None,
                 'validator_type': ZipcodeValidator.__name__,
                 'validator_state': ZipcodeValidator.state_for_addressable,
-                'background_color': lambda o: ColorScheme.VALIDATION_ERROR if not ZipcodeValidator.for_addressable(o).validate(o.zip_code).valid else None,
+                'background_color': lambda o: ColorScheme.VALIDATION_ERROR if not ZipcodeValidator.for_addressable(o).validity(o.zip_code).valid else None,
                 },
             'administrative_division': {
                 'delegate':delegates.Many2OneDelegate,

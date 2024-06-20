@@ -92,14 +92,12 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.regex = None
-        self.regex_repl = None
+        self.state = self.State()
 
     def set_state(self, state):
-        state = state or self.State()
-        assert isinstance(state, self.State)
-        self.regex = QtCore.QRegularExpression(state.regex) if state.regex else None
-        self.regex_repl = QtCore.QRegularExpression(state.regex_repl) if state.regex_repl else None
+        state = state or dict()
+        assert isinstance(state, dict)
+        self.state = self.State(**state)
 
     def validate(self, qtext, position):
         ptext = str(qtext).upper()
@@ -119,8 +117,8 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
         # Check if the zip code matches the zip code type's regex.
         # This is done as the regex may enforce additional constraints in some cases
         # e.g. the module validate a broader range of identifiers that is used for both legal and natural party identifiers.
-        if self.regex is not None:
-            regex = re.compile(self.regex)
+        if zip_code is not None and self.state.regex is not None:
+            regex = re.compile(self.state.regex)
             if not regex.fullmatch(zip_code):
                 return data_validity(False, zip_code, zip_code, InvalidFormat.message, info)
             # If the zip code type has regex replacement patterns defined, use them construct
@@ -146,30 +144,31 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
 
     @property
     def compact_repl(self):
-        if self.regex_repl is not None:
-            if '|' in self.regex_repl:
+        if self.state.regex_repl is not None:
+            if '|' in self.state.regex_repl:
                 def multi_repl(m):
-                    for i, repl in enumerate(self.regex_repl.split('|'), start=1):
+                    for i, repl in enumerate(self.state.regex_repl.split('|'), start=1):
                         if m.group(i) is not None:
                             return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
                 return multi_repl
-            return ''.join(re.findall('\\\\\d+', self.regex_repl))
+            return ''.join(re.findall('\\\\\d+', self.state.regex_repl))
 
     @property
     def format_repl(self):
-        if self.regex_repl is not None and '|' in self.regex_repl:
+        if self.state.regex_repl is not None and '|' in self.state.regex_repl:
             def multi_repl(m):
-                for i, repl in enumerate(self.regex_repl.split('|'), start=1):
+                for i, repl in enumerate(self.state.regex_repl.split('|'), start=1):
                     if m.group(i) is not None:
                         return re.sub(m.re, repl, m.string)
             return multi_repl
-        return self.regex_repl
+        return self.state.regex_repl
 
     @classmethod
     def state_for_city(cls, city):
         if city is not None and city.zip_code_type is not None:
             zip_code_type = zip_code_types[city.zip_code_type]
-            return cls.State(regex=zip_code_type.regex, regex_replace=zip_code_type.regex_repl)
+            state = cls.State(regex=zip_code_type.regex, regex_repl=zip_code_type.repl)
+            return DataclassSerializable.asdict(state)
 
     @classmethod
     def state_for_addressable(cls, addressable):
