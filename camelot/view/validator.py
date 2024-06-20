@@ -101,6 +101,39 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
         self.regex = QtCore.QRegularExpression(state.regex) if state.regex else None
         self.regex_repl = QtCore.QRegularExpression(state.regex_repl) if state.regex_repl else None
 
+    def validate(self, qtext, position):
+        ptext = str(qtext).upper()
+        if not ptext:
+            return (QtGui.QValidator.State.Acceptable, qtext, 0)
+
+        validity = self.validity(ptext)
+        if validity.valid:
+            return (QtGui.QValidator.State.Acceptable, validity.formatted_value, len(validity.formatted_value or ''))
+        return (QtGui.QValidator.State.Intermediate, qtext, position)
+
+    def validity(self, zip_code):
+        info = {}
+        # First sanitize the zip code.
+        zip_code = self.sanitize(zip_code)
+        formatted_zip_code = zip_code
+        # Check if the zip code matches the zip code type's regex.
+        # This is done as the regex may enforce additional constraints in some cases
+        # e.g. the module validate a broader range of identifiers that is used for both legal and natural party identifiers.
+        if self.regex is not None:
+            regex = re.compile(self.regex)
+            if not regex.fullmatch(zip_code):
+                return data_validity(False, zip_code, zip_code, InvalidFormat.message, info)
+            # If the zip code type has regex replacement patterns defined, use them construct
+            # both the compact as the formatted value:
+            if self.format_repl:
+                formatted_zip_code = re.sub(regex, self.format_repl, zip_code)
+                zip_code = re.sub(regex, self.compact_repl, zip_code)
+            # If no replacement is defined, the formatted zip code should be equal to the formatted one:
+            else:
+                formatted_zip_code = zip_code
+
+        return data_validity(True, zip_code, formatted_zip_code, None, info)
+
     @classmethod
     def sanitize(cls, zip_code):
         """
@@ -132,39 +165,28 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
             return multi_repl
         return self.regex_repl
 
-    def validity(self, zip_code):
-        info = {}
-        # First sanitize the zip code.
-        zip_code = self.sanitize(zip_code)
-        formatted_zip_code = zip_code
-        # Check if the zip code matches the zip code type's regex.
-        # This is done as the regex may enforce additional constraints in some cases
-        # e.g. the module validate a broader range of identifiers that is used for both legal and natural party identifiers.
-        if self.regex is not None:
-            regex = re.compile(self.regex)
-            if not regex.fullmatch(zip_code):
-                return data_validity(False, zip_code, zip_code, InvalidFormat.message, info)
-            # If the zip code type has regex replacement patterns defined, use them construct
-            # both the compact as the formatted value:
-            if self.format_repl:
-                formatted_zip_code = re.sub(regex, self.format_repl, zip_code)
-                zip_code = re.sub(regex, self.compact_repl, zip_code)
-            # If no replacement is defined, the formatted zip code should be equal to the formatted one:
-            else:
-                formatted_zip_code = zip_code
+    @classmethod
+    def state_for_city(cls, city):
+        if city is not None and city.zip_code_type is not None:
+            zip_code_type = zip_code_types[city.zip_code_type]
+            return cls.State(regex=zip_code_type.regex, regex_replace=zip_code_type.regex_repl)
 
-        return data_validity(True, zip_code, formatted_zip_code, None, info)
+    @classmethod
+    def state_for_addressable(cls, addressable):
+        if addressable is not None:
+            return cls.state_for_city(addressable.city)
 
-    def validate(self, qtext, position):
-        ptext = str(qtext).upper()
+    @classmethod
+    def for_city(cls, city):
+        validator = cls()
+        validator.set_state(cls.state_for_city(city))
+        return validator
 
-        if not ptext:
-            return (QtGui.QValidator.State.Acceptable, qtext, 0)
-
-        validity = self.validity(ptext)
-        if validity.valid:
-            return (QtGui.QValidator.State.Acceptable, validity.formatted_value, len(validity.formatted_value or ''))
-        return (QtGui.QValidator.State.Intermediate, qtext, position)
+    @classmethod
+    def for_addressable(cls, addressable):
+        validator = cls()
+        validator.set_state(cls.state_for_addressable(addressable))
+        return validator
 
     def format_value(self, zip_code):
         return self.validity(zip_code).formatted_value
