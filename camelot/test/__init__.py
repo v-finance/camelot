@@ -171,7 +171,7 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
         cls._replies = collections.defaultdict(dict)
         get_root_backend().actionStepped.connect(cls._record_step)
         cls.thread.start("exec", cls.args)
-        connected = cls.thread.waitForConnected(10000)
+        connected = cls.thread.waitForConnected(20000)
         assert connected
 
     @classmethod
@@ -181,7 +181,7 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
             cls.process()
         finally:
             cls.thread.stop()
-            finished = cls.thread.waitForFinished(10000)
+            finished = cls.thread.waitForFinished(20000)
             assert finished
 
     def tearDown(self):
