@@ -58,7 +58,6 @@ from camelot.sql import is_postgres, is_sqlite
 from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
 from camelot.types.typing import Note
 
-from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 from camelot.view.validator import ZipcodeValidator
