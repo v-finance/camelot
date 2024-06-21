@@ -469,6 +469,11 @@ class Address( Entity ):
                                                nullable=True, index=True)
     _administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
 
+    __table_args__ = (
+        schema.CheckConstraint("_zip_code !~ '[-\\s\\./#,]'", name='zip_code', _create_rule=is_postgres),
+        schema.CheckConstraint("_zip_code GLOB '*[^-. /#,]*'", name='zip_code', _create_rule=is_sqlite),
+    )
+
     @property
     def administrative_division(self):
         """
