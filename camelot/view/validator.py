@@ -98,6 +98,8 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
         state = state or dict()
         assert isinstance(state, dict)
         self.state = self.State(**state)
+        if (regex := self.state.regex) is not None:
+            self.state.regex = re.compile(regex)
 
     def validate(self, qtext, position):
         ptext = str(qtext).upper()
@@ -118,14 +120,13 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
         # This is done as the regex may enforce additional constraints in some cases
         # e.g. the module validate a broader range of identifiers that is used for both legal and natural party identifiers.
         if zip_code is not None and self.state.regex is not None:
-            regex = re.compile(self.state.regex)
-            if not regex.fullmatch(zip_code):
+            if not self.state.regex.fullmatch(zip_code):
                 return data_validity(False, zip_code, zip_code, InvalidFormat.message, info)
             # If the zip code type has regex replacement patterns defined, use them construct
             # both the compact as the formatted value:
             if self.format_repl:
-                formatted_zip_code = re.sub(regex, self.format_repl, zip_code)
-                zip_code = re.sub(regex, self.compact_repl, zip_code)
+                formatted_zip_code = re.sub(self.state.regex, self.format_repl, zip_code)
+                zip_code = re.sub(self.state.regex, self.compact_repl, zip_code)
             # If no replacement is defined, the formatted zip code should be equal to the formatted one:
             else:
                 formatted_zip_code = zip_code
