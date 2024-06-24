@@ -89,6 +89,7 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
 
         regex: str = None
         regex_repl: str = None
+        example: str = None
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -168,13 +169,28 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
     def state_for_city(cls, city):
         if city is not None and city.zip_code_type is not None:
             zip_code_type = zip_code_types[city.zip_code_type]
-            state = cls.State(regex=zip_code_type.regex, regex_repl=zip_code_type.repl)
+            state = cls.State(
+                regex=zip_code_type.regex,
+                regex_repl=zip_code_type.repl,
+                example=zip_code_type.example,
+            )
             return DataclassSerializable.asdict(state)
 
     @classmethod
     def state_for_addressable(cls, addressable):
         if addressable is not None:
             return cls.state_for_city(addressable.city)
+
+    @classmethod
+    def hint_for_city(cls, city):
+        if (state := cls.state_for_city(city)) is not None and \
+                (example := state["example"]) is not None:
+            return 'e.g: {}'.format(example)
+
+    @classmethod
+    def hint_for_addressable(cls, addressable):
+        if addressable is not None:
+            return cls.hint_for_city(addressable.city)
 
     @classmethod
     def for_city(cls, city):
