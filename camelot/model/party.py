@@ -71,7 +71,7 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
 
-    _code = schema.Column('code', QuasiIdentifyingUnicode(length=10) )
+    _code = schema.Column('code', QuasiIdentifyingUnicode(length=10), index=True)
     name = schema.Column( QuasiIdentifyingUnicode(length=40), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
