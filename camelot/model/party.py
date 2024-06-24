@@ -437,7 +437,7 @@ class City(GeographicBoundary, WithCountry):
         attributes_dict = {
             'code': {
                 'name': _('Postal code'),
-                'tooltip': lambda c: zip_code_types[c.zip_code_type].tooltip if c.zip_code_type is not None else None,
+                'tooltip': ZipcodeValidator.hint_for_city,
                 'validator_type': ZipcodeValidator.__name__,
                 'validator_state': ZipcodeValidator.state_for_city,
             },
@@ -548,7 +548,7 @@ class Address( Entity ):
             'street1': {'minimal_column_width':30},
             'zip_code': {
                 'editable': lambda o: o.city is not None and not o.city.code,
-                'tooltip': lambda o: zip_code_types[o.zip_code_type].tooltip if o.zip_code_type is not None else None,
+                'tooltip': ZipcodeValidator.hint_for_addressable,
                 'validator_type': ZipcodeValidator.__name__,
                 'validator_state': ZipcodeValidator.state_for_addressable,
                 },
