@@ -90,6 +90,7 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
         regex: str = None
         regex_repl: str = None
         example: str = None
+        deletechars: str = ' -./#,'
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -134,15 +135,14 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
 
         return data_validity(True, zip_code, formatted_zip_code, None, info)
 
-    @classmethod
-    def sanitize(cls, zip_code):
+    def sanitize(self, zip_code):
         """
         Sanitizes the given zip code by stripping whitespace and delimeters,
         and capitilizing the result. If the stripped form becomes the empty string,
         None will be returned.
         """
         if isinstance(zip_code, str):
-            return stdnum.util.clean(zip_code, ' -./#,').strip().upper() or None
+            return stdnum.util.clean(zip_code, self.state.deletechars).strip().upper() or None
 
     @property
     def compact_repl(self):
