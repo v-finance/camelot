@@ -196,16 +196,4 @@ class ZipcodeValidator(RegexReplaceValidator):
         if addressable is not None:
             return cls.hint_for_city(addressable.city)
 
-    @classmethod
-    def for_city(cls, city):
-        validator = cls()
-        validator.set_state(cls.state_for_city(city))
-        return validator
-
-    @classmethod
-    def for_addressable(cls, addressable):
-        validator = cls()
-        validator.set_state(cls.state_for_addressable(addressable))
-        return validator
-
 zipcode_validator = ZipcodeValidator()
