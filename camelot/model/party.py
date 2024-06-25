@@ -54,10 +54,10 @@ from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import zip_code_types
 import camelot.types
-from camelot.types.typing import Note
+from camelot.sql import is_postgres, is_sqlite
 from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
+from camelot.types.typing import Note
 
-from camelot.view.art import ColorScheme
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 from camelot.view.validator import ZipcodeValidator
@@ -71,7 +71,7 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
 
-    _code = schema.Column('code', QuasiIdentifyingUnicode(length=10) )
+    _code = schema.Column('code', QuasiIdentifyingUnicode(length=10), index=True)
     name = schema.Column( QuasiIdentifyingUnicode(length=40), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
@@ -122,6 +122,8 @@ class GeographicBoundary( Entity ):
             postgresql_ops={"name": "gin_trgm_ops"},
             postgresql_using='gin'
         ),
+        schema.CheckConstraint("code !~ '[-\\s\\./#,]'", name='code', _create_rule=is_postgres),
+        schema.CheckConstraint("code GLOB '*[^-. /#,]*'", name='code', _create_rule=is_sqlite),
     )
 
     __entity_args__ = {
@@ -435,10 +437,9 @@ class City(GeographicBoundary, WithCountry):
         attributes_dict = {
             'code': {
                 'name': _('Postal code'),
-                'tooltip': lambda c: zip_code_types[c.zip_code_type].tooltip if c.zip_code_type is not None else None,
+                'tooltip': ZipcodeValidator.hint_for_city,
                 'validator_type': ZipcodeValidator.__name__,
                 'validator_state': ZipcodeValidator.state_for_city,
-                'background_color': lambda c: ColorScheme.VALIDATION_ERROR if not ZipcodeValidator.for_city(c).validity(c.code).valid else None,
             },
             'administrative_name_NL': {'name': _('Administrative name')},
             'administrative_name_FR': {'name': _('Administrative name')},
@@ -466,6 +467,11 @@ class Address( Entity ):
                                                schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='restrict', onupdate='cascade'),
                                                nullable=True, index=True)
     _administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
+
+    __table_args__ = (
+        schema.CheckConstraint("_zip_code !~ '[-\\s\\./#,]'", name='zip_code', _create_rule=is_postgres),
+        schema.CheckConstraint("_zip_code GLOB '*[^-. /#,]*'", name='zip_code', _create_rule=is_sqlite),
+    )
 
     @property
     def administrative_division(self):
@@ -542,10 +548,9 @@ class Address( Entity ):
             'street1': {'minimal_column_width':30},
             'zip_code': {
                 'editable': lambda o: o.city is not None and not o.city.code,
-                'tooltip': lambda o: zip_code_types[o.zip_code_type].tooltip if o.zip_code_type is not None else None,
+                'tooltip': ZipcodeValidator.hint_for_addressable,
                 'validator_type': ZipcodeValidator.__name__,
                 'validator_state': ZipcodeValidator.state_for_addressable,
-                'background_color': lambda o: ColorScheme.VALIDATION_ERROR if not ZipcodeValidator.for_addressable(o).validity(o.zip_code).valid else None,
                 },
             'administrative_division': {
                 'delegate':delegates.Many2OneDelegate,

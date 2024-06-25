@@ -123,27 +123,6 @@ class zip_code_type(collections.namedtuple('zip_code_type', ('code', 'regex', 'r
         return set(prefixes)
 
     @property
-    def compact_repl(self):
-        if self.repl is not None:
-            if '|' in self.repl:
-                def multi_repl(m):
-                    for i, repl in enumerate(self.repl.split('|'), start=1):
-                        if m.group(i) is not None:
-                            return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
-                return multi_repl
-            return ''.join(re.findall('\\\\\d+', self.repl))
-
-    @property
-    def format_repl(self):
-        if self.repl is not None and '|' in self.repl:
-            def multi_repl(m):
-                for i, repl in enumerate(self.repl.split('|'), start=1):
-                    if m.group(i) is not None:
-                        return re.sub(m.re, repl, m.string)
-            return multi_repl
-        return self.repl
-
-    @property
     def tooltip(self):
         if self.example is not None:
             return 'e.g: {}'.format(self.example)
