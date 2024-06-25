@@ -1116,6 +1116,11 @@ class Addressable(object):
     def zip_code( self ):
         return Address.zip_code
 
+    @property
+    def formatted_zip_code(self):
+        if self.address:
+            return self.address.formatted_zip_code
+
     @hybrid.hybrid_property
     def city( self ):
         return self._get_address_field( u'city' )
