@@ -82,7 +82,7 @@ class DateValidator(QtGui.QValidator):
             return (QtGui.QValidator.State.Intermediate, input_, pos)
         return (QtGui.QValidator.State.Acceptable, input_, pos)
 
-class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
+class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
     @dataclass    
     class State(DataclassSerializable):
@@ -113,36 +113,37 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
             return (QtGui.QValidator.State.Acceptable, validity.formatted_value, len(validity.formatted_value or ''))
         return (QtGui.QValidator.State.Intermediate, qtext, position)
 
-    def validity(self, zip_code):
+    def validity(self, value):
         info = {}
-        # First sanitize the zip code.
-        zip_code = self.sanitize(zip_code)
-        formatted_zip_code = zip_code
-        # Check if the zip code matches the zip code type's regex.
-        # This is done as the regex may enforce additional constraints in some cases
-        # e.g. the module validate a broader range of identifiers that is used for both legal and natural party identifiers.
-        if zip_code is not None and self.state.regex is not None:
-            if not self.state.regex.fullmatch(zip_code):
-                return data_validity(False, zip_code, zip_code, InvalidFormat.message, info)
-            # If the zip code type has regex replacement patterns defined, use them construct
+        # First sanitize the value.
+        value = self.sanitize(value)
+        formatted_value = value
+        # Check if the value matches the regex.
+        if value is not None and self.state.regex is not None:
+            if not self.state.regex.fullmatch(value):
+                return data_validity(False, value, value, InvalidFormat.message, info)
+            # If the regex replacement pattern is defined, use it construct
             # both the compact as the formatted value:
             if self.format_repl:
-                formatted_zip_code = re.sub(self.state.regex, self.format_repl, zip_code)
-                zip_code = re.sub(self.state.regex, self.compact_repl, zip_code)
-            # If no replacement is defined, the formatted zip code should be equal to the formatted one:
+                formatted_value = re.sub(self.state.regex, self.format_repl, value)
+                value = re.sub(self.state.regex, self.compact_repl, value)
+            # If no replacement is defined, the formatted value should be identitical to the formatted one:
             else:
-                formatted_zip_code = zip_code
+                formatted_value = value
 
-        return data_validity(True, zip_code, formatted_zip_code, None, info)
+        return data_validity(True, value, formatted_value, None, info)
 
-    def sanitize(self, zip_code):
+    def sanitize(self, value):
         """
-        Sanitizes the given zip code by stripping whitespace and delimeters,
+        Sanitizes the given value by stripping whitespace and delimeters,
         and capitilizing the result. If the stripped form becomes the empty string,
         None will be returned.
         """
-        if isinstance(zip_code, str):
-            return stdnum.util.clean(zip_code, self.state.deletechars).strip().upper() or None
+        if isinstance(value, str):
+            return stdnum.util.clean(value, self.state.deletechars).strip().upper() or None
+
+    def format_value(self, zip_code):
+        return self.validity(zip_code).formatted_value
 
     @property
     def compact_repl(self):
@@ -164,6 +165,9 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
                         return re.sub(m.re, repl, m.string)
             return multi_repl
         return self.state.regex_repl
+
+
+class ZipcodeValidator(RegexReplaceValidator):
 
     @classmethod
     def state_for_city(cls, city):
@@ -203,8 +207,5 @@ class ZipcodeValidator(QtGui.QValidator, AbstractValidator):
         validator = cls()
         validator.set_state(cls.state_for_addressable(addressable))
         return validator
-
-    def format_value(self, zip_code):
-        return self.validity(zip_code).formatted_value
 
 zipcode_validator = ZipcodeValidator()
