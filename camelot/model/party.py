@@ -317,7 +317,11 @@ class City(GeographicBoundary, WithCountry):
     __mapper_args__ = {'polymorphic_identity': 'city'}
 
     def __init__(self, *args, **kwargs):
+        self._reconstruct()
         super().__init__(*args, **kwargs)
+
+    @orm.reconstructor
+    def _reconstruct(self):
         self._zipcode_validator = ZipcodeValidator()
 
     @property
@@ -484,7 +488,11 @@ class Address( Entity ):
     )
 
     def __init__(self, *args, **kwargs):
+        self._reconstruct()
         super().__init__(*args, **kwargs)
+
+    @orm.reconstructor
+    def _reconstruct(self):
         self._zipcode_validator = ZipcodeValidator()
 
     @property
