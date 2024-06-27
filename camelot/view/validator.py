@@ -82,24 +82,24 @@ class DateValidator(QtGui.QValidator):
             return (QtGui.QValidator.State.Intermediate, input_, pos)
         return (QtGui.QValidator.State.Acceptable, input_, pos)
 
+@dataclass
+class RegexReplaceValidatorState(DataclassSerializable):
+
+    regex: str = None
+    regex_repl: str = None
+    example: str = None
+    deletechars: str = ' -./#,'
+
 class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
-
-    @dataclass    
-    class State(DataclassSerializable):
-
-        regex: str = None
-        regex_repl: str = None
-        example: str = None
-        deletechars: str = ' -./#,'
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.state = self.State()
+        self.state = RegexReplaceValidatorState()
 
     def set_state(self, state):
         state = state or dict()
         assert isinstance(state, dict)
-        self.state = self.State(**state)
+        self.state = RegexReplaceValidatorState(**state)
         if (regex := self.state.regex) is not None:
             self.state.regex = re.compile(regex)
 
@@ -173,7 +173,7 @@ class ZipcodeValidator(RegexReplaceValidator):
     def state_for_city(cls, city):
         if city is not None and city.zip_code_type is not None:
             zip_code_type = zip_code_types[city.zip_code_type]
-            state = cls.State(
+            state = RegexReplaceValidatorState(
                 regex=zip_code_type.regex,
                 regex_repl=zip_code_type.repl,
                 example=zip_code_type.example,
