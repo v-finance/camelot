@@ -97,13 +97,14 @@ class RegexReplaceValidatorState(DataclassSerializable):
         formatted_value = value
         # Check if the value matches the regex.
         if value is not None and self.regex is not None:
-            if not self.regex.fullmatch(value):
+            regex = re.compile(self.regex)
+            if not regex.fullmatch(value):
                 return data_validity(False, value, value, InvalidFormat.message, info)
             # If the regex replacement pattern is defined, use it construct
             # both the compact as the formatted value:
             if self.format_repl:
-                formatted_value = re.sub(self.regex, self.format_repl, value)
-                value = re.sub(self.regex, self.compact_repl, value)
+                formatted_value = re.sub(regex, self.format_repl, value)
+                value = re.sub(regex, self.compact_repl, value)
             # If no replacement is defined, the formatted value should be identitical to the formatted one:
             else:
                 formatted_value = value
@@ -131,7 +132,7 @@ class RegexReplaceValidatorState(DataclassSerializable):
                         if m.group(i) is not None:
                             return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
                 return multi_repl
-            return ''.join(re.findall('\\\\\d+', self.state.regex_repl))
+            return ''.join(re.findall('\\\\\d+', self.regex_repl))
 
     @property
     def format_repl(self):
@@ -152,10 +153,9 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
     def set_state(self, state):
         state = state or dict()
-        assert isinstance(state, dict)
-        self.state = RegexReplaceValidatorState(**state)
-        if (regex := self.state.regex) is not None:
-            self.state.regex = re.compile(regex)
+        if isinstance(state, dict):
+            state = RegexReplaceValidatorState()
+        self.state = state
 
     def validate(self, qtext, position):
         ptext = str(qtext).upper()
@@ -170,26 +170,32 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
 class ZipcodeValidatorState(RegexReplaceValidatorState):
 
-    @classmethod
-    def state_for_city(cls, city):
+    def update_for_city(self, city):
         if city is not None and city.zip_code_type is not None:
             zip_code_type = zip_code_types[city.zip_code_type]
-            state = cls(
-                regex=zip_code_type.regex,
-                regex_repl=zip_code_type.repl,
-                example=zip_code_type.example,
-            )
-            return cls.asdict(state)
+            self.regex = zip_code_type.regex
+            self.regex_repl = zip_code_type.repl
+            self.example = zip_code_type.example
+
+    def update_for_addressable(self, addressable):
+        if addressable is not None:
+            self.update_for_city(addressable.city)
 
     @classmethod
-    def state_for_addressable(cls, addressable):
+    def for_city(cls, city):
+        state = cls()
+        state.update_for_city(city)
+        return state
+
+    @classmethod
+    def for_addressable(cls, addressable):
         if addressable is not None:
-            return cls.state_for_city(addressable.city)
+            return cls.for_city(addressable.city)
 
     @classmethod
     def hint_for_city(cls, city):
-        if (state := cls.state_for_city(city)) is not None and \
-                (example := state["example"]) is not None:
+        if (state := cls.for_city(city)) is not None and \
+                (example := state.example) is not None:
             return 'e.g: {}'.format(example)
 
     @classmethod
