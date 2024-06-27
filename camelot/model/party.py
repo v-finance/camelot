@@ -60,7 +60,7 @@ from camelot.types.typing import Note
 
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
-from camelot.view.validator import ZipcodeValidator
+from camelot.view.validator import RegexReplaceValidator, ZipcodeValidatorState
 
 from ..core.sql import metadata
 
@@ -322,7 +322,7 @@ class City(GeographicBoundary, WithCountry):
 
     @orm.reconstructor
     def _reconstruct(self):
-        self._zipcode_validator = ZipcodeValidator()
+        self._zipcode_validator_state = ZipcodeValidatorState.for_city(self)
 
     @property
     def zip_code_type(self):
@@ -336,13 +336,13 @@ class City(GeographicBoundary, WithCountry):
     def code(self, code):
         # Set the city's zip code to its compact and sanitized representation defined by the validation.
         # If its invalid, the value will remain untouched.
-        self._zipcode_validator.set_state(ZipcodeValidator.state_for_city(self))
-        self._code = self._zipcode_validator.validity(code).value
+        self._zipcode_validator_state.update_for_city(self)
+        self._code = self._zipcode_validator_state.validity(code).value
 
     @property
     def formatted_zip_code(self):
-        self._zipcode_validator.set_state(ZipcodeValidator.state_for_city(self))
-        return self._zipcode_validator.format_value(self.code)
+        self._zipcode_validator_state.update_for_city(self)
+        return self._zipcode_validator_state.format_value(self.code)
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
@@ -416,8 +416,8 @@ class City(GeographicBoundary, WithCountry):
     def get_messages(self):
         if self.country is not None:
 
-            self._zipcode_validator.set_state(ZipcodeValidator.state_for_city(self))
-            validity = self._zipcode_validator.validity(self.code)
+            self._zipcode_validator_state.update_for_city(self)
+            validity = self._zipcode_validator_state.validity(self.code)
             if not validity.valid:
                 yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(validity.error_msg))
 
@@ -451,9 +451,9 @@ class City(GeographicBoundary, WithCountry):
         attributes_dict = {
             'code': {
                 'name': _('Postal code'),
-                'tooltip': ZipcodeValidator.hint_for_city,
-                'validator_type': ZipcodeValidator.__name__,
-                'validator_state': ZipcodeValidator.state_for_city,
+                'validator_type': RegexReplaceValidator.__name__,
+                'validator_state': ZipcodeValidatorState.for_city,
+                'tooltip': ZipcodeValidatorState.hint_for_city,
             },
             'administrative_name_NL': {'name': _('Administrative name')},
             'administrative_name_FR': {'name': _('Administrative name')},
@@ -493,7 +493,7 @@ class Address( Entity ):
 
     @orm.reconstructor
     def _reconstruct(self):
-        self._zipcode_validator = ZipcodeValidator()
+        self._zipcode_validator_state = ZipcodeValidatorState.for_addressable(self)
 
     @property
     def administrative_division(self):
@@ -524,8 +524,8 @@ class Address( Entity ):
         if self.city is not None and not self.city.code:
             # Set the zip code to its compact and sanitized representation defined by the validation.
             # If its invalid, the value will remain untouched.
-            self._zipcode_validator.set_state(ZipcodeValidator.state_for_addressable(self))
-            self._zip_code = self._zipcode_validator.validity(code).value
+            self._zipcode_validator_state.update_for_addressable(self)
+            self._zip_code = self._zipcode_validator_state.validity(code).value
 
     @property
     def zip_code_type(self):
@@ -534,8 +534,8 @@ class Address( Entity ):
 
     @property
     def formatted_zip_code(self):
-        self._zipcode_validator.set_state(ZipcodeValidator.state_for_addressable(self))
-        return self._zipcode_validator.format_value(self.zip_code)
+        self._zipcode_validator_state.update_for_addressable(self)
+        return self._zipcode_validator_state.format_value(self.zip_code)
 
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
@@ -554,8 +554,8 @@ class Address( Entity ):
             yield from self.city.get_messages()
 
             if self._zip_code is not None:
-                self._zipcode_validator.set_state(ZipcodeValidator.state_for_addressable(self))
-                validity = self._zipcode_validator.validity(self._zip_code)
+                self._zipcode_validator_state.update_for_addressable(self)
+                validity = self._zipcode_validator_state.validity(self._zip_code)
                 if not validity.valid:
                     yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country, ugettext(validity.error_msg))
 
@@ -576,9 +576,9 @@ class Address( Entity ):
             'street1': {'minimal_column_width':30},
             'zip_code': {
                 'editable': lambda o: o.city is not None and not o.city.code,
-                'tooltip': ZipcodeValidator.hint_for_addressable,
-                'validator_type': ZipcodeValidator.__name__,
-                'validator_state': ZipcodeValidator.state_for_addressable,
+                'validator_type': RegexReplaceValidator.__name__,
+                'validator_state': ZipcodeValidatorState.for_addressable,
+                'tooltip': ZipcodeValidatorState.hint_for_addressable,
                 },
             'administrative_division': {
                 'delegate':delegates.Many2OneDelegate,
@@ -688,6 +688,11 @@ class WithAddresses(object):
                               cls.first_address_filter()
                               ),
                           limit=1).as_scalar()
+
+    @property
+    def formatted_zip_code(self):
+        if self.city is not None:
+            return self.city.formatted_zip_code
 
     @hybrid.hybrid_property
     def administrative_division(self):
