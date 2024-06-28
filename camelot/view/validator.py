@@ -156,6 +156,8 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
         if isinstance(state, dict):
             state = RegexReplaceValidatorState(**state)
         self.state = state
+        # Emit changed singnal as the updated state may affect the validity (and background color).
+        self.changed.emit()
 
     def validate(self, qtext, position):
         ptext = str(qtext).upper()
