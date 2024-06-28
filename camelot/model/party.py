@@ -316,14 +316,6 @@ class City(GeographicBoundary, WithCountry):
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
 
-    def __init__(self, *args, **kwargs):
-        self._reconstruct()
-        super().__init__(*args, **kwargs)
-
-    @orm.reconstructor
-    def _reconstruct(self):
-        self._zipcode_validator_state = ZipcodeValidatorState.for_city(self)
-
     @property
     def zip_code_type(self):
         if self.country is not None:
@@ -336,13 +328,11 @@ class City(GeographicBoundary, WithCountry):
     def code(self, code):
         # Set the city's zip code to its compact and sanitized representation defined by the validation.
         # If its invalid, the value will remain untouched.
-        self._zipcode_validator_state.update_for_city(self)
-        self._code = self._zipcode_validator_state.validity(code).value
+        self._code = ZipcodeValidatorState.for_city(self).validity(code).value
 
     @property
     def formatted_zip_code(self):
-        self._zipcode_validator_state.update_for_city(self)
-        return self._zipcode_validator_state.format_value(self.code)
+        return ZipcodeValidatorState.for_city(self).format_value(self.code)
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
@@ -416,8 +406,7 @@ class City(GeographicBoundary, WithCountry):
     def get_messages(self):
         if self.country is not None:
 
-            self._zipcode_validator_state.update_for_city(self)
-            validity = self._zipcode_validator_state.validity(self.code)
+            validity = ZipcodeValidatorState.for_city(self).validity(self.code)
             if not validity.valid:
                 yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(validity.error_msg))
 
@@ -487,14 +476,6 @@ class Address( Entity ):
         schema.CheckConstraint("_zip_code GLOB '*[^-. /#,]*'", name='zip_code', _create_rule=is_sqlite),
     )
 
-    def __init__(self, *args, **kwargs):
-        self._reconstruct()
-        super().__init__(*args, **kwargs)
-
-    @orm.reconstructor
-    def _reconstruct(self):
-        self._zipcode_validator_state = ZipcodeValidatorState.for_addressable(self)
-
     @property
     def administrative_division(self):
         """
@@ -524,8 +505,7 @@ class Address( Entity ):
         if self.city is not None and not self.city.code:
             # Set the zip code to its compact and sanitized representation defined by the validation.
             # If its invalid, the value will remain untouched.
-            self._zipcode_validator_state.update_for_addressable(self)
-            self._zip_code = self._zipcode_validator_state.validity(code).value
+            self._zip_code = ZipcodeValidatorState.for_addressable(self).validity(code).value
 
     @property
     def zip_code_type(self):
@@ -534,8 +514,7 @@ class Address( Entity ):
 
     @property
     def formatted_zip_code(self):
-        self._zipcode_validator_state.update_for_addressable(self)
-        return self._zipcode_validator_state.format_value(self.zip_code)
+        return ZipcodeValidatorState.for_addressable(self).format_value(self.zip_code)
 
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
@@ -554,8 +533,7 @@ class Address( Entity ):
             yield from self.city.get_messages()
 
             if self._zip_code is not None:
-                self._zipcode_validator_state.update_for_addressable(self)
-                validity = self._zipcode_validator_state.validity(self._zip_code)
+                validity = ZipcodeValidatorState.for_addressable(self).validity(self._zip_code)
                 if not validity.valid:
                     yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country, ugettext(validity.error_msg))
 
