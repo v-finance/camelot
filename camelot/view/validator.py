@@ -154,7 +154,7 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
     def set_state(self, state):
         state = state or dict()
         if isinstance(state, dict):
-            state = RegexReplaceValidatorState()
+            state = RegexReplaceValidatorState(**state)
         self.state = state
 
     def validate(self, qtext, position):
@@ -170,27 +170,22 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
 class ZipcodeValidatorState(RegexReplaceValidatorState):
 
-    def update_for_city(self, city):
-        if city is not None and city.zip_code_type is not None:
-            zip_code_type = zip_code_types[city.zip_code_type]
-            self.regex = zip_code_type.regex
-            self.regex_repl = zip_code_type.repl
-            self.example = zip_code_type.example
-
-    def update_for_addressable(self, addressable):
-        if addressable is not None:
-            self.update_for_city(addressable.city)
-
     @classmethod
     def for_city(cls, city):
-        state = cls()
-        state.update_for_city(city)
-        return state
+        if city is not None and city.zip_code_type is not None:
+            zip_code_type = zip_code_types[city.zip_code_type]
+            return cls(
+                regex=zip_code_type.regex,
+                regex_repl=zip_code_type.repl,
+                example=zip_code_type.example,
+            )
+        return cls()
 
     @classmethod
     def for_addressable(cls, addressable):
         if addressable is not None:
             return cls.for_city(addressable.city)
+        return cls()
 
     @classmethod
     def hint_for_city(cls, city):
