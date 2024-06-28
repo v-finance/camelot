@@ -41,7 +41,6 @@ from ...core.serializable import NamedDataclassSerializable
 
 from ...core.item_model import ActionModeRole
 from .. import gui_naming_context
-from camelot.admin.action.base import GuiContext
 from camelot.core.item_model import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
@@ -253,7 +252,7 @@ class FormWidget(QtWidgets.QWidget):
                 #break
         LOGGER.debug( 'done' )
 
-class FormView(AbstractView, GuiContext):
+class FormView(AbstractView):
     """A FormView is the combination of a FormWidget, possible actions and menu
     items
 

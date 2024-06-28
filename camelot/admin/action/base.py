@@ -46,41 +46,11 @@ LOGGER = logging.getLogger( 'camelot.admin.action' )
 class ModelContext( object ):
     """
 The Model context in which an action is running.  The model context can contain
-reference to database sessions or other model related data. This object can not 
-contain references to widgets as those belong strictly to the :class:`GuiContext`.
+reference to database sessions or other model related data. 
     """
 
     def __init__( self ):
         pass
-
-
-class GuiContext( object ):
-    """
-The GUI context in which an action is running.  This object can contain
-references to widgets and other useful information.  This object cannot
-contain reference to anything database or model related, as those belong
-strictly to the :class:`ModelContext`
-    """
-
-    def get_window(self):
-        """
-        The window to be used as a reference to position new windows.  Returns
-        `None` if there is no window yet.
-        
-        :return: a :class:`QtWidgets.QWidget`
-        """
-        return None
-
-    def copy( self, base_class = None ):
-        """Create a copy of the GuiContext, this function is used
-        to create new GuiContext's that are more specialized without
-        modifying the original one.
-
-        :param base_class: the type of the new context to be created, None
-            if the new context should be of the same type as the copied context.
-        """
-        new_context = (base_class or self.__class__)()
-        return new_context
 
 
 @dataclass
@@ -91,8 +61,7 @@ the default mode.
     
 .. attribute:: value
 
-    a value representing the mode to the developer and the authentication
-    system.  this name will be used in the :class:`GuiContext`
+    a value representing the mode to the developer
     
 .. attribute:: verbose_name
 

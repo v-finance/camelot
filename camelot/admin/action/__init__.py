@@ -28,7 +28,7 @@
 #  ============================================================================
 
 from .application_action import ApplicationActionModelContext, OpenTableView
-from .base import Action, ActionStep, GuiContext, Mode, State, RenderHint
+from .base import Action, ActionStep, Mode, State, RenderHint
 from .list_action import OpenFormView , RowNumberAction
 from .form_action import ShowHistory
 from .field_action import FieldActionModelContext
@@ -40,7 +40,6 @@ __all__ = [
     FieldActionModelContext.__name__,
     OpenFormView.__init__,
     OpenTableView.__name__,
-    GuiContext.__name__,
     Mode.__name__,
     RenderHint.__name__,
     RowNumberAction.__name__,
