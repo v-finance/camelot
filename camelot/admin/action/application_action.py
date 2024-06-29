@@ -188,7 +188,7 @@ class SelectProfileMixin:
             # to avoid the use of subgenerators in the main action
             from camelot.view.action_steps.application import Exit
             yield Exit()
-            raise SystemExit()
+            return
         message = ugettext(u'Use {} profile'.format(selected_profile.name))
         yield action_steps.UpdateProgress(text=message)
         profile_store.set_last_profile(selected_profile)
