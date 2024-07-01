@@ -45,7 +45,9 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm.base import NEVER_SET
 from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
-from sqlalchemy import event, orm, schema, sql, ForeignKey
+from sqlalchemy import (
+    event, ForeignKey, orm, schema, sql, type_coerce,
+)
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action.list_filter import StringFilter
@@ -77,6 +79,10 @@ class GeographicBoundary( Entity ):
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
 
     @hybrid.hybrid_property
+    def code(self):
+        return self._code
+
+    @code.expression
     def code(cls):
         return cls._code
 
@@ -499,6 +505,10 @@ class Address( Entity ):
             return self._zip_code or self.city.code
         return self._zip_code
 
+    @zip_code.expression
+    def zip_code(cls):
+        return cls._zip_code
+
     @zip_code.setter
     def zip_code(self, code):
         # Only allow to overrule the address' zip code if its city's code is undefined.
@@ -643,9 +653,7 @@ class WithAddresses(object):
 
     @zip_code.expression
     def zip_code(cls):
-        return sql.select([Address.zip_code],
-                          whereclause=cls.first_address_filter(),
-                          limit=1).as_scalar()    
+        return Address.zip_code
 
     @hybrid.hybrid_property
     def city( self ):
@@ -1098,6 +1106,10 @@ class Addressable(object):
     @hybrid.hybrid_property
     def zip_code( self ):
         return self._get_address_field( u'zip_code' )
+
+    @zip_code.expression
+    def zip_code(cls):
+        return cls._zip_code
 
     @zip_code.setter
     def zip_code( self, value ):
