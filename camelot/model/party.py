@@ -46,7 +46,7 @@ from sqlalchemy.orm.base import NEVER_SET
 from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import (
-    event, ForeignKey, orm, schema, sql, type_coerce,
+    event, ForeignKey, orm, schema, sql,
 )
 
 from camelot.admin.entity_admin import EntityAdmin
