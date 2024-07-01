@@ -84,7 +84,8 @@ class BusyWidget(QtWidgets.QLabel):
         self.setPixmap(pixmap.copy(
             int(self.frame_width * col),
             int(self.frame_height * row),
-            int(self.frame_width,self.frame_height)
+            int(self.frame_width),
+            int(self.frame_height)
         ))
 
 
