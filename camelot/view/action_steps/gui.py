@@ -118,8 +118,8 @@ class SelectItem(ActionStep, DataclassSerializable):
     value: str = initial_naming_context._bind_object(None)
     autoaccept: bool = True
 
-    title: Union[str, ugettext_lazy] = field(init=False, default= _('Please select'))
-    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Make a selection and press the OK button.'))
+    title: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Please select'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Make a selection and press the OK button.'))
 
     def __post_init__(self):
         self.autoaccept = True
@@ -194,8 +194,8 @@ class MessageBox( ActionStep, DataclassSerializable ):
     """
 
     text: typing.Union[str, ugettext_lazy]
-    icon: Icon = Icon('info')
-    title: typing.Union[str, ugettext_lazy] = _('Message')
+    icon: Icon = field(default_factory=lambda: Icon('info'))
+    title: typing.Union[str, ugettext_lazy] = field(default_factory=lambda: _('Message'))
     standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
     informative_text: str = field(init=False)
     detailed_text: str = field(init=False)
