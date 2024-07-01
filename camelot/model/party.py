@@ -934,9 +934,6 @@ class Person( Party ):
     #def social_security_number( self ):
         #return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
 
-    #def __unicode__( self ):
-        #return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
-
     #class Admin( PartyRelationship.Admin ):
         #verbose_name = _('Employment relation')
         #verbose_name_plural = _('Employment relations')

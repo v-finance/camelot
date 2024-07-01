@@ -13,7 +13,7 @@ from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.item_model import ObjectRole
 from camelot.core.item_model.query_proxy import QueryModelProxy
-from camelot.admin.action import ActionStep, State, GuiContext
+from camelot.admin.action import ActionStep, State
 from camelot.admin.action import (
     list_action, application_action, list_filter
 )
@@ -30,7 +30,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningProcessCase
 from camelot.test.action import MockModelContext
-from camelot.view import action_steps, import_utils, utils, gui_naming_context
+from camelot.view import action_steps, import_utils, utils
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.controls.action_widget import AbstractActionWidget
@@ -94,19 +94,15 @@ class ActionBaseCase(RunningProcessCase, SerializableMixinCase):
     def setUp(self):
         super().setUp()
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context_obj = GuiContext()
-        self.gui_context_name = gui_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
-        )
 
     def test_action_step(self):
         ActionStep()
 
     def test_action(self):
-        self.gui_run(custom_action_name, self.gui_context_name, 'mode_1')
+        self.gui_run(custom_action_name, mode='mode_1')
 
     def test_action_state(self):
-        state = self.get_state(custom_action_name, self.gui_context_name)
+        state = self.get_state(custom_action_name)
         self.assertTrue(state['verbose_name'])
         self.assertTrue(len(state['modes']))
 
@@ -124,10 +120,6 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     def setUp(self):
         get_root_backend().set_visible(True, False)
-        self.gui_context_obj = GuiContext()
-        self.gui_context = gui_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
-        )
         self.parent = QtWidgets.QWidget()
         enabled = State()
         disabled = State()
@@ -411,7 +403,7 @@ class ListActionsCase(
         self.view.item_view.setCurrentIndex(list_model.index(0, 0))
         for step_name, step in self.gui_run(open_form_view_name, self.gui_context,None, model_context_name=self.model_context_name):
             if step_name == action_steps.OpenFormView.__name__:
-                form = action_steps.OpenFormView.render(self.gui_context, step)
+                form = action_steps.OpenFormView.render(step)
                 form_value = form.model.value()
         self.assertTrue(isinstance(form_value, list))
 
@@ -543,7 +535,7 @@ class ListActionsCase(
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
-        state = self.get_state(set_filters_step, self.gui_context)
+        state = self.get_state(set_filters_step)
         self.assertTrue(len(state.modes))
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
@@ -555,12 +547,12 @@ class ListActionsCase(
                 #steps.send(('first_name', 'test'))
 
     def test_group_box_filter(self):
-        state = self.get_state(group_box_filter_name, self.gui_context)
+        state = self.get_state(group_box_filter_name)
         self.assertTrue(len(state['modes']))
         self.gui_run(group_box_filter_name, self.gui_context, state['modes'][0]['value'], model_context_name=self.model_context_name)
 
     def test_combo_box_filter(self):
-        state = self.get_state(combo_box_filter_name, self.gui_context)
+        state = self.get_state(combo_box_filter_name)
         self.assertTrue(len(state['modes']))
         widget = self.view.render_action(
             list_filter.ComboBoxFilter.render_hint, combo_box_filter_name,

@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 
-"""ModelContext, GuiContext and Actions that are used in the context of
+"""ModelContext and Actions that are used in the context of
 editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """

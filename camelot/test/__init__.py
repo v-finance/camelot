@@ -119,7 +119,7 @@ class ActionMixinCase(object):
     Helper methods to simulate running actions in a different thread
     """
 
-    def get_state(self, action_name, gui_context):
+    def get_state(self, action_name):
         """
         Get the state of an action in the model thread and return
         the result.

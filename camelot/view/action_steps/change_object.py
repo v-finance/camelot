@@ -32,7 +32,6 @@ from dataclasses import dataclass, field
 import json
 from typing import List, Union
 
-from camelot.admin.action.base import GuiContext
 from camelot.admin.icon import Icon
 from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.naming import initial_naming_context
@@ -54,7 +53,7 @@ from ...admin.admin_route import AdminRoute, RouteWithRenderHint
 from ...core.qt import QtCore, QtWidgets, Qt
 
 
-class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext):
+class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
     """A dialog to change an object.  This differs from a FormView in that
     it does not contains Actions, and has an OK button that is enabled when
     the object is valid.

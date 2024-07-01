@@ -42,7 +42,7 @@ from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
 
-"""ModelContext, GuiContext and Actions that run in the context of an 
+"""ModelContext and Actions that run in the context of an 
 application.
 """
 
@@ -150,22 +150,21 @@ class SelectProfileMixin:
                     verbose_name = ugettext('load profiles'),
                     icon = Icon('folder-open')
                 ))
+
                 select_profile = action_steps.SelectItem(items)
-                
                 select_profile.title = ugettext('Profile Selection')
                 if len(profiles):
-                    subtitle = ugettext('Select a stored profile:')
-                else:
-                    subtitle = ugettext('''Load profiles from file or'''
-                                        ''' create a new profile''')
-                select_profile.subtitle = subtitle
-                if last_profile in profiles:
+                    select_profile.subtitle = ugettext('Select a stored profile:')
                     select_profile.value = last_profile_name
-                elif len(profiles):
-                    select_profile.value = None
                 else:
+                    select_profile.subtitle = ugettext(
+                        '''Load profiles from file or'''
+                        ''' create a new profile'''
+                    )
                     select_profile.value = load_profiles_name
+
                 selected_name = yield select_profile
+
                 selected_profile = initial_naming_context.resolve(selected_name)
                 if selected_profile is new_profile:
                     while selected_profile is new_profile:
@@ -189,7 +188,7 @@ class SelectProfileMixin:
             # to avoid the use of subgenerators in the main action
             from camelot.view.action_steps.application import Exit
             yield Exit()
-            raise SystemExit()
+            return
         message = ugettext(u'Use {} profile'.format(selected_profile.name))
         yield action_steps.UpdateProgress(text=message)
         profile_store.set_last_profile(selected_profile)
