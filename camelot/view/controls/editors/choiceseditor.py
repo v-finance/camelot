@@ -61,6 +61,7 @@ class ChoicesEditor(CustomEditor):
         combobox = QtWidgets.QComboBox()
         combobox.setObjectName('combobox')
         combobox.activated.connect(self._activated)
+        combobox.installEventFilter(self)
         layout.addWidget(combobox)
         self.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
@@ -69,6 +70,15 @@ class ChoicesEditor(CustomEditor):
         self.set_choices([none_item])
         self.setLayout(layout)
         self.add_actions(action_routes, layout)
+
+    # https://vfinance.atlassian.net/browse/VFIN-2804
+    # https://stackoverflow.com/questions/77347403/how-to-handle-qcombobox-wheel-events-with-an-event-filter
+    def eventFilter(self, watched, event):
+        if event.type() == QtCore.QEvent.Type.Wheel:
+            event.ignore()
+            return True
+        else:
+            return super().eventFilter(watched, event)
 
     @QtCore.qt_slot(int)
     def _activated(self, _index):
