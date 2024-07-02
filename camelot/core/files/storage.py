@@ -6,7 +6,7 @@ import tempfile
 from contextlib import contextmanager
 from io import IOBase
 from pathlib import Path, PurePosixPath
-from typing import Optional, Callable, Union, Type
+from typing import Optional, Callable, Union, Type, Dict
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -15,7 +15,7 @@ from camelot.core.utils import ugettext
 # Initialize the logger
 logger = logging.getLogger('camelot.core.files.storage')
 
-PathType = Union[str, os.PathLike[str]]
+PathType = Union[str, os.PathLike]
 
 
 class StoredFile:
@@ -37,7 +37,7 @@ class StoredFile:
         """The name of the file, as it is to be displayed in the GUI"""
         return self.name
 
-    def __getstate__(self) -> dict[str, str]:
+    def __getstate__(self) -> Dict[str, str]:
         """Returns the key of the file. To support pickling stored files
         in the database in a :class:`camelot.model.memento.Memento` object
         """
@@ -182,6 +182,7 @@ class Storage:
                                 resolution=ugettext('Please rename the file'))
 
         root, extension = os.path.splitext(filename or local_path.name)
+
         handle, to_path = self._create_tempfile(extension, root)
         os.close(handle)
 
@@ -224,7 +225,7 @@ class Storage:
         logger.debug('closed file')
         return self.stored_file_implementation(self, os.path.basename(to_path))
 
-    def checkout(self, stored_file: StoredFile):
+    def checkout(self, stored_file: StoredFile) -> PurePosixPath:
         """Check the file out of the storage and return a local filesystem path
 
         :param stored_file: StoredFile object
@@ -241,7 +242,7 @@ class Storage:
         :return: File object
         """
         self.available()
-        with open(self.upload_to.joinpath(os.path.basename(stored_file)), 'rb') as f:
+        with Path(self.upload_to.joinpath(os.path.basename(stored_file))).open('rb') as f:
             yield f
 
     def delete(self, name):
