@@ -265,7 +265,8 @@ class SaveFile(OpenFile):
         local_path = yield action_steps.SaveFile()
         with open(local_path, 'wb') as destination:
             yield action_steps.UpdateProgress(text=_('Saving file'))
-            destination.write(storage.checkout_stream(stored_file).read())
+            with storage.checkout_stream(stored_file) as source:
+                destination.write(source.read())
 
 
 class AddNewObject(AddNewObjectMixin, EditFieldAction):

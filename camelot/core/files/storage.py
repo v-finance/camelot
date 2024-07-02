@@ -1,40 +1,12 @@
-#  ============================================================================
-#
-#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
-#  www.conceptive.be / info@conceptive.be
-#
-#  Redistribution and use in source and binary forms, with or without
-#  modification, are permitted provided that the following conditions are met:
-#      * Redistributions of source code must retain the above copyright
-#        notice, this list of conditions and the following disclaimer.
-#      * Redistributions in binary form must reproduce the above copyright
-#        notice, this list of conditions and the following disclaimer in the
-#        documentation and/or other materials provided with the distribution.
-#      * Neither the name of Conceptive Engineering nor the
-#        names of its contributors may be used to endorse or promote products
-#        derived from this software without specific prior written permission.
-#
-#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#  ============================================================================
-
-
 import logging
 import os
+import glob
 import shutil
 import tempfile
+from contextlib import contextmanager
 from io import IOBase
 from pathlib import Path, PurePosixPath
-from typing import Optional, Callable, Union, Type, Dict, BinaryIO
+from typing import Optional, Callable, Union, Type
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -43,7 +15,7 @@ from camelot.core.utils import ugettext
 # Initialize the logger
 logger = logging.getLogger('camelot.core.files.storage')
 
-PathType = Union[str, os.PathLike]
+PathType = Union[str, os.PathLike[str]]
 
 
 class StoredFile:
@@ -65,7 +37,7 @@ class StoredFile:
         """The name of the file, as it is to be displayed in the GUI"""
         return self.name
 
-    def __getstate__(self) -> Dict[str, str]:
+    def __getstate__(self) -> dict[str, str]:
         """Returns the key of the file. To support pickling stored files
         in the database in a :class:`camelot.model.memento.Memento` object
         """
@@ -127,7 +99,7 @@ class Storage:
         """
         try:
             if not (p := Path(self.upload_to)).exists():
-                p.mkdir(parents=True)
+                p.mkdir()
             return True
         except Exception as e:
             logger.warning(f'Could not access or create path {self.upload_to}, files will be unreachable', exc_info=e)
@@ -142,28 +114,24 @@ class Storage:
             return os.access(Path(self.upload_to), os.W_OK)
         return False
 
-    def exists(self, name: PurePosixPath) -> bool:
+    @staticmethod
+    def exists(name: PathType) -> bool:
         """Check if a file exists given its name
 
         :param name: Name of the file
         :return: True if the file exists, False otherwise
         """
-        return Path(self.path(name)).exists()
+        return Path(name).exists()
 
     def list_files(self, prefix='*', suffix='*'):
         """List all files with a given prefix and/or suffix available in this storage
 
         :return: An iterator of StoredFile objects
         """
-        if suffix == '*':
-            pattern = f'{prefix}*'
-        else:
-            pattern = f'{prefix}*{suffix}'
-
         upload_to_path = Path(self.upload_to)
-        return (StoredFile(self, path.name) for path in upload_to_path.glob(pattern))
+        return (StoredFile(self, path.name) for path in upload_to_path.glob(f'{prefix}*{suffix}'))
 
-    def path(self, name) -> PurePosixPath:
+    def path(self, name):
         """Get the local filesystem path where the file can be opened using Python standard open
 
         :param name: Name of the file
@@ -183,7 +151,7 @@ class Storage:
         try:
             return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to)
         except EnvironmentError as e:
-            if not self.available():
+            if not self.exists(self.upload_to):
                 raise UserException(text=ugettext(f'The directory {self.upload_to} does not exist'),
                                     resolution=ugettext('Contact your system administrator'))
             if not self.writeable():
@@ -214,7 +182,6 @@ class Storage:
                                 resolution=ugettext('Please rename the file'))
 
         root, extension = os.path.splitext(filename or local_path.name)
-
         handle, to_path = self._create_tempfile(extension, root)
         os.close(handle)
 
@@ -257,26 +224,25 @@ class Storage:
         logger.debug('closed file')
         return self.stored_file_implementation(self, os.path.basename(to_path))
 
-    def checkout(self, stored_file: StoredFile) -> PurePosixPath:
+    def checkout(self, stored_file: StoredFile):
         """Check the file out of the storage and return a local filesystem path
 
         :param stored_file: StoredFile object
         :return: Path of the checked-out file
         """
-        assert isinstance(stored_file, StoredFile)
         self.available()
         return self.upload_to.joinpath(stored_file.name)
 
-    # @contextmanager: NOTE: This should be a context manager so that the file always gets closed(doesn't happen now), good luck!
-    def checkout_stream(self, stored_file: StoredFile) -> BinaryIO:
+    @contextmanager
+    def checkout_stream(self, stored_file: PathType):
         """Check the file out of the storage as a data stream
 
         :param stored_file: StoredFile object
         :return: File object
         """
-        assert isinstance(stored_file, StoredFile)
         self.available()
-        return Path(self.upload_to, stored_file.name).open('rb')
+        with open(self.upload_to.joinpath(os.path.basename(stored_file)), 'rb') as f:
+            yield f
 
     def delete(self, name):
         pass
