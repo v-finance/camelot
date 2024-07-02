@@ -82,118 +82,122 @@ class DateValidator(QtGui.QValidator):
             return (QtGui.QValidator.State.Intermediate, input_, pos)
         return (QtGui.QValidator.State.Acceptable, input_, pos)
 
+@dataclass
+class RegexReplaceValidatorState(DataclassSerializable):
+
+    regex: str = None
+    regex_repl: str = None
+    example: str = None
+    deletechars: str = ' -./#,'
+
+    @property
+    def compact_repl(self):
+        if self.regex_repl is not None:
+            if '|' in self.regex_repl:
+                def multi_repl(m):
+                    for i, repl in enumerate(self.regex_repl.split('|'), start=1):
+                        if m.group(i) is not None:
+                            return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
+                return multi_repl
+            return ''.join(re.findall('\\\\\d+', self.regex_repl))
+
+    @property
+    def format_repl(self):
+        if self.regex_repl is not None and '|' in self.regex_repl:
+            def multi_repl(m):
+                for i, repl in enumerate(self.regex_repl.split('|'), start=1):
+                    if m.group(i) is not None:
+                        return re.sub(m.re, repl, m.string)
+            return multi_repl
+        return self.regex_repl
+
 class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
-
-    @dataclass    
-    class State(DataclassSerializable):
-
-        regex: str = None
-        regex_repl: str = None
-        example: str = None
-        deletechars: str = ' -./#,'
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.state = self.State()
+        self.state = RegexReplaceValidatorState()
 
     def set_state(self, state):
         state = state or dict()
-        assert isinstance(state, dict)
-        self.state = self.State(**state)
-        if (regex := self.state.regex) is not None:
-            self.state.regex = re.compile(regex)
+        if isinstance(state, dict):
+            state = RegexReplaceValidatorState(**state)
+        self.state = state
+        # Emit changed signal as the updated state may affect the validity (and background color).
+        self.changed.emit()
 
     def validate(self, qtext, position):
         ptext = str(qtext).upper()
         if not ptext:
             return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
-        validity = self.validity(ptext)
+        validity = self.validity(self.state, ptext)
         if validity.valid:
             return (QtGui.QValidator.State.Acceptable, validity.formatted_value, len(validity.formatted_value or ''))
         return (QtGui.QValidator.State.Intermediate, qtext, position)
 
-    def validity(self, value):
+    @classmethod
+    def validity(cls, state, value):
+        assert isinstance(state, RegexReplaceValidatorState)
         info = {}
         # First sanitize the value.
-        value = self.sanitize(value)
+        value = cls.sanitize(state, value)
         formatted_value = value
         # Check if the value matches the regex.
-        if value is not None and self.state.regex is not None:
-            if not self.state.regex.fullmatch(value):
+        if value is not None and state.regex is not None:
+            regex = re.compile(state.regex)
+            if not regex.fullmatch(value):
                 return data_validity(False, value, value, InvalidFormat.message, info)
             # If the regex replacement pattern is defined, use it construct
             # both the compact as the formatted value:
-            if self.format_repl:
-                formatted_value = re.sub(self.state.regex, self.format_repl, value)
-                value = re.sub(self.state.regex, self.compact_repl, value)
+            if state.format_repl:
+                formatted_value = re.sub(regex, state.format_repl, value)
+                value = re.sub(regex, state.compact_repl, value)
             # If no replacement is defined, the formatted value should be identitical to the formatted one:
             else:
                 formatted_value = value
 
         return data_validity(True, value, formatted_value, None, info)
 
-    def sanitize(self, value):
+    @classmethod
+    def sanitize(cls, state, value):
         """
         Sanitizes the given value by stripping whitespace and delimeters,
         and capitilizing the result. If the stripped form becomes the empty string,
         None will be returned.
         """
+        assert isinstance(state, RegexReplaceValidatorState)
         if isinstance(value, str):
-            return stdnum.util.clean(value, self.state.deletechars).strip().upper() or None
+            return stdnum.util.clean(value, state.deletechars).strip().upper() or None
 
-    def format_value(self, zip_code):
-        return self.validity(zip_code).formatted_value
+    def format_value(self, value):
+        return self.validity(self.state, value).formatted_value
 
-    @property
-    def compact_repl(self):
-        if self.state.regex_repl is not None:
-            if '|' in self.state.regex_repl:
-                def multi_repl(m):
-                    for i, repl in enumerate(self.state.regex_repl.split('|'), start=1):
-                        if m.group(i) is not None:
-                            return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
-                return multi_repl
-            return ''.join(re.findall('\\\\\d+', self.state.regex_repl))
-
-    @property
-    def format_repl(self):
-        if self.state.regex_repl is not None and '|' in self.state.regex_repl:
-            def multi_repl(m):
-                for i, repl in enumerate(self.state.regex_repl.split('|'), start=1):
-                    if m.group(i) is not None:
-                        return re.sub(m.re, repl, m.string)
-            return multi_repl
-        return self.state.regex_repl
-
-
-class ZipcodeValidator(RegexReplaceValidator):
+class ZipcodeValidatorState(RegexReplaceValidatorState):
 
     @classmethod
-    def state_for_city(cls, city):
+    def for_city(cls, city):
         if city is not None and city.zip_code_type is not None:
             zip_code_type = zip_code_types[city.zip_code_type]
-            state = cls.State(
+            return cls(
                 regex=zip_code_type.regex,
                 regex_repl=zip_code_type.repl,
                 example=zip_code_type.example,
             )
-            return DataclassSerializable.asdict(state)
+        return cls()
 
     @classmethod
-    def state_for_addressable(cls, addressable):
+    def for_addressable(cls, addressable):
         if addressable is not None:
-            return cls.state_for_city(addressable.city)
+            return cls.for_city(addressable.city)
+        return cls()
 
     @classmethod
     def hint_for_city(cls, city):
-        if (state := cls.state_for_city(city)) is not None and \
-                (example := state["example"]) is not None:
+        if (state := cls.for_city(city)) is not None and \
+                (example := state.example) is not None:
             return 'e.g: {}'.format(example)
 
     @classmethod
     def hint_for_addressable(cls, addressable):
         if addressable is not None:
             return cls.hint_for_city(addressable.city)
-
-zipcode_validator = ZipcodeValidator()
