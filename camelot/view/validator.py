@@ -88,7 +88,7 @@ class RegexReplaceValidatorState(DataclassSerializable):
     regex: str = None
     regex_repl: str = None
     example: str = None
-    deletechars: str = ' -./#,'
+    deletechars: str = ''
 
     @property
     def compact_repl(self):
@@ -173,6 +173,8 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
         return self.validity(self.state, value).formatted_value
 
 class ZipcodeValidatorState(RegexReplaceValidatorState):
+
+    deletechars: str = ' -./#,'
 
     @classmethod
     def for_city(cls, city):
