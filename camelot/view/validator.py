@@ -38,12 +38,27 @@ from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, InitVar
 from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
 
 data_validity = collections.namedtuple('data_validity', ['valid', 'value', 'formatted_value', 'error_msg', 'info'])
+
+@dataclass
+class ValidatorState(DataclassSerializable):
+
+    value: str = None
+    formatted_value: str = field(init=False, default=None)
+    valid: bool = field(init=False, default=True)
+    error_msg: str = field(init=False, default=None)
+
+    @property
+    def info(self):
+        return self._info
+
+    def __post_init__(self):
+        self._info = {}
 
 class AbstractValidator:
     """
@@ -83,7 +98,7 @@ class DateValidator(QtGui.QValidator):
         return (QtGui.QValidator.State.Acceptable, input_, pos)
 
 @dataclass
-class RegexReplaceValidatorState(DataclassSerializable):
+class RegexReplaceValidatorState(ValidatorState):
 
     regex: str = None
     regex_repl: str = None
@@ -120,7 +135,7 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
     def set_state(self, state):
         state = state or dict()
         if isinstance(state, dict):
-            state = RegexReplaceValidatorState(**state)
+            state = self.state.__class__(**state)
         self.state = state
         # Emit changed signal as the updated state may affect the validity (and background color).
         self.changed.emit()
