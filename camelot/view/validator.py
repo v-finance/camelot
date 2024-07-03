@@ -105,6 +105,37 @@ class RegexReplaceValidatorState(ValidatorState):
     example: str = None
     deletechars: str = ''
 
+    def __post_init__(self):
+        super().__post_init__()
+        # First sanitize the value.
+        self.sanitize(self.value, self.deletechars)
+        self.formatted_value = self.value
+        # Check if the value matches the regex.
+        if self.value is not None and self.regex is not None:
+            regex = re.compile(self.regex)
+            if not regex.fullmatch(self.value):
+                self.valid = False
+                self.error_msg = InvalidFormat.message
+            else:
+                # If the regex replacement pattern is defined, use it construct
+                # both the compact as the formatted value:
+                if self.format_repl:
+                    self.formatted_value = re.sub(regex, self.format_repl, self.value)
+                    self.value = re.sub(regex, self.compact_repl, self.value)
+                # If no replacement is defined, the formatted value should be identitical to the formatted one:
+                else:
+                    self.formatted_value = self.value
+
+    @classmethod
+    def sanitize(cls, value):
+        """
+        Sanitizes the given value by stripping the chars defined by this state's deletechars,
+        and capitilizing the result. If the stripped form becomes the empty string,
+        None will be returned.
+        """
+        if isinstance(value, str):
+            return stdnum.util.clean(value, cls.deletechars).strip().upper() or None
+
     @property
     def compact_repl(self):
         if self.regex_repl is not None:
@@ -145,47 +176,19 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
         if not ptext:
             return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
-        validity = self.validity(self.state, ptext)
-        if validity.valid:
-            return (QtGui.QValidator.State.Acceptable, validity.formatted_value, len(validity.formatted_value or ''))
-        return (QtGui.QValidator.State.Intermediate, qtext, position)
+        regex = re.compile(self.state.regex)
+        if regex.match(ptext) is None:
+            return (QtGui.QValidator.State.Intermediate, qtext, len(ptext))
+        else:
+            if ptext == self.state.value:
+                return (QtGui.QValidator.State.Acceptable if self.state.valid else QtGui.QValidator.State.Intermediate,
+                        self.state.formatted_value, len(self.state.formatted_value or ''))
 
-    @classmethod
-    def validity(cls, state, value):
-        assert isinstance(state, RegexReplaceValidatorState)
-        info = {}
-        # First sanitize the value.
-        value = cls.sanitize(state, value)
-        formatted_value = value
-        # Check if the value matches the regex.
-        if value is not None and state.regex is not None:
-            regex = re.compile(state.regex)
-            if not regex.fullmatch(value):
-                return data_validity(False, value, value, InvalidFormat.message, info)
-            # If the regex replacement pattern is defined, use it construct
-            # both the compact as the formatted value:
-            if state.format_repl:
-                formatted_value = re.sub(regex, state.format_repl, value)
-                value = re.sub(regex, state.compact_repl, value)
-            # If no replacement is defined, the formatted value should be identitical to the formatted one:
-            else:
-                formatted_value = value
-
-        return data_validity(True, value, formatted_value, None, info)
-
-    @classmethod
-    def sanitize(cls, state, value):
-        """
-        Sanitizes the given value by stripping whitespace and delimeters,
-        and capitilizing the result. If the stripped form becomes the empty string,
-        None will be returned.
-        """
-        assert isinstance(state, RegexReplaceValidatorState)
-        if isinstance(value, str):
-            return stdnum.util.clean(value, state.deletechars).strip().upper() or None
+            formatted_value = re.sub(regex, self.state.format_repl, ptext)
+            return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
 
     def format_value(self, value):
-        return self.validity(self.state, value).formatted_value
+        return self.state.formatted_value
 
 class ZipcodeValidatorState(RegexReplaceValidatorState):
 
