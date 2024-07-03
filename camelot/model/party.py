@@ -332,9 +332,8 @@ class City(GeographicBoundary, WithCountry):
 
     @GeographicBoundary.code.setter
     def code(self, code):
-        # Set the city's zip code to its compact and sanitized representation defined by the validation.
-        # If its invalid, the value will remain untouched.
-        self._code = ZipcodeValidatorState.for_city(self).value
+        # Set the city's zip code to its compact and sanitized representation.
+        self._code = ZipcodeValidatorState.sanitize(code)
 
     @property
     def formatted_zip_code(self):
