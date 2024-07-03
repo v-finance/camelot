@@ -159,13 +159,13 @@ class Storage:
         upload_to_path = Path(self.upload_to)
         return (StoredFile(self, path.name) for path in upload_to_path.glob(f'{prefix}*{suffix}'))
 
-    def path(self, name) -> str:
+    def path(self, name) -> PurePosixPath:
         """Get the local filesystem path where the file can be opened using Python standard open
 
         :param name: Name of the file
         :return: Path of the file
         """
-        return self.upload_to.joinpath(name).as_posix()
+        return self.upload_to.joinpath(name)
 
     def _create_tempfile(self, suffix: str, prefix: str):
         # @todo suffix and prefix should be cleaned, because the user might be
@@ -253,7 +253,7 @@ class Storage:
         logger.debug('closed file')
         return self.stored_file_implementation(self, os.path.basename(to_path))
 
-    def checkout(self, stored_file: StoredFile) -> str:
+    def checkout(self, stored_file: StoredFile) -> PurePosixPath:
         """Check the file out of the storage and return a local filesystem path
 
         :param stored_file: StoredFile object
@@ -261,7 +261,7 @@ class Storage:
         """
         assert isinstance(stored_file, StoredFile)
         self.available()
-        return self.upload_to.joinpath(stored_file.name).as_posix()
+        return self.upload_to.joinpath(stored_file.name)
 
     # @contextmanager: NOTE: This should be a context manager so that the file always gets closed(doesn't happen now), good luck!
     def checkout_stream(self, stored_file: StoredFile) -> BinaryIO:
