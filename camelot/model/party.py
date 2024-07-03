@@ -37,6 +37,7 @@ by Len Silverston, Chapter 2
 import copy
 import datetime
 import enum
+from pathlib import PurePosixPath
 
 import sqlalchemy.types
 
@@ -865,7 +866,7 @@ class Organization( Party ):
 class Person( Party ):
     """Person represents natural persons
     """
-    storage = Storage(upload_to='person-pictures')
+    storage = Storage(upload_to=PurePosixPath('person-pictures'))
 
     __tablename__ = 'person'
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
@@ -882,7 +883,7 @@ class Person( Party ):
     social_security_number = schema.Column( IdentifyingUnicode(length=12) )
     passport_number = schema.Column( IdentifyingUnicode(length=20) )
     passport_expiry_date = schema.Column( Date() )
-    picture = schema.Column( camelot.types.File())
+    picture = schema.Column( camelot.types.File(storage))
     comment = schema.Column( camelot.types.RichText() )
 
     @property
