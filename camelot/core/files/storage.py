@@ -15,9 +15,6 @@ from camelot.core.utils import ugettext
 # Initialize the logger
 logger = logging.getLogger('camelot.core.files.storage')
 
-PathType = Union[str, os.PathLike]
-
-
 class StoredFile:
     """Helper class for the File field type.
     Stored file objects can be used within the GUI thread, as none of
@@ -59,8 +56,7 @@ class Storage:
     script as well.
     """
 
-    def __init__(self, upload_to: PathType = '', stored_file_implementation: Type[StoredFile] = StoredFile,
-                 root: Optional[Union[PathType, Callable[[], PathType]]] = None):
+    def __init__(self, upload_to: PurePosixPath = ''):
         """
         :param upload_to: the subdirectory in which to put files
         :param stored_file_implementation: the subclass of StoredFile to be used when
@@ -72,25 +68,12 @@ class Storage:
         The actual files will be put in root + upload to.  If None is given as root,
         the settings.CAMELOT_MEDIA_ROOT will be taken as the root directory.
         """
-        self._root = root
-        self._subfolder: PurePosixPath = PurePosixPath(upload_to)
-        self._upload_to = None
-        self.stored_file_implementation = stored_file_implementation
+        assert isinstance(upload_to, PurePosixPath)
+        self.upload_to = PurePosixPath(settings.CAMELOT_MEDIA_ROOT).joinpath(upload_to)
         #
         # don't do anything here that might reduce the startup time, like verifying the
         # availability of the storage, since the path might be on a slow network share
         #
-
-    @property
-    def upload_to(self) -> PurePosixPath:
-        """Return the directory path to upload files"""
-        if self._upload_to is None:
-            root = self._root or settings.CAMELOT_MEDIA_ROOT
-            if callable(root):
-                root = root()
-            root = PurePosixPath(root)
-            self._upload_to = root.joinpath(self._subfolder)
-        return self._upload_to
 
     def available(self) -> bool:
         """
@@ -115,7 +98,7 @@ class Storage:
         return False
 
     @staticmethod
-    def exists(name: PathType) -> bool:
+    def exists(name: PurePosixPath) -> bool:
         """Check if a file exists given its name
 
         :param name: Name of the file
@@ -162,7 +145,7 @@ class Storage:
                                 detail=ugettext(
                                     f'OS Error number : {e.errno}\nError : {e.strerror}\nPrefix : {prefix}\nSuffix : {suffix}'))
 
-    def checkin(self, local_path: PathType, filename: str = None) -> StoredFile:
+    def checkin(self, local_path: PurePosixPath, filename: str = None) -> StoredFile:
         """Check the file pointed to by local_path into the storage and return a StoredFile
 
         :param local_path: The path to the local file that needs to be checked in
@@ -190,9 +173,9 @@ class Storage:
         logger.debug(f'copy file from {local_path} to {to_path}')
         shutil.copy(Path(local_path), Path(to_path))
 
-        return self.stored_file_implementation(self, to_path.name)
+        return StoredFile(self, to_path.name)
 
-    def checkin_stream(self, prefix: str, suffix: str, stream: IOBase):
+    def checkin_stream(self, prefix: str, suffix: str, stream: IOBase) -> StoredFile:
         """Check the data stream as a file into the storage
 
         :param prefix: The prefix to use for generating a file name
@@ -223,7 +206,7 @@ class Storage:
             logger.debug('flushed file')
 
         logger.debug('closed file')
-        return self.stored_file_implementation(self, os.path.basename(to_path))
+        return StoredFile(self, os.path.basename(to_path))
 
     def checkout(self, stored_file: StoredFile) -> PurePosixPath:
         """Check the file out of the storage and return a local filesystem path
@@ -235,7 +218,7 @@ class Storage:
         return self.upload_to.joinpath(stored_file.name)
 
     @contextmanager
-    def checkout_stream(self, stored_file: PathType):
+    def checkout_stream(self, stored_file: PurePosixPath):
         """Check the file out of the storage as a data stream
 
         :param stored_file: StoredFile object

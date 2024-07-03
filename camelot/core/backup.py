@@ -76,25 +76,6 @@ class BackupMechanism(object):
         This method will be called inside the model thread.
         """
         return u'backup'
-    
-    @classmethod
-    def get_default_storage(cls):
-        """
-        :return: a camelot.core.files.storage.Storage object
-        
-        Returns the storage to be used to store default backups.
-        
-        By default, this will return a Storage that puts the backup files
-        in the DataLocation as specified by the QDesktopServices
-        """
-        apps_folder = str(
-            QtCore.QStandardPaths.writableLocation(
-                QtCore.QStandardPaths.DataLocation
-            )
-        )
-        
-        from camelot.core.files.storage import Storage
-        return Storage(upload_to='backups', root=apps_folder)
         
     def backup_table_filter(self, from_table):
         """
