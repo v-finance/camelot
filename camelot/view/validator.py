@@ -31,7 +31,6 @@
 editors or other widgets.
 """
 import collections
-import dataclasses
 import re
 import stdnum.util
 
@@ -39,7 +38,7 @@ from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
-from dataclasses import dataclass, field, InitVar
+from dataclasses import dataclass
 from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
