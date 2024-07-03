@@ -43,8 +43,6 @@ from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
 
-data_validity = collections.namedtuple('data_validity', ['valid', 'value', 'formatted_value', 'error_msg', 'info'])
-
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
 
@@ -131,7 +129,7 @@ class RegexReplaceValidatorState(ValidatorState):
                     error_msg=InvalidFormat.message,
                 )
             else:
-                # If the regex replacement pattern is defined, use it construct
+                # If the regex replacement pattern is defined, use it to construct
                 # both the compact as the formatted value:
                 if cls.format_repl(regex_repl):
                     formatted_value = re.sub(regex, cls.format_repl(regex_repl), value)
