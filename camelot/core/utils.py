@@ -137,9 +137,6 @@ class ugettext_lazy(object):
     def __str__(self):
         return ugettext(self._string_to_translate).format(*self._args, **self._kwargs)
 
-    def __unicode__(self):
-        return ugettext(self._string_to_translate).format(*self._args, **self._kwargs)
-    
     def __eq__(self, other_string):
         if isinstance(other_string, str):
             return other_string == self._string_to_translate.format(*self._args, **self._kwargs)
