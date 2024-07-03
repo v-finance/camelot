@@ -293,7 +293,7 @@ class NamingContextCaseMixin(AbstractNamingContextCaseMixin):
             initial_naming_context.bind_context(self.context_name, self.context)
             obj =  Object()
             self.context.bind('obj1', obj)
-            context_size = len(list(self.context.list_files()))
+            context_size = len(list(self.context.list()))
             self.assertEqual(context_size, 1)
             initial_size_after_bind = len(list(initial_naming_context.list()))
             self.assertEqual(initial_size_after_bind, initial_size_before_bind+context_size)
