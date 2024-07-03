@@ -181,30 +181,31 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.state = RegexReplaceValidatorState()
+        self.state = None
 
     def set_state(self, state):
         state = state or dict()
-        if isinstance(state, dict):
-            state = self.state.__class__(**state)
+        if not isinstance(state, dict):
+            state = ValidatorState.asdict(state)
         self.state = state
         # Emit changed signal as the updated state may affect the validity (and background color).
         self.changed.emit()
 
     def validate(self, qtext, position):
         ptext = str(qtext).upper()
-        if not ptext:
+        if not ptext or self.state is None:
             return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
-        regex = re.compile(self.state.regex)
+        regex = re.compile(self.state["regex"])
         if regex.match(ptext) is None:
             return (QtGui.QValidator.State.Intermediate, qtext, len(ptext))
         else:
-            if ptext == self.state.value:
-                return (QtGui.QValidator.State.Acceptable if self.state.valid else QtGui.QValidator.State.Intermediate,
-                        self.state.formatted_value, len(self.state.formatted_value or ''))
+            if ptext == self.state["value"]:
+                formatted_value = self.state["formatted_value"]
+                return (QtGui.QValidator.State.Acceptable if self.state["valid"] else QtGui.QValidator.State.Intermediate,
+                        formatted_value, len(formatted_value))
 
-            formatted_value = re.sub(regex, self.state.format_repl, ptext)
+            formatted_value = re.sub(regex, RegexReplaceValidatorState.format_repl(self.state["regex_repl"]), ptext)
             return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
 
     def format_value(self, value):
