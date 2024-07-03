@@ -156,8 +156,13 @@ class Storage:
 
         :return: An iterator of StoredFile objects
         """
+        if suffix == '*':
+            pattern = f'{prefix}*'
+        else:
+            pattern = f'{prefix}*{suffix}'
+
         upload_to_path = Path(self.upload_to)
-        return (StoredFile(self, path.name) for path in upload_to_path.glob(f'{prefix}*{suffix}'))
+        return (StoredFile(self, path.name) for path in upload_to_path.glob(pattern))
 
     def path(self, name) -> PurePosixPath:
         """Get the local filesystem path where the file can be opened using Python standard open
