@@ -48,7 +48,7 @@ data_validity = collections.namedtuple('data_validity', ['valid', 'value', 'form
 @dataclass
 class ValidatorState(DataclassSerializable):
 
-    value: str = None
+    _value: str = None
     formatted_value: str = None
     valid: bool = True
     error_msg: str = None
@@ -57,8 +57,24 @@ class ValidatorState(DataclassSerializable):
     def info(self):
         return self._info
 
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+        self.update()
+
     def __post_init__(self):
         self._info = {}
+        self.update()
+    
+    def update(self):
+        """
+        Update this validator state based on the set value.
+        """
+        pass
 
 class AbstractValidator:
     """
@@ -105,23 +121,22 @@ class RegexReplaceValidatorState(ValidatorState):
     example: str = None
     deletechars: str = ''
 
-    def __post_init__(self):
-        super().__post_init__()
+    def update(self):
         # First sanitize the value.
-        self.sanitize(self.value, self.deletechars)
-        self.formatted_value = self.value
+        self._value = self.sanitize(self._value)
+        self.formatted_value = self._value
         # Check if the value matches the regex.
-        if self.value is not None and self.regex is not None:
+        if self._value is not None and self.regex is not None:
             regex = re.compile(self.regex)
-            if not regex.fullmatch(self.value):
+            if not regex.fullmatch(self._value):
                 self.valid = False
                 self.error_msg = InvalidFormat.message
             else:
                 # If the regex replacement pattern is defined, use it construct
                 # both the compact as the formatted value:
                 if self.format_repl:
-                    self.formatted_value = re.sub(regex, self.format_repl, self.value)
-                    self.value = re.sub(regex, self.compact_repl, self.value)
+                    self.formatted_value = re.sub(regex, self.format_repl, self._value)
+                    self._value = re.sub(regex, self.compact_repl, self._value)
                 # If no replacement is defined, the formatted value should be identitical to the formatted one:
                 else:
                     self.formatted_value = self.value
@@ -195,9 +210,9 @@ class ZipcodeValidatorState(RegexReplaceValidatorState):
     deletechars: str = ' -./#,'
 
     @classmethod
-    def for_city(cls, city):
-        if city is not None and city.zip_code_type is not None:
-            zip_code_type = zip_code_types[city.zip_code_type]
+    def for_zip_code_type(cls, zip_code_type):
+        if zip_code_type in zip_code_types:
+            zip_code_type = zip_code_types[zip_code_type]
             return cls(
                 regex=zip_code_type.regex,
                 regex_repl=zip_code_type.repl,
@@ -206,9 +221,21 @@ class ZipcodeValidatorState(RegexReplaceValidatorState):
         return cls()
 
     @classmethod
+    def for_city(cls, city):
+        if city is not None:
+            state = cls.for_zip_code_type(city.zip_code_type)
+            state.value = city.code
+            return state
+        return cls()
+
+    @classmethod
     def for_addressable(cls, addressable):
         if addressable is not None:
-            return cls.for_city(addressable.city)
+            state = cls()
+            if addressable.city is not None:
+                state = cls.for_zip_code_type(addressable.city.zip_code_type)
+            state.value = addressable.zip_code
+            return state
         return cls()
 
     @classmethod
