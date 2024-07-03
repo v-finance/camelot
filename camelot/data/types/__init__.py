@@ -2,7 +2,6 @@ import collections
 import re
 
 from camelot.core.utils import ugettext_lazy
-from camelot.admin.action import Mode
 
 from sqlalchemy import util
 
@@ -77,6 +76,7 @@ class Types(util.OrderedProperties):
         return [(feature_type.id, self.get_verbose_name(feature_type.name)) for feature_type in self]
 
     def get_modes(self):
+        from camelot.admin.action import Mode
         return [Mode(*choice) for choice in self.get_choices()]
 
     def get_by_id(self, type_id):
@@ -121,27 +121,6 @@ class zip_code_type(collections.namedtuple('zip_code_type', ('code', 'regex', 'r
             if m is not None:
                 prefixes.extend(m.group(1).split('|'))
         return set(prefixes)
-
-    @property
-    def compact_repl(self):
-        if self.repl is not None:
-            if '|' in self.repl:
-                def multi_repl(m):
-                    for i, repl in enumerate(self.repl.split('|'), start=1):
-                        if m.group(i) is not None:
-                            return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
-                return multi_repl
-            return ''.join(re.findall('\\\\\d+', self.repl))
-
-    @property
-    def format_repl(self):
-        if self.repl is not None and '|' in self.repl:
-            def multi_repl(m):
-                for i, repl in enumerate(self.repl.split('|'), start=1):
-                    if m.group(i) is not None:
-                        return re.sub(m.re, repl, m.string)
-            return multi_repl
-        return self.repl
 
     @property
     def tooltip(self):

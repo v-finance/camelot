@@ -46,41 +46,11 @@ LOGGER = logging.getLogger( 'camelot.admin.action' )
 class ModelContext( object ):
     """
 The Model context in which an action is running.  The model context can contain
-reference to database sessions or other model related data. This object can not 
-contain references to widgets as those belong strictly to the :class:`GuiContext`.
+reference to database sessions or other model related data. 
     """
 
     def __init__( self ):
         pass
-
-
-class GuiContext( object ):
-    """
-The GUI context in which an action is running.  This object can contain
-references to widgets and other useful information.  This object cannot
-contain reference to anything database or model related, as those belong
-strictly to the :class:`ModelContext`
-    """
-
-    def get_window(self):
-        """
-        The window to be used as a reference to position new windows.  Returns
-        `None` if there is no window yet.
-        
-        :return: a :class:`QtWidgets.QWidget`
-        """
-        return None
-
-    def copy( self, base_class = None ):
-        """Create a copy of the GuiContext, this function is used
-        to create new GuiContext's that are more specialized without
-        modifying the original one.
-
-        :param base_class: the type of the new context to be created, None
-            if the new context should be of the same type as the copied context.
-        """
-        new_context = (base_class or self.__class__)()
-        return new_context
 
 
 @dataclass
@@ -91,8 +61,7 @@ the default mode.
     
 .. attribute:: value
 
-    a value representing the mode to the developer and the authentication
-    system.  this name will be used in the :class:`GuiContext`
+    a value representing the mode to the developer
     
 .. attribute:: verbose_name
 
@@ -234,27 +203,6 @@ return immediately and the :meth:`model_run` will not be blocked.
 
     blocking = True
     cancelable = True
-
-    @classmethod
-    def gui_run( cls, gui_context_name, serialized_step=b'' ):
-        """This method is called in the *GUI thread* upon execution of the
-        action step.  The return value of this method is the result of the
-        :keyword:`yield` statement in the *model thread*.
-        
-        The default behavior of this method is to call the cpp_action_step
-        function.
-        
-        :param gui_context:  An object of type 
-            :class:`camelot.admin.action.GuiContext`, which is the context 
-            of this action available in the *GUI thread*.  What is in the 
-            context depends on how the action was called.
-        :param serialized_step: The serialized action step.
-            
-        this method will raise a :class:`camelot.core.exception.CancelRequest`
-        exception, if the user canceled the operation.
-        """
-        from camelot.core.backend import cpp_action_step
-        return cpp_action_step(gui_context_name, cls.__name__, serialized_step)
 
     def model_run( self, model_context, mode ):
         raise Exception('This should not happen')

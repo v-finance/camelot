@@ -37,7 +37,6 @@ by Len Silverston, Chapter 2
 import copy
 import datetime
 import enum
-import re
 
 import sqlalchemy.types
 
@@ -46,19 +45,24 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm.base import NEVER_SET
 from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
-from sqlalchemy import event, orm, schema, sql, ForeignKey
+from sqlalchemy import (
+    event, ForeignKey, orm, schema, sql,
+)
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action.list_filter import StringFilter
 from camelot.admin.action import list_filter
 from camelot.core.orm import Entity
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import zip_code_types
 import camelot.types
-from camelot.types.typing import Note
+from camelot.sql import is_postgres, is_sqlite
 from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
+from camelot.types.typing import Note
+
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
+from camelot.view.validator import RegexReplaceValidator, ZipcodeValidatorState
 
 from ..core.sql import metadata
 
@@ -69,10 +73,22 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
 
-    code = schema.Column( QuasiIdentifyingUnicode(length=10) )
+    _code = schema.Column('code', QuasiIdentifyingUnicode(length=10), index=True)
     name = schema.Column( QuasiIdentifyingUnicode(length=40), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
+
+    @hybrid.hybrid_property
+    def code(self):
+        return self._code
+
+    @code.expression
+    def code(cls):
+        return cls._code
+
+    @code.setter
+    def code(self, code):
+        self._code = code
 
     @hybrid.hybrid_method
     def translation(self, language='nl_BE'):
@@ -112,13 +128,15 @@ class GeographicBoundary( Entity ):
             postgresql_ops={"name": "gin_trgm_ops"},
             postgresql_using='gin'
         ),
+        schema.CheckConstraint("code !~ '[-\\s\\./#,]'", name='code', _create_rule=is_postgres),
+        schema.CheckConstraint("code GLOB '*[^-. /#,]*'", name='code', _create_rule=is_sqlite),
     )
 
     __entity_args__ = {
         'editable': False
     }
 
-    full_name = orm.column_property(code + ' ' + name)
+    full_name = orm.column_property(_code + ' ' + name)
 
     def __str__(self):
         return u'%s %s' % ( self.code, self.name )
@@ -308,9 +326,19 @@ class City(GeographicBoundary, WithCountry):
     def zip_code_type(self):
         if self.country is not None:
             try:
-                return zip_code_types[self.country.code]
+                return zip_code_types[self.country.code].name
             except KeyError:
                 return
+
+    @GeographicBoundary.code.setter
+    def code(self, code):
+        # Set the city's zip code to its compact and sanitized representation defined by the validation.
+        # If its invalid, the value will remain untouched.
+        self._code = RegexReplaceValidator.validity(ZipcodeValidatorState.for_city(self), code).value
+
+    @property
+    def formatted_zip_code(self):
+        return RegexReplaceValidator.validity(ZipcodeValidatorState.for_city(self), self.code).formatted_value
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
@@ -362,11 +390,11 @@ class City(GeographicBoundary, WithCountry):
     
     def __str__(self):
         if None not in (self.name, self.country):
-            if self.code is not None:
-                return u'{0.code} {0.name} [{1.code}]'.format(self, self.country)
+            if self.formatted_zip_code is not None:
+                return u'{0} {1} [{2.code}]'.format(self.formatted_zip_code, self.name, self.country)
             return u'{0.name} [{1.code}]'.format(self, self.country)
         return u''
-    
+
     @classmethod
     def get_or_create( cls, country, code, name ):
         city = City.query.filter_by( code = code, country = country ).first()
@@ -379,14 +407,14 @@ class City(GeographicBoundary, WithCountry):
     class Message(enum.Enum):
 
         invalid_administrative_division = "{} is geen geldige administratieve indeling voor {}"
-        invalid_zip_code =                "{} is not a valid zip code for {}"
+        invalid_zip_code =                "{} is not a valid zip code for {}: {}"
 
     def get_messages(self):
         if self.country is not None:
 
-            if None not in (self.code, self.zip_code_type):
-                if not re.fullmatch(re.compile(self.zip_code_type.regex), self.code):
-                    yield _(self.Message.invalid_zip_code.value, self.code, self.country)
+            validity = RegexReplaceValidator.validity(ZipcodeValidatorState.for_city(self), self.code)
+            if not validity.valid:
+                yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(validity.error_msg))
 
             if self.administrative_division is not None:
                 if self.country != self.administrative_division.country:
@@ -416,7 +444,12 @@ class City(GeographicBoundary, WithCountry):
 
         field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
         attributes_dict = {
-            'code': {'name': _('Postal code')},
+            'code': {
+                'name': _('Postal code'),
+                'validator_type': RegexReplaceValidator.__name__,
+                'validator_state': ZipcodeValidatorState.for_city,
+                'tooltip': ZipcodeValidatorState.hint_for_city,
+            },
             'administrative_name_NL': {'name': _('Administrative name')},
             'administrative_name_FR': {'name': _('Administrative name')},
             'administrative_division': {'name': _('Administrative division (NUTS)')},
@@ -444,6 +477,11 @@ class Address( Entity ):
                                                nullable=True, index=True)
     _administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
 
+    __table_args__ = (
+        schema.CheckConstraint("_zip_code !~ '[-\\s\\./#,]'", name='zip_code', _create_rule=is_postgres),
+        schema.CheckConstraint("_zip_code GLOB '*[^-. /#,]*'", name='zip_code', _create_rule=is_sqlite),
+    )
+
     @property
     def administrative_division(self):
         """
@@ -467,16 +505,26 @@ class Address( Entity ):
             return self._zip_code or self.city.code
         return self._zip_code
 
+    @zip_code.expression
+    def zip_code(cls):
+        return cls._zip_code
+
     @zip_code.setter
-    def zip_code(self, value):
+    def zip_code(self, code):
         # Only allow to overrule the address' zip code if its city's code is undefined.
         if self.city is not None and not self.city.code:
-            self._zip_code = value
+            # Set the zip code to its compact and sanitized representation defined by the validation.
+            # If its invalid, the value will remain untouched.
+            self._zip_code = RegexReplaceValidator.validity(ZipcodeValidatorState.for_addressable(self), code).value
 
     @property
     def zip_code_type(self):
         if self.city is not None:
             return self.city.zip_code_type
+
+    @property
+    def formatted_zip_code(self):
+        return RegexReplaceValidator.validity(ZipcodeValidatorState.for_addressable(self), self.zip_code).formatted_value
 
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
@@ -494,16 +542,17 @@ class Address( Entity ):
         if self.city is not None:
             yield from self.city.get_messages()
 
-            if None not in (self._zip_code, self.city.zip_code_type):
-                if not re.fullmatch(re.compile(self.city.zip_code_type.regex), self._zip_code):
-                    yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country)
+            if self._zip_code is not None:
+                validity = RegexReplaceValidator.validity(ZipcodeValidatorState.for_addressable(self), self._zip_code)
+                if not validity.valid:
+                    yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country, ugettext(validity.error_msg))
 
             if self.administrative_division is not None and self.city.country != self.administrative_division.country:
                 yield _(City.Message.invalid_administrative_division.value, self.administrative_division, self.city.country)
 
     def __str__(self):
         city_name = self.city.name if self.city is not None else ''
-        return u'%s, %s %s' % ( self.street1 or '', self.zip_code or '', city_name or '' )
+        return u'%s, %s %s' % ( self.street1 or '', self.formatted_zip_code or '', city_name or '' )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
@@ -513,7 +562,12 @@ class Address( Entity ):
         form_state = 'right'
         field_attributes = {
             'street1': {'minimal_column_width':30},
-            'zip_code': {'editable': lambda o: o.city is not None and not o.city.code},
+            'zip_code': {
+                'editable': lambda o: o.city is not None and not o.city.code,
+                'validator_type': RegexReplaceValidator.__name__,
+                'validator_state': ZipcodeValidatorState.for_addressable,
+                'tooltip': ZipcodeValidatorState.hint_for_addressable,
+                },
             'administrative_division': {
                 'delegate':delegates.Many2OneDelegate,
                 'target': AdministrativeDivision,
@@ -599,9 +653,7 @@ class WithAddresses(object):
 
     @zip_code.expression
     def zip_code(cls):
-        return sql.select([Address.zip_code],
-                          whereclause=cls.first_address_filter(),
-                          limit=1).as_scalar()    
+        return Address.zip_code
 
     @hybrid.hybrid_property
     def city( self ):
@@ -622,6 +674,11 @@ class WithAddresses(object):
                               cls.first_address_filter()
                               ),
                           limit=1).as_scalar()
+
+    @property
+    def formatted_zip_code(self):
+        if self.city is not None:
+            return self.city.formatted_zip_code
 
     @hybrid.hybrid_property
     def administrative_division(self):
@@ -877,9 +934,6 @@ class Person( Party ):
     #def social_security_number( self ):
         #return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
 
-    #def __unicode__( self ):
-        #return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
-
     #class Admin( PartyRelationship.Admin ):
         #verbose_name = _('Employment relation')
         #verbose_name_plural = _('Employment relations')
@@ -1050,6 +1104,10 @@ class Addressable(object):
     def zip_code( self ):
         return self._get_address_field( u'zip_code' )
 
+    @zip_code.expression
+    def zip_code(cls):
+        return cls._zip_code
+
     @zip_code.setter
     def zip_code( self, value ):
         return self._set_address_field( u'zip_code', value )
@@ -1057,6 +1115,11 @@ class Addressable(object):
     @zip_code.expression
     def zip_code( self ):
         return Address.zip_code
+
+    @property
+    def formatted_zip_code(self):
+        if self.address:
+            return self.address.formatted_zip_code
 
     @hybrid.hybrid_property
     def city( self ):

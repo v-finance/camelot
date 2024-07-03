@@ -111,6 +111,10 @@ class Profile:
         kwargs.setdefault( 'pool_recycle', 600 )
         if self.dialect == 'mysql':
             kwargs.setdefault( 'connect_args', dict(charset='utf8') )
+        elif self.dialect == 'postgresql':
+            kwargs.setdefault('executemany_mode', 'values')
+            kwargs.setdefault('executemany_values_page_size', 10000)
+            kwargs.setdefault('executemany_batch_page_size', 500)
         return create_engine( self.get_connection_string(), **kwargs )
 
     def get_language_code(self):

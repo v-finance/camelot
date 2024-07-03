@@ -8,17 +8,11 @@ import sys
 import unittest
 from decimal import Decimal
 
-from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
-from .test_item_model import (
-    A, QueryQStandardItemModelMixinCase, ExampleItemModelProcess,
-    setup_query_proxy_name, setup_query_proxy_small_columns_name,
-    setup_query_proxy_equal_columns_name
-)
+from .test_item_model import QueryQStandardItemModelMixinCase
 from .test_model import ExampleModelMixinCase
-from camelot.admin.action import GuiContext
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
@@ -41,7 +35,13 @@ from camelot.view.controls.formview import FormEditors
 from camelot.view.controls.tableview import TableWidget
 from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
-from camelot_example.application_admin import MyApplicationAdmin
+
+from .test_thread import testing_context_args
+from .testing_context import (
+    app_admin, A, setup_query_proxy_name, setup_query_proxy_small_columns_name,
+    setup_query_proxy_equal_columns_name
+)
+
 
 logger = logging.getLogger('view.unittests')
 
@@ -465,7 +465,7 @@ class FormTest(
 
     images_path = static_images_path
     model_context_name = ('form_test_model_context',)
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp(self):
         super().setUp()
@@ -483,14 +483,13 @@ class FormTest(
         widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
         widget_mapper.setModel( self.person_model )
         widget_mapper.setItemDelegate(delegate)
-        fields = dict((f, {
+        fields = list((f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
             }) for f, fa in self.person_admin.get_fields())
         self.widgets = FormEditors(self.qt_parent, fields)
         self.person_entity = Person
-        self.gui_context = GuiContext()
-        
+
     def _get_serialized_form_display_data(self, form_display):
         serialized_form_display = form_display._to_bytes()
         form_data = json.loads(serialized_form_display)
@@ -551,7 +550,7 @@ class FormTest(
         person = self.person_entity()
         open_form_view = OpenFormView(person, person_admin)
         self.grab_widget(
-            open_form_view.render(self.gui_context, open_form_view._to_dict())
+            open_form_view.render(open_form_view._to_dict())
         )
 
 class DelegateCase(unittest.TestCase, GrabMixinCase):
@@ -815,11 +814,11 @@ class ControlsTest(
     ):
     """Test some basic controls"""
 
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     images_path = static_images_path
     model_context_name = ('controls_test_model_context',)
-    app_admin = MyApplicationAdmin()
+    app_admin = ApplicationAdmin()
 
     def setUp(self):
         self.gui_run(setup_query_proxy_name, mode=self.model_context_name)
@@ -891,28 +890,27 @@ class SnippetsTest(RunningProcessCase,
 
     images_path = static_images_path
     model_context_name = ('snippets_test_model_context',)
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.gui_run(setup_query_proxy_name, mode=cls.model_context_name)
         cls.app_admin = ApplicationAdmin()
-        cls.gui_context = GuiContext()
         cls.process()
 
     def test_fields_with_actions(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView(coordinate, admin)
-        form = open_form_view.render(self.gui_context, open_form_view._to_dict())
+        form = open_form_view.render(open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView(coordinate, admin)
-        form = open_form_view.render(self.gui_context, open_form_view._to_dict())
+        form = open_form_view.render(open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_background_color(self):
