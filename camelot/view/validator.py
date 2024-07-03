@@ -38,43 +38,28 @@ from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
 
 data_validity = collections.namedtuple('data_validity', ['valid', 'value', 'formatted_value', 'error_msg', 'info'])
 
-@dataclass
+@dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
 
-    _value: str = None
+    value: str = None
     formatted_value: str = None
     valid: bool = True
     error_msg: str = None
+    info: dict = field(default_factory=dict)
 
-    @property
-    def info(self):
-        return self._info
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-        self.update()
-
-    def __post_init__(self):
-        self._info = {}
-        self.update()
-    
-    def update(self):
-        """
-        Update this validator state based on the set value.
-        """
-        pass
+    @classmethod
+    def for_value(cls, value):
+        return cls(
+            value=value,
+            formatted_value=value,
+        )
 
 class AbstractValidator:
     """
@@ -113,7 +98,7 @@ class DateValidator(QtGui.QValidator):
             return (QtGui.QValidator.State.Intermediate, input_, pos)
         return (QtGui.QValidator.State.Acceptable, input_, pos)
 
-@dataclass
+@dataclass(frozen=True)
 class RegexReplaceValidatorState(ValidatorState):
 
     regex: str = None
@@ -121,25 +106,45 @@ class RegexReplaceValidatorState(ValidatorState):
     example: str = None
     deletechars: str = ''
 
-    def update(self):
+    @classmethod
+    def for_value(cls, value, regex=None, regex_repl=None, example=None):
+        state = dict(
+            value=value,
+            formatted_value=value,
+            valid=True,
+            error_message=None,
+            regex=regex,
+            regex_repl=regex_repl,
+            example=example,
+        )
+
         # First sanitize the value.
-        self._value = self.sanitize(self._value)
-        self.formatted_value = self._value
+        value = cls.sanitize(value)
+        formatted_value = value
+
         # Check if the value matches the regex.
-        if self._value is not None and self.regex is not None:
-            regex = re.compile(self.regex)
-            if not regex.fullmatch(self._value):
-                self.valid = False
-                self.error_msg = InvalidFormat.message
+        if value is not None and regex is not None:
+            regex = re.compile(regex)
+            if not regex.fullmatch(value):
+                state.update(
+                    valid=False,
+                    error_msg=InvalidFormat.message,
+                )
             else:
                 # If the regex replacement pattern is defined, use it construct
                 # both the compact as the formatted value:
-                if self.format_repl:
-                    self.formatted_value = re.sub(regex, self.format_repl, self._value)
-                    self._value = re.sub(regex, self.compact_repl, self._value)
+                if cls.format_repl(regex_repl):
+                    formatted_value = re.sub(regex, cls.format_repl(regex_repl), value)
+                    value = re.sub(regex, cls.compact_repl(regex_repl), value)
                 # If no replacement is defined, the formatted value should be identitical to the formatted one:
                 else:
-                    self.formatted_value = self.value
+                    formatted_value = value
+
+        state.update(
+            value=value,
+            formatted_value=formatted_value,
+        )
+        return cls(**state)
 
     @classmethod
     def sanitize(cls, value):
@@ -151,26 +156,26 @@ class RegexReplaceValidatorState(ValidatorState):
         if isinstance(value, str):
             return stdnum.util.clean(value, cls.deletechars).strip().upper() or None
 
-    @property
-    def compact_repl(self):
-        if self.regex_repl is not None:
-            if '|' in self.regex_repl:
+    @classmethod
+    def compact_repl(cls, regex_repl):
+        if regex_repl is not None:
+            if '|' in regex_repl:
                 def multi_repl(m):
-                    for i, repl in enumerate(self.regex_repl.split('|'), start=1):
+                    for i, repl in enumerate(regex_repl.split('|'), start=1):
                         if m.group(i) is not None:
                             return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
                 return multi_repl
-            return ''.join(re.findall('\\\\\d+', self.regex_repl))
+            return ''.join(re.findall('\\\\\d+', regex_repl))
 
-    @property
-    def format_repl(self):
-        if self.regex_repl is not None and '|' in self.regex_repl:
+    @classmethod
+    def format_repl(cls, regex_repl):
+        if regex_repl is not None and '|' in regex_repl:
             def multi_repl(m):
-                for i, repl in enumerate(self.regex_repl.split('|'), start=1):
+                for i, repl in enumerate(regex_repl.split('|'), start=1):
                     if m.group(i) is not None:
                         return re.sub(m.re, repl, m.string)
             return multi_repl
-        return self.regex_repl
+        return regex_repl
 
 class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
