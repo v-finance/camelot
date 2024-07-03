@@ -31,6 +31,7 @@
 editors or other widgets.
 """
 import collections
+import dataclasses
 import re
 import stdnum.util
 
@@ -49,9 +50,9 @@ data_validity = collections.namedtuple('data_validity', ['valid', 'value', 'form
 class ValidatorState(DataclassSerializable):
 
     value: str = None
-    formatted_value: str = field(init=False, default=None)
-    valid: bool = field(init=False, default=True)
-    error_msg: str = field(init=False, default=None)
+    formatted_value: str = None
+    valid: bool = True
+    error_msg: str = None
 
     @property
     def info(self):
