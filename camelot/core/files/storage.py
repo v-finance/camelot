@@ -99,7 +99,7 @@ class Storage:
         """
         try:
             if not (p := Path(self.upload_to)).exists():
-                p.mkdir()
+                p.mkdir(parents=True)
             return True
         except Exception as e:
             logger.warning(f'Could not access or create path {self.upload_to}, files will be unreachable', exc_info=e)
