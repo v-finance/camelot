@@ -41,7 +41,6 @@ from ...core.serializable import NamedDataclassSerializable
 
 from ...core.item_model import ActionModeRole
 from .. import gui_naming_context
-from camelot.admin.action.base import GuiContext
 from camelot.core.item_model import VerboseIdentifierRole
 from camelot.view.controls.view import AbstractView
 from camelot.view.controls.busy_widget import BusyWidget
@@ -68,10 +67,11 @@ class FormEditors(QtCore.QObject):
             # a form view and not on a table view
             self.option.version = 5
 
-        self._fields = fields
-        self._index = dict(
-            (field_name, i) for i, field_name in enumerate(fields.keys())
-        )
+        self._fields = dict()
+        self._index = dict()
+        for i, (field_name, column_attributes) in enumerate(fields):
+            self._fields[field_name] = column_attributes
+            self._index[field_name] = i
 
     def create_editor( self, field_name, parent ):
         """
@@ -252,7 +252,7 @@ class FormWidget(QtWidgets.QWidget):
                 #break
         LOGGER.debug( 'done' )
 
-class FormView(AbstractView, GuiContext):
+class FormView(AbstractView):
     """A FormView is the combination of a FormWidget, possible actions and menu
     items
 

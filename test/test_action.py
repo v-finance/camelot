@@ -13,7 +13,7 @@ from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.item_model import ObjectRole
 from camelot.core.item_model.query_proxy import QueryModelProxy
-from camelot.admin.action import ActionStep, State, GuiContext
+from camelot.admin.action import ActionStep, State
 from camelot.admin.action import (
     list_action, application_action, list_filter
 )
@@ -30,7 +30,7 @@ from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningProcessCase
 from camelot.test.action import MockModelContext
-from camelot.view import action_steps, import_utils, utils, gui_naming_context
+from camelot.view import action_steps, import_utils, utils
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.controls.action_widget import AbstractActionWidget
@@ -42,18 +42,21 @@ from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.core.backend import get_root_backend
 from camelot_example.importer import ImportCovers
-from camelot_example.model import Movie, Tag
 
 from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
-from . import app_admin, test_core, test_view
+from . import test_core, test_view
 from .test_item_model import (
-    QueryQStandardItemModelMixinCase, setup_query_proxy_name, ExampleItemModelProcess
+    QueryQStandardItemModelMixinCase, setup_query_proxy_name,
 )
 from .test_orm import TestMetaData, EntityMetaMock
 from .test_model import (
-    ExampleModelMixinCase, LoadSampleData,
+    ExampleModelMixinCase, 
+)
+from .test_thread import testing_context_args
+from .testing_context import (
+    Movie, Tag, app_admin, LoadSampleData,
     setup_session_name, dirty_session_action_name,
     custom_action_name, send_document_action_name,
     model_context_action_name, to_first_row_name, to_last_row_name,
@@ -86,24 +89,20 @@ class SerializableMixinCase(object):
 class ActionBaseCase(RunningProcessCase, SerializableMixinCase):
 
     model_context_name = ('constant', 'null')
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp(self):
         super().setUp()
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context_obj = GuiContext()
-        self.gui_context_name = gui_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
-        )
 
     def test_action_step(self):
         ActionStep()
 
     def test_action(self):
-        self.gui_run(custom_action_name, self.gui_context_name, 'mode_1')
+        self.gui_run(custom_action_name, mode='mode_1')
 
     def test_action_state(self):
-        state = self.get_state(custom_action_name, self.gui_context_name)
+        state = self.get_state(custom_action_name)
         self.assertTrue(state['verbose_name'])
         self.assertTrue(len(state['modes']))
 
@@ -121,10 +120,6 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
 
     def setUp(self):
         get_root_backend().set_visible(True, False)
-        self.gui_context_obj = GuiContext()
-        self.gui_context = gui_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
-        )
         self.parent = QtWidgets.QWidget()
         enabled = State()
         disabled = State()
@@ -155,7 +150,7 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
 
     model_context_name = ('constant', 'null')
     images_path = test_view.static_images_path
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
@@ -203,7 +198,7 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
         )
         self.assertTrue( str( update_progress ) )
         update_progress = self._write_read(update_progress)
-        update_progress.gui_run(self.gui_context, update_progress._to_bytes())
+        self.assertEqual(update_progress.value, 20)
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')
@@ -220,7 +215,7 @@ class ListActionsCase(
     """
 
     images_path = test_view.static_images_path
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
@@ -408,7 +403,7 @@ class ListActionsCase(
         self.view.item_view.setCurrentIndex(list_model.index(0, 0))
         for step_name, step in self.gui_run(open_form_view_name, self.gui_context,None, model_context_name=self.model_context_name):
             if step_name == action_steps.OpenFormView.__name__:
-                form = action_steps.OpenFormView.render(self.gui_context, step)
+                form = action_steps.OpenFormView.render(step)
                 form_value = form.model.value()
         self.assertTrue(isinstance(form_value, list))
 
@@ -540,7 +535,7 @@ class ListActionsCase(
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
-        state = self.get_state(set_filters_step, self.gui_context)
+        state = self.get_state(set_filters_step)
         self.assertTrue(len(state.modes))
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
@@ -552,12 +547,12 @@ class ListActionsCase(
                 #steps.send(('first_name', 'test'))
 
     def test_group_box_filter(self):
-        state = self.get_state(group_box_filter_name, self.gui_context)
+        state = self.get_state(group_box_filter_name)
         self.assertTrue(len(state['modes']))
         self.gui_run(group_box_filter_name, self.gui_context, state['modes'][0]['value'], model_context_name=self.model_context_name)
 
     def test_combo_box_filter(self):
-        state = self.get_state(combo_box_filter_name, self.gui_context)
+        state = self.get_state(combo_box_filter_name)
         self.assertTrue(len(state['modes']))
         widget = self.view.render_action(
             list_filter.ComboBoxFilter.render_hint, combo_box_filter_name,
@@ -576,7 +571,7 @@ class FormActionsCase(
     """
 
     images_path = test_view.static_images_path
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
@@ -608,7 +603,7 @@ class ApplicationActionsCase(
 
     images_path = test_view.static_images_path
     model_context_name = ('constant', 'null')
-    process_cls = ExampleItemModelProcess
+    args = testing_context_args
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()

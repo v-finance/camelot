@@ -48,7 +48,7 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
     blocking: bool = False
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         # Always send to C++ (even if gui_context_name comes from python)
         cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
 
@@ -59,7 +59,7 @@ class PopProgressLevel(ActionStep, DataclassSerializable):
     blocking: bool = False
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         # Always send to C++ (even if gui_context_name comes from python)
         cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
 
@@ -106,7 +106,7 @@ updated.
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         # Always send to C++ (even if gui_context_name comes from python)
         return cpp_action_step(gui_context_name, 'UpdateProgress', serialized_step)
 

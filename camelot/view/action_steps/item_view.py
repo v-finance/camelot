@@ -49,8 +49,6 @@ from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ...view.utils import get_settings_group
 from .. import gui_naming_context
-from ..workspace import show_top_level
-from ...core.backend import cpp_action_step
 from ...view.crud_action import CrudActions
 
 LOGGER = logging.getLogger(__name__)
@@ -68,7 +66,7 @@ class Sort( ActionStep, DataclassSerializable ):
     blocking: bool = False
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         gui_context = gui_naming_context.resolve(gui_context_name)
         step = json.loads(serialized_step)
         model = gui_context.get_model()
@@ -190,12 +188,10 @@ class UpdateTableView(AbstractCrudView):
         actions.extend(admin.get_list_toolbar_actions())
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
+    def gui_run(cls, gui_run, gui_context, serialized_step):
         step = json.loads(serialized_step)
         cls.update_table_view(gui_context.view, step)
         gui_context.view.change_title(step['title'])
-
-        gui_context.view.findChild(Qt)
 
 
 @dataclass
@@ -223,30 +219,6 @@ class OpenTableView( UpdateTableView ):
         super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
 
-    @classmethod
-    def render(cls, gui_context, step):
-        from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, tuple(step['admin_route']))
-        cls.update_table_view(table_view, step)
-        return table_view
-        
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        table_view = cls.render(gui_context, step)
-        if gui_context.workspace is not None:
-            if step['new_tab'] == True:
-                gui_context.workspace.add_view(table_view)
-            else:
-                gui_context.workspace.set_view(table_view)
-        else:
-            table_view.setObjectName('table.{}.{}'.format(
-                step['admin_name'], id(table_view)
-            ))
-            show_top_level(table_view, None)
-        table_view.change_title(step['title'])
-        table_view.setFocus(Qt.FocusReason.PopupFocusReason)
-
 
 @dataclass
 class OpenQmlTableView(OpenTableView):
@@ -262,12 +234,7 @@ class OpenQmlTableView(OpenTableView):
         open the view in a new tab instead of the current tab
         
     """
-
-    @classmethod
-    def render(cls, gui_context, action_step_name, serialized_step):
-        response = cpp_action_step(gui_context, action_step_name,
-                serialized_step)
-        return response, None
+    pass
 
 
 @dataclass
@@ -290,11 +257,6 @@ class ClearSelection(ActionStep, DataclassSerializable):
 
     blocking: bool = False
 
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        gui_context.item_view.clearSelection()
-
 
 @dataclass
 class SetSelection(ActionStep, DataclassSerializable):
@@ -312,10 +274,3 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     """
 
     blocking: bool = False
-
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        model = gui_context.get_model()
-        if model is not None:
-            model.refresh()

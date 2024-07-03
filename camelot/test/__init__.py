@@ -119,7 +119,7 @@ class ActionMixinCase(object):
     Helper methods to simulate running actions in a different thread
     """
 
-    def get_state(self, action_name, gui_context):
+    def get_state(self, action_name):
         """
         Get the state of an action in the model thread and return
         the result.
@@ -161,15 +161,18 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
     that initialized the needed resources to run the test case.
     """
 
-    process_cls = None
+    args = '[""]'
 
     @classmethod
     def setUpClass(cls):
-        cls.thread = cls.process_cls()
+        cls.rb = get_root_backend()
+        cls.thread = cls.rb.create_server_process()
         cls._recorded_steps = collections.defaultdict(list)
         cls._replies = collections.defaultdict(dict)
         get_root_backend().actionStepped.connect(cls._record_step)
-        cls.thread.start()
+        cls.thread.start("exec", cls.args)
+        connected = cls.thread.waitForConnected(20000)
+        assert connected
 
     @classmethod
     def tearDownClass(cls):
@@ -178,10 +181,11 @@ class RunningProcessCase(unittest.TestCase, ActionMixinCase):
             cls.process()
         finally:
             cls.thread.stop()
+            finished = cls.thread.waitForFinished(20000)
+            assert finished
 
     def tearDown(self):
         self.process()
-        
 
     @classmethod
     def _record_step(cls, gui_run_name, action_step_type, gui_context_name, blocking, action_step):

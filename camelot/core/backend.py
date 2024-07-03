@@ -3,6 +3,7 @@ import json
 
 from camelot.core.qt import QtWidgets, QtCore
 from ..view.requests import AbstractRequest, CancelRequest
+from ..view.responses import Busy
 from .singleton import QSingleton
 
 LOGGER = logging.getLogger(__name__)
@@ -65,9 +66,7 @@ class PythonBackend(QtCore.QObject):
         root_backend = get_root_backend()
         try:
             step_cls = MetaActionStep.action_steps[step_type]
-            result = step_cls.gui_run(tuple(gui_context_name), bytes(serialized_step))
-            if blocking == True:
-                root_backend.action_step_result_valid(gui_run_name, result, False, "")
+            step_cls.gui_run(tuple(gui_run_name), tuple(gui_context_name), bytes(serialized_step))
         except CancelRequest:
             root_backend.action_step_result_valid(gui_run_name, None, True, "")
         except Exception as e:
@@ -97,15 +96,17 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
     @classmethod
     def _execute_serialized_request(cls, serialized_request, response_handler):
         try:
+            response_handler.send_response(Busy(True))
             AbstractRequest.handle_request(
                 serialized_request, response_handler, response_handler
             )
+            response_handler.send_response(Busy(False))
         except Exception as e:
             LOGGER.error('Unhandled exception in model process', exc_info=e)
             import traceback
             traceback.print_exc()
         except SystemExit:
-            LOGGER.info('Terminating')
+            LOGGER.debug('Terminating')
             raise
         except:
             LOGGER.error('Unhandled event in model process')
@@ -119,6 +120,10 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
         backend = get_root_backend()
         action_runner = backend.action_runner()
         action_runner.onResponse(QtCore.QByteArray(response._to_bytes()))
+
+    @classmethod
+    def send_action_step(cls, gui_context_name, step):
+        return cpp_action_step(gui_context_name, type(step).__name__, step._to_bytes())
 
     def has_cancel_request(self):
         return False

@@ -219,13 +219,7 @@ and used as a custom action.
             primary_key = self.primary_key(obj)
             if not None in primary_key:
                 primary_key_representation = u','.join([str(v) for v in primary_key])
-                if hasattr(obj, '__unicode__'):
-                    return u'%s %s : %s' % (
-                        str(self.get_verbose_name() or ''),
-                        primary_key_representation,
-                        str(obj)
-                    )
-                elif hasattr(obj, '__str__'):
+                if hasattr(obj, '__str__'):
                     return u'%s %s : %s' % (
                         self.get_verbose_name() or '',
                         primary_key_representation,

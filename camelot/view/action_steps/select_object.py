@@ -30,10 +30,9 @@
 
 from dataclasses import dataclass, field
 
-from camelot.core.exception import CancelRequest
 from camelot.core.naming import initial_naming_context
 
-from .item_view import OpenTableView, OpenQmlTableView
+from .item_view import OpenTableView
 
 @dataclass
 class SelectObjects(OpenTableView):
@@ -70,13 +69,6 @@ class SelectObjects(OpenTableView):
         actions.extend(admin.get_list_actions())
         actions.extend(admin.get_filters())
         actions.extend(admin.get_select_list_toolbar_actions())
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        response, model = OpenQmlTableView.render(gui_context, 'SelectObjects', serialized_step)
-        if not response['selection_count']:
-            raise CancelRequest()
-        return response
 
     @classmethod
     def deserialize_result(cls, gui_context, response):
