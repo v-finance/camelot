@@ -1,12 +1,40 @@
+#  ============================================================================
+#
+#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
+#  www.conceptive.be / info@conceptive.be
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#      * Redistributions of source code must retain the above copyright
+#        notice, this list of conditions and the following disclaimer.
+#      * Redistributions in binary form must reproduce the above copyright
+#        notice, this list of conditions and the following disclaimer in the
+#        documentation and/or other materials provided with the distribution.
+#      * Neither the name of Conceptive Engineering nor the
+#        names of its contributors may be used to endorse or promote products
+#        derived from this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  ============================================================================
+
+
 import logging
 import os
-import glob
 import shutil
 import tempfile
-from contextlib import contextmanager
 from io import IOBase
 from pathlib import Path, PurePosixPath
-from typing import Optional, Callable, Union, Type, Dict
+from typing import Optional, Callable, Union, Type, Dict, BinaryIO
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -131,13 +159,13 @@ class Storage:
         upload_to_path = Path(self.upload_to)
         return (StoredFile(self, path.name) for path in upload_to_path.glob(f'{prefix}*{suffix}'))
 
-    def path(self, name):
+    def path(self, name) -> str:
         """Get the local filesystem path where the file can be opened using Python standard open
 
         :param name: Name of the file
         :return: Path of the file
         """
-        return self.upload_to.joinpath(name)
+        return self.upload_to.joinpath(name).as_posix()
 
     def _create_tempfile(self, suffix: str, prefix: str):
         # @todo suffix and prefix should be cleaned, because the user might be
@@ -225,25 +253,26 @@ class Storage:
         logger.debug('closed file')
         return self.stored_file_implementation(self, os.path.basename(to_path))
 
-    def checkout(self, stored_file: StoredFile) -> PurePosixPath:
+    def checkout(self, stored_file: StoredFile) -> str:
         """Check the file out of the storage and return a local filesystem path
 
         :param stored_file: StoredFile object
         :return: Path of the checked-out file
         """
+        assert isinstance(stored_file, StoredFile)
         self.available()
-        return self.upload_to.joinpath(stored_file.name)
+        return self.upload_to.joinpath(stored_file.name).as_posix()
 
-    @contextmanager
-    def checkout_stream(self, stored_file: PathType):
+    # @contextmanager: NOTE: This should be a context manager so that the file always gets closed(doesn't happen now), good luck!
+    def checkout_stream(self, stored_file: StoredFile) -> BinaryIO:
         """Check the file out of the storage as a data stream
 
         :param stored_file: StoredFile object
         :return: File object
         """
+        assert isinstance(stored_file, StoredFile)
         self.available()
-        with Path(self.upload_to.joinpath(os.path.basename(stored_file))).open('rb') as f:
-            yield f
+        return Path(self.upload_to, stored_file.name).open('rb')
 
     def delete(self, name):
         pass
