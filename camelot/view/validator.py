@@ -112,7 +112,7 @@ class RegexReplaceValidatorState(ValidatorState):
             value=value,
             formatted_value=value,
             valid=True,
-            error_message=None,
+            error_msg=None,
             regex=regex,
             regex_repl=regex_repl,
             example=example,
@@ -215,32 +215,29 @@ class ZipcodeValidatorState(RegexReplaceValidatorState):
     deletechars: str = ' -./#,'
 
     @classmethod
-    def for_zip_code_type(cls, zip_code_type):
+    def for_zip_code_type(cls, value, zip_code_type):
+        state = dict()
         if zip_code_type in zip_code_types:
             zip_code_type = zip_code_types[zip_code_type]
-            return cls(
+            state.update(
                 regex=zip_code_type.regex,
                 regex_repl=zip_code_type.repl,
                 example=zip_code_type.example,
             )
-        return cls()
+        return cls.for_value(value, **state)
 
     @classmethod
     def for_city(cls, city):
         if city is not None:
-            state = cls.for_zip_code_type(city.zip_code_type)
-            state.value = city.code
-            return state
+            return cls.for_zip_code_type(city.code, city.zip_code_type)
         return cls()
 
     @classmethod
     def for_addressable(cls, addressable):
         if addressable is not None:
-            state = cls()
             if addressable.city is not None:
-                state = cls.for_zip_code_type(addressable.city.zip_code_type)
-            state.value = addressable.zip_code
-            return state
+                return cls.for_zip_code_type(addressable.zip_code, addressable.city.zip_code_type)
+            return cls.for_value(addressable.zip_code)
         return cls()
 
     @classmethod
