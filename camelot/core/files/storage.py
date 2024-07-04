@@ -109,7 +109,10 @@ class Storage:
 
     @property
     def upload_to(self):
-        return PurePosixPath(settings.CAMELOT_MEDIA_ROOT()).joinpath(self._upload_to)
+        root = settings.CAMELOT_MEDIA_ROOT
+        if callable(root):
+            root = root()
+        return PurePosixPath(root).joinpath(self._upload_to)
 
     def available(self) -> bool:
         """
