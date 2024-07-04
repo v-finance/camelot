@@ -256,7 +256,7 @@ class Storage:
         return self.upload_to.joinpath(stored_file.name)
 
     # @contextmanager: NOTE: This should be a context manager so that the file always gets closed(doesn't happen now), good luck!
-    def checkout_stream(self, stored_file: PurePosixPath) -> BinaryIO:
+    def checkout_stream(self, stored_file: StoredFile) -> BinaryIO:
         """Check the file out of the storage as a data stream
 
         :param stored_file: StoredFile object
