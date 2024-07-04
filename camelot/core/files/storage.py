@@ -141,20 +141,17 @@ class Storage:
         """
         return Path(self.path(name)).exists()
 
-    def list_files(self, prefix='*', suffix='*'):
+    def list_files(self, prefix='', suffix=''):
         """List all files with a given prefix and/or suffix available in this storage
 
         :return: An iterator of StoredFile objects
         """
-        if suffix == '*':
-            pattern = f'{prefix}*'
-        else:
-            pattern = f'{prefix}*{suffix}'
 
+        pattern = f'{prefix}*{suffix}'
         upload_to_path = Path(self.upload_to)
         return (StoredFile(self, path.name) for path in upload_to_path.glob(pattern))
 
-    def path(self, name) -> PurePosixPath:
+    def path(self, name: PurePosixPath) -> PurePosixPath:
         """Get the local filesystem path where the file can be opened using Python standard open
 
         :param name: Name of the file
@@ -269,8 +266,11 @@ class Storage:
         self.available()
         return Path(self.upload_to, stored_file.name).open('rb')
 
-    def delete(self, name):
-        pass
+    def delete(self, name: PurePosixPath):
+        """
+        :param name: The name of the file to be deleted
+        """
+        Path(self.path(name)).unlink(missing_ok=True)
 
 
 class HashStorage(Storage):
