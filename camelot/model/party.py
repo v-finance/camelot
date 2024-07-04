@@ -846,7 +846,7 @@ class Organization( Party ):
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
-    logo = schema.Column( camelot.types.File())
+    logo = schema.Column( camelot.types.File(storage))
     tax_id = schema.Column( Unicode( 20 ) )
 
     def __str__(self):
