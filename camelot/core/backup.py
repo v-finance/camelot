@@ -31,8 +31,6 @@ import logging
 
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
-from .qt import QtCore
-
 from camelot.core.utils import ugettext as _
 from camelot.core.sql import metadata as default_metadata
 
@@ -76,7 +74,7 @@ class BackupMechanism(object):
         This method will be called inside the model thread.
         """
         return u'backup'
-        
+
     def backup_table_filter(self, from_table):
         """
         Method used to filter which tables should be backed up, overwrite this method
