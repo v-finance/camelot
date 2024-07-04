@@ -840,7 +840,7 @@ class Party(Entity, WithAddresses):
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
-    storage = Storage(upload_to='organization-logo')
+    storage = Storage(upload_to=PurePosixPath('organization-logo'))
 
     __tablename__ = 'organization'
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)

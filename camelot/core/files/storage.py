@@ -34,7 +34,7 @@ import shutil
 import tempfile
 from io import IOBase
 from pathlib import Path, PurePosixPath
-from typing import Optional, Callable, Union, Type, Dict, BinaryIO
+from typing import Union, Dict, BinaryIO
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -87,8 +87,7 @@ class Storage:
     script as well.
     """
 
-    def __init__(self, upload_to: PathType = '', stored_file_implementation: Type[StoredFile] = StoredFile,
-                 root: Optional[Union[PathType, Callable[[], PathType]]] = None):
+    def __init__(self, upload_to: PurePosixPath = None):
         """
         :param upload_to: the subdirectory in which to put files
         :param stored_file_implementation: the subclass of StoredFile to be used when
@@ -100,25 +99,18 @@ class Storage:
         The actual files will be put in root + upload to.  If None is given as root,
         the settings.CAMELOT_MEDIA_ROOT will be taken as the root directory.
         """
-        self._root = root
-        self._subfolder: PurePosixPath = PurePosixPath(upload_to)
-        self._upload_to = None
-        self.stored_file_implementation = stored_file_implementation
+        if upload_to is None:
+            upload_to = PurePosixPath('')
+        assert isinstance(upload_to, PurePosixPath)
+        self._upload_to = upload_to
         #
         # don't do anything here that might reduce the startup time, like verifying the
         # availability of the storage, since the path might be on a slow network share
         #
 
     @property
-    def upload_to(self) -> PurePosixPath:
-        """Return the directory path to upload files"""
-        if self._upload_to is None:
-            root = self._root or settings.CAMELOT_MEDIA_ROOT
-            if callable(root):
-                root = root()
-            root = PurePosixPath(root)
-            self._upload_to = root.joinpath(self._subfolder)
-        return self._upload_to
+    def upload_to(self):
+        return PurePosixPath(settings.CAMELOT_MEDIA_ROOT()).joinpath(self._upload_to)
 
     def available(self) -> bool:
         """

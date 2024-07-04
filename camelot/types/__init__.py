@@ -300,8 +300,7 @@ class File(types.TypeDecorator):
     """
     
     impl = types.Unicode
-    stored_file_implementation = StoredFile
-    
+
     def __init__(self, storage=None, *, max_length=100, **kwargs):
         self.max_length = max_length
         self.storage = storage or Storage()
@@ -315,7 +314,7 @@ class File(types.TypeDecorator):
           
         def processor(value):
             if value is not None:
-                assert isinstance(value, (self.stored_file_implementation))
+                assert isinstance(value, StoredFile)
                 return impl_processor(value.name)
             return impl_processor(value)
           
@@ -331,7 +330,7 @@ class File(types.TypeDecorator):
     
             if value:
                 value = impl_processor(value)
-                return self.stored_file_implementation(self.storage, value)
+                return StoredFile(self.storage, value)
               
         return processor
       
