@@ -29,13 +29,21 @@
 
 """ Tableview """
 
+import json
 import logging
 
+from ...admin.icon import Icon
+from ...core.item_model import (
+    PreviewRole, ActionRoutesRole, ActionStatesRole, ActionModeRole
+)
 from ...core.qt import QtCore, QtGui, QtWidgets, Qt
+from ...core.utils import ugettext
+from ..art import from_admin_icon
 
 
 logger = logging.getLogger('camelot.view.controls.tableview')
 
+copy_icon = Icon('copy')
 
 class TableWidget(QtWidgets.QTableView):
     """
@@ -84,6 +92,51 @@ class TableWidget(QtWidgets.QTableView):
             self._save_section_width)
         self.verticalScrollBar().sliderPressed.connect(self._slider_pressed)
         self.horizontalScrollBar().sliderPressed.connect(self._slider_pressed)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.customContextMenu)
+
+    @QtCore.qt_slot(bool)
+    def copy(self, checked):
+        action = self.sender()
+        data = action.data()
+        QtGui.QGuiApplication.instance().clipboard().setText(data)
+
+    @QtCore.qt_slot(bool)
+    def popup_action(self, checked):
+        action = self.sender()
+        data = action.data()
+        row, column, route = data
+        model = self.model()
+        if model is not None:
+            index = model.index(row, column)
+            model.setData(index, json.dumps([route, None]), ActionModeRole)
+
+
+    @QtCore.qt_slot(QtCore.QPoint)
+    def customContextMenu(self, pos):
+        index = self.indexAt(pos)
+        if(index.isValid()):
+            if not bool(index.flags() & Qt.ItemFlag.ItemIsEditable):
+                action_states = json.loads(index.data(ActionStatesRole))
+                action_routes = json.loads(index.data(ActionRoutesRole))
+                menu = QtWidgets.QMenu(self)
+                copy_action = QtGui.QAction(menu)
+                copy_action.setIcon(from_admin_icon(copy_icon).getQIcon())
+                copy_action.setData(index.data(PreviewRole))
+                copy_action.triggered.connect(self.copy)
+                copy_action.setText(ugettext("Copy"))
+                menu.addAction(copy_action)
+                for route, state in zip(action_routes, action_states):
+                    action = QtGui.QAction(menu)
+                    icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+                    action.setIcon(from_admin_icon(icon).getQIcon())
+                    action.setVisible(state["visible"])
+                    action.setText(state["tooltip"])
+                    action.setEnabled(state["enabled"])
+                    action.setData((index.row(), index.column(), route))
+                    action.triggered.connect(self.popup_action)
+                    menu.addAction(action)
+                menu.popup(self.viewport().mapToGlobal(pos))
 
     @QtCore.qt_slot()
     def selectAll(self):
