@@ -35,7 +35,7 @@ import tempfile
 from io import IOBase
 from hashlib import sha1
 from pathlib import Path, PurePosixPath
-from typing import Dict, BinaryIO, Tuple
+from typing import Dict, BinaryIO, Tuple, IO
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -219,7 +219,7 @@ class Storage:
 
         return StoredFile(self, PurePosixPath(to_path.name))
 
-    def checkin_stream(self, prefix: str, suffix: str, stream: IOBase) -> StoredFile:
+    def checkin_stream(self, prefix: str, suffix: str, stream: IO) -> StoredFile:
         """Check the data stream as a file into the storage
 
         :param prefix: The prefix to use for generating a file name
