@@ -27,7 +27,7 @@
 #
 #  ============================================================================
 import logging
-
+from pathlib import PurePosixPath
 
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
@@ -200,7 +200,7 @@ class BackupMechanism(object):
         if self.storage:
             if not self.storage.exists(self.filename):
                 raise Exception('Backup file does not exist')
-            stored_file = StoredFile(self.storage, self.filename)
+            stored_file = StoredFile(self.storage, PurePosixPath(self.filename))
             filename = self.storage.checkout( stored_file )
         else:
             if not os.path.exists(self.filename):

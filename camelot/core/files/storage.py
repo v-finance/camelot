@@ -35,7 +35,7 @@ import tempfile
 from io import IOBase
 from hashlib import sha1
 from pathlib import Path, PurePosixPath
-from typing import Dict, BinaryIO
+from typing import Dict, BinaryIO, Tuple
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -51,24 +51,25 @@ class StoredFile:
     its methods should block.
     """
 
-    def __init__(self, storage: 'Storage', name: str):
+    def __init__(self, storage: 'Storage', name: PurePosixPath):
         """
         :param storage: the storage in which the file is stored
         :param name: the key by which the file is known in the storage
         """
+        assert isinstance(name, PurePosixPath)
         self.storage = storage
-        self.name = name
+        self.name: PurePosixPath = name
 
     @property
     def verbose_name(self) -> str:
         """The name of the file, as it is to be displayed in the GUI"""
-        return self.name
+        return str(self.name)
 
     def __getstate__(self) -> Dict[str, str]:
         """Returns the key of the file. To support pickling stored files
         in the database in a :class:`camelot.model.memento.Memento` object
         """
-        return {'name': self.name}
+        return {'name': self.verbose_name}
 
     def __str__(self) -> str:
         return self.verbose_name
@@ -86,7 +87,7 @@ class Storage:
     script as well.
     """
 
-    def __init__(self, upload_to: PurePosixPath = None):
+    def __init__(self, upload_to: PurePosixPath):
         """
         :param upload_to: the subdirectory in which to put files
         :param stored_file_implementation: the subclass of StoredFile to be used when
@@ -98,8 +99,7 @@ class Storage:
         The actual files will be put in root + upload to.  If None is given as root,
         the settings.CAMELOT_MEDIA_ROOT will be taken as the root directory.
         """
-        if upload_to is None:
-            upload_to = PurePosixPath('')
+
         assert isinstance(upload_to, PurePosixPath)
         self._upload_to = upload_to
         #
@@ -110,8 +110,6 @@ class Storage:
     @property
     def upload_to(self):
         root = settings.CAMELOT_MEDIA_ROOT
-        if callable(root):
-            root = root()
         return PurePosixPath(root).joinpath(self._upload_to)
 
     def available(self) -> bool:
@@ -152,7 +150,7 @@ class Storage:
 
         pattern = f'{prefix}*{suffix}'
         upload_to_path = Path(self.upload_to)
-        return (StoredFile(self, path.name) for path in upload_to_path.glob(pattern))
+        return (StoredFile(self, PurePosixPath(path.name)) for path in upload_to_path.glob(pattern))
 
     def path(self, name: PurePosixPath) -> PurePosixPath:
         """Get the local filesystem path where the file can be opened using Python standard open
@@ -162,7 +160,7 @@ class Storage:
         """
         return self.upload_to.joinpath(name)
 
-    def _create_tempfile(self, suffix: str, prefix: str):
+    def _create_tempfile_with_user_exceptions(self, suffix: str, prefix: str) -> Tuple[int, PurePosixPath]:
         # @todo suffix and prefix should be cleaned, because the user might be
         #       able to get directory separators in here or something related
         """Create a temporary file in the storage directory
@@ -172,7 +170,8 @@ class Storage:
         :return: File descriptor and file path of the temporary file
         """
         try:
-            return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to)
+            handle, name = self._create_tempfile(suffix, prefix)
+            return handle, PurePosixPath(name)
         except EnvironmentError as e:
             if not self.exists(self.upload_to):
                 raise UserException(text=ugettext(f'The directory {self.upload_to} does not exist'),
@@ -185,7 +184,10 @@ class Storage:
                                 detail=ugettext(
                                     f'OS Error number : {e.errno}\nError : {e.strerror}\nPrefix : {prefix}\nSuffix : {suffix}'))
 
-    def checkin(self, local_path: PurePosixPath, filename: str = None) -> StoredFile:
+    def _create_tempfile(self, suffix: str, prefix: str) -> (int, str):
+        return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to)
+
+    def checkin(self, local_path: PurePosixPath, filename: PurePosixPath = None) -> StoredFile:
         """Check the file pointed to by local_path into the storage and return a StoredFile
 
         :param local_path: The path to the local file that needs to be checked in
@@ -199,21 +201,23 @@ class Storage:
         """
         self.available()
 
-        local_path = PurePosixPath(local_path)
+        assert isinstance(local_path, PurePosixPath)
+        assert isinstance(filename, PurePosixPath) or filename is None
+
         if filename is None and len(local_path.name) > 100:
             raise UserException(text=ugettext('The filename of the selected file is too long'),
                                 resolution=ugettext('Please rename the file'))
 
-        root, extension = os.path.splitext(filename or local_path.name)
+        name = (filename or local_path)
+        root, extension = name.stem, name.suffix
 
-        handle, to_path = self._create_tempfile(extension, root)
+        handle, to_path = self._create_tempfile_with_user_exceptions(extension, root)
         os.close(handle)
 
-        to_path = PurePosixPath(to_path)
         logger.debug(f'copy file from {local_path} to {to_path}')
         shutil.copy(Path(local_path), Path(to_path))
 
-        return StoredFile(self, to_path.name)
+        return StoredFile(self, PurePosixPath(to_path.name))
 
     def checkin_stream(self, prefix: str, suffix: str, stream: IOBase) -> StoredFile:
         """Check the data stream as a file into the storage
@@ -235,7 +239,7 @@ class Storage:
         stored_file = storage.checkin_stream( 'document', '.txt', stream )
         """
         self.available()
-        handle, to_path = self._create_tempfile(suffix, prefix)
+        handle, to_path = self._create_tempfile_with_user_exceptions(suffix, prefix)
         logger.debug('checkin stream to %s', to_path)
 
         with os.fdopen(handle, 'wb') as file:
@@ -246,7 +250,7 @@ class Storage:
             logger.debug('flushed file')
 
         logger.debug('closed file')
-        return StoredFile(self, os.path.basename(to_path))
+        return StoredFile(self, PurePosixPath(to_path.name))
 
     def checkout(self, stored_file: StoredFile) -> PurePosixPath:
         """Check the file out of the storage and return a local filesystem path
@@ -256,7 +260,7 @@ class Storage:
         """
         assert isinstance(stored_file, StoredFile)
         self.available()
-        return self.upload_to.joinpath(stored_file.name)
+        return self.path(stored_file.name)
 
     # @contextmanager: NOTE: This should be a context manager so that the file always gets closed(doesn't happen now), good luck!
     def checkout_stream(self, stored_file: StoredFile) -> BinaryIO:
@@ -267,7 +271,7 @@ class Storage:
         """
         assert isinstance(stored_file, StoredFile)
         self.available()
-        return Path(self.upload_to, stored_file.name).open('rb')
+        return Path(self.path(stored_file.name)).open('rb')
 
     def delete(self, name: PurePosixPath):
         """
@@ -276,27 +280,28 @@ class Storage:
         Path(self.path(name)).unlink(missing_ok=True)
 
 
+def get_hashed_path(path: PurePosixPath) -> str:
+    return sha1(path.name.encode('UTF-8')).hexdigest()
+
+
 class HashStorage(Storage):
 
-    def __init__(self, upload_to: PurePosixPath = None):
+    def __init__(self, upload_to: PurePosixPath):
         super().__init__(upload_to)
-        self.hash_folder: PurePosixPath = PurePosixPath('')
 
-    def _create_tempfile(self, suffix: str, prefix: str):
-        # @todo suffix and prefix should be cleaned, because the user might be
-        #       able to get directory separators in here or something related
-        """Create a temporary file in the storage directory
+    def _create_tempfile(self, suffix: str, prefix: str, dir_: str = None) -> (int, str):
+        hashed_prefix = get_hashed_path(PurePosixPath(prefix))
+        return tempfile.mkstemp(suffix=suffix, prefix=hashed_prefix, dir=self.upload_to/hashed_prefix[:2])
 
-        :param suffix: Suffix of the temporary file
-        :param prefix: Prefix of the temporary file
-        :return: File descriptor and file path of the temporary file
-        """
-        hexhash = sha1(prefix.encode('UTF-8')).hexdigest()
-        self.hash_folder = hexhash[:2]
-        self.available()
-        return super()._create_tempfile(suffix, hexhash)
+    def checkin(self, local_path: PurePosixPath, filename: PurePosixPath = None) -> StoredFile:
+        file = super().checkin(local_path, filename)
+        hashed_prefix = get_hashed_path(file.name)
+        return StoredFile(self, PurePosixPath(hashed_prefix[:2], hashed_prefix))
 
-    @property
-    def upload_to(self):
-        return PurePosixPath(settings.CAMELOT_MEDIA_ROOT()).joinpath(self._upload_to, self.hash_folder)
+    def checkin_stream(self, prefix: str, suffix: str, stream: IOBase) -> StoredFile:
+        file = super().checkin_stream(prefix, suffix, stream)
+        hashed_prefix = get_hashed_path(file.name)
+        return StoredFile(self, PurePosixPath(hashed_prefix[:2], hashed_prefix))
+
+
 

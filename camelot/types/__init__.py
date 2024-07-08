@@ -36,6 +36,7 @@ Those fields are stored in the :mod:`camelot.types` module.
 """
 import collections
 import logging
+from pathlib import PurePosixPath
 
 logger = logging.getLogger('camelot.types')
 
@@ -301,7 +302,8 @@ class File(types.TypeDecorator):
     
     impl = types.Unicode
 
-    def __init__(self, storage=None, *, max_length=100, **kwargs):
+    def __init__(self, storage, max_length=100, **kwargs):
+        assert isinstance(storage, Storage)
         self.max_length = max_length
         self.storage = storage or Storage()
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
@@ -321,16 +323,14 @@ class File(types.TypeDecorator):
         return processor
     
     def result_processor(self, dialect, coltype=None):
-      
         impl_processor = self.impl.result_processor(dialect, coltype)
         if not impl_processor:
             impl_processor = lambda x:x
-            
+
         def processor(value):
-    
             if value:
                 value = impl_processor(value)
-                return StoredFile(self.storage, value)
+                return StoredFile(self.storage, PurePosixPath(value))
               
         return processor
       
