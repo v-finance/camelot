@@ -37,6 +37,7 @@ by Len Silverston, Chapter 2
 import copy
 import datetime
 import enum
+from pathlib import PurePosixPath
 
 import sqlalchemy.types
 
@@ -63,6 +64,7 @@ from camelot.types.typing import Note
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
 from camelot.view.validator import RegexReplaceValidator, ZipcodeValidatorState
+from ..core.files.storage import Storage
 
 from ..core.sql import metadata
 
@@ -838,11 +840,13 @@ class Party(Entity, WithAddresses):
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
+    storage = Storage(upload_to=PurePosixPath('organization-logo'))
+
     __tablename__ = 'organization'
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
-    logo = schema.Column( camelot.types.File( upload_to = 'organization-logo' ))
+    logo = schema.Column( camelot.types.File(storage))
     tax_id = schema.Column( Unicode( 20 ) )
 
     def __str__(self):
@@ -862,6 +866,8 @@ class Organization( Party ):
 class Person( Party ):
     """Person represents natural persons
     """
+    storage = Storage(upload_to=PurePosixPath('person-pictures'))
+
     __tablename__ = 'person'
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'person'}
@@ -877,7 +883,7 @@ class Person( Party ):
     social_security_number = schema.Column( IdentifyingUnicode(length=12) )
     passport_number = schema.Column( IdentifyingUnicode(length=20) )
     passport_expiry_date = schema.Column( Date() )
-    picture = schema.Column( camelot.types.File( upload_to = 'person-pictures' ))
+    picture = schema.Column( camelot.types.File(storage))
     comment = schema.Column( camelot.types.RichText() )
 
     @property

@@ -6,6 +6,7 @@
 
 import datetime
 import logging
+from pathlib import PurePosixPath
 
 import sqlalchemy
 from sqlalchemy import event, insert, Table, ForeignKey, Column, orm
@@ -22,6 +23,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.core.files.storage import Storage
 from camelot.core.item_model import QueryModelProxy
 from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, metadata, Session
@@ -112,7 +114,10 @@ class A(object):
 class Movie( Entity ):
 
     __tablename__ = 'movies'
-    
+
+    cover_storage = Storage(upload_to=PurePosixPath('covers'))
+    script_storage = Storage(upload_to=PurePosixPath('script'))
+
     title = Column( sqlalchemy.types.Unicode(60), nullable = False )
     short_description = Column( sqlalchemy.types.Unicode(512) )
     releasedate = Column( sqlalchemy.types.Date )
@@ -130,13 +135,13 @@ class Movie( Entity ):
     # image on disk and keeps the reference to it in the database.
     #
 # begin image definition
-    cover = Column( camelot.types.File( upload_to = 'covers' ) )
+    cover = Column(camelot.types.File(cover_storage))
 # end image definition
     #
     # Or File, which stores a file in the upload_to directory and stores a
     # reference to it in the database
     #
-    script = Column( camelot.types.File( upload_to = 'script' ) )
+    script = Column(camelot.types.File(script_storage))
     description = Column( camelot.types.RichText )
 
     #
