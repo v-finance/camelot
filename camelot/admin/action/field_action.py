@@ -33,6 +33,7 @@ various actions that are beyond the icons shown in the editors of a form.
 """
 
 import os
+from pathlib import PurePosixPath
 
 from sqlalchemy import orm
 
@@ -187,7 +188,7 @@ class UploadFile(EditFieldAction):
                 if reply == QtWidgets.QMessageBox.StandardButton.Yes:
                     remove = True
             yield action_steps.UpdateProgress(text='Attaching file')
-            stored_file = storage.checkin(file_name)
+            stored_file = storage.checkin(PurePosixPath(file_name))
             model_context.admin.set_field_value(
                 model_context.obj, model_context.field, stored_file
             )

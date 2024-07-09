@@ -303,9 +303,9 @@ class File(types.TypeDecorator):
     impl = types.Unicode
 
     def __init__(self, storage, max_length=100, **kwargs):
-        assert isinstance(storage, Storage)
+        assert isinstance(storage, Storage) or storage is None
         self.max_length = max_length
-        self.storage = storage or Storage()
+        self.storage = storage or Storage(PurePosixPath(''))
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
         
     def bind_processor(self, dialect):
@@ -317,7 +317,7 @@ class File(types.TypeDecorator):
         def processor(value):
             if value is not None:
                 assert isinstance(value, StoredFile)
-                return impl_processor(value.name)
+                return impl_processor(value.verbose_name)
             return impl_processor(value)
           
         return processor

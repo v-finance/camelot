@@ -47,7 +47,7 @@ from .testing_context import (
 logger = logging.getLogger('view.unittests')
 
 static_images_path = os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinx', 'source', '_static')
-storage = Storage()
+storage = Storage(PurePosixPath(''))
 
 admin = app_admin.get_related_admin(A)
 
