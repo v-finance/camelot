@@ -63,7 +63,7 @@ class StoredFile:
     @property
     def verbose_name(self) -> str:
         """The name of the file, as it is to be displayed in the GUI"""
-        return str(self.name)
+        return self.name.as_posix()
 
     def __getstate__(self) -> Dict[str, str]:
         """Returns the key of the file. To support pickling stored files
