@@ -69,7 +69,7 @@ class StoredFile:
         """Returns the key of the file. To support pickling stored files
         in the database in a :class:`camelot.model.memento.Memento` object
         """
-        return {'name': self.verbose_name}
+        return {'name': self.name.as_posix()}
 
     def __str__(self) -> str:
         return self.verbose_name
@@ -187,7 +187,7 @@ class Storage:
     def _create_tempfile(self, suffix: str, prefix: str) -> (int, str):
         return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to)
 
-    def checkin(self, local_path: PurePosixPath, filename: PurePosixPath = None) -> StoredFile:
+    def checkin(self, local_path: PurePosixPath, filename: os.PathLike[str] = None) -> StoredFile:
         """Check the file pointed to by local_path into the storage and return a StoredFile
 
         :param local_path: The path to the local file that needs to be checked in
@@ -202,13 +202,12 @@ class Storage:
         self.available()
 
         assert isinstance(local_path, PurePosixPath)
-        assert isinstance(filename, PurePosixPath) or filename is None
 
         if filename is None and len(local_path.name) > 100:
             raise UserException(text=ugettext('The filename of the selected file is too long'),
                                 resolution=ugettext('Please rename the file'))
 
-        name = (filename or local_path)
+        name = (PurePosixPath(filename) or local_path)
         root, extension = name.stem, name.suffix
 
         handle, to_path = self._create_tempfile_with_user_exceptions(extension, root)
@@ -280,28 +279,30 @@ class Storage:
         Path(self.path(name)).unlink(missing_ok=True)
 
 
-def get_hashed_path(path: PurePosixPath) -> str:
-    return sha1(path.name.encode('UTF-8')).hexdigest()
-
-
 class HashStorage(Storage):
 
     def __init__(self, upload_to: PurePosixPath):
         super().__init__(upload_to)
 
-    def _create_tempfile(self, suffix: str, prefix: str, dir_: str = None) -> (int, str):
-        hashed_prefix = get_hashed_path(PurePosixPath(prefix))
-        return tempfile.mkstemp(suffix=suffix, prefix=hashed_prefix, dir=self.upload_to/hashed_prefix[:2])
+    @staticmethod
+    def get_hashed_path(path: PurePosixPath) -> str:
+        return sha1(path.name.encode('UTF-8')).hexdigest()
+
+    def path(self, name: PurePosixPath) -> PurePosixPath:
+        hashed_name = self.get_hashed_path(PurePosixPath(name))
+        return self.upload_to.joinpath(hashed_name[:2], hashed_name)
+
+    def _create_tempfile(self, suffix: str, prefix: str) -> (int, str):
+        hashed_prefix = self.get_hashed_path(PurePosixPath(prefix))
+        return tempfile.mkstemp(suffix=suffix, prefix=hashed_prefix, dir=self.upload_to.joinpath(hashed_prefix[:2]))
 
     def checkin(self, local_path: PurePosixPath, filename: PurePosixPath = None) -> StoredFile:
         file = super().checkin(local_path, filename)
-        hashed_prefix = get_hashed_path(file.name)
-        return StoredFile(self, PurePosixPath(hashed_prefix[:2], hashed_prefix))
+        return StoredFile(self, self.path(file.name))
 
-    def checkin_stream(self, prefix: str, suffix: str, stream: IOBase) -> StoredFile:
+    def checkin_stream(self, prefix: str, suffix: str, stream: IO) -> StoredFile:
         file = super().checkin_stream(prefix, suffix, stream)
-        hashed_prefix = get_hashed_path(file.name)
-        return StoredFile(self, PurePosixPath(hashed_prefix[:2], hashed_prefix))
+        return StoredFile(self, self.path(file.name))
 
 
 

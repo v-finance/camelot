@@ -317,7 +317,7 @@ class File(types.TypeDecorator):
         def processor(value):
             if value is not None:
                 assert isinstance(value, StoredFile)
-                return impl_processor(value.verbose_name)
+                return impl_processor(value.name.as_posix())
             return impl_processor(value)
           
         return processor
