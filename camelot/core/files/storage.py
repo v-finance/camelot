@@ -112,13 +112,13 @@ class Storage:
         root = settings.CAMELOT_MEDIA_ROOT
         return PurePosixPath(root).joinpath(self._upload_to)
 
-    def available(self) -> bool:
+    def available(self, subdir: str = '') -> bool:
         """
         Verify if the storage is available, or create if it doesn't exist
         :return: True if the storage is available, False otherwise
         """
         try:
-            if not (p := Path(self.upload_to)).exists():
+            if not (p := Path(self.upload_to, subdir)).exists():
                 p.mkdir(parents=True)
             return True
         except Exception as e:
@@ -187,7 +187,7 @@ class Storage:
     def _create_tempfile(self, suffix: str, prefix: str) -> (int, str):
         return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to)
 
-    def checkin(self, local_path: PurePosixPath, filename: os.PathLike[str] = None) -> StoredFile:
+    def checkin(self, local_path: PurePosixPath, filename: os.PathLike = None) -> StoredFile:
         """Check the file pointed to by local_path into the storage and return a StoredFile
 
         :param local_path: The path to the local file that needs to be checked in
@@ -207,7 +207,7 @@ class Storage:
             raise UserException(text=ugettext('The filename of the selected file is too long'),
                                 resolution=ugettext('Please rename the file'))
 
-        name = (PurePosixPath(filename) or local_path)
+        name = PurePosixPath(filename or local_path)
         root, extension = name.stem, name.suffix
 
         handle, to_path = self._create_tempfile_with_user_exceptions(extension, root)
@@ -285,24 +285,38 @@ class HashStorage(Storage):
         super().__init__(upload_to)
 
     @staticmethod
-    def get_hashed_path(path: PurePosixPath) -> str:
-        return sha1(path.name.encode('UTF-8')).hexdigest()
+    def get_hashed_name(name: str) -> str:
+        return sha1(name.encode('UTF-8')).hexdigest()
 
-    def path(self, name: PurePosixPath) -> PurePosixPath:
-        hashed_name = self.get_hashed_path(PurePosixPath(name))
-        return self.upload_to.joinpath(hashed_name[:2], hashed_name)
+    def _relative_hashed_path(self, path: PurePosixPath) -> PurePosixPath:
+        hashed_name = self.get_hashed_name(path.name)
+        return self._upload_to.joinpath(hashed_name[:2], hashed_name)
 
     def _create_tempfile(self, suffix: str, prefix: str) -> (int, str):
-        hashed_prefix = self.get_hashed_path(PurePosixPath(prefix))
+        hashed_prefix = self.get_hashed_name(prefix)
+        self.available(subdir=hashed_prefix[:2])
         return tempfile.mkstemp(suffix=suffix, prefix=hashed_prefix, dir=self.upload_to.joinpath(hashed_prefix[:2]))
+
+    def list_files(self, prefix='', suffix=''):
+        # TODO user exception?
+        raise NotImplementedError
 
     def checkin(self, local_path: PurePosixPath, filename: PurePosixPath = None) -> StoredFile:
         file = super().checkin(local_path, filename)
-        return StoredFile(self, self.path(file.name))
+        return StoredFile(self, self._relative_hashed_path(file.name))
 
     def checkin_stream(self, prefix: str, suffix: str, stream: IO) -> StoredFile:
         file = super().checkin_stream(prefix, suffix, stream)
-        return StoredFile(self, self.path(file.name))
+        return StoredFile(self, self._relative_hashed_path(file.name))
 
+    def checkout(self, stored_file: StoredFile) -> PurePosixPath:
+        assert isinstance(stored_file, StoredFile)
+        self.available()
+        root = PurePosixPath(settings.CAMELOT_MEDIA_ROOT)
+        return root.joinpath(stored_file.name)
 
-
+    def checkout_stream(self, stored_file: StoredFile) -> BinaryIO:
+        assert isinstance(stored_file, StoredFile)
+        self.available()
+        root = PurePosixPath(settings.CAMELOT_MEDIA_ROOT)
+        return Path(self.path(root.joinpath(stored_file.name))).open('rb')
