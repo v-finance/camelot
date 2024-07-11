@@ -222,13 +222,13 @@ class Storage:
         Path(self.path(name)).unlink(missing_ok=True)
 
     def _process_path(self, path: PurePosixPath) -> PurePosixPath:
-        return path.relative_to(self.upload_to)
+        return PurePosixPath(os.path.relpath(path, start=self.upload_to))
 
 
 class HashStorage(Storage):
 
     def _process_path(self, path: PurePosixPath) -> PurePosixPath:
-        return path.relative_to(settings.CAMELOT_MEDIA_ROOT)
+        return PurePosixPath(os.path.relpath(path, start=settings.CAMELOT_MEDIA_ROOT))
 
     @staticmethod
     def get_hashed_name(name: str) -> str:
