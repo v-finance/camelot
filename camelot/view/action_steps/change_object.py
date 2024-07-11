@@ -423,3 +423,7 @@ class ChangeObjects(UpdateTableView):
         step = json.loads(serialized_step)
         dialog = cls.render(step)
         dialog.async_exec(gui_run)
+
+@dataclass
+class QmlChangeObjects(ChangeObjects):
+    pass

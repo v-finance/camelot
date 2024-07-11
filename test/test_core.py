@@ -161,7 +161,7 @@ class ConfCase(unittest.TestCase):
     def test_simple_settings(self):
         settings = SimpleSettings( 'Conceptive Engineering', 'Camelot Test')
         self.assertTrue( settings.ENGINE() )
-        self.assertTrue( settings.CAMELOT_MEDIA_ROOT() )
+        self.assertTrue( settings.CAMELOT_MEDIA_ROOT )
 
 class QtCase(unittest.TestCase):
     """Test the qt binding abstraction module

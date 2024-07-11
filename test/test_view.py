@@ -7,6 +7,7 @@ import os
 import sys
 import unittest
 from decimal import Decimal
+from pathlib import PurePosixPath
 
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
@@ -46,7 +47,7 @@ from .testing_context import (
 logger = logging.getLogger('view.unittests')
 
 static_images_path = os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinx', 'source', '_static')
-storage = Storage()
+storage = Storage(PurePosixPath(''))
 
 admin = app_admin.get_related_admin(A)
 
@@ -280,7 +281,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), None )
         self.grab_default_states( editor )
-        self.assert_valid_editor( editor, StoredFile( storage, 'test.txt').verbose_name )
+        self.assert_valid_editor( editor, StoredFile( storage, PurePosixPath('test.txt')).verbose_name )
 
     def test_FloatEditor(self):
         # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
@@ -722,7 +723,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
     def test_filedelegate(self):
         delegate = delegates.FileDelegate()
-        file = StoredFile(None, 'agreement.pdf')
+        file = StoredFile(None, PurePosixPath('agreement.pdf'))
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FileEditor))
         self.grab_delegate(delegate, file)
