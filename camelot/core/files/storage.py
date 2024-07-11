@@ -2,10 +2,9 @@ import logging
 import os
 import shutil
 import tempfile
-from abc import ABC, abstractmethod
 from hashlib import sha1
 from pathlib import Path, PurePosixPath
-from typing import Dict, BinaryIO, Tuple, IO, Optional
+from typing import Dict, BinaryIO, Tuple, IO
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -16,7 +15,7 @@ logger = logging.getLogger('camelot.core.files.storage')
 
 
 class StoredFile:
-    def __init__(self, storage: 'AbstractStorage', name: PurePosixPath):
+    def __init__(self, storage: 'Storage', name: PurePosixPath):
         assert isinstance(name, PurePosixPath)
         self.storage = storage
         self.name: PurePosixPath = name
