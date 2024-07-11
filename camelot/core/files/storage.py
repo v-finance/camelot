@@ -110,8 +110,6 @@ class Storage:
         return self.upload_to.joinpath(name)
 
     def _create_tempfile_with_user_exceptions(self, suffix: str, prefix: str) -> Tuple[int, PurePosixPath]:
-        # @todo suffix and prefix should be cleaned, because the user might be
-        #       able to get directory separators in here or something related
         """Create a temporary file in the storage directory
 
         :param suffix: Suffix of the temporary file
