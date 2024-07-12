@@ -148,7 +148,7 @@ class Storage:
         self.available()
 
         assert isinstance(local_path, Path)
-        assert local_path.resolve()
+        assert local_path.resolve(strict=True)
 
         if filename is None and len(local_path.name) > 100:
             raise UserException(text=ugettext('The filename of the selected file is too long'),
