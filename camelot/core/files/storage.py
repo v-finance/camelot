@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 from hashlib import sha1
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePath
 from typing import Dict, BinaryIO, Tuple, IO
 
 from camelot.core.conf import settings
@@ -15,10 +15,10 @@ logger = logging.getLogger('camelot.core.files.storage')
 
 
 class StoredFile:
-    def __init__(self, storage: 'Storage', name: PurePosixPath):
-        assert isinstance(name, PurePosixPath)
+    def __init__(self, storage: 'Storage', name: PurePath):
+        assert isinstance(name, PurePath)
         self.storage = storage
-        self.name: PurePosixPath = name
+        self.name: PurePath = name
 
     @property
     def verbose_name(self) -> str:
@@ -47,14 +47,14 @@ class Storage:
     script as well.
     """
 
-    def __init__(self, upload_to: PurePosixPath):
+    def __init__(self, upload_to: PurePath):
         """
         :param upload_to: the subdirectory in which to put files
 
         The actual files will be put in settings.CAMELOT_MEDIA_ROOT + upload to.
         """
 
-        assert isinstance(upload_to, PurePosixPath)
+        assert isinstance(upload_to, PurePath)
         self._upload_to = upload_to
         #
         # don't do anything here that might reduce the startup time, like verifying the
@@ -64,7 +64,7 @@ class Storage:
     @property
     def upload_to(self):
         root = settings.CAMELOT_MEDIA_ROOT
-        return PurePosixPath(root).joinpath(self._upload_to)
+        return PurePath(root).joinpath(self._upload_to)
 
     def available(self, subdir: str = '') -> bool:
         """
@@ -82,7 +82,7 @@ class Storage:
     def writeable(self) -> bool:
         return os.access(Path(self.upload_to), os.W_OK) if self.available() else False
 
-    def exists(self, name: PurePosixPath) -> bool:
+    def exists(self, name: PurePath) -> bool:
         """Check if a file exists given its name
 
         :param name: Name of the file
@@ -98,9 +98,9 @@ class Storage:
 
         pattern = f'{prefix}*{suffix}'
         upload_to_path = Path(self.upload_to)
-        return (StoredFile(self, PurePosixPath(path.name)) for path in upload_to_path.glob(pattern))
+        return (StoredFile(self, PurePath(path.name)) for path in upload_to_path.glob(pattern))
 
-    def path(self, name: PurePosixPath) -> PurePosixPath:
+    def path(self, name: PurePath) -> PurePath:
         """Get the local filesystem path where the file can be opened using Python standard open
 
         :param name: Name of the file
@@ -108,7 +108,7 @@ class Storage:
         """
         return self.upload_to.joinpath(name)
 
-    def _create_tempfile_with_user_exceptions(self, suffix: str, prefix: str) -> Tuple[int, PurePosixPath]:
+    def _create_tempfile_with_user_exceptions(self, suffix: str, prefix: str) -> Tuple[int, PurePath]:
         """Create a temporary file in the storage directory
 
         :param suffix: Suffix of the temporary file
@@ -117,7 +117,7 @@ class Storage:
         """
         try:
             handle, name = self._create_tempfile(suffix, prefix)
-            return handle, PurePosixPath(name)
+            return handle, PurePath(name)
         except EnvironmentError as e:
             if not self.exists(self.upload_to):
                 raise UserException(text=ugettext(f'The directory {self.upload_to} does not exist'),
@@ -133,7 +133,7 @@ class Storage:
     def _create_tempfile(self, suffix: str, prefix: str) -> Tuple[int, str]:
         return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to)
 
-    def checkin(self, local_path: PurePosixPath, filename: os.PathLike = None) -> StoredFile:
+    def checkin(self, local_path: PurePath, filename: os.PathLike = None) -> StoredFile:
         """Check the file pointed to by local_path into the storage and return a StoredFile
 
         :param local_path: The path to the local file that needs to be checked in
@@ -147,13 +147,13 @@ class Storage:
         """
         self.available()
 
-        assert isinstance(local_path, PurePosixPath)
+        assert isinstance(local_path, PurePath)
 
         if filename is None and len(local_path.name) > 100:
             raise UserException(text=ugettext('The filename of the selected file is too long'),
                                 resolution=ugettext('Please rename the file'))
 
-        name = PurePosixPath(filename or local_path)
+        name = PurePath(filename or local_path)
         root, extension = name.stem, name.suffix
 
         handle, to_path = self._create_tempfile_with_user_exceptions(extension, root)
@@ -161,7 +161,7 @@ class Storage:
 
         logger.debug(f'copy file from {local_path} to {to_path}')
         shutil.copy(Path(local_path), Path(to_path))
-        return StoredFile(self, self._process_path(PurePosixPath(to_path)))
+        return StoredFile(self, self._process_path(PurePath(to_path)))
 
     def checkin_stream(self, prefix: str, suffix: str, stream: IO) -> StoredFile:
         """Check the data stream as a file into the storage
@@ -191,9 +191,9 @@ class Storage:
             file.write(stream.read())
             logger.debug('written contents to file')
             file.flush()
-        return StoredFile(self, self._process_path(PurePosixPath(to_path)))
+        return StoredFile(self, self._process_path(PurePath(to_path)))
 
-    def checkout(self, stored_file: StoredFile) -> PurePosixPath:
+    def checkout(self, stored_file: StoredFile) -> PurePath:
         """Check the file out of the storage and return a local filesystem path
 
         :param stored_file: StoredFile object
@@ -214,20 +214,20 @@ class Storage:
         self.available()
         return Path(self.path(stored_file.name)).open('rb')
 
-    def delete(self, name: PurePosixPath):
+    def delete(self, name: PurePath):
         """
         :param name: The name of the file to be deleted
         """
         Path(self.path(name)).unlink(missing_ok=True)
 
-    def _process_path(self, path: PurePosixPath) -> PurePosixPath:
-        return PurePosixPath(os.path.relpath(path, start=self.upload_to))
+    def _process_path(self, path: PurePath) -> PurePath:
+        return PurePath(os.path.relpath(path, start=self.upload_to))
 
 
 class HashStorage(Storage):
 
-    def _process_path(self, path: PurePosixPath) -> PurePosixPath:
-        return PurePosixPath(os.path.relpath(path, start=settings.CAMELOT_MEDIA_ROOT))
+    def _process_path(self, path: PurePath) -> PurePath:
+        return PurePath(os.path.relpath(path, start=settings.CAMELOT_MEDIA_ROOT))
 
     @staticmethod
     def get_hashed_name(name: str) -> str:
@@ -238,8 +238,8 @@ class HashStorage(Storage):
         self.available(subdir=hashed_prefix[:2])
         return tempfile.mkstemp(suffix=suffix, prefix=hashed_prefix, dir=self.upload_to.joinpath(hashed_prefix[:2]))
 
-    def path(self, name: PurePosixPath) -> PurePosixPath:
-        return PurePosixPath(settings.CAMELOT_MEDIA_ROOT).joinpath(name)
+    def path(self, name: PurePath) -> PurePath:
+        return PurePath(settings.CAMELOT_MEDIA_ROOT).joinpath(name)
 
     def list_files(self, prefix='', suffix=''):
         # TODO user exception?
