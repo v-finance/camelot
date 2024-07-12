@@ -88,7 +88,7 @@ class Storage:
         :param name: Name of the file
         :return: True if the file exists, False otherwise
         """
-        return Path(self.path(name)).exists()
+        return Path(self._path(name)).exists()
 
     def list_files(self, prefix='', suffix=''):
         """List all files with a given prefix and/or suffix available in this storage
@@ -100,7 +100,7 @@ class Storage:
         upload_to_path = Path(self.upload_to)
         return (StoredFile(self, PurePath(path.name)) for path in upload_to_path.glob(pattern))
 
-    def path(self, name: PurePath) -> PurePath:
+    def _path(self, name: PurePath) -> PurePath:
         """Get the local filesystem path where the file can be opened using Python standard open
 
         :param name: Name of the file
@@ -133,7 +133,7 @@ class Storage:
     def _create_tempfile(self, suffix: str, prefix: str) -> Tuple[int, str]:
         return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=self.upload_to)
 
-    def checkin(self, local_path: PurePath, filename: os.PathLike = None) -> StoredFile:
+    def checkin(self, local_path: Path, filename: PurePath = None) -> StoredFile:
         """Check the file pointed to by local_path into the storage and return a StoredFile
 
         :param local_path: The path to the local file that needs to be checked in
@@ -147,7 +147,8 @@ class Storage:
         """
         self.available()
 
-        assert isinstance(local_path, PurePath)
+        assert isinstance(local_path, Path)
+        assert local_path.resolve()
 
         if filename is None and len(local_path.name) > 100:
             raise UserException(text=ugettext('The filename of the selected file is too long'),
@@ -193,7 +194,7 @@ class Storage:
             file.flush()
         return StoredFile(self, self._process_path(PurePath(to_path)))
 
-    def checkout(self, stored_file: StoredFile) -> PurePath:
+    def checkout(self, stored_file: StoredFile) -> Path:
         """Check the file out of the storage and return a local filesystem path
 
         :param stored_file: StoredFile object
@@ -201,7 +202,7 @@ class Storage:
         """
         assert isinstance(stored_file, StoredFile)
         self.available()
-        return self.path(stored_file.name)
+        return Path(self._path(stored_file.name))
 
     # @contextmanager: NOTE: This should be a context manager so that the file always gets closed(doesn't happen now), good luck!
     def checkout_stream(self, stored_file: StoredFile) -> BinaryIO:
@@ -212,13 +213,13 @@ class Storage:
         """
         assert isinstance(stored_file, StoredFile)
         self.available()
-        return Path(self.path(stored_file.name)).open('rb')
+        return Path(self._path(stored_file.name)).open('rb')
 
     def delete(self, name: PurePath):
         """
         :param name: The name of the file to be deleted
         """
-        Path(self.path(name)).unlink(missing_ok=True)
+        Path(self._path(name)).unlink(missing_ok=True)
 
     def _process_path(self, path: PurePath) -> PurePath:
         return PurePath(os.path.relpath(path, start=self.upload_to))
@@ -238,7 +239,7 @@ class HashStorage(Storage):
         self.available(subdir=hashed_prefix[:2])
         return tempfile.mkstemp(suffix=suffix, prefix=hashed_prefix, dir=self.upload_to.joinpath(hashed_prefix[:2]))
 
-    def path(self, name: PurePath) -> PurePath:
+    def _path(self, name: PurePath) -> PurePath:
         return PurePath(settings.CAMELOT_MEDIA_ROOT).joinpath(name)
 
     def list_files(self, prefix='', suffix=''):
