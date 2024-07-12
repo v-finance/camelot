@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from hashlib import sha1
 from pathlib import Path, PurePath
-from typing import Dict, BinaryIO, Tuple, IO
+from typing import Dict, BinaryIO, Tuple, IO, Generator
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -90,7 +90,7 @@ class Storage:
         """
         return Path(self._path(name)).exists()
 
-    def list_files(self, prefix='', suffix=''):
+    def list_files(self, prefix='', suffix='') -> Generator[StoredFile, None, None]:
         """List all files with a given prefix and/or suffix available in this storage
 
         :return: An iterator of StoredFile objects

@@ -27,7 +27,6 @@
 #
 #  ============================================================================
 import logging
-from pathlib import PurePath
 
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
@@ -191,7 +190,6 @@ class BackupMechanism(object):
         # Proceed with the restore
         #
         import os
-        from camelot.core.files.storage import StoredFile
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData
         from sqlalchemy.pool import NullPool
