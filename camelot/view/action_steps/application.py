@@ -49,7 +49,9 @@ class Exit(ActionStep, DataclassSerializable):
     """
 
     return_code: int = 0
-    blocking: bool = False
+    # blocking, since after exit has been instructed, the server should
+    # wait for termination of the client and not continue the action
+    blocking: bool = True
 
 
 @dataclass
