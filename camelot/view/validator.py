@@ -191,13 +191,14 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
     def validate(self, qtext, position):
         ptext = str(qtext).upper()
-        if ptext and self.state is not None and self.state["regex"] is not None:
-            # First check if the text validates the regex.
-            regex = re.compile(self.state["regex"])
+        if ptext and self.state is not None:
+
+            # First check if the text validates the regex (if defined)
+            regex = re.compile(self.state["regex"] or '')
             if regex.match(ptext) is None:
                 return (QtGui.QValidator.State.Intermediate, qtext, len(ptext))
             else:
-                # If it passed the regex validation, check if the text differs from state last value:
+                # If it passed the regex validation, check if the text differs from the state's last value:
                 if ptext == self.state["value"]:
                     # If the value did not change, reuse the state's validation result:
                     formatted_value = self.state["formatted_value"]
