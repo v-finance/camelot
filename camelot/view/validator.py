@@ -38,7 +38,7 @@ from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
 from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
@@ -50,7 +50,13 @@ class ValidatorState(DataclassSerializable):
     formatted_value: str = None
     valid: bool = True
     error_msg: str = None
-    info: dict = field(default_factory=dict)
+
+    # Info dictionary allowing user-defined metadata to be associated.
+    # This data is meant for server-side validation usecases and therefor should not be serialized.
+    info: InitVar(dict) = None
+
+    def __post_init__(self, info):
+        object.__setattr__(self, "info", info or dict())
 
     @classmethod
     def for_value(cls, value):
