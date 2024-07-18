@@ -36,6 +36,7 @@ Those fields are stored in the :mod:`camelot.types` module.
 """
 import collections
 import logging
+from pathlib import PurePosixPath
 
 logger = logging.getLogger('camelot.types')
 
@@ -300,11 +301,11 @@ class File(types.TypeDecorator):
     """
     
     impl = types.Unicode
-    stored_file_implementation = StoredFile
-    
-    def __init__(self, max_length=100, upload_to=u'', storage=Storage, **kwargs):
+
+    def __init__(self, storage, max_length=100, **kwargs):
+        assert isinstance(storage, Storage) or storage is None
         self.max_length = max_length
-        self.storage = storage(upload_to, self.stored_file_implementation)
+        self.storage = storage or Storage(PurePosixPath(''))
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
         
     def bind_processor(self, dialect):
@@ -315,23 +316,21 @@ class File(types.TypeDecorator):
           
         def processor(value):
             if value is not None:
-                assert isinstance(value, (self.stored_file_implementation))
-                return impl_processor(value.name)
+                assert isinstance(value, StoredFile)
+                return impl_processor(value.name.as_posix())
             return impl_processor(value)
           
         return processor
     
     def result_processor(self, dialect, coltype=None):
-      
         impl_processor = self.impl.result_processor(dialect, coltype)
         if not impl_processor:
             impl_processor = lambda x:x
-            
+
         def processor(value):
-    
             if value:
                 value = impl_processor(value)
-                return self.stored_file_implementation(self.storage, value)
+                return StoredFile(self.storage, PurePosixPath(value))
               
         return processor
       

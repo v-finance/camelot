@@ -2,6 +2,8 @@
 """
 Tests for the Admin classes
 """
+from pathlib import PurePosixPath
+
 import camelot.types
 import datetime
 import unittest
@@ -15,6 +17,7 @@ from sqlalchemy.dialects import mysql
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.session import Session
 
+from camelot.core.files.storage import Storage
 from .test_model import ExampleModelMixinCase
 from .test_orm import TestMetaData
 from camelot.admin.action import list_filter
@@ -603,7 +606,7 @@ class EntityAdminCase(TestMetaData):
         self.assertEqual( fa_4['filter_strategy'], list_filter.ChoicesFilter )
         self.assertEqual( fa_4['search_strategy'], list_filter.NoFilter)
 
-        column_5 = schema.Column( camelot.types.File)
+        column_5 = schema.Column( camelot.types.File(Storage(PurePosixPath(''))))
         fa_5 = EntityAdmin.get_sql_field_attributes( [column_5] )
         self.assertEqual( fa_5['delegate'], delegates.FileDelegate )
         self.assertEqual( fa_5['filter_strategy'], list_filter.NoFilter )
