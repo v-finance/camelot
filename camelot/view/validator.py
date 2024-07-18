@@ -86,13 +86,6 @@ class AbstractValidator:
     def set_state(self, state):
         pass
 
-    def format_value(self, value):
-        """
-        Format the given value for display.
-        The value is left untouched by default.
-        """
-        return value
-
 class DateValidator(QtGui.QValidator):
 
     def validate(self, input_, pos):
@@ -219,11 +212,6 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
                 return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
 
         return (QtGui.QValidator.State.Acceptable, qtext, 0)
-
-    def format_value(self, value):
-        if self.state is not None:
-            return self.state['formatted_value']
-        return value
 
 class ZipcodeValidatorState(RegexReplaceValidatorState):
 
