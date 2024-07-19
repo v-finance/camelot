@@ -101,6 +101,7 @@ class RegexReplaceValidatorState(ValidatorState):
     regex_repl: str = None
     example: str = None
     deletechars: str = ''
+    to_upper: bool = True
 
     @classmethod
     def for_value(cls, value, regex=None, regex_repl=None, example=None):
@@ -150,7 +151,10 @@ class RegexReplaceValidatorState(ValidatorState):
         None will be returned.
         """
         if isinstance(value, str):
-            return stdnum.util.clean(value, cls.deletechars).strip().upper() or None
+            value = stdnum.util.clean(value, cls.deletechars).strip()
+            if cls.to_upper == True:
+                value = value.upper()
+            return value or None
 
     @classmethod
     def compact_repl(cls, regex_repl):
@@ -188,8 +192,11 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
         self.changed.emit()
 
     def validate(self, qtext, position):
-        ptext = str(qtext).upper()
+        ptext = str(qtext)
         if ptext and self.state is not None:
+
+            if self.state["to_upper"] == True:
+                ptext = ptext.upper()
 
             # First check if the text validates the regex (if defined)
             regex = re.compile(self.state["regex"] or '')
