@@ -144,6 +144,14 @@ class RegexReplaceValidatorState(ValidatorState):
         return cls(**state)
 
     @classmethod
+    def for_attribute(cls, attribute, **kwargs):
+        def for_obj(obj):
+            if obj is not None:
+                return cls.for_value(attribute.__get__(obj, None), **kwargs)
+            return cls()
+        return for_obj
+
+    @classmethod
     def sanitize(cls, value):
         """
         Sanitizes the given value by stripping the chars defined by this state's deletechars,
