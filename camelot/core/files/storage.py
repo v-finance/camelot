@@ -19,12 +19,12 @@ class StoredFile:
         assert isinstance(name, PurePath)
         self.storage = storage
         self.name: PurePath = name
-        self.verbose_name = verbose_name
+        self._verbose_name = verbose_name
 
     @property
     def verbose_name(self) -> str:
         """The name of the file, as it is to be displayed in the GUI"""
-        return self.name.as_posix()
+        return self._verbose_name
 
     def __getstate__(self) -> Dict[str, str]:
         """Returns the key of the file. To support pickling stored files
