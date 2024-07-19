@@ -1,11 +1,13 @@
 import dataclasses
+import datetime
 import io
 import json
 import base64
 
 from camelot.core.qt import QtCore, QtGui
-from .utils import ugettext_lazy
 from enum import Enum
+
+from .utils import ugettext_lazy
 
 
 class Serializable(object):
@@ -73,6 +75,8 @@ class DataclassEncoder(json.JSONEncoder):
          #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
         if isinstance(obj, DataclassSerializable):
             return obj.asdict(obj)
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
         return json.JSONEncoder.default(self, obj)
 
 
