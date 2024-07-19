@@ -195,7 +195,7 @@ class Storage:
             logger.debug('written contents to file')
             file.flush()
         filepath = self._process_path(PurePath(to_path))
-        return StoredFile(self, filepath, self._verbose_name(filepath, prefix + suffix))
+        return StoredFile(self, filepath, self._verbose_name(filepath, (prefix or '') + (suffix or '')))
 
     def checkout(self, stored_file: StoredFile) -> Path:
         """Check the file out of the storage and return a local filesystem path
