@@ -37,7 +37,7 @@ by Len Silverston, Chapter 2
 import copy
 import datetime
 import enum
-from pathlib import PurePosixPath
+from pathlib import PurePath
 
 import sqlalchemy.types
 
@@ -334,13 +334,12 @@ class City(GeographicBoundary, WithCountry):
 
     @GeographicBoundary.code.setter
     def code(self, code):
-        # Set the city's zip code to its compact and sanitized representation defined by the validation.
-        # If its invalid, the value will remain untouched.
-        self._code = RegexReplaceValidator.validity(ZipcodeValidatorState.for_city(self), code).value
+        # Set the city's zip code to its compact and sanitized representation.
+        self._code = ZipcodeValidatorState.sanitize(code)
 
     @property
     def formatted_zip_code(self):
-        return RegexReplaceValidator.validity(ZipcodeValidatorState.for_city(self), self.code).formatted_value
+        return ZipcodeValidatorState.for_city(self).formatted_value
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
@@ -414,9 +413,9 @@ class City(GeographicBoundary, WithCountry):
     def get_messages(self):
         if self.country is not None:
 
-            validity = RegexReplaceValidator.validity(ZipcodeValidatorState.for_city(self), self.code)
-            if not validity.valid:
-                yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(validity.error_msg))
+            zipcode_validator_state = ZipcodeValidatorState.for_city(self)
+            if not zipcode_validator_state.valid:
+                yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(zipcode_validator_state.error_msg))
 
             if self.administrative_division is not None:
                 if self.country != self.administrative_division.country:
@@ -515,9 +514,8 @@ class Address( Entity ):
     def zip_code(self, code):
         # Only allow to overrule the address' zip code if its city's code is undefined.
         if self.city is not None and not self.city.code:
-            # Set the zip code to its compact and sanitized representation defined by the validation.
-            # If its invalid, the value will remain untouched.
-            self._zip_code = RegexReplaceValidator.validity(ZipcodeValidatorState.for_addressable(self), code).value
+            # Set the zip code to its compact and sanitized representation.
+            self._zip_code = ZipcodeValidatorState.sanitize(code)
 
     @property
     def zip_code_type(self):
@@ -526,7 +524,7 @@ class Address( Entity ):
 
     @property
     def formatted_zip_code(self):
-        return RegexReplaceValidator.validity(ZipcodeValidatorState.for_addressable(self), self.zip_code).formatted_value
+        return ZipcodeValidatorState.for_addressable(self).formatted_value
 
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
@@ -544,10 +542,9 @@ class Address( Entity ):
         if self.city is not None:
             yield from self.city.get_messages()
 
-            if self._zip_code is not None:
-                validity = RegexReplaceValidator.validity(ZipcodeValidatorState.for_addressable(self), self._zip_code)
-                if not validity.valid:
-                    yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country, ugettext(validity.error_msg))
+            zipcode_validator_state = ZipcodeValidatorState.for_addressable(self)
+            if not zipcode_validator_state.valid:
+                yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country, ugettext(zipcode_validator_state.error_msg))
 
             if self.administrative_division is not None and self.city.country != self.administrative_division.country:
                 yield _(City.Message.invalid_administrative_division.value, self.administrative_division, self.city.country)
@@ -845,7 +842,7 @@ class Organization( Party ):
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
-    logo = schema.Column( camelot.types.File(Storage(upload_to=PurePosixPath('organization-logo'))))
+    logo = schema.Column( camelot.types.File(Storage(upload_to=PurePath('organization-logo'))))
     tax_id = schema.Column( Unicode( 20 ) )
 
     def __str__(self):
@@ -881,7 +878,7 @@ class Person( Party ):
     social_security_number = schema.Column( IdentifyingUnicode(length=12) )
     passport_number = schema.Column( IdentifyingUnicode(length=20) )
     passport_expiry_date = schema.Column( Date() )
-    picture = schema.Column( camelot.types.File(Storage(upload_to=PurePosixPath('person-pictures'))))
+    picture = schema.Column( camelot.types.File(Storage(upload_to=PurePath('person-pictures'))))
     comment = schema.Column( camelot.types.RichText() )
 
     @property

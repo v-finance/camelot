@@ -66,6 +66,10 @@ class TextLineEditor(CustomEditor):
         if validator is not None:
             validator.setObjectName('validator')
             text_input.setValidator(validator)
+            # Connect the validator's changed signal to the text input's
+            # bg color update, as it may require updating when the validator
+            # state changes.
+            validator.changed.connect(text_input._update_background_color)
         completer = AbstractCompleter.get_completer(completer_type, self)
         if completer is not None:
             completer.setObjectName('completer')

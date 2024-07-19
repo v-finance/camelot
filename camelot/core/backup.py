@@ -27,7 +27,6 @@
 #
 #  ============================================================================
 import logging
-from pathlib import PurePosixPath
 
 from sqlalchemy import types, sql, PrimaryKeyConstraint
 
@@ -191,21 +190,14 @@ class BackupMechanism(object):
         # Proceed with the restore
         #
         import os
-        from camelot.core.files.storage import StoredFile
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData
         from sqlalchemy.pool import NullPool
 
         yield (0, 0, _('Open backup file'))
-        if self.storage:
-            if not self.storage.exists(self.filename):
-                raise Exception('Backup file does not exist')
-            stored_file = StoredFile(self.storage, PurePosixPath(self.filename))
-            filename = self.storage.checkout( stored_file )
-        else:
-            if not os.path.exists(self.filename):
-                raise Exception('Backup file does not exist')
-            filename = self.filename
+        if not os.path.exists(self.filename):
+            raise Exception('Backup file does not exist')
+        filename = self.filename
         from_engine = create_engine('sqlite:///%s'%filename, poolclass=NullPool )
         from_connection = from_engine.connect()
 
