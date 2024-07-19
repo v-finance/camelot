@@ -19,6 +19,7 @@ class StoredFile:
         assert isinstance(name, PurePath)
         self.storage = storage
         self.name: PurePath = name
+        assert isinstance(verbose_name, str)
         self._verbose_name = verbose_name
 
     @property
@@ -164,7 +165,7 @@ class Storage:
         logger.debug(f'copy file from {local_path} to {to_path}')
         shutil.copy(Path(local_path), Path(to_path))
         filepath = self._process_path(PurePath(to_path))
-        return StoredFile(self, filepath, self._verbose_name(filepath, name))
+        return StoredFile(self, filepath, self._verbose_name(filepath, name.name))
 
     def checkin_stream(self, prefix: str, suffix: str, stream: IO) -> StoredFile:
         """Check the data stream as a file into the storage
