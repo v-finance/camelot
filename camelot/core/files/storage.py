@@ -228,7 +228,7 @@ class Storage:
         return the verbose name of a path
         :param path: The path of the file
         """
-        return name_hint if name_hint != '' or name_hint is not None else path.name
+        return name_hint if name_hint != '' and name_hint is not None else path.name
 
 
 class HashStorage(Storage):
