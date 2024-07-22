@@ -30,6 +30,7 @@
 """:class:`QtGui.QValidator` subclasses to be used in the
 editors or other widgets.
 """
+import dataclasses
 import re
 import stdnum.util
 
@@ -78,15 +79,12 @@ class ValidatorState(DataclassSerializable):
             return value or None
 
     @classmethod
-    def for_value(cls, value, deletechars=deletechars, to_upper=to_upper):
+    def for_value(cls, value, **kwargs):
         # Initialize state with sanitization parameters before using it
         # to sanitize the provided value.
-        state = cls(
-            deletechars=deletechars,
-            to_upper=to_upper,
-        )
+        state = cls(**kwargs)
         value = state.sanitize(value)
-        return dataclass.replace(
+        return dataclasses.replace(
             state,
             value=value,
             formatted_value=value,
@@ -130,26 +128,22 @@ class RegexReplaceValidatorState(ValidatorState):
     example: str = None
 
     @classmethod
-    def for_value(cls, value, regex=None, regex_repl=None, example=None):
-        state = dict(
-            value=value,
-            formatted_value=value,
-            valid=True,
-            error_msg=None,
+    def for_value(cls, value, regex=None, regex_repl=None, example=None, **kwargs):
+        # Use inherited ValidatorState behaviour, wich will sanitize the value.
+        state = super().for_value(value, **kwargs)
+        state = dataclasses.replace(
+            state,
             regex=regex,
             regex_repl=regex_repl,
             example=example,
         )
 
-        # First sanitize the value.
-        value = cls.sanitize(value)
-        formatted_value = value
-
         # Check if the value matches the regex.
-        if value is not None and regex is not None:
+        if state.value is not None and regex is not None:
             regex = re.compile(regex)
-            if not regex.fullmatch(value):
-                state.update(
+            if not regex.fullmatch(state.value):
+                state = dataclasses.replace(
+                    state,
                     valid=False,
                     error_msg=InvalidFormat.message,
                 )
@@ -157,17 +151,13 @@ class RegexReplaceValidatorState(ValidatorState):
                 # If the regex replacement pattern is defined, use it to construct
                 # both the compact as the formatted value:
                 if cls.format_repl(regex_repl):
-                    formatted_value = re.sub(regex, cls.format_repl(regex_repl), value)
-                    value = re.sub(regex, cls.compact_repl(regex_repl), value)
-                # If no replacement is defined, the formatted value should be identitical to the formatted one:
-                else:
-                    formatted_value = value
+                    state = dataclasses.replace(
+                        state,
+                        value=re.sub(regex, cls.compact_repl(regex_repl), state.value),
+                        formatted_value=re.sub(regex, cls.format_repl(regex_repl), state.value),
+                    )
 
-        state.update(
-            value=value,
-            formatted_value=formatted_value,
-        )
-        return cls(**state)
+        return state
 
     @classmethod
     def for_attribute(cls, attribute, **kwargs):
