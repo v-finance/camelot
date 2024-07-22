@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from hashlib import sha1
 from pathlib import Path, PurePath
-from typing import Dict, BinaryIO, Tuple, IO, Generator
+from typing import Dict, BinaryIO, Tuple, IO, Generator, Optional
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -20,12 +20,7 @@ class StoredFile:
         self.storage = storage
         self.name: PurePath = name
         assert isinstance(verbose_name, str)
-        self._verbose_name = verbose_name
-
-    @property
-    def verbose_name(self) -> str:
-        """The name of the file, as it is to be displayed in the GUI"""
-        return self._verbose_name
+        self.verbose_name = verbose_name
 
     def __getstate__(self) -> Dict[str, str]:
         """Returns the key of the file. To support pickling stored files
@@ -100,7 +95,7 @@ class Storage:
 
         pattern = f'{prefix}*{suffix}'
         upload_to_path = Path(self.upload_to)
-        return (StoredFile(self, PurePath(path.name), path.name) for path in upload_to_path.glob(pattern))
+        return (StoredFile(self, PurePath(path.name), self._verbose_name(path)) for path in upload_to_path.glob(pattern))
 
     def _path(self, name: PurePath) -> PurePath:
         """Get the local filesystem path where the file can be opened using Python standard open
@@ -228,21 +223,18 @@ class Storage:
     def _process_path(self, path: PurePath) -> PurePath:
         return PurePath(os.path.relpath(path, start=self.upload_to))
 
-    def _verbose_name(self, path: PurePath, name_hint: str) -> str:
+    def _verbose_name(self, path: PurePath, name_hint: Optional[str] = None) -> str:
         """
         return the verbose name of a path
         :param path: The path of the file
         """
-        return path.name
+        return name_hint if name_hint != '' and name_hint is not None else path.name
 
 
 class HashStorage(Storage):
 
     def _process_path(self, path: PurePath) -> PurePath:
         return PurePath(os.path.relpath(path, start=settings.CAMELOT_MEDIA_ROOT))
-
-    def _verbose_name(self, path: PurePath, name_hint: str) -> str:
-        return name_hint
 
     @staticmethod
     def get_hashed_name(name: str) -> str:
