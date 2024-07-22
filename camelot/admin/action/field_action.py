@@ -244,7 +244,7 @@ class OpenFile(Action):
         storage = model_context.field_attributes['storage']
         local_path = storage.checkout(model_context.value)
         yield action_steps.UpdateProgress(text=_('Open file'))
-        yield action_steps.OpenFile(local_path)
+        yield action_steps.OpenFile(local_path.as_posix())
 
     def get_state(self, model_context):
         state = super(OpenFile, self).get_state(model_context)

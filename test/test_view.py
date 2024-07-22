@@ -281,7 +281,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), None )
         self.grab_default_states( editor )
-        self.assert_valid_editor( editor, StoredFile( storage, PurePosixPath('test.txt')).verbose_name )
+        self.assert_valid_editor( editor, StoredFile( storage, PurePosixPath('test.txt'), 'test.txt').verbose_name )
 
     def test_FloatEditor(self):
         # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
@@ -723,7 +723,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
     def test_filedelegate(self):
         delegate = delegates.FileDelegate()
-        file = StoredFile(None, PurePosixPath('agreement.pdf'))
+        file = StoredFile(None, PurePosixPath('agreement.pdf'), 'agreement.pdf')
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FileEditor))
         self.grab_delegate(delegate, file)

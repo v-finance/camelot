@@ -15,15 +15,17 @@ logger = logging.getLogger('camelot.core.files.storage')
 
 
 class StoredFile:
-    def __init__(self, storage: 'Storage', name: PurePath):
+    def __init__(self, storage: 'Storage', name: PurePath, verbose_name: str):
         assert isinstance(name, PurePath)
         self.storage = storage
         self.name: PurePath = name
+        assert isinstance(verbose_name, str)
+        self._verbose_name = verbose_name
 
     @property
     def verbose_name(self) -> str:
         """The name of the file, as it is to be displayed in the GUI"""
-        return self.name.as_posix()
+        return self._verbose_name
 
     def __getstate__(self) -> Dict[str, str]:
         """Returns the key of the file. To support pickling stored files
@@ -98,7 +100,7 @@ class Storage:
 
         pattern = f'{prefix}*{suffix}'
         upload_to_path = Path(self.upload_to)
-        return (StoredFile(self, PurePath(path.name)) for path in upload_to_path.glob(pattern))
+        return (StoredFile(self, PurePath(path.name), path.name) for path in upload_to_path.glob(pattern))
 
     def _path(self, name: PurePath) -> PurePath:
         """Get the local filesystem path where the file can be opened using Python standard open
@@ -162,7 +164,8 @@ class Storage:
 
         logger.debug(f'copy file from {local_path} to {to_path}')
         shutil.copy(Path(local_path), Path(to_path))
-        return StoredFile(self, self._process_path(PurePath(to_path)))
+        filepath = self._process_path(PurePath(to_path))
+        return StoredFile(self, filepath, self._verbose_name(filepath, name.name))
 
     def checkin_stream(self, prefix: str, suffix: str, stream: IO) -> StoredFile:
         """Check the data stream as a file into the storage
@@ -192,7 +195,8 @@ class Storage:
             file.write(stream.read())
             logger.debug('written contents to file')
             file.flush()
-        return StoredFile(self, self._process_path(PurePath(to_path)))
+        filepath = self._process_path(PurePath(to_path))
+        return StoredFile(self, filepath, self._verbose_name(filepath, (prefix or '') + (suffix or '')))
 
     def checkout(self, stored_file: StoredFile) -> Path:
         """Check the file out of the storage and return a local filesystem path
@@ -224,11 +228,21 @@ class Storage:
     def _process_path(self, path: PurePath) -> PurePath:
         return PurePath(os.path.relpath(path, start=self.upload_to))
 
+    def _verbose_name(self, path: PurePath, name_hint: str) -> str:
+        """
+        return the verbose name of a path
+        :param path: The path of the file
+        """
+        return path.name
+
 
 class HashStorage(Storage):
 
     def _process_path(self, path: PurePath) -> PurePath:
         return PurePath(os.path.relpath(path, start=settings.CAMELOT_MEDIA_ROOT))
+
+    def _verbose_name(self, path: PurePath, name_hint: str) -> str:
+        return name_hint
 
     @staticmethod
     def get_hashed_name(name: str) -> str:
