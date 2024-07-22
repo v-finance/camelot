@@ -330,7 +330,7 @@ class File(types.TypeDecorator):
         def processor(value):
             if value:
                 value = impl_processor(value)
-                return StoredFile(self.storage, PurePath(value))
+                return StoredFile(self.storage, PurePath(value), value)
               
         return processor
       

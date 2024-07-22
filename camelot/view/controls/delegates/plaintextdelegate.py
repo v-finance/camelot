@@ -40,7 +40,7 @@ from ....core.qt import Qt
 from .customdelegate import CustomDelegate
 
 from camelot.view.controls import editors
-from camelot.view.validator import AbstractValidator
+from camelot.view.validator import AbstractValidator, ValidatorState
 
 DEFAULT_COLUMN_WIDTH = 20
 
@@ -72,11 +72,13 @@ class PlainTextDelegate(CustomDelegate):
         item.roles[CompleterStateRole] = model_context.field_attributes.get('completer_state')
         if model_context.value is not None:
             value = str(model_context.value)
-            # If a validator is defined, use it to format the model value:
             validator = AbstractValidator.get_validator(model_context.field_attributes.get('validator_type'))
             if validator is not None:
-                validator.set_state(model_context.field_attributes.get('validator_state'))
-                value = validator.format_value(value)
+                state = model_context.field_attributes.get('validator_state')
+                validator.set_state(state)
+                # If a ValidatorState is encountered, use it to format the model value:
+                if isinstance(state, ValidatorState):
+                    value = state.formatted_value or value
             item.roles[PreviewRole] = value
             # Set EditRole to possible reformatted value, to apply programatically triggered changes.
             item.roles[Qt.ItemDataRole.EditRole] = value

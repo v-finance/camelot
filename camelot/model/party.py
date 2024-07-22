@@ -335,7 +335,7 @@ class City(GeographicBoundary, WithCountry):
     @GeographicBoundary.code.setter
     def code(self, code):
         # Set the city's zip code to its compact and sanitized representation.
-        self._code = ZipcodeValidatorState.sanitize(code)
+        self._code = ZipcodeValidatorState.for_type(self.zip_code_type, code).value
 
     @property
     def formatted_zip_code(self):
@@ -515,7 +515,7 @@ class Address( Entity ):
         # Only allow to overrule the address' zip code if its city's code is undefined.
         if self.city is not None and not self.city.code:
             # Set the zip code to its compact and sanitized representation.
-            self._zip_code = ZipcodeValidatorState.sanitize(code)
+            self._zip_code = ZipcodeValidatorState.for_type(self.city.zip_code_type, code).value
 
     @property
     def zip_code_type(self):

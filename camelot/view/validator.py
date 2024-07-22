@@ -30,7 +30,6 @@
 """:class:`QtGui.QValidator` subclasses to be used in the
 editors or other widgets.
 """
-import collections
 import re
 import stdnum.util
 
@@ -38,12 +37,10 @@ from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, InitVar
 from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
-
-data_validity = collections.namedtuple('data_validity', ['valid', 'value', 'formatted_value', 'error_msg', 'info'])
 
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
@@ -52,10 +49,34 @@ class ValidatorState(DataclassSerializable):
     formatted_value: str = None
     valid: bool = True
     error_msg: str = None
-    info: dict = field(default_factory=dict)
+
+    # Fields that configure if and how values should be sanitized. 
+    deletechars: str = ''
+    to_upper: bool = True
+
+    # Info dictionary allowing user-defined metadata to be associated.
+    # This data is meant for server-side validation usecases and therefor should not be serialized.
+    info: InitVar(dict) = None
+
+    def __post_init__(self, info):
+        object.__setattr__(self, "info", info or dict())
+
+    @classmethod
+    def sanitize(cls, value):
+        """
+        Sanitizes the given value by stripping the given chars and conditionally
+        converting the result to uppercase based on the provided flag.
+        If the stripped form becomes the empty string, None will be returned.
+        """
+        if isinstance(value, str):
+            value = stdnum.util.clean(value, cls.deletechars).strip()
+            if cls.to_upper == True:
+                value = value.upper()
+            return value or None
 
     @classmethod
     def for_value(cls, value):
+        value = cls.sanitize(value)
         return cls(
             value=value,
             formatted_value=value,
@@ -82,13 +103,6 @@ class AbstractValidator:
     def set_state(self, state):
         pass
 
-    def format_value(self, value):
-        """
-        Format the given value for display.
-        The value is left untouched by default.
-        """
-        return value
-
 class DateValidator(QtGui.QValidator):
 
     def validate(self, input_, pos):
@@ -104,7 +118,6 @@ class RegexReplaceValidatorState(ValidatorState):
     regex: str = None
     regex_repl: str = None
     example: str = None
-    deletechars: str = ''
 
     @classmethod
     def for_value(cls, value, regex=None, regex_repl=None, example=None):
@@ -131,7 +144,7 @@ class RegexReplaceValidatorState(ValidatorState):
                     error_msg=InvalidFormat.message,
                 )
             else:
-                # If the regex replacement pattern is defined, use it construct
+                # If the regex replacement pattern is defined, use it to construct
                 # both the compact as the formatted value:
                 if cls.format_repl(regex_repl):
                     formatted_value = re.sub(regex, cls.format_repl(regex_repl), value)
@@ -147,14 +160,12 @@ class RegexReplaceValidatorState(ValidatorState):
         return cls(**state)
 
     @classmethod
-    def sanitize(cls, value):
-        """
-        Sanitizes the given value by stripping the chars defined by this state's deletechars,
-        and capitilizing the result. If the stripped form becomes the empty string,
-        None will be returned.
-        """
-        if isinstance(value, str):
-            return stdnum.util.clean(value, cls.deletechars).strip().upper() or None
+    def for_attribute(cls, attribute, **kwargs):
+        def for_obj(obj):
+            if obj is not None:
+                return cls.for_value(attribute.__get__(obj, None), **kwargs)
+            return cls()
+        return for_obj
 
     @classmethod
     def compact_repl(cls, regex_repl):
@@ -192,14 +203,18 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
         self.changed.emit()
 
     def validate(self, qtext, position):
-        ptext = str(qtext).upper()
-        if ptext and self.state is not None and self.state["regex"] is not None:
-            # First check if the text validates the regex.
-            regex = re.compile(self.state["regex"])
+        ptext = str(qtext)
+        if ptext and self.state is not None:
+
+            if self.state["to_upper"] == True:
+                ptext = ptext.upper()
+
+            # First check if the text validates the regex (if defined)
+            regex = re.compile(self.state["regex"] or '')
             if regex.match(ptext) is None:
                 return (QtGui.QValidator.State.Intermediate, qtext, len(ptext))
             else:
-                # If it passed the regex validation, check if the text differs from state last value:
+                # If it passed the regex validation, check if the text differs from the state's last value:
                 if ptext == self.state["value"]:
                     # If the value did not change, reuse the state's validation result:
                     formatted_value = self.state["formatted_value"]
@@ -215,17 +230,12 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
         return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
-    def format_value(self, value):
-        if self.state is not None:
-            return self.state['formatted_value']
-        return value
-
 class ZipcodeValidatorState(RegexReplaceValidatorState):
 
     deletechars: str = ' -./#,'
 
     @classmethod
-    def for_zip_code_type(cls, value, zip_code_type):
+    def for_type(cls, zip_code_type, value):
         state = dict()
         if zip_code_type in zip_code_types:
             zip_code_type = zip_code_types[zip_code_type]
@@ -239,14 +249,14 @@ class ZipcodeValidatorState(RegexReplaceValidatorState):
     @classmethod
     def for_city(cls, city):
         if city is not None:
-            return cls.for_zip_code_type(city.code, city.zip_code_type)
+            return cls.for_type(city.zip_code_type, city.code)
         return cls()
 
     @classmethod
     def for_addressable(cls, addressable):
         if addressable is not None:
             if addressable.city is not None:
-                return cls.for_zip_code_type(addressable.zip_code, addressable.city.zip_code_type)
+                return cls.for_type(addressable.city.zip_code_type, addressable.zip_code)
             return cls.for_value(addressable.zip_code)
         return cls()
 
