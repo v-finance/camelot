@@ -38,6 +38,7 @@ from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
 from dataclasses import dataclass, InitVar
+from sqlalchemy.ext import hybrid
 from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
@@ -61,23 +62,32 @@ class ValidatorState(DataclassSerializable):
     def __post_init__(self, info):
         object.__setattr__(self, "info", info or dict())
 
-    @classmethod
-    def sanitize(cls, value):
+    @hybrid.hybrid_method
+    def sanitize(self, value):
         """
-        Sanitizes the given value by stripping the given chars and conditionally
-        converting the result to uppercase based on the provided flag.
+        Hybrid method to sanitizes the given value by stripping chars and conditionally
+        converting the result to uppercase based on this state.
         If the stripped form becomes the empty string, None will be returned.
+        The hybrid behaviour will result in the field defaults for deletechars and to_upper being used
+        if called on the class level, and the initialized field values if called on the instance level.
         """
         if isinstance(value, str):
-            value = stdnum.util.clean(value, cls.deletechars).strip()
-            if cls.to_upper == True:
+            value = stdnum.util.clean(value, self.deletechars).strip()
+            if self.to_upper == True:
                 value = value.upper()
             return value or None
 
     @classmethod
-    def for_value(cls, value):
-        value = cls.sanitize(value)
-        return cls(
+    def for_value(cls, value, deletechars=deletechars, to_upper=to_upper):
+        # Initialize state with sanitization parameters before using it
+        # to sanitize the provided value.
+        state = cls(
+            deletechars=deletechars,
+            to_upper=to_upper,
+        )
+        value = state.sanitize(value)
+        return dataclass.replace(
+            state,
             value=value,
             formatted_value=value,
         )
