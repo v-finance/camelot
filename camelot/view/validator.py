@@ -204,7 +204,7 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
     def validate(self, qtext, position):
         ptext = str(qtext)
-        if ptext and self.state is not None:
+        if ptext and self.state:
 
             if self.state["to_upper"] == True:
                 ptext = ptext.upper()
@@ -215,7 +215,7 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
                 return (QtGui.QValidator.State.Intermediate, qtext, len(ptext))
             else:
                 # If it passed the regex validation, check if the text differs from the state's last value:
-                if ptext == self.state["value"]:
+                if ptext == self.state["formatted_value"]:
                     # If the value did not change, reuse the state's validation result:
                     formatted_value = self.state["formatted_value"]
                     return (QtGui.QValidator.State.Acceptable if self.state["valid"] else QtGui.QValidator.State.Intermediate,
