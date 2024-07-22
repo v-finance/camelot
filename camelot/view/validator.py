@@ -50,6 +50,10 @@ class ValidatorState(DataclassSerializable):
     valid: bool = True
     error_msg: str = None
 
+    # Fields that configure if and how values should be sanitized. 
+    deletechars: str = ''
+    to_upper: bool = True
+
     # Info dictionary allowing user-defined metadata to be associated.
     # This data is meant for server-side validation usecases and therefor should not be serialized.
     info: InitVar(dict) = None
@@ -58,7 +62,21 @@ class ValidatorState(DataclassSerializable):
         object.__setattr__(self, "info", info or dict())
 
     @classmethod
+    def sanitize(cls, value):
+        """
+        Sanitizes the given value by stripping the given chars and conditionally
+        converting the result to uppercase based on the provided flag.
+        If the stripped form becomes the empty string, None will be returned.
+        """
+        if isinstance(value, str):
+            value = stdnum.util.clean(value, cls.deletechars).strip()
+            if cls.to_upper == True:
+                value = value.upper()
+            return value or None
+
+    @classmethod
     def for_value(cls, value):
+        value = cls.sanitize(value)
         return cls(
             value=value,
             formatted_value=value,
@@ -100,7 +118,6 @@ class RegexReplaceValidatorState(ValidatorState):
     regex: str = None
     regex_repl: str = None
     example: str = None
-    deletechars: str = ''
 
     @classmethod
     def for_value(cls, value, regex=None, regex_repl=None, example=None):
@@ -143,14 +160,12 @@ class RegexReplaceValidatorState(ValidatorState):
         return cls(**state)
 
     @classmethod
-    def sanitize(cls, value):
-        """
-        Sanitizes the given value by stripping the chars defined by this state's deletechars,
-        and capitilizing the result. If the stripped form becomes the empty string,
-        None will be returned.
-        """
-        if isinstance(value, str):
-            return stdnum.util.clean(value, cls.deletechars).strip().upper() or None
+    def for_attribute(cls, attribute, **kwargs):
+        def for_obj(obj):
+            if obj is not None:
+                return cls.for_value(attribute.__get__(obj, None), **kwargs)
+            return cls()
+        return for_obj
 
     @classmethod
     def compact_repl(cls, regex_repl):
@@ -188,8 +203,11 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
         self.changed.emit()
 
     def validate(self, qtext, position):
-        ptext = str(qtext).upper()
+        ptext = str(qtext)
         if ptext and self.state is not None:
+
+            if self.state["to_upper"] == True:
+                ptext = ptext.upper()
 
             # First check if the text validates the regex (if defined)
             regex = re.compile(self.state["regex"] or '')
