@@ -80,8 +80,8 @@ class ValidatorState(DataclassSerializable):
 
     @classmethod
     def for_value(cls, value, **kwargs):
-        # Initialize state with sanitization parameters before using it
-        # to sanitize the provided value.
+        # Use initialized state to sanitize value so that possible provided
+        # sanitization kwargs are correctly accounted for.
         state = cls(**kwargs)
         value = state.sanitize(value)
         return dataclasses.replace(
