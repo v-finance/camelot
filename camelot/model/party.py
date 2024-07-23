@@ -597,8 +597,7 @@ class PartyContactMechanismAdmin( EntityAdmin ):
                         'mechanism':{'minimal_column_width':25,
                                      'editable':True,
                                      'nullable':False,
-                                     'name':_('Mechanism'),
-                                     'delegate':delegates.VirtualAddressDelegate}}
+                                     'name':_('Mechanism')}}
 
     def get_depending_objects(self, contact_mechanism ):
         party = contact_mechanism.party
