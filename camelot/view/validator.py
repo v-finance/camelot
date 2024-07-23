@@ -90,6 +90,12 @@ class ValidatorState(DataclassSerializable):
             formatted_value=value,
         )
 
+    @classmethod
+    def for_setting(cls, key, **kwargs):
+        def for_setting_proxy(proxy):
+            return cls.for_value(value=getattr(proxy, key), **kwargs)
+        return for_setting_proxy
+
 class AbstractValidator:
     """
     Validators must be default constructable.
