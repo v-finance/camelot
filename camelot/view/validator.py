@@ -52,9 +52,9 @@ class ValidatorState(DataclassSerializable):
     valid: bool = True
     error_msg: str = None
 
-    # Fields that configure if and how values should be sanitized. 
+    # Fields that influence how values are sanitized.
     deletechars: str = ''
-    to_upper: bool = True
+    to_upper: bool = False
 
     # Info dictionary allowing user-defined metadata to be associated.
     # This data is meant for server-side validation usecases and therefor should not be serialized.
@@ -236,9 +236,11 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
 
         return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
+@dataclass(frozen=True)
 class ZipcodeValidatorState(RegexValidatorState):
 
     deletechars: str = ' -./#,'
+    to_upper: bool = True
 
     @classmethod
     def for_type(cls, zip_code_type, value):
