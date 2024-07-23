@@ -30,6 +30,7 @@
 """:class:`QtGui.QValidator` subclasses to be used in the
 editors or other widgets.
 """
+import dataclasses
 import re
 import stdnum.util
 
@@ -38,6 +39,7 @@ from camelot.core.serializable import DataclassSerializable
 from camelot.data.types import zip_code_types
 
 from dataclasses import dataclass, InitVar
+from sqlalchemy.ext import hybrid
 from stdnum.exceptions import InvalidFormat
 
 from .utils import date_from_string, ParsingError
@@ -61,23 +63,29 @@ class ValidatorState(DataclassSerializable):
     def __post_init__(self, info):
         object.__setattr__(self, "info", info or dict())
 
-    @classmethod
-    def sanitize(cls, value):
+    @hybrid.hybrid_method
+    def sanitize(self, value):
         """
-        Sanitizes the given value by stripping the given chars and conditionally
-        converting the result to uppercase based on the provided flag.
+        Hybrid method to sanitizes the given value by stripping chars and conditionally
+        converting the result to uppercase based on this state.
         If the stripped form becomes the empty string, None will be returned.
+        The hybrid behaviour will result in the field defaults for deletechars and to_upper being used
+        if called on the class level, and the initialized field values if called on the instance level.
         """
         if isinstance(value, str):
-            value = stdnum.util.clean(value, cls.deletechars).strip()
-            if cls.to_upper == True:
+            value = stdnum.util.clean(value, self.deletechars).strip()
+            if self.to_upper == True:
                 value = value.upper()
             return value or None
 
     @classmethod
-    def for_value(cls, value):
-        value = cls.sanitize(value)
-        return cls(
+    def for_value(cls, value, **kwargs):
+        # Use initialized state to sanitize value so that possible provided
+        # sanitization kwargs are correctly accounted for.
+        state = cls(**kwargs)
+        value = state.sanitize(value)
+        return dataclasses.replace(
+            state,
             value=value,
             formatted_value=value,
         )
@@ -120,26 +128,22 @@ class RegexReplaceValidatorState(ValidatorState):
     example: str = None
 
     @classmethod
-    def for_value(cls, value, regex=None, regex_repl=None, example=None):
-        state = dict(
-            value=value,
-            formatted_value=value,
-            valid=True,
-            error_msg=None,
+    def for_value(cls, value, regex=None, regex_repl=None, example=None, **kwargs):
+        # Use inherited ValidatorState behaviour, wich will sanitize the value.
+        state = super().for_value(value, **kwargs)
+        state = dataclasses.replace(
+            state,
             regex=regex,
             regex_repl=regex_repl,
             example=example,
         )
 
-        # First sanitize the value.
-        value = cls.sanitize(value)
-        formatted_value = value
-
         # Check if the value matches the regex.
-        if value is not None and regex is not None:
+        if state.value is not None and regex is not None:
             regex = re.compile(regex)
-            if not regex.fullmatch(value):
-                state.update(
+            if not regex.fullmatch(state.value):
+                state = dataclasses.replace(
+                    state,
                     valid=False,
                     error_msg=InvalidFormat.message,
                 )
@@ -147,17 +151,13 @@ class RegexReplaceValidatorState(ValidatorState):
                 # If the regex replacement pattern is defined, use it to construct
                 # both the compact as the formatted value:
                 if cls.format_repl(regex_repl):
-                    formatted_value = re.sub(regex, cls.format_repl(regex_repl), value)
-                    value = re.sub(regex, cls.compact_repl(regex_repl), value)
-                # If no replacement is defined, the formatted value should be identitical to the formatted one:
-                else:
-                    formatted_value = value
+                    state = dataclasses.replace(
+                        state,
+                        value=re.sub(regex, cls.compact_repl(regex_repl), state.value),
+                        formatted_value=re.sub(regex, cls.format_repl(regex_repl), state.value),
+                    )
 
-        state.update(
-            value=value,
-            formatted_value=formatted_value,
-        )
-        return cls(**state)
+        return state
 
     @classmethod
     def for_attribute(cls, attribute, **kwargs):
@@ -204,7 +204,7 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
 
     def validate(self, qtext, position):
         ptext = str(qtext)
-        if ptext and self.state is not None:
+        if ptext and self.state:
 
             if self.state["to_upper"] == True:
                 ptext = ptext.upper()
@@ -215,7 +215,7 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
                 return (QtGui.QValidator.State.Intermediate, qtext, len(ptext))
             else:
                 # If it passed the regex validation, check if the text differs from the state's last value:
-                if ptext == self.state["value"]:
+                if ptext == self.state["formatted_value"]:
                     # If the value did not change, reuse the state's validation result:
                     formatted_value = self.state["formatted_value"]
                     return (QtGui.QValidator.State.Acceptable if self.state["valid"] else QtGui.QValidator.State.Intermediate,
