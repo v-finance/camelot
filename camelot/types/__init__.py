@@ -37,6 +37,7 @@ Those fields are stored in the :mod:`camelot.types` module.
 import collections
 import logging
 from pathlib import PurePath
+from typing import Union
 
 logger = logging.getLogger('camelot.types')
 
@@ -340,6 +341,29 @@ class File(types.TypeDecorator):
 
     def __repr__(self):
         return 'File()'
+
+
+class HashFile(StoredFile):
+    def __init__(self, document: Union[StoredFile, str], verbose_name: str):
+        if document is not None:
+            self.none = False
+            assert isinstance(document, StoredFile)
+            StoredFile.__init__(self, document.storage, document.name, verbose_name or document.name)
+        else:
+            self.none = True
+
+    def __composite_values__(self):
+        if not self.none:
+            return self, self.verbose_name
+        else:
+            return None
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other):
+        return isinstance(other, HashFile) and other == self
+
 
 class Months(types.TypeDecorator):
     """
