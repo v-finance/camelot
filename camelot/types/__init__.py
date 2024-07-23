@@ -343,28 +343,6 @@ class File(types.TypeDecorator):
         return 'File()'
 
 
-class HashFile(StoredFile):
-    def __init__(self, document: Union[StoredFile, str], verbose_name: str):
-        if document is not None:
-            self.none = False
-            assert isinstance(document, StoredFile)
-            StoredFile.__init__(self, document.storage, document.name, verbose_name or document.name)
-        else:
-            self.none = True
-
-    def __composite_values__(self):
-        if not self.none:
-            return self, self.verbose_name
-        else:
-            return None, None
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __eq__(self, other):
-        return isinstance(other, HashFile) and other == self
-
-
 class Months(types.TypeDecorator):
     """
     Months fields are integer fields that represent a number of months.
