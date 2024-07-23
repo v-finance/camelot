@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from hashlib import sha1
 from pathlib import Path, PurePath
-from typing import Dict, BinaryIO, Tuple, IO, Generator, Optional, Union
+from typing import Dict, BinaryIO, Tuple, IO, Generator, Optional
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException

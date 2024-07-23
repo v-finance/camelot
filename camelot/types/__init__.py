@@ -37,7 +37,6 @@ Those fields are stored in the :mod:`camelot.types` module.
 import collections
 import logging
 from pathlib import PurePath
-from typing import Union
 
 logger = logging.getLogger('camelot.types')
 
