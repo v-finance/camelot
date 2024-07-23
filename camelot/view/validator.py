@@ -218,21 +218,22 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
             # First check if the text validates the regex (if defined)
             regex = re.compile(self.state["regex"] or '')
             if regex.match(ptext) is None:
-                return (QtGui.QValidator.State.Intermediate, qtext, len(ptext))
+                return (QtGui.QValidator.State.Intermediate, qtext, position)
             else:
                 # If it passed the regex validation, check if the text differs from the state's last value:
                 if ptext == self.state["formatted_value"]:
                     # If the value did not change, reuse the state's validation result:
                     formatted_value = self.state["formatted_value"]
-                    return (QtGui.QValidator.State.Acceptable if self.state["valid"] else QtGui.QValidator.State.Intermediate,
-                            formatted_value, len(formatted_value))
+                    if self.state["valid"]:
+                        return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
+                    return (QtGui.QValidator.State.Intermediate, formatted_value, position)
 
                 # If the value changed, the state's validation result is invalidated, so perform the regex replace formatting
                 # (if available) awaiting the validator state from being updated.
-                formatted_value = ptext
                 if self.state["regex_repl"] is not None:
                     formatted_value = re.sub(regex, RegexValidatorState.format_repl(self.state["regex_repl"]), ptext)
-                return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
+                    return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
+                return (QtGui.QValidator.State.Acceptable, ptext, position)
 
         return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
