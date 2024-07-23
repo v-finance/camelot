@@ -127,7 +127,7 @@ class DateValidator(QtGui.QValidator):
         return (QtGui.QValidator.State.Acceptable, input_, pos)
 
 @dataclass(frozen=True)
-class RegexReplaceValidatorState(ValidatorState):
+class RegexValidatorState(ValidatorState):
 
     regex: str = None
     regex_repl: str = None
@@ -194,7 +194,7 @@ class RegexReplaceValidatorState(ValidatorState):
             return multi_repl
         return regex_repl
 
-class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
+class RegexValidator(QtGui.QValidator, AbstractValidator):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -231,12 +231,12 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
                 # (if available) awaiting the validator state from being updated.
                 formatted_value = ptext
                 if self.state["regex_repl"] is not None:
-                    formatted_value = re.sub(regex, RegexReplaceValidatorState.format_repl(self.state["regex_repl"]), ptext)
+                    formatted_value = re.sub(regex, RegexValidatorState.format_repl(self.state["regex_repl"]), ptext)
                 return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
 
         return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
-class ZipcodeValidatorState(RegexReplaceValidatorState):
+class ZipcodeValidatorState(RegexValidatorState):
 
     deletechars: str = ' -./#,'
 
