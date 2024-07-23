@@ -356,7 +356,7 @@ class HashFile(StoredFile):
         if not self.none:
             return self, self.verbose_name
         else:
-            return None
+            return None, None
 
     def __repr__(self):
         return self.__str__()
