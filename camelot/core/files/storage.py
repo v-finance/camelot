@@ -225,8 +225,8 @@ class Storage:
         else:
             path.unlink(missing_ok=True)
 
-    def _rmdir(self, directory: PurePath):
-        directory = Path(directory)
+    def _rmdir(self, directory: Path):
+        assert isinstance(directory, Path)
         for item in directory.iterdir():
             if item.is_dir():
                 self._rmdir(item)
