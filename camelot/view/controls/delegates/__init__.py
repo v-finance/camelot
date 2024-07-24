@@ -45,7 +45,6 @@ from .plaintextdelegate import PlainTextDelegate
 from .richtextdelegate import RichTextDelegate
 from .statusdelegate import StatusDelegate
 from .texteditdelegate import TextEditDelegate
-from .virtualaddressdelegate import VirtualAddressDelegate
 from .notedelegate import NoteDelegate
 from .labeldelegate import LabelDelegate
 from .monthsdelegate import MonthsDelegate
@@ -70,7 +69,6 @@ __all__ = [
     RichTextDelegate.__name__,
     StatusDelegate.__name__,
     TextEditDelegate.__name__,
-    VirtualAddressDelegate.__name__,
     NoteDelegate.__name__,
     LabelDelegate.__name__,
     MonthsDelegate.__name__,

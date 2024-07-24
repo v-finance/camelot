@@ -155,16 +155,6 @@ _sqlalchemy_to_python_type_ = {
         'filter_strategy': list_filter.StringFilter,
     },
 
-    camelot.types.VirtualAddress: lambda f: {
-        'python_type': str,
-        'editable': True,
-        'nullable': True,
-        'delegate': delegates.VirtualAddressDelegate,
-        'from_string' : lambda str:None,
-        'search_strategy': list_filter.NoFilter,
-        'filter_strategy': list_filter.NoFilter,
-    },
-
     camelot.types.RichText: lambda f: {
         'python_type': str,
         'editable': True,

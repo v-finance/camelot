@@ -597,8 +597,7 @@ class PartyContactMechanismAdmin( EntityAdmin ):
                         'mechanism':{'minimal_column_width':25,
                                      'editable':True,
                                      'nullable':False,
-                                     'name':_('Mechanism'),
-                                     'delegate':delegates.VirtualAddressDelegate}}
+                                     'name':_('Mechanism')}}
 
     def get_depending_objects(self, contact_mechanism ):
         party = contact_mechanism.party
@@ -1157,30 +1156,7 @@ class Addressable(object):
                                             delegate = delegates.Many2OneDelegate,
                                             target = AdministrativeDivision),
             zip_code = dict( editable = lambda o: o.city is not None and not o.city.code),
-            email = dict( editable = True, 
-                          minimal_column_width = 20,
-                          name = _('Email'),
-                          address_type = 'email',
-                          from_string = lambda s:('email', s),
-                          delegate = delegates.VirtualAddressDelegate),
-            phone = dict( editable = True, 
-                          minimal_column_width = 20,
-                          address_type = 'phone',
-                          name = _('Phone'),
-                          from_string = lambda s:('phone', s),
-                          delegate = delegates.VirtualAddressDelegate ),
-            mobile = dict( editable = True,
-                           minimal_column_width = 20,
-                           address_type = 'mobile',
-                           name = _('Mobile'),
-                           from_string = lambda s:('mobile', s),
-                           delegate = delegates.VirtualAddressDelegate ),
-            fax = dict( editable = True,
-                        minimal_column_width = 20,
-                        address_type = 'fax',
-                        name = _('Fax'),
-                        from_string = lambda s:('fax', s),
-                        delegate = delegates.VirtualAddressDelegate ), )
+        )
 
 
 
