@@ -233,11 +233,25 @@ class Storage:
         self.available()
         return Path(self._path(stored_file.name)).open('rb')
 
-    def delete(self, name: PurePath):
+    def delete(self, name: PurePath, recursive=False):
         """
         :param name: The name of the file to be deleted
+        :param recursive: whether to remove directories and their contents recursively, False by default.
         """
-        Path(self._path(name)).unlink(missing_ok=True)
+        path = Path(self._path(name))
+        if recursive and os.path.isdir(path):
+            self._rmdir(path)
+        else:
+            path.unlink(missing_ok=True)
+
+    def _rmdir(self, directory: Path):
+        assert isinstance(directory, Path)
+        for item in directory.iterdir():
+            if item.is_dir():
+                self._rmdir(item)
+            else:
+                self.delete(item)
+        directory.rmdir()
 
     def _process_path(self, path: PurePath) -> PurePath:
         return PurePath(os.path.relpath(path, start=self.upload_to))
