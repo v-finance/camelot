@@ -336,8 +336,8 @@ and used as a custom action.
             mapper = self.get_mapper()
             property = mapper.get_property(field_name) if mapper else None
             if isinstance(property, (orm.properties.ColumnProperty, orm.properties.CompositeProperty)):
-                columns = property.columns
-                sql_attributes = self.get_sql_field_attributes( columns )
+                columns = property.columns[:1]
+                sql_attributes = self.get_sql_field_attributes(columns)
                 attributes.update( sql_attributes )
             elif isinstance(property, orm.properties.RelationshipProperty):
                 target = forced_attributes.get( 'target',
