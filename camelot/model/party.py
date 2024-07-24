@@ -63,7 +63,7 @@ from camelot.types.typing import Note
 
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
-from camelot.view.validator import RegexReplaceValidator, ZipcodeValidatorState
+from camelot.view.validator import RegexValidator, ZipcodeValidatorState
 from ..core.files.storage import Storage
 
 from ..core.sql import metadata
@@ -447,7 +447,7 @@ class City(GeographicBoundary, WithCountry):
         attributes_dict = {
             'code': {
                 'name': _('Postal code'),
-                'validator_type': RegexReplaceValidator.__name__,
+                'validator_type': RegexValidator.__name__,
                 'validator_state': ZipcodeValidatorState.for_city,
                 'tooltip': ZipcodeValidatorState.hint_for_city,
             },
@@ -563,7 +563,7 @@ class Address( Entity ):
             'street1': {'minimal_column_width':30},
             'zip_code': {
                 'editable': lambda o: o.city is not None and not o.city.code,
-                'validator_type': RegexReplaceValidator.__name__,
+                'validator_type': RegexValidator.__name__,
                 'validator_state': ZipcodeValidatorState.for_addressable,
                 'tooltip': ZipcodeValidatorState.hint_for_addressable,
                 },
