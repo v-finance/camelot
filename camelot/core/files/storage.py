@@ -221,15 +221,15 @@ class Storage:
         """
         path = Path(self._path(name))
         if recursive and os.path.isdir(path):
-            self.rmdir(path)
+            self._rmdir(path)
         else:
             path.unlink(missing_ok=True)
 
-    def rmdir(self, directory: PurePath):
+    def _rmdir(self, directory: PurePath):
         directory = Path(directory)
         for item in directory.iterdir():
             if item.is_dir():
-                self.rmdir(item)
+                self._rmdir(item)
             else:
                 self.delete(item)
         directory.rmdir()
