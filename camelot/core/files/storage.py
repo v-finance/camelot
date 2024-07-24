@@ -240,18 +240,9 @@ class Storage:
         """
         path = Path(self._path(name))
         if recursive and os.path.isdir(path):
-            self._rmdir(path)
+            shutil.rmtree(path)
         else:
             path.unlink(missing_ok=True)
-
-    def _rmdir(self, directory: Path):
-        assert isinstance(directory, Path)
-        for item in directory.iterdir():
-            if item.is_dir():
-                self._rmdir(item)
-            else:
-                self.delete(item)
-        directory.rmdir()
 
     def _process_path(self, path: PurePath) -> PurePath:
         return PurePath(os.path.relpath(path, start=self.upload_to))
