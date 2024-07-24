@@ -28,6 +28,25 @@ class StoredFile:
         """
         return {'name': self.name.as_posix()}
 
+    def __composite_values__(self):
+        return self, self.verbose_name
+
+    @classmethod
+    def _generate(cls, document: 'StoredFile', verbose_name: str) -> Optional['StoredFile']:
+        """
+        Generates a new StoredFile for use in the composite type. When the document is None, the returned object will
+        be None since there isn't a document value in the db. This function will be called when retrieving values from
+        the database, and should never be manually called.
+
+        :param document: a StoredFile
+        :param verbose_name: the name of the file
+        :return: the generated StoredFile, optionally
+        """
+        if document is None:
+            return None
+        document.verbose_name = verbose_name
+        return document
+
     def __str__(self) -> str:
         return self.verbose_name
 
