@@ -52,9 +52,9 @@ class ValidatorState(DataclassSerializable):
     valid: bool = True
     error_msg: str = None
 
-    # Fields that configure if and how values should be sanitized. 
+    # Fields that influence how values are sanitized.
     deletechars: str = ''
-    to_upper: bool = True
+    to_upper: bool = False
 
     # Info dictionary allowing user-defined metadata to be associated.
     # This data is meant for server-side validation usecases and therefor should not be serialized.
@@ -90,6 +90,12 @@ class ValidatorState(DataclassSerializable):
             formatted_value=value,
         )
 
+    @classmethod
+    def for_setting(cls, key, **kwargs):
+        def for_setting_proxy(proxy):
+            return cls.for_value(value=getattr(proxy, key), **kwargs)
+        return for_setting_proxy
+
 class AbstractValidator:
     """
     Validators must be default constructable.
@@ -121,7 +127,7 @@ class DateValidator(QtGui.QValidator):
         return (QtGui.QValidator.State.Acceptable, input_, pos)
 
 @dataclass(frozen=True)
-class RegexReplaceValidatorState(ValidatorState):
+class RegexValidatorState(ValidatorState):
 
     regex: str = None
     regex_repl: str = None
@@ -188,7 +194,7 @@ class RegexReplaceValidatorState(ValidatorState):
             return multi_repl
         return regex_repl
 
-class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
+class RegexValidator(QtGui.QValidator, AbstractValidator):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -225,14 +231,16 @@ class RegexReplaceValidator(QtGui.QValidator, AbstractValidator):
                 # (if available) awaiting the validator state from being updated.
                 formatted_value = ptext
                 if self.state["regex_repl"] is not None:
-                    formatted_value = re.sub(regex, RegexReplaceValidatorState.format_repl(self.state["regex_repl"]), ptext)
+                    formatted_value = re.sub(regex, RegexValidatorState.format_repl(self.state["regex_repl"]), ptext)
                 return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
 
         return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
-class ZipcodeValidatorState(RegexReplaceValidatorState):
+@dataclass(frozen=True)
+class ZipcodeValidatorState(RegexValidatorState):
 
     deletechars: str = ' -./#,'
+    to_upper: bool = True
 
     @classmethod
     def for_type(cls, zip_code_type, value):

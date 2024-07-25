@@ -100,8 +100,6 @@ class SetColumns(ActionStep, DataclassSerializable):
             attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type', 'completer_type'])
         elif issubclass(fa['delegate'], delegates.TextEditDelegate):
             attrs = filter_attributes(fa, ['length', 'editable'])
-        elif issubclass(fa['delegate'], delegates.VirtualAddressDelegate):
-            attrs = filter_attributes(fa, ['address_type'])
         return attrs
 
 @dataclass

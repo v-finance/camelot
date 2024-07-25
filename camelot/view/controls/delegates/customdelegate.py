@@ -251,8 +251,6 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
             editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type, self.completer_type)
         elif issubclass(editor_cls, editors.TextEditEditor):
             editor = editor_cls(parent, self.length, self.editable)
-        elif issubclass(editor_cls, editors.VirtualAddressEditor):
-            editor = editor_cls(parent, self.address_type)
         else:
             raise NotImplementedError()
         assert editor != None
