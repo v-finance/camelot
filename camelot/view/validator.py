@@ -212,6 +212,10 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
         ptext = str(qtext)
         if ptext and self.state:
 
+            # Perform sanitization based on the state's parameters.
+            if self.state["deletechars"]:
+                for c in self.state["deletechars"]:
+                    ptext = ptext.replace(c, '')
             if self.state["to_upper"] == True:
                 ptext = ptext.upper()
 
@@ -221,7 +225,7 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
                 return (QtGui.QValidator.State.Intermediate, qtext, position)
             else:
                 # If it passed the regex validation, check if the text differs from the state's last value:
-                if ptext == self.state["formatted_value"]:
+                if ptext == self.state["value"]:
                     # If the value did not change, reuse the state's validation result:
                     formatted_value = self.state["formatted_value"]
                     if self.state["valid"]:
