@@ -221,9 +221,9 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
                 ptext = ptext.upper()
 
             # First check if the text validates the regex (if defined)
-            regex = self.state["regex"] or ''
+            regex = self.state["regex"]
             flags = re.IGNORECASE if self.state["ignore_case"] == True else 0
-            if re.fullmatch(regex, ptext, flags=flags) is None:
+            if regex is not None and re.fullmatch(regex, ptext, flags=flags) is None:
                 return (QtGui.QValidator.State.Intermediate, qtext, position)
             else:
                 # If it passed the regex validation, check if the text differs from the state's last value:
