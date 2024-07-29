@@ -133,6 +133,8 @@ class RegexValidatorState(ValidatorState):
     regex_repl: str = None
     example: str = None
 
+    ignore_case: bool = False
+
     @classmethod
     def for_value(cls, value, regex=None, regex_repl=None, example=None, **kwargs):
         # Use inherited ValidatorState behaviour, wich will sanitize the value.
@@ -146,8 +148,7 @@ class RegexValidatorState(ValidatorState):
 
         # Check if the value matches the regex.
         if state.value is not None and regex is not None:
-            regex = re.compile(regex)
-            if not regex.fullmatch(state.value):
+            if not re.fullmatch(regex, state.value, flags=re.IGNORECASE if state.ignore_case else 0):
                 state = dataclasses.replace(
                     state,
                     valid=False,
@@ -220,8 +221,9 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
                 ptext = ptext.upper()
 
             # First check if the text validates the regex (if defined)
-            regex = re.compile(self.state["regex"] or '')
-            if regex.match(ptext) is None:
+            regex = self.state["regex"] or ''
+            flags = re.IGNORECASE if self.state["ignore_case"] == True else 0
+            if re.fullmatch(regex, ptext, flags=flags) is None:
                 return (QtGui.QValidator.State.Intermediate, qtext, position)
             else:
                 # If it passed the regex validation, check if the text differs from the state's last value:
