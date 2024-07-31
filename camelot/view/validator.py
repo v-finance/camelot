@@ -131,24 +131,19 @@ class RegexValidatorState(ValidatorState):
 
     regex: str = None
     regex_repl: str = None
+    compact_repl: str = None
     example: str = None
 
     ignore_case: bool = False
 
     @classmethod
-    def for_value(cls, value, regex=None, regex_repl=None, example=None, **kwargs):
+    def for_value(cls, value, **kwargs):
         # Use inherited ValidatorState behaviour, wich will sanitize the value.
         state = super().for_value(value, **kwargs)
-        state = dataclasses.replace(
-            state,
-            regex=regex,
-            regex_repl=regex_repl,
-            example=example,
-        )
 
         # Check if the value matches the regex.
-        if state.value is not None and regex is not None:
-            if not re.fullmatch(regex, state.value, flags=re.IGNORECASE if state.ignore_case else 0):
+        if state.value is not None and state.regex is not None:
+            if not re.fullmatch(state.regex, state.value, flags=re.IGNORECASE if state.ignore_case else 0):
                 state = dataclasses.replace(
                     state,
                     valid=False,
@@ -157,13 +152,12 @@ class RegexValidatorState(ValidatorState):
             else:
                 # If the regex replacement pattern is defined, use it to construct
                 # both the compact as the formatted value:
-                if cls.format_repl(regex_repl):
+                if state.regex_repl:
                     state = dataclasses.replace(
                         state,
-                        value=re.sub(regex, cls.compact_repl(regex_repl), state.value),
-                        formatted_value=re.sub(regex, cls.format_repl(regex_repl), state.value),
+                        value=re.sub(state.regex, cls.compact_repl_multi(state.compact_repl or state.regex_repl), state.value),
+                        formatted_value=re.sub(state.regex, cls.format_repl_multi(state.regex_repl), state.value),
                     )
-
         return state
 
     @classmethod
@@ -174,8 +168,8 @@ class RegexValidatorState(ValidatorState):
             return cls()
         return for_obj
 
-    @classmethod
-    def compact_repl(cls, regex_repl):
+    @staticmethod
+    def compact_repl_multi(regex_repl):
         if regex_repl is not None:
             if '|' in regex_repl:
                 def multi_repl(m):
@@ -185,8 +179,8 @@ class RegexValidatorState(ValidatorState):
                 return multi_repl
             return ''.join(re.findall('\\\\\d+', regex_repl))
 
-    @classmethod
-    def format_repl(cls, regex_repl):
+    @staticmethod
+    def format_repl_multi(regex_repl):
         if regex_repl is not None and '|' in regex_repl:
             def multi_repl(m):
                 for i, repl in enumerate(regex_repl.split('|'), start=1):
