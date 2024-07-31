@@ -131,10 +131,10 @@ class RegexValidatorState(ValidatorState):
 
     regex: str = None
     regex_repl: str = None
-    compact_repl: str = None
     example: str = None
 
     ignore_case: bool = False
+    compact: bool = True
 
     @classmethod
     def for_value(cls, value, **kwargs):
@@ -155,8 +155,9 @@ class RegexValidatorState(ValidatorState):
                 if state.regex_repl:
                     state = dataclasses.replace(
                         state,
-                        value=re.sub(state.regex, cls.compact_repl_multi(state.compact_repl or state.regex_repl), state.value),
-                        formatted_value=re.sub(state.regex, cls.format_repl_multi(state.regex_repl), state.value),
+                        value=re.sub(state.regex, cls.compact_repl(state.regex_repl), state.value)\
+                            if state.compact == True else state.value,
+                        formatted_value=re.sub(state.regex, cls.format_repl(state.regex_repl), state.value),
                     )
         return state
 
@@ -169,7 +170,7 @@ class RegexValidatorState(ValidatorState):
         return for_obj
 
     @staticmethod
-    def compact_repl_multi(regex_repl):
+    def compact_repl(regex_repl):
         if regex_repl is not None:
             if '|' in regex_repl:
                 def multi_repl(m):
@@ -180,7 +181,7 @@ class RegexValidatorState(ValidatorState):
             return ''.join(re.findall('\\\\\d+', regex_repl))
 
     @staticmethod
-    def format_repl_multi(regex_repl):
+    def format_repl(regex_repl):
         if regex_repl is not None and '|' in regex_repl:
             def multi_repl(m):
                 for i, repl in enumerate(regex_repl.split('|'), start=1):
