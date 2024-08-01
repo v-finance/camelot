@@ -238,6 +238,9 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
 
         return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
+# TODO: once moved to the vFinance repo, the zip_code_types can be
+# refactored as identifier types and this ZipcodeValidatorState
+# will become superfluous (as the IdentifierValidatorState can then be used).
 @dataclass(frozen=True)
 class ZipcodeValidatorState(RegexValidatorState):
 
