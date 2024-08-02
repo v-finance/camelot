@@ -219,6 +219,8 @@ _sqlalchemy_to_python_type_ = {
     },
 }
 
+# when implementing Annotated types with metadata, implement this as a class with [] get, and use case switch to match
+# and return the proper values
 _typing_to_python_type = {
     bool: {
         'python_type': bool,

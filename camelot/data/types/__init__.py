@@ -4,6 +4,8 @@ import re
 from camelot.core.utils import ugettext_lazy
 
 from sqlalchemy import util
+from typing import Annotated
+
 
 class Types(util.OrderedProperties):
     """
@@ -87,6 +89,10 @@ class Types(util.OrderedProperties):
         for t in self:
             if t.id == type_id:
                 return t.name
+
+    @classmethod
+    def type_str(cls):
+        return Annotated[str, cls]
 
 
 sensitivity_level_type = collections.namedtuple('sensitivity_level_type', ('id', 'name', 'description'))
