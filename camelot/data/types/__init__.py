@@ -127,6 +127,9 @@ class zip_code_type(collections.namedtuple('zip_code_type', ('code', 'regex', 'r
         if self.example is not None:
             return 'e.g: {}'.format(self.example)
 
+# TODO: once moved to the vFinance repo, the zip code types can become a
+# subset of the identifier types.
+# This would allow validation to make use of the IdentifierValidatorState.
 zip_code_types = Types(
   #             #code #regex                                            #regex_repl     #example
   zip_code_type("AD", "AD\d{3}",                                         None,          "AD100"),
