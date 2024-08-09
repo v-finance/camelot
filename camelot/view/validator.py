@@ -133,21 +133,17 @@ class RegexValidatorState(ValidatorState):
     regex_repl: str = None
     example: str = None
 
+    ignore_case: bool = False
+    compact: bool = True
+
     @classmethod
-    def for_value(cls, value, regex=None, regex_repl=None, example=None, **kwargs):
+    def for_value(cls, value, **kwargs):
         # Use inherited ValidatorState behaviour, wich will sanitize the value.
         state = super().for_value(value, **kwargs)
-        state = dataclasses.replace(
-            state,
-            regex=regex,
-            regex_repl=regex_repl,
-            example=example,
-        )
 
         # Check if the value matches the regex.
-        if state.value is not None and regex is not None:
-            regex = re.compile(regex)
-            if not regex.fullmatch(state.value):
+        if state.value is not None and state.regex is not None:
+            if not re.fullmatch(state.regex, state.value, flags=re.IGNORECASE if state.ignore_case else 0):
                 state = dataclasses.replace(
                     state,
                     valid=False,
@@ -156,13 +152,13 @@ class RegexValidatorState(ValidatorState):
             else:
                 # If the regex replacement pattern is defined, use it to construct
                 # both the compact as the formatted value:
-                if cls.format_repl(regex_repl):
+                if state.regex_repl:
                     state = dataclasses.replace(
                         state,
-                        value=re.sub(regex, cls.compact_repl(regex_repl), state.value),
-                        formatted_value=re.sub(regex, cls.format_repl(regex_repl), state.value),
+                        value=re.sub(state.regex, cls.compact_repl(state.regex_repl), state.value)\
+                            if state.compact == True else state.value,
+                        formatted_value=re.sub(state.regex, cls.format_repl(state.regex_repl), state.value),
                     )
-
         return state
 
     @classmethod
@@ -173,8 +169,8 @@ class RegexValidatorState(ValidatorState):
             return cls()
         return for_obj
 
-    @classmethod
-    def compact_repl(cls, regex_repl):
+    @staticmethod
+    def compact_repl(regex_repl):
         if regex_repl is not None:
             if '|' in regex_repl:
                 def multi_repl(m):
@@ -184,8 +180,8 @@ class RegexValidatorState(ValidatorState):
                 return multi_repl
             return ''.join(re.findall('\\\\\d+', regex_repl))
 
-    @classmethod
-    def format_repl(cls, regex_repl):
+    @staticmethod
+    def format_repl(regex_repl):
         if regex_repl is not None and '|' in regex_repl:
             def multi_repl(m):
                 for i, repl in enumerate(regex_repl.split('|'), start=1):
@@ -220,8 +216,9 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
                 ptext = ptext.upper()
 
             # First check if the text validates the regex (if defined)
-            regex = re.compile(self.state["regex"] or '')
-            if regex.match(ptext) is None:
+            regex = self.state["regex"]
+            flags = re.IGNORECASE if self.state["ignore_case"] == True else 0
+            if regex is not None and re.fullmatch(regex, ptext, flags=flags) is None:
                 return (QtGui.QValidator.State.Intermediate, qtext, position)
             else:
                 # If it passed the regex validation, check if the text differs from the state's last value:
@@ -241,6 +238,9 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
 
         return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
+# TODO: once moved to the vFinance repo, the zip_code_types can be
+# refactored as identifier types and this ZipcodeValidatorState
+# will become superfluous (as the IdentifierValidatorState can then be used).
 @dataclass(frozen=True)
 class ZipcodeValidatorState(RegexValidatorState):
 
