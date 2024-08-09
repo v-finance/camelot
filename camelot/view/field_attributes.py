@@ -180,6 +180,20 @@ _sqlalchemy_to_python_type_ = {
         'filter_strategy': list_filter.ChoicesFilter,
     },
 
+    camelot.types.StatusEnumeration: lambda f: {
+        'delegate': delegates.StatusDelegate,
+        'python_type': str,
+        'choices': [(v, enumeration_to_string(v)) for v in f.choices],
+        'from_string': lambda s:dict((enumeration_to_string(v), v) for v in f.choices)[s],
+        'minimal_column_width':max(itertools.chain((0,), (len(enumeration_to_string(v)) for v in f.choices))),
+        'editable': False,
+        'nullable': True,
+        'widget': 'combobox',
+        'to_string': enumeration_to_string,
+        'search_strategy': list_filter.NoFilter,
+        'filter_strategy': list_filter.ChoicesFilter,
+    },
+
     camelot.types.Language: lambda f: {
         'delegate': delegates.LanguageDelegate,
         'python_type': str,
