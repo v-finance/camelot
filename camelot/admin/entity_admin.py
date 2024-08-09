@@ -319,6 +319,8 @@ and used as a custom action.
                             columns = [expression]
                         elif isinstance(expression, sql.Select):
                             columns = expression.columns
+                        elif isinstance(expression, sql.elements.TypeCoerce):
+                            columns = expression.base_columns
                         for k, v in self.get_sql_field_attributes(columns).items():
                             # the defaults or the nullable status of the column
                             # does not need to be the default or the nullable

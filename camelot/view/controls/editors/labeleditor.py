@@ -43,9 +43,13 @@ class LabelEditor(QtWidgets.QLabel, AbstractCustomEditor):
         QtWidgets.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
+        self.setFrameStyle(QtWidgets.QFrame.Shape.Panel)# | QtWidgets.QFrame.Shadow.Sunken)
 
     def set_value(self, value):
         if value is not None:
             self.setText(value)
         else:
             self.setText('')
+
+    def get_value(self):
+        return self.text()
