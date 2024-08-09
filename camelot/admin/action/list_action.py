@@ -983,7 +983,7 @@ class AddNewObjectMixin(object):
         else:
             new_object = admin.entity()
         admin.add(new_object)
-        ## defaults might depend on object being part of a collection
+        # defaults might depend on object being part of a collection
         self.get_proxy(model_context, admin).append(admin.get_subsystem_object(new_object))
         # Give the default fields their value
         admin.set_defaults(new_object)
