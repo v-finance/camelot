@@ -69,7 +69,7 @@ from ..core.item_model.proxy import AbstractModelFilter
 from ..core.orm import Entity
 from ..core.utils import ugettext, ugettext_lazy as _
 from ..model.authentication import end_of_times
-from ..types import Enumeration, PrimaryKey
+from ..types import PrimaryKey, StatusEnumeration
 from ..view import action_steps
 
 
@@ -193,7 +193,7 @@ class WithStatus(object):
             status_types = [(member.id, name) for name, member in cls.status_types.__members__.items()]
         status_history = type(cls.__name__ + 'StatusHistory', (Entity, StatusHistory),
                               {'__tablename__': status_history_table,
-                               'classified_by': schema.Column(Enumeration(status_types), nullable=False, index=True ),
+                               'classified_by': schema.Column(StatusEnumeration(status_types), nullable=False, index=True ),
                                'Admin': status_history_admin})
 
         if hasattr(cls, '__table_args__'):
@@ -260,19 +260,19 @@ class StatusMixin( object ):
                            ).order_by(SH.status_from_date.desc(), SH.id.desc()).limit(1)
 
     @hybrid.hybrid_property
-    def current_status( self ):
+    def current_status(self):
         status_history = self.get_status_history_at()
         if status_history != None:
             return status_history.classified_by
 
     @current_status.expression
-    def current_status( cls ):
+    def current_status(cls):
         status_types = cls.status_types
         if isinstance(status_types, util.OrderedProperties):
             status_types = [(member.id, name) for name, member in cls.status_types.__members__.items()]
         return type_coerce(
             StatusMixin.current_status_query(cls._status_history, cls).label('current_status'),
-            Enumeration(status_types)
+            StatusEnumeration(status_types)
             )
 
     def change_status(self, new_status, 
