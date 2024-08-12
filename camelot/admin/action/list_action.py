@@ -965,20 +965,20 @@ class AddNewObjectMixin(object):
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
         """
-        from camelot.view import action_steps
-        # In case the subsystem class has secondary related entity discriminators defined,
-        # prompt the user to select entity instances to instantiate them before creating the object
-        # itself, as they are required to retrieve the correct registered facade class.
         secondary_discriminator_values = []
-        for entity_cls in admin.entity.get_secondary_discriminator_types():
-            related_admin = admin.get_related_admin(entity_cls)
-            selected_object = yield action_steps.SelectObject(related_admin.get_query(), related_admin)
-            if selected_object is not None:
-                secondary_discriminator_values.append(selected_object)
-        # Resolve admin again based on the now fully qualified discriminator values, to create the object with.
-        admin = self.get_admin(model_context, mode, secondary_discriminator_values)
-
         if issubclass(admin.entity, Entity):
+            from camelot.view import action_steps
+            # In case the subsystem class has secondary related entity discriminators defined,
+            # prompt the user to select entity instances to instantiate them before creating the object
+            # itself, as they are required to retrieve the correct registered facade class.
+            for entity_cls in admin.entity.get_secondary_discriminator_types():
+                related_admin = admin.get_related_admin(entity_cls)
+                selected_object = yield action_steps.SelectObject(related_admin.get_query(), related_admin)
+                if selected_object is not None:
+                    secondary_discriminator_values.append(selected_object)
+
+            # Resolve admin again based on the now fully qualified discriminator values, to create the object with.
+            admin = self.get_admin(model_context, mode, secondary_discriminator_values)
             new_object = admin.entity(_session=session)
         else:
             new_object = admin.entity()
