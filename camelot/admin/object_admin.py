@@ -1149,6 +1149,9 @@ be specified using the verbose_name attribute.
         """Return the given object's applicable subsystem object."""
         return obj
 
+    def get_subsystem_cls(self):
+        return self.entity
+
     def get_discriminator_value(self, obj):
         """return the given object's discriminator value."""
         pass
