@@ -966,7 +966,7 @@ class AddNewObjectMixin(object):
         This is done in the given session, or the default session if it is not yet attached to a session.
         """
         secondary_discriminator_values = []
-        if issubclass(admin.entity, Entity):
+        if issubclass(admin.get_subsystem_cls(), Entity):
             from camelot.view import action_steps
             # In case the subsystem class has secondary related entity discriminators defined,
             # prompt the user to select entity instances to instantiate them before creating the object
