@@ -34,8 +34,10 @@ import dataclasses
 import re
 import stdnum.util
 
+from camelot.core.exception import UserException
 from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
+from camelot.core.utils import ugettext
 from camelot.data.types import zip_code_types
 
 from dataclasses import dataclass, InitVar
@@ -96,6 +98,32 @@ class ValidatorState(DataclassSerializable):
             return cls.for_value(value=getattr(proxy, key), **kwargs)
         return for_setting_proxy
 
+    def valid_or_raise(self, message=None):
+        """
+        Check whether this state is valid and raise a UserException if not.
+        The exception message will be this state's error message.
+
+        :param message: optional custom message for the UserException that
+        will be raised. The provided message will be formatted with this state's
+        error message as the first format value.
+        """
+        for error_msg in self.valid_or_yield(message):
+            raise UserException(error_msg)
+
+    def valid_or_yield(self, message=None):
+        """
+        Check whether this state is valid and yield this state's error message if not.
+
+        :param message: optional custom message to be yielded.
+        The provided message will be formatted with this state's error message as the first format value.
+        """
+        if not self.valid:
+            error_msg = ugettext(self.error_msg)
+            if message is None:
+                yield error_msg
+            else:
+                yield message.format(error_msg)
+
 class AbstractValidator:
     """
     Validators must be default constructable.
@@ -138,7 +166,7 @@ class RegexValidatorState(ValidatorState):
 
     @classmethod
     def for_value(cls, value, **kwargs):
-        # Use inherited ValidatorState behaviour, wich will sanitize the value.
+        # Use inherited ValidatorState behaviour, which will sanitize the value.
         state = super().for_value(value, **kwargs)
 
         # Check if the value matches the regex.
