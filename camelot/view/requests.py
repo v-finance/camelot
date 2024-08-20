@@ -145,7 +145,9 @@ class InitiateAction(AbstractRequest):
         from .action_steps import PushProgressLevel
         from .responses import ActionStopped, ActionStepped
         gui_run_name = tuple(request_data['gui_run_name'])
-        LOGGER.debug('Run of action {} with mode {}'.format(request_data['action_name'], request_data['mode']))
+        LOGGER.debug('Run of action {} with mode {} on model context {}'.format(
+            request_data['action_name'], request_data['mode'], request_data['model_context']
+        ))
         try:
             action = initial_naming_context.resolve(tuple(request_data['action_name']))
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))

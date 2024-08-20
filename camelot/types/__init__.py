@@ -358,6 +358,10 @@ class Months(types.TypeDecorator):
 
     impl = types.Integer
 
+    def __init__(self, forever=None):
+        super().__init__()
+        self.forever = forever
+
     @property
     def python_type(self):
         return self.impl.python_type
