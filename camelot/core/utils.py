@@ -38,35 +38,6 @@ from sqlalchemy import sql
 
 logger = logging.getLogger('camelot.core.utils')
 
-    ## try to activate the PySide backend of matplotlib
-    ## http://www.scipy.org/Cookbook/Matplotlib/PySide
-    #try:
-        #import matplotlib
-        #matplotlib.rcParams['backend.qt4'] = 'PySide'
-    #except:
-        #pass
-    
-def create_constant_function(constant):
-    return lambda:constant
-
-class CollectionGetterFromObjectGetter(object):
-    """Convert an object getter to a collection getter.  The resulting
-    class is callable and will make sure object_getter is only called
-    once, even if collection getter is called multiple times.
-    """
-
-    def __init__(self, object_getter):
-        """:param object_getter: a function that returns the object to
-        be put in the collection.
-        """
-        self._object_getter = object_getter
-        self._collection = None
-
-    def __call__(self):
-        if not self._collection:
-            self._collection = [self._object_getter()]
-        return self._collection
-
 #
 # Global dictionary containing all user defined translations in the
 # current locale

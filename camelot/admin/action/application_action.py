@@ -78,8 +78,6 @@ class ApplicationActionModelContext(ModelContext):
         self.admin = admin
         self.actions = []
 
-    # Cannot set session in constructor because constructor is called
-    # inside the GUI thread
     @property
     def session( self ):
         return Session()
