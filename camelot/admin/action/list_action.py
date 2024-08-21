@@ -254,7 +254,7 @@ class DeleteSelection( EditAction ):
                                                    _('Removing') )
                 model_context.admin.delete(obj)
         else:
-            yield action_steps.RefreshItemView()
+            yield action_steps.RefreshItemView(model_context)
         yield action_steps.UpdateObjects(depending_objects)
         yield action_steps.FlushSession( model_context.session )
 
@@ -919,7 +919,7 @@ class SetFilters(Action, AbstractModelFilter):
 
         if filter_values != new_filter_values:
             model_context.proxy.filter(self, new_filter_values)
-            yield action_steps.RefreshItemView()
+            yield action_steps.RefreshItemView(model_context)
         new_state = self._get_state(model_context, new_filter_values)
         yield action_steps.UpdateActionsState(model_context, {self: new_state})
 

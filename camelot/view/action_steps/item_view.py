@@ -42,6 +42,7 @@ from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.model_context import ObjectsModelContext
 from ...admin.object_admin import ObjectAdmin
+from ...core.cache import ValueCache
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore
@@ -273,4 +274,9 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     Refresh only the current item view
     """
 
+    model_context: InitVar[Any]
     blocking: bool = False
+
+    def __post_init__(self, model_context):
+        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
+        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
