@@ -33,7 +33,6 @@ import logging
 from ....admin.admin_route import RouteWithRenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
 from ....core.item_model import ActionModeRole
-from ... import gui_naming_context
 from ..view import ViewWithActionsMixin
 from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
@@ -97,9 +96,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         layout.addWidget(toolbar)
         self.setLayout(layout)
         self._new_message = None
-        self.list_gui_context_name = gui_naming_context.bind(
-            ('transient', str(id(self))), self
-        )
+        self.list_gui_context_name = tuple(model.guiContextName())
         self.add_actions(action_routes, toolbar)
         self.set_right_toolbar_actions(list_actions, toolbar)
         self.set_columns(columns)
