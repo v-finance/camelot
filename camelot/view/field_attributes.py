@@ -127,6 +127,10 @@ _sqlalchemy_to_python_type_ = {
         'to_string': str,
         'search_strategy': list_filter.MonthsFilter,
         'filter_strategy': list_filter.MonthsFilter,
+        'forever': f.forever,
+        'actions': [
+            field_action.ToggleForeverAction(),
+        ] if f.forever is not None else [],
     },
 
     sqlalchemy.types.Integer: lambda f: {
