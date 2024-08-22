@@ -31,7 +31,7 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import Dict
+from typing import Dict, Optional
 from dataclasses import dataclass, field
 import json
 
@@ -39,15 +39,13 @@ from ..controls.formview import FormView
 from ..forms import AbstractForm
 from ..workspace import show_top_level
 from ...admin.action.base import ActionStep, RenderHint
-from ...admin.admin_route import AdminRoute
+from ...admin.admin_route import Route, AdminRoute
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
-from ...core.qt import is_deleted
 from ...core.serializable import DataclassSerializable
 from ...view.utils import get_settings_group
+from ...core.backend import get_root_backend
 from .item_view import AbstractCrudView
-from  ..qml_view import get_qml_root_backend
-#from ..qml_view import qml_action_step
 
 
 @dataclass
@@ -83,16 +81,19 @@ class OpenFormView(AbstractCrudView):
     row: int = field(init=False)
     form_state: str = field(init=False)
     blocking: bool = False
+    qml: bool = False
+    auto_update: bool = True
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
         assert (proxy is None) or (isinstance(proxy, AbstractModelProxy))
-        self.fields = dict((f, {
+        self.fields = [[f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
-            }) for f, fa in admin.get_fields())
+            }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
+        self.qml = admin.qml_form
         if proxy is None:
             proxy = admin.get_proxy([value])
             self.row = 0
@@ -101,7 +102,7 @@ class OpenFormView(AbstractCrudView):
         self.close_route = AdminRoute._register_action_route(
             self.admin_route, admin.form_close_action
         )
-        self.title = admin.get_verbose_name()
+        self.title = admin.get_verbose_identifier(value)
         self.form_state = admin.form_state
         self._add_actions(admin, self.actions)
         super().__post_init__(value, admin, proxy)
@@ -119,13 +120,12 @@ class OpenFormView(AbstractCrudView):
         return initial_naming_context.resolve(self.admin_route)
 
     @classmethod
-    def render(self, gui_context_name, step):
+    def render(self, step):
         form = FormView()
-        model = get_qml_root_backend().createModel(get_settings_group(step['admin_route']), form)
+        model = get_root_backend().create_model(get_settings_group(step['admin_route']), form)
         model.setValue(step['model_context_name'])
-        columns = [ fn for fn, fa in step['fields'].items() ]
+        columns = [ fn for fn, fa in step['fields']]
         model.setColumns(columns)
-
         form.setup(
             title=step['title'], admin_route=step['admin_route'],
             close_route=tuple(step['close_route']), model=model,
@@ -138,64 +138,30 @@ class OpenFormView(AbstractCrudView):
         return form
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        # Use new QML forms:
-        #qml_action_step(gui_context_name, 'OpenFormView', serialized_step)
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         step = json.loads(serialized_step)
-        formview = cls.render(gui_context_name, step)
+        formview = cls.render(step)
         if formview is not None:
             formview.setObjectName('form.{}.{}'.format(
                 step['admin_route'], id(formview)
             ))
             show_top_level(formview, gui_context_name, step['form_state'])
 
-
 @dataclass
-class ChangeFormIndex(ActionStep, DataclassSerializable):
+class HighlightForm(ActionStep, DataclassSerializable):
 
-    def gui_run( self, gui_context ):
-        # a pending request might change the number of rows, and therefor
-        # the new index
-        # submit all pending requests to the model thread
-        if is_deleted(gui_context.widget_mapper):
-            return
-        gui_context.widget_mapper.model().onTimeout()
-        # wait until they are handled
-        super(ChangeFormIndex, self).gui_run(gui_context)
+    tab: Optional[str] = None # The form tab
+    label: Optional[str] = None # A field label to highlight
+    label_delegate: bool = False # Highlight delegate associated with label
+    label_delegate_focus: bool = False # Focus delegate associated with label
+    table_label: Optional[str] = None # Label of the table for table_row and table_column
+    table_row: Optional[int] = None # Table row to highlight
+    table_column: Optional[str] = None # Table column to highlight
+    action_route: Optional[Route] = None # Action to highlight
+    action_menu_route: Optional[Route] = None # Menu to open
+    action_menu_mode: Optional[str] = None # Menu mode (verbose name) to highlight
 
-class ToFirstForm(ChangeFormIndex):
-    """
-    Show the first object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        super(ToFirstForm, self).gui_run(gui_context)
-        gui_context.widget_mapper.toFirst()
-
-class ToNextForm(ChangeFormIndex):
-    """
-    Show the next object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        super(ToNextForm, self).gui_run(gui_context)
-        gui_context.widget_mapper.toNext()
-        
-class ToLastForm(ChangeFormIndex):
-    """
-    Show the last object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        super(ToLastForm, self).gui_run(gui_context)
-        gui_context.widget_mapper.toLast()
-        
-class ToPreviousForm(ChangeFormIndex):
-    """
-    Show the previous object in the collection in the current form
-    """
-
-    def gui_run( self, gui_context ):
-        super(ToPreviousForm, self).gui_run(gui_context)
-        gui_context.widget_mapper.toPrevious()
-
+    #action_cls_state: Optional[?] = None
+    #group_box: Optional[?] = None
+    form_state: Optional[str] = None
+    field_name: Optional[str] = None

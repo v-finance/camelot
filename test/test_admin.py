@@ -2,6 +2,8 @@
 """
 Tests for the Admin classes
 """
+from pathlib import PurePosixPath
+
 import camelot.types
 import datetime
 import unittest
@@ -15,6 +17,7 @@ from sqlalchemy.dialects import mysql
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.session import Session
 
+from camelot.core.files.storage import Storage
 from .test_model import ExampleModelMixinCase
 from .test_orm import TestMetaData
 from camelot.admin.action import list_filter
@@ -31,6 +34,7 @@ from camelot.model.i18n import Translation
 from camelot.model.party import Person, Address
 from camelot.view.controls import delegates
 from camelot.types.typing import Color, Directory, File, Note
+from camelot.core.backend import get_root_backend
 
 class ApplicationAdminCase(unittest.TestCase):
 
@@ -39,7 +43,7 @@ class ApplicationAdminCase(unittest.TestCase):
         self.assertTrue( app_admin.get_navigation_menu() )
         self.assertTrue( app_admin.get_related_toolbar_actions( 'onetomany' ) )
         self.assertTrue( app_admin.get_related_toolbar_actions( 'manytomany' ) )
-        self.assertTrue( app_admin.get_version() )
+        self.assertTrue( get_root_backend().build_tag() )
         with self.assertRaises(Exception):
             app_admin.get_related_admin(1)
         self.assertEqual(type(app_admin.get_related_admin(object)), ObjectAdmin)
@@ -602,7 +606,7 @@ class EntityAdminCase(TestMetaData):
         self.assertEqual( fa_4['filter_strategy'], list_filter.ChoicesFilter )
         self.assertEqual( fa_4['search_strategy'], list_filter.NoFilter)
 
-        column_5 = schema.Column( camelot.types.File)
+        column_5 = schema.Column( camelot.types.File(Storage(PurePosixPath(''))))
         fa_5 = EntityAdmin.get_sql_field_attributes( [column_5] )
         self.assertEqual( fa_5['delegate'], delegates.FileDelegate )
         self.assertEqual( fa_5['filter_strategy'], list_filter.NoFilter )

@@ -7,20 +7,13 @@ import os
 import sys
 import unittest
 from decimal import Decimal
+from pathlib import PurePosixPath
 
-from . import app_admin
 from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
-from .test_item_model import (
-    A, QueryQStandardItemModelMixinCase,
-    setup_query_proxy_name, setup_query_proxy_small_columns_name,
-    setup_query_proxy_equal_columns_name
-)
-from .test_model import (
-    ExampleModelMixinCase, load_sample_data_name, setup_sample_model_name
-)
-from camelot.admin.action import GuiContext
+from .test_item_model import QueryQStandardItemModelMixinCase
+from .test_model import ExampleModelMixinCase
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
@@ -40,17 +33,21 @@ from camelot.view.controls.busy_widget import BusyWidget
 from camelot.view.controls.delegates import DelegateManager
 from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.controls.formview import FormEditors
-from camelot.view.controls.progress_dialog import ProgressDialog
 from camelot.view.controls.tableview import TableWidget
-from camelot.view.qml_view import get_qml_root_backend
-from camelot.view.proxy import ValueLoading
+from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
-from camelot_example.application_admin import MyApplicationAdmin
+
+from .test_thread import testing_context_args
+from .testing_context import (
+    app_admin, A, setup_query_proxy_name, setup_query_proxy_small_columns_name,
+    setup_query_proxy_equal_columns_name
+)
+
 
 logger = logging.getLogger('view.unittests')
 
 static_images_path = os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinx', 'source', '_static')
-storage = Storage()
+storage = Storage(PurePosixPath(''))
 
 admin = app_admin.get_related_admin(A)
 
@@ -70,7 +67,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
   - get_value
   - set_value
-  - support for ValueLoading
+  - support for None
   """
 
     images_path = static_images_path
@@ -88,11 +85,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         """Test the basic functions of an editor that are needed to integrate
         well with Camelot and Qt
         """
-        #
-        # The editor should remember its when its value is ValueLoading
-        #
-        #editor.set_value( ValueLoading )
-        #self.assertEqual( editor.get_value(), ValueLoading )
         #
         # When a value is set, no editingFinished should be called
         #
@@ -118,7 +110,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_DateEditor(self):
         editor = editors.DateEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( None )
         self.assertEqual( editor.get_value(), None )
         editor.set_value( QtCore.QDate(datetime.date(1980, 12, 31)) )
@@ -126,18 +117,20 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assertEqual( editor.get_value(), datetime.date(1980, 12, 31) )
         self.assert_valid_editor( editor, QtCore.QDate(datetime.date(1980, 12, 31)) )
 
+    def test_DbImageEditor(self):
+        editor = editors.DbImageEditor(parent=None)
+        self.assertEqual(editor.get_value(), None)
+        editor.set_value(None)
+        self.assertEqual(editor.get_value(), None)
+
     def test_TextLineEditor(self):
         editor = editors.TextLineEditor(parent=None, length=10)
-        self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor.set_value( u'za coś tam' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), u'za coś tam' )
-        editor.set_value( ValueLoading )
-        self.assertEqual( editor.get_value(), ValueLoading )
         editor = editors.TextLineEditor(parent=None, length=10)
         editor.set_editable( False )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( u'za coś tam' )
         self.assertEqual( editor.get_value(), u'za coś tam' )
         editor.set_value( None )
@@ -176,7 +169,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_LocalFileEditor( self ):
         editor = editors.LocalFileEditor( parent=None )
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( '/home/lancelot/quests.txt' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), '/home/lancelot/quests.txt' )
@@ -185,16 +178,16 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_BoolEditor(self):
         editor = editors.BoolEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( True )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
         self.assertEqual( editor.get_value(), False )
-        editor.set_value( ValueLoading )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        editor.set_value( None )
+        self.assertEqual( editor.get_value(), None )
         editor = editors.BoolEditor()
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( True )
         self.assertEqual( editor.get_value(), True )
         editor.set_value( False )
@@ -286,9 +279,9 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
     def test_FileEditor(self):
         editor = editors.FileEditor()
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         self.grab_default_states( editor )
-        self.assert_valid_editor( editor, StoredFile( storage, 'test.txt').verbose_name )
+        self.assert_valid_editor( editor, StoredFile( storage, PurePosixPath('test.txt'), 'test.txt').verbose_name )
 
     def test_FloatEditor(self):
         # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
@@ -308,7 +301,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
@@ -319,7 +312,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_editable(True)
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0.0 )
         self.assertEqual( editor.get_value(), 0.0 )
         editor.set_value( 3.14 )
@@ -373,7 +366,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         editor.set_minimum(minimum)
         editor.set_maximum(maximum)
         self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 0 )
         self.assertEqual( editor.get_value(), 0 )
         editor.set_value( 3 )
@@ -428,9 +421,12 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.grab_default_states( editor )
         self.assert_valid_editor(editor, initial_naming_context._bind_object(3))
 
+    def test_One2ManyEditor(self):
+        editors.One2ManyEditor(parent=None, admin_route=['foo', 'bar'])
+
     def test_RichTextEditor(self):
         editor = editors.RichTextEditor(parent=None)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( u'<h1>Rich Text Editor</h1>' )
         self.grab_default_states( editor )
         self.assertTrue( u'Rich Text Editor' in editor.get_value() )
@@ -438,25 +434,16 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
 
     def test_TextEditEditor(self):
         editor = editors.TextEditEditor(parent=None, editable=True)
-        self.assertEqual( editor.get_value(), ValueLoading )
+        self.assertEqual( editor.get_value(), None )
         editor.set_value( 'Plain text' )
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'Plain text' )
         self.assert_valid_editor( editor, 'Plain text' )
 
-    def test_VirtualAddressEditor(self):
-        editor = editors.VirtualAddressEditor(parent=None)
-        self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), ValueLoading )
-        editor.set_value( ('im','test') )
-        self.grab_default_states( editor )
-        self.assertEqual( editor.get_value(),  ('im','test') )
-        self.assert_valid_editor( editor, ('im','test') )
-
     def test_MonthsEditor(self):
         editor = editors.MonthsEditor(parent=None)
         self.assert_vertical_size( editor )
-        self.assertEqual(editor.get_value(), ValueLoading)
+        self.assertEqual(editor.get_value(), None)
         editor.set_value(12)
         self.grab_default_states( editor )
         self.assertEqual(editor.get_value(),  12)
@@ -470,12 +457,7 @@ class FormTest(
 
     images_path = static_images_path
     model_context_name = ('form_test_model_context',)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
-        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
+    args = testing_context_args
 
     def setUp(self):
         super().setUp()
@@ -485,7 +467,7 @@ class FormTest(
         self.admin_route = self.person_admin.get_admin_route()
         columns = [ fn for fn, fa in self.person_admin.get_fields() ]
         self.qt_parent = QtCore.QObject()
-        self.person_model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), self.qt_parent)
+        self.person_model = get_root_backend().create_model(get_settings_group(self.admin_route), self.qt_parent)
         self.person_model.setValue(self.model_context_name)
         self.person_model.setColumns(columns)
         self._load_data(self.person_model)
@@ -493,14 +475,13 @@ class FormTest(
         widget_mapper = QtWidgets.QDataWidgetMapper(self.qt_parent)
         widget_mapper.setModel( self.person_model )
         widget_mapper.setItemDelegate(delegate)
-        fields = dict((f, {
+        fields = list((f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
             }) for f, fa in self.person_admin.get_fields())
         self.widgets = FormEditors(self.qt_parent, fields)
         self.person_entity = Person
-        self.gui_context = GuiContext()
-        
+
     def _get_serialized_form_display_data(self, form_display):
         serialized_form_display = form_display._to_bytes()
         form_data = json.loads(serialized_form_display)
@@ -561,7 +542,7 @@ class FormTest(
         person = self.person_entity()
         open_form_view = OpenFormView(person, person_admin)
         self.grab_widget(
-            open_form_view.render(self.gui_context, open_form_view._to_dict())
+            open_form_view.render(open_form_view._to_dict())
         )
 
 class DelegateCase(unittest.TestCase, GrabMixinCase):
@@ -733,7 +714,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
     def test_filedelegate(self):
         delegate = delegates.FileDelegate()
-        file = StoredFile(None, 'agreement.pdf')
+        file = StoredFile(None, PurePosixPath('agreement.pdf'), 'agreement.pdf')
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FileEditor))
         self.grab_delegate(delegate, file)
@@ -806,12 +787,6 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
         ]]
         self.assertEqual(item.roles[ChoicesRole], choices + [none_completion])
 
-    def test_virtualaddressdelegate(self):
-        delegate = delegates.VirtualAddressDelegate()
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, editors.VirtualAddressEditor))
-        self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
-
     def test_monthsdelegate(self):
         delegate = delegates.MonthsDelegate()
         editor = delegate.createEditor(None, self.option, None)
@@ -825,16 +800,11 @@ class ControlsTest(
     ):
     """Test some basic controls"""
 
+    args = testing_context_args
+
     images_path = static_images_path
     model_context_name = ('controls_test_model_context',)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name, mode=True)
-        cls.gui_run(load_sample_data_name, mode=True)
-        cls.app_admin = MyApplicationAdmin()
-        cls.process()
+    app_admin = ApplicationAdmin()
 
     def setUp(self):
         self.gui_run(setup_query_proxy_name, mode=self.model_context_name)
@@ -845,14 +815,14 @@ class ControlsTest(
         #create a table view for an Admin interface with small columns
         self.gui_run(setup_query_proxy_small_columns_name, mode=self.model_context_name)
         widget = TableWidget()
-        model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), widget)
+        model = get_root_backend().create_model(get_settings_group(self.admin_route), widget)
         widget.setModel(model)
         model.setValue(self.model_context_name)
         model.setColumns(('first_name', 'suffix'))
-        model.onTimeout()
+        model.submit()
         self.process()
         self.grab_widget( widget )
-        model.onTimeout()
+        model.submit()
         self.process()
         widget.horizontalHeader()
 
@@ -865,14 +835,14 @@ class ControlsTest(
         #create a table view for an Admin interface with small columns
         self.gui_run(setup_query_proxy_equal_columns_name, mode=self.model_context_name)
         widget = TableWidget()
-        model = get_qml_root_backend().createModel(get_settings_group(self.admin_route), widget)
+        model = get_root_backend().create_model(get_settings_group(self.admin_route), widget)
         widget.setModel(model)
         model.setValue(self.model_context_name)
         model.setColumns(('first_name', 'suffix',))
-        model.onTimeout()
+        model.submit()
         self.process()
         self.grab_widget(widget)
-        model.onTimeout()
+        model.submit()
         self.process()
         widget.horizontalHeader()
         first_name_width = self._header_data(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.SizeHintRole, model).width()
@@ -883,14 +853,6 @@ class ControlsTest(
         busy_widget = BusyWidget()
         busy_widget.set_busy( True )
         self.grab_widget( busy_widget )
-
-    def test_progress_dialog( self ):
-        dialog = ProgressDialog(None)
-        dialog.title = 'Import cover images'
-        self.grab_widget(dialog)
-        dialog.add_detail('toy_story.png imported')
-        dialog.add_detail('matrix.png imported')
-        self.grab_widget(dialog, suffix='detail')
 
     def test_user_exception(self):
         exc = None
@@ -914,29 +876,27 @@ class SnippetsTest(RunningProcessCase,
 
     images_path = static_images_path
     model_context_name = ('snippets_test_model_context',)
+    args = testing_context_args
 
     @classmethod
     def setUpClass(cls):
-        super(SnippetsTest, cls).setUpClass()
-        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
-        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
+        super().setUpClass()
         cls.gui_run(setup_query_proxy_name, mode=cls.model_context_name)
         cls.app_admin = ApplicationAdmin()
-        cls.gui_context = GuiContext()
         cls.process()
 
     def test_fields_with_actions(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView(coordinate, admin)
-        form = open_form_view.render(self.gui_context, open_form_view._to_dict())
+        form = open_form_view.render(open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_fields_with_tooltips(self):
         coordinate = Coordinate()
         admin = Coordinate.Admin( self.app_admin, Coordinate )
         open_form_view = OpenFormView(coordinate, admin)
-        form = open_form_view.render(self.gui_context, open_form_view._to_dict())
+        form = open_form_view.render(open_form_view._to_dict())
         self.grab_widget(form)
 
     def test_background_color(self):

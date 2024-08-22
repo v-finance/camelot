@@ -66,6 +66,10 @@ class TextLineEditor(CustomEditor):
         if validator is not None:
             validator.setObjectName('validator')
             text_input.setValidator(validator)
+            # Connect the validator's changed signal to the text input's
+            # bg color update, as it may require updating when the validator
+            # state changes.
+            validator.changed.connect(text_input._update_background_color)
         completer = AbstractCompleter.get_completer(completer_type, self)
         if completer is not None:
             completer.setObjectName('completer')
@@ -84,7 +88,6 @@ class TextLineEditor(CustomEditor):
         self.editingFinished.emit()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         self._value = value
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
@@ -95,10 +98,6 @@ class TextLineEditor(CustomEditor):
         return value
 
     def get_value(self):
-        value_loading = CustomEditor.get_value(self)
-        if value_loading is not None:
-            return value_loading
-
         text_input = self.findChild(QtWidgets.QLineEdit, 'text_input')
         if text_input is not None:
             value = str(text_input.text())

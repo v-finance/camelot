@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 from ..admin.action.base import Action
+from ..admin.admin_route import Route
 from ..admin.icon import Icon
 from ..admin.action.field_action import FieldActionModelContext
 from ..core.cache import ValueCache
@@ -302,13 +303,21 @@ class RowCount(Action):
 
     name = 'row_count'
 
+    def clear_cache(self, model_context):
+        # clear the whole cache, there might be more efficient means to 
+        # do this.
+        #
+        # clearing the cache also clears the data on which columns and rows
+        # are visible in the model.  this used to be done on each row count,
+        # but spurious row counts thus cause this data to be gone, causing
+        # wrong subsequent updates to one2 many views.
+        #
+        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
+        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
+
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         rows = len(model_context.proxy)
-        # clear the whole cache, there might be more efficient means to 
-        # do this
-        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
-        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
         yield action_steps.RowCount(rows)
 
 rowcount_name = crud_action_context.bind(RowCount.name, RowCount(), True)
@@ -430,7 +439,8 @@ class Deleted(RowCount, UpdateMixin):
         rows = len(model_context.proxy)
         if (row is not None) or (rows != mode['rows']):
             # but updating the view is only needed if the rows changed
-            yield from super(Deleted, self).model_run(model_context, mode)
+            self.clear_cache(model_context)
+            yield from super().model_run(model_context, mode)
 
 deleted_name = crud_action_context.bind(Deleted.name, Deleted(), True)
 
@@ -648,7 +658,8 @@ class Sort(RowCount):
         column, order = mode
         field_name = model_context.static_field_attributes[column]['field_name']
         model_context.proxy.sort(field_name, order!=Qt.SortOrder.AscendingOrder.value)
-        yield from super(Sort, self).model_run(model_context, mode)
+        self.clear_cache(model_context)
+        yield from super().model_run(model_context, mode)
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
@@ -702,3 +713,24 @@ class RunFieldAction(Action, ChangedObjectMixin, UpdateMixin):
             )
 
 runfieldaction_name = crud_action_context.bind(RunFieldAction.name, RunFieldAction(), True)
+
+
+@dataclass
+class CrudActions(DataclassSerializable):
+    """
+    A data class which contains the routes to crud actions available
+    to the gui to invoke.
+    """
+
+    admin: InitVar
+    set_columns: Route = field(init=False, default=setcolumns_name)
+    row_count: Route = field(init=False, default=rowcount_name)
+    row_data: Route = field(init=False, default=rowdata_name)
+    set_data: Route = field(init=False, default=setdata_name)
+    change_selection: Route = field(init=False, default=changeselection_name)
+    update: Route = field(init=False, default=update_name)
+    deleted: Route = field(init=False, default=deleted_name)
+    created: Route = field(init=False, default=created_name)
+    sort: Route = field(init=False, default=sort_name)
+    field_action: Route = field(init=False, default=runfieldaction_name)
+    completion: Route = field(init=False, default=completion_name)

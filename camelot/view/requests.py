@@ -93,6 +93,9 @@ class AbstractRequest(NamedDataclassSerializable):
         except NameNotFoundException:
             LOGGER.error('Run name not found : {} for request {}'.format(run_name, request_data))
             return
+        if run is None:
+            LOGGER.error('Request contains no run {}'.format(request_data))
+            return
         gui_run_name = run.gui_run_name
         try:
             result = cls._next(run, request_data)
@@ -142,7 +145,9 @@ class InitiateAction(AbstractRequest):
         from .action_steps import PushProgressLevel
         from .responses import ActionStopped, ActionStepped
         gui_run_name = tuple(request_data['gui_run_name'])
-        LOGGER.debug('Run of action {} with mode {}'.format(request_data['action_name'], request_data['mode']))
+        LOGGER.debug('Run of action {} with mode {} on model context {}'.format(
+            request_data['action_name'], request_data['mode'], request_data['model_context']
+        ))
         try:
             action = initial_naming_context.resolve(tuple(request_data['action_name']))
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))
@@ -229,4 +234,21 @@ class CancelAction(AbstractRequest):
 @dataclass
 class StopProcess(AbstractRequest):
     """Sentinel task to end all tasks to be executed by a process"""
-    pass
+
+    @classmethod
+    def execute(cls, request_data, response_handler, cancel_handler):
+        raise SystemExit(0)
+
+
+@dataclass
+class Unbind(AbstractRequest):
+
+    names: typing.List[CompositeName]
+
+    @classmethod
+    def execute(cls, request_data, response_handler, cancel_handler):
+        for lease in request_data['names']:
+            try:
+                initial_naming_context.unbind(tuple(lease))
+            except NameNotFoundException:
+                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))

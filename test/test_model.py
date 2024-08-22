@@ -1,14 +1,11 @@
 import datetime
+import logging
 import os
 import unittest
 from unittest.mock import Mock, patch
 
-from sqlalchemy import create_engine, orm, schema, types
+from sqlalchemy import orm, schema, types
 
-from . import unit_test_context
-from .test_orm import TestMetaData
-
-from camelot.admin.action import Action
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.exception import UserException
@@ -21,68 +18,12 @@ from camelot.model.i18n import Translation
 from camelot.model.party import Person
 from camelot.test.action import MockModelContext
 from camelot.view.import_utils import XlsReader
-from camelot.view import action_steps
-from camelot_example.fixtures import load_movie_fixtures
 
-app_admin = ApplicationAdmin()
+from .testing_context import model_engine, app_admin
+from .test_orm import TestMetaData
 
-#
-# This creates an in memory database per thread
-#
-model_engine = create_engine('sqlite://')
+LOGGER = logging.getLogger(__name__)
 
-class SetupSampleModel(Action):
-
-    def model_run(self, model_context, mode):
-        ExampleModelMixinCase.setup_sample_model()
-        yield action_steps.UpdateProgress(detail='Model set up')
-
-setup_sample_model_name = unit_test_context.bind(('setup_sample_model',), SetupSampleModel())
-
-class LoadSampleData(Action):
-
-    def model_run(self, model_context, mode):
-        if mode in (None, True):
-            load_movie_fixtures(model_engine)
-            yield action_steps.UpdateProgress(detail="samples loaded")
-
-load_sample_data_name = unit_test_context.bind(('load_sample_data',), LoadSampleData())
-
-class SetupSession(Action):
-
-    def model_run(self, model_context, mode):
-        session = Session()
-        session.close()
-        yield action_steps.UpdateProgress(detail='Session closed')
-
-setup_session_name = unit_test_context.bind(('setup_session',), SetupSession())
-
-class DirtySession(Action):
-    
-    def model_run(self, model_context, mode):
-        session = Session()
-        session.expunge_all()
-        # create objects in various states
-        #
-        p2 = Person(first_name = u'p2', last_name = u'dirty' )
-        p3 = Person(first_name = u'p3', last_name = u'deleted' )
-        p4 = Person(first_name = u'p4', last_name = u'to be deleted' )
-        p6 = Person(first_name = u'p6', last_name = u'deleted outside session' )
-        session.flush()
-        p3.delete()
-        session.flush()
-        p4.delete()
-        p2.last_name = u'clean'
-        #
-        # delete p6 without the session being aware
-        #
-        person_table = Person.table
-        session.execute(
-            person_table.delete().where( person_table.c.party_id == p6.id )
-        )
-        yield action_steps.UpdateProgress(detail='Session dirty')
-
-dirty_session_action_name = unit_test_context.bind(('dirty_session',), DirtySession())
 
 class ExampleModelMixinCase(object):
 
@@ -96,6 +37,7 @@ class ExampleModelMixinCase(object):
         AuthenticationMechanism.authenticate(
             metadata.bind, 'database', 'user', ['admin']
         )
+        return model_engine
 
     @classmethod
     def tear_down_sample_model(cls):

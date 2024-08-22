@@ -129,7 +129,6 @@ class IntegerEditor(CustomEditor):
             set_background_color_palette(spin_box.lineEdit(), background_color)
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             if value is None:
@@ -138,9 +137,6 @@ class IntegerEditor(CustomEditor):
                 spin_box.setValue(value)
 
     def get_value(self):
-        value_loading = CustomEditor.get_value(self)
-        if value_loading is not None:
-            return value_loading
         spin_box = self.findChild(CustomDoubleSpinBox, 'spin_box')
         if spin_box is not None:
             spin_box.interpretText()
@@ -170,7 +166,7 @@ class IntegerEditor(CustomEditor):
         calculator = Calculator(self)
         calculator.setValue(value)
         calculator.calculation_finished_signal.connect( self.calculation_finished )
-        calculator.exec()
+        calculator.open()
 
     @QtCore.qt_slot(str)
     def calculation_finished(self, value):

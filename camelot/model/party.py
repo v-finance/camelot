@@ -37,7 +37,7 @@ by Len Silverston, Chapter 2
 import copy
 import datetime
 import enum
-import re
+from pathlib import PurePath
 
 import sqlalchemy.types
 
@@ -46,19 +46,25 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm.base import NEVER_SET
 from sqlalchemy.types import Date, Unicode, Integer
 from sqlalchemy.sql.expression import and_
-from sqlalchemy import event, orm, schema, sql, ForeignKey
+from sqlalchemy import (
+    event, ForeignKey, orm, schema, sql,
+)
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action.list_filter import StringFilter
 from camelot.admin.action import list_filter
 from camelot.core.orm import Entity
-from camelot.core.utils import ugettext_lazy as _
+from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import zip_code_types
 import camelot.types
-from camelot.types.typing import Note
+from camelot.sql import is_postgres, is_sqlite
 from camelot.sql.types import IdentifyingUnicode, QuasiIdentifyingUnicode, first_letter_transform
+from camelot.types.typing import Note
+
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, TabForm, HBoxForm, WidgetOnlyForm, Stretch
+from camelot.view.validator import RegexValidator, ZipcodeValidatorState
+from ..core.files.storage import Storage
 
 from ..core.sql import metadata
 
@@ -69,10 +75,22 @@ class GeographicBoundary( Entity ):
     """The base class for Country and City"""
     __tablename__ = 'geographic_boundary'
 
-    code = schema.Column( QuasiIdentifyingUnicode(length=10) )
+    _code = schema.Column('code', QuasiIdentifyingUnicode(length=10), index=True)
     name = schema.Column( QuasiIdentifyingUnicode(length=40), nullable = False )
 
     row_type = schema.Column( Unicode(40), nullable = False, index=True)
+
+    @hybrid.hybrid_property
+    def code(self):
+        return self._code
+
+    @code.expression
+    def code(cls):
+        return cls._code
+
+    @code.setter
+    def code(self, code):
+        self._code = code
 
     @hybrid.hybrid_method
     def translation(self, language='nl_BE'):
@@ -112,13 +130,15 @@ class GeographicBoundary( Entity ):
             postgresql_ops={"name": "gin_trgm_ops"},
             postgresql_using='gin'
         ),
+        schema.CheckConstraint("code !~ '[-\\s\\./#,]'", name='code', _create_rule=is_postgres),
+        schema.CheckConstraint("code GLOB '*[^-. /#,]*'", name='code', _create_rule=is_sqlite),
     )
 
     __entity_args__ = {
         'editable': False
     }
 
-    full_name = orm.column_property(code + ' ' + name)
+    full_name = orm.column_property(_code + ' ' + name)
 
     def __str__(self):
         return u'%s %s' % ( self.code, self.name )
@@ -308,9 +328,18 @@ class City(GeographicBoundary, WithCountry):
     def zip_code_type(self):
         if self.country is not None:
             try:
-                return zip_code_types[self.country.code]
+                return zip_code_types[self.country.code].name
             except KeyError:
                 return
+
+    @GeographicBoundary.code.setter
+    def code(self, code):
+        # Set the city's zip code to its compact and sanitized representation.
+        self._code = ZipcodeValidatorState.for_type(self.zip_code_type, code).value
+
+    @property
+    def formatted_zip_code(self):
+        return ZipcodeValidatorState.for_city(self).formatted_value
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
@@ -362,11 +391,11 @@ class City(GeographicBoundary, WithCountry):
     
     def __str__(self):
         if None not in (self.name, self.country):
-            if self.code is not None:
-                return u'{0.code} {0.name} [{1.code}]'.format(self, self.country)
+            if self.formatted_zip_code is not None:
+                return u'{0} {1} [{2.code}]'.format(self.formatted_zip_code, self.name, self.country)
             return u'{0.name} [{1.code}]'.format(self, self.country)
         return u''
-    
+
     @classmethod
     def get_or_create( cls, country, code, name ):
         city = City.query.filter_by( code = code, country = country ).first()
@@ -379,14 +408,14 @@ class City(GeographicBoundary, WithCountry):
     class Message(enum.Enum):
 
         invalid_administrative_division = "{} is geen geldige administratieve indeling voor {}"
-        invalid_zip_code =                "{} is not a valid zip code for {}"
+        invalid_zip_code =                "{} is not a valid zip code for {}: {}"
 
     def get_messages(self):
         if self.country is not None:
 
-            if None not in (self.code, self.zip_code_type):
-                if not re.fullmatch(re.compile(self.zip_code_type.regex), self.code):
-                    yield _(self.Message.invalid_zip_code.value, self.code, self.country)
+            zipcode_validator_state = ZipcodeValidatorState.for_city(self)
+            if not zipcode_validator_state.valid:
+                yield _(self.Message.invalid_zip_code.value, self.code, self.country, ugettext(zipcode_validator_state.error_msg))
 
             if self.administrative_division is not None:
                 if self.country != self.administrative_division.country:
@@ -416,7 +445,12 @@ class City(GeographicBoundary, WithCountry):
 
         field_attributes = {h:copy.copy(v) for h,v in GeographicBoundary.Admin.field_attributes.items()}
         attributes_dict = {
-            'code': {'name': _('Postal code')},
+            'code': {
+                'name': _('Postal code'),
+                'validator_type': RegexValidator.__name__,
+                'validator_state': ZipcodeValidatorState.for_city,
+                'tooltip': ZipcodeValidatorState.hint_for_city,
+            },
             'administrative_name_NL': {'name': _('Administrative name')},
             'administrative_name_FR': {'name': _('Administrative name')},
             'administrative_division': {'name': _('Administrative division (NUTS)')},
@@ -444,6 +478,11 @@ class Address( Entity ):
                                                nullable=True, index=True)
     _administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
 
+    __table_args__ = (
+        schema.CheckConstraint("_zip_code !~ '[-\\s\\./#,]'", name='zip_code', _create_rule=is_postgres),
+        schema.CheckConstraint("_zip_code GLOB '*[^-. /#,]*'", name='zip_code', _create_rule=is_sqlite),
+    )
+
     @property
     def administrative_division(self):
         """
@@ -467,16 +506,25 @@ class Address( Entity ):
             return self._zip_code or self.city.code
         return self._zip_code
 
+    @zip_code.expression
+    def zip_code(cls):
+        return cls._zip_code
+
     @zip_code.setter
-    def zip_code(self, value):
+    def zip_code(self, code):
         # Only allow to overrule the address' zip code if its city's code is undefined.
         if self.city is not None and not self.city.code:
-            self._zip_code = value
+            # Set the zip code to its compact and sanitized representation.
+            self._zip_code = ZipcodeValidatorState.for_type(self.city.zip_code_type, code).value
 
     @property
     def zip_code_type(self):
         if self.city is not None:
             return self.city.zip_code_type
+
+    @property
+    def formatted_zip_code(self):
+        return ZipcodeValidatorState.for_addressable(self).formatted_value
 
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
@@ -494,16 +542,16 @@ class Address( Entity ):
         if self.city is not None:
             yield from self.city.get_messages()
 
-            if None not in (self._zip_code, self.city.zip_code_type):
-                if not re.fullmatch(re.compile(self.city.zip_code_type.regex), self._zip_code):
-                    yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country)
+            zipcode_validator_state = ZipcodeValidatorState.for_addressable(self)
+            if not zipcode_validator_state.valid:
+                yield _(City.Message.invalid_zip_code.value, self._zip_code, self.city.country, ugettext(zipcode_validator_state.error_msg))
 
             if self.administrative_division is not None and self.city.country != self.administrative_division.country:
                 yield _(City.Message.invalid_administrative_division.value, self.administrative_division, self.city.country)
 
     def __str__(self):
         city_name = self.city.name if self.city is not None else ''
-        return u'%s, %s %s' % ( self.street1 or '', self.zip_code or '', city_name or '' )
+        return u'%s, %s %s' % ( self.street1 or '', self.formatted_zip_code or '', city_name or '' )
 
     class Admin( EntityAdmin ):
         verbose_name = _('Address')
@@ -513,7 +561,12 @@ class Address( Entity ):
         form_state = 'right'
         field_attributes = {
             'street1': {'minimal_column_width':30},
-            'zip_code': {'editable': lambda o: o.city is not None and not o.city.code},
+            'zip_code': {
+                'editable': lambda o: o.city is not None and not o.city.code,
+                'validator_type': RegexValidator.__name__,
+                'validator_state': ZipcodeValidatorState.for_addressable,
+                'tooltip': ZipcodeValidatorState.hint_for_addressable,
+                },
             'administrative_division': {
                 'delegate':delegates.Many2OneDelegate,
                 'target': AdministrativeDivision,
@@ -544,8 +597,7 @@ class PartyContactMechanismAdmin( EntityAdmin ):
                         'mechanism':{'minimal_column_width':25,
                                      'editable':True,
                                      'nullable':False,
-                                     'name':_('Mechanism'),
-                                     'delegate':delegates.VirtualAddressDelegate}}
+                                     'name':_('Mechanism')}}
 
     def get_depending_objects(self, contact_mechanism ):
         party = contact_mechanism.party
@@ -599,9 +651,7 @@ class WithAddresses(object):
 
     @zip_code.expression
     def zip_code(cls):
-        return sql.select([Address.zip_code],
-                          whereclause=cls.first_address_filter(),
-                          limit=1).as_scalar()    
+        return Address.zip_code
 
     @hybrid.hybrid_property
     def city( self ):
@@ -622,6 +672,11 @@ class WithAddresses(object):
                               cls.first_address_filter()
                               ),
                           limit=1).as_scalar()
+
+    @property
+    def formatted_zip_code(self):
+        if self.city is not None:
+            return self.city.formatted_zip_code
 
     @hybrid.hybrid_property
     def administrative_division(self):
@@ -781,11 +836,12 @@ class Party(Entity, WithAddresses):
 class Organization( Party ):
     """An organization represents any internal or external organization.  Organizations can include
     businesses and groups of individuals"""
+
     __tablename__ = 'organization'
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'organization'}
     name = schema.Column( Unicode( 50 ), nullable = False, index = True )
-    logo = schema.Column( camelot.types.File( upload_to = 'organization-logo' ))
+    logo = schema.Column( camelot.types.File(Storage(upload_to=PurePath('organization-logo'))))
     tax_id = schema.Column( Unicode( 20 ) )
 
     def __str__(self):
@@ -805,6 +861,7 @@ class Organization( Party ):
 class Person( Party ):
     """Person represents natural persons
     """
+
     __tablename__ = 'person'
     party_id = schema.Column(camelot.types.PrimaryKey(), ForeignKey('party.id'), primary_key=True)
     __mapper_args__ = {'polymorphic_identity': u'person'}
@@ -820,7 +877,7 @@ class Person( Party ):
     social_security_number = schema.Column( IdentifyingUnicode(length=12) )
     passport_number = schema.Column( IdentifyingUnicode(length=20) )
     passport_expiry_date = schema.Column( Date() )
-    picture = schema.Column( camelot.types.File( upload_to = 'person-pictures' ))
+    picture = schema.Column( camelot.types.File(Storage(upload_to=PurePath('person-pictures'))))
     comment = schema.Column( camelot.types.RichText() )
 
     @property
@@ -876,9 +933,6 @@ class Person( Party ):
     #@ColumnProperty
     #def social_security_number( self ):
         #return sql.select( [Person.social_security_number], Person.party_id == self.established_to_party_id )
-
-    #def __unicode__( self ):
-        #return u'%s %s %s' % ( unicode( self.established_to ), _('Employed by'),unicode( self.established_from ) )
 
     #class Admin( PartyRelationship.Admin ):
         #verbose_name = _('Employment relation')
@@ -1050,6 +1104,10 @@ class Addressable(object):
     def zip_code( self ):
         return self._get_address_field( u'zip_code' )
 
+    @zip_code.expression
+    def zip_code(cls):
+        return cls._zip_code
+
     @zip_code.setter
     def zip_code( self, value ):
         return self._set_address_field( u'zip_code', value )
@@ -1057,6 +1115,11 @@ class Addressable(object):
     @zip_code.expression
     def zip_code( self ):
         return Address.zip_code
+
+    @property
+    def formatted_zip_code(self):
+        if self.address:
+            return self.address.formatted_zip_code
 
     @hybrid.hybrid_property
     def city( self ):
@@ -1093,30 +1156,7 @@ class Addressable(object):
                                             delegate = delegates.Many2OneDelegate,
                                             target = AdministrativeDivision),
             zip_code = dict( editable = lambda o: o.city is not None and not o.city.code),
-            email = dict( editable = True, 
-                          minimal_column_width = 20,
-                          name = _('Email'),
-                          address_type = 'email',
-                          from_string = lambda s:('email', s),
-                          delegate = delegates.VirtualAddressDelegate),
-            phone = dict( editable = True, 
-                          minimal_column_width = 20,
-                          address_type = 'phone',
-                          name = _('Phone'),
-                          from_string = lambda s:('phone', s),
-                          delegate = delegates.VirtualAddressDelegate ),
-            mobile = dict( editable = True,
-                           minimal_column_width = 20,
-                           address_type = 'mobile',
-                           name = _('Mobile'),
-                           from_string = lambda s:('mobile', s),
-                           delegate = delegates.VirtualAddressDelegate ),
-            fax = dict( editable = True,
-                        minimal_column_width = 20,
-                        address_type = 'fax',
-                        name = _('Fax'),
-                        from_string = lambda s:('fax', s),
-                        delegate = delegates.VirtualAddressDelegate ), )
+        )
 
 
 

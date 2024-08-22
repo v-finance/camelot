@@ -13,9 +13,9 @@ from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.item_model import ObjectRole
 from camelot.core.item_model.query_proxy import QueryModelProxy
-from camelot.admin.action import Action, ActionStep, State, GuiContext
+from camelot.admin.action import ActionStep, State
 from camelot.admin.action import (
-    list_action, application_action, form_action, list_filter, Mode
+    list_action, application_action, list_filter
 )
 from camelot.admin.action import export_mapping
 from camelot.admin.action.logging import ChangeLogging
@@ -23,16 +23,14 @@ from camelot.admin.action.field_action import DetachFile, SelectObject, UploadFi
 from camelot.admin.action.list_action import SetFilters
 from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.application_admin import ApplicationAdmin
-from camelot.admin.icon import CompletionValue
 from camelot.admin.entity_admin import EntityAdmin
-from camelot.core.qt import QtCore, QtGui, QtWidgets, Qt, delete, is_deleted
+from camelot.core.qt import QtCore, QtWidgets, Qt, delete, is_deleted
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.party import Person
-from camelot.test import GrabMixinCase, RunningProcessCase, test_context
+from camelot.test import GrabMixinCase, RunningProcessCase
 from camelot.test.action import MockModelContext
-from camelot.view import action_steps, import_utils, utils, gui_naming_context
-from camelot.view.action_runner import hide_progress_dialog
+from camelot.view import action_steps, import_utils, utils
 from camelot.view.action_steps import SelectItem
 from camelot.view.action_steps.change_object import ChangeObject
 from camelot.view.controls.action_widget import AbstractActionWidget
@@ -42,20 +40,30 @@ from camelot.view.controls.editors.one2manyeditor import One2ManyEditor
 from camelot.view.forms import Form
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 from camelot_example.importer import ImportCovers
-from camelot_example.model import Movie, Tag
 
 from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
-from . import app_admin, test_core, test_view, unit_test_context
-from .test_item_model import QueryQStandardItemModelMixinCase, setup_query_proxy_name
+from . import test_core, test_view
+from .test_item_model import (
+    QueryQStandardItemModelMixinCase, setup_query_proxy_name,
+)
 from .test_orm import TestMetaData, EntityMetaMock
 from .test_model import (
-    ExampleModelMixinCase, LoadSampleData,
-    load_sample_data_name, setup_session_name, dirty_session_action_name,
-    setup_sample_model_name
+    ExampleModelMixinCase, 
+)
+from .test_thread import testing_context_args
+from .testing_context import (
+    Movie, Tag, app_admin, LoadSampleData,
+    setup_session_name, dirty_session_action_name,
+    custom_action_name, send_document_action_name,
+    model_context_action_name, to_first_row_name, to_last_row_name,
+    export_spreadsheet_name, import_from_file_name, open_form_view_name,
+    remove_selection_name, set_filters_name, group_box_filter_name,
+    combo_box_filter_name, close_form_name, refresh_action_name,
+    backup_action_name, restore_action_name, segmentation_fault_action_name
 )
 
 test_images = [os.path.join( os.path.dirname(__file__), '..', 'camelot_example', 'media', 'covers', 'circus.png') ]
@@ -77,37 +85,24 @@ class SerializableMixinCase(object):
         deserialized_object.read_object(stream)
         return deserialized_object
 
-class CustomAction(Action):
-    name = 'custom_test_action'
-    verbose_name = 'Custom Action'
-    shortcut = QtGui.QKeySequence.StandardKey.New
-    modes = [
-        Mode('mode_1', _('First mode')),
-        Mode('mode_2', _('Second mode')),
-    ]
-
-
-custom_action_name = test_context.bind((CustomAction.name,), CustomAction())
-
 
 class ActionBaseCase(RunningProcessCase, SerializableMixinCase):
 
     model_context_name = ('constant', 'null')
+    args = testing_context_args
 
     def setUp(self):
         super().setUp()
         self.admin_route = app_admin.get_admin_route()
-        self.gui_context_obj = GuiContext()
-        self.gui_context_name = gui_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
-        )
 
     def test_action_step(self):
         ActionStep()
 
     def test_action(self):
-        self.gui_run(custom_action_name, self.gui_context_name, 'mode_1')
-        state = self.get_state(custom_action_name, self.gui_context_name)
+        self.gui_run(custom_action_name, mode='mode_1')
+
+    def test_action_state(self):
+        state = self.get_state(custom_action_name)
         self.assertTrue(state['verbose_name'])
         self.assertTrue(len(state['modes']))
 
@@ -124,11 +119,7 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         cls.action_name = initial_naming_context.bind(('import_covers',), cls.action)
 
     def setUp(self):
-        get_qml_root_backend().setVisible(True, False)
-        self.gui_context_obj = GuiContext()
-        self.gui_context = gui_naming_context.bind(
-            ('transient', str(id(self.gui_context_obj))), self.gui_context_obj
-        )
+        get_root_backend().set_visible(True, False)
         self.parent = QtWidgets.QWidget()
         enabled = State()
         disabled = State()
@@ -151,38 +142,6 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
         widget = QtWidgets.QPushButton()
         self.grab_widget_states( widget, 'application' )
 
-    def test_hide_progress_dialog( self ):
-        dialog = self.gui_context_obj.get_progress_dialog()
-        dialog.show()
-        with hide_progress_dialog(self.gui_context):
-            self.assertTrue( dialog.isHidden() )
-        self.assertFalse( dialog.isHidden() )
-
-# begin select item
-class SendDocumentAction( Action ):
-
-    def model_run( self, model_context, mode ):
-        methods = [
-            CompletionValue(
-                initial_naming_context._bind_object('email'),
-                'By E-mail'),
-            CompletionValue(
-                initial_naming_context._bind_object('email'),
-                'By Fax'),
-            CompletionValue(
-                initial_naming_context._bind_object('email'),
-                'By postal mail')
-        ]
-        method = yield SelectItem(
-            methods,
-            value=initial_naming_context._bind_object('email')
-        )
-        # handle sending of the document
-        LOGGER.info('selected {}'.format(method))
-
-# end select item
-
-send_document_action_name = unit_test_context.bind(('send_document_action',), SendDocumentAction())
 
 class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, SerializableMixinCase):
     """Test the various steps that can be executed during an
@@ -191,16 +150,11 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
 
     model_context_name = ('constant', 'null')
     images_path = test_view.static_images_path
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name)
-        cls.gui_run(load_sample_data_name, mode=True)
+    args = testing_context_args
 
     def setUp(self):
         super(ActionStepsCase, self).setUp()
-        get_qml_root_backend().setVisible(True, False)
+        get_root_backend().set_visible(True, False)
         self.admin_route = app_admin.get_admin_route()
         self.gui_context = ('cpp_gui_context', 'root_backend')
 
@@ -237,9 +191,6 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
         open_stream = action_steps.OpenStream( stream, suffix='.csv' )
         self.assertTrue( str( open_stream ) )
         action_steps.OpenString(b'1, 2, 3, 4')
-        context = { 'columns':['width', 'height'],
-                    'table':[[1,2],[3,4]] }
-        action_steps.WordJinjaTemplate( 'list.html', context )
 
     def test_update_progress( self ):
         update_progress = action_steps.UpdateProgress(
@@ -247,7 +198,7 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
         )
         self.assertTrue( str( update_progress ) )
         update_progress = self._write_read(update_progress)
-        update_progress.gui_run(self.gui_context, update_progress._to_bytes())
+        self.assertEqual(update_progress.value, 20)
 
     def test_message_box( self ):
         step = action_steps.MessageBox('Hello World')
@@ -255,31 +206,6 @@ class ActionStepsCase(RunningProcessCase, GrabMixinCase, ExampleModelMixinCase, 
         dialog = step.render(serialized_step)
         dialog.show()
         self.grab_widget(dialog)
-
-group_box_filter_name = unit_test_context.bind(('group_box',), list_filter.GroupBoxFilter(Person.last_name, exclusive=True))
-combo_box_filter_name = unit_test_context.bind(('combo_box',), list_filter.ComboBoxFilter(Person.last_name))
-to_first_row_name = unit_test_context.bind(('to_first_row',), list_action.ToFirstRow())
-to_last_row_name = unit_test_context.bind(('to_last_row',), list_action.ToLastRow())
-export_spreadsheet_name = unit_test_context.bind(('export_spreadsheet',), list_action.ExportSpreadsheet())
-import_from_file_name = unit_test_context.bind(('import_from_file',), list_action.ImportFromFile())
-set_filters_name = unit_test_context.bind(('set_filters',), list_action.SetFilters())
-open_form_view_name = unit_test_context.bind(('open_form_view',), list_action.OpenFormView())
-remove_selection_name = unit_test_context.bind(('remove_selection',), list_action.RemoveSelection())
-
-
-class ModelContextAction(Action):
-    name = 'model_context_action'
-    verbose_name = 'Model context methods'
-
-    def model_run(model_context, mode):
-        for obj in model_context.get_collection():
-            yield action_steps.UpdateProgress('obj in collection {}'.format(obj))
-        for obj in model_context.get_selection():
-            yield action_steps.UpdateProgress('obj in selection {}'.format(obj))
-        model_context.get_object()
-
-model_context_action_name = test_context.bind((ModelContextAction.name,), ModelContextAction())
-
 
 
 class ListActionsCase(
@@ -289,12 +215,7 @@ class ListActionsCase(
     """
 
     images_path = test_view.static_images_path
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
-        cls.gui_run(load_sample_data_name, mode=True)
+    args = testing_context_args
 
     def setUp( self ):
         super(ListActionsCase, self).setUp()
@@ -315,7 +236,7 @@ class ListActionsCase(
         # select the first row
         table_view.setCurrentIndex(self.item_model.index(0, 0))
         # Make sure to ChangeSelection action step is executed
-        self.item_model.onTimeout()
+        self.item_model.submit()
         # create a model context
         self.example_folder = os.path.join( os.path.dirname(__file__), '..', 'camelot_example' )
 
@@ -437,7 +358,8 @@ class ListActionsCase(
 
     def test_import_from_file(self, filename='import_example.csv'):
         replies = {
-            action_steps.SelectFile: [os.path.join(self.example_folder, filename)]
+            action_steps.SelectFile: {'selected': [os.path.join(self.example_folder, filename)]},
+            action_steps.MessageBox: {"button": QtWidgets.QMessageBox.StandardButton.Ok,},
         }
         steps = self.gui_run(import_from_file_name, self.gui_context, None, replies, model_context_name=self.model_context_name)
         for step in steps:
@@ -472,16 +394,16 @@ class ListActionsCase(
         item_view = self.view.item_view
         list_model = item_view.model()
         list_model.sort(1, Qt.SortOrder.DescendingOrder)
-        list_model.onTimeout()
+        list_model.submit()
         self.process()
         list_model.headerData(0, Qt.Orientation.Vertical, ObjectRole)
         list_model.data(list_model.index(0, 0), Qt.ItemDataRole.DisplayRole)
-        list_model.onTimeout()
+        list_model.submit()
         self.process()
         self.view.item_view.setCurrentIndex(list_model.index(0, 0))
         for step_name, step in self.gui_run(open_form_view_name, self.gui_context,None, model_context_name=self.model_context_name):
             if step_name == action_steps.OpenFormView.__name__:
-                form = action_steps.OpenFormView.render(self.gui_context, step)
+                form = action_steps.OpenFormView.render(step)
                 form_value = form.model.value()
         self.assertTrue(isinstance(form_value, list))
 
@@ -500,7 +422,9 @@ class ListActionsCase(
     def test_remove_selection(self):
         list(self.gui_run(
             remove_selection_name, self.gui_context,
-            None, model_context_name=self.model_context_name
+            None, replies={
+                action_steps.MessageBox: {"button": QtWidgets.QMessageBox.StandardButton.Yes}
+                }, model_context_name=self.model_context_name
         ))
 
     def test_move_rank_up_down(self):
@@ -611,7 +535,7 @@ class ListActionsCase(
 
     def test_set_filters(self):
         set_filters_step = yield SetFilters()
-        state = self.get_state(set_filters_step, self.gui_context)
+        state = self.get_state(set_filters_step)
         self.assertTrue(len(state.modes))
         mode_names = set(m.name for m in state.modes)
         self.assertIn('first_name', mode_names)
@@ -623,12 +547,12 @@ class ListActionsCase(
                 #steps.send(('first_name', 'test'))
 
     def test_group_box_filter(self):
-        state = self.get_state(group_box_filter_name, self.gui_context)
+        state = self.get_state(group_box_filter_name)
         self.assertTrue(len(state['modes']))
         self.gui_run(group_box_filter_name, self.gui_context, state['modes'][0]['value'], model_context_name=self.model_context_name)
 
     def test_combo_box_filter(self):
-        state = self.get_state(combo_box_filter_name, self.gui_context)
+        state = self.get_state(combo_box_filter_name)
         self.assertTrue(len(state['modes']))
         widget = self.view.render_action(
             list_filter.ComboBoxFilter.render_hint, combo_box_filter_name,
@@ -640,12 +564,6 @@ class ListActionsCase(
         self.grab_widget(widget)
 
 
-close_form_name = unit_test_context.bind(('close_form',), form_action.CloseForm())
-to_previous_form_name = unit_test_context.bind(('to_previous_form',), form_action.ToPreviousForm())
-to_next_form_name = unit_test_context.bind(('to_next_form',), form_action.ToNextForm())
-to_first_form_name = unit_test_context.bind(('to_first_form',), form_action.ToFirstForm())
-to_last_form_name = unit_test_context.bind(('to_last_form',), form_action.ToLastForm())
-
 class FormActionsCase(
     RunningProcessCase,
     ExampleModelMixinCase, GrabMixinCase, QueryQStandardItemModelMixinCase):
@@ -653,12 +571,7 @@ class FormActionsCase(
     """
 
     images_path = test_view.static_images_path
-
-    @classmethod
-    def setUpClass(cls):
-        super(FormActionsCase, cls).setUpClass()
-        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
-        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
+    args = testing_context_args
 
     def setUp( self ):
         super(FormActionsCase, self).setUp()
@@ -678,22 +591,10 @@ class FormActionsCase(
         self.tear_down_item_model()
         super().tearDown()
 
-    def test_previous_next( self ):
-        list(self.gui_run(to_previous_form_name, self.gui_context_name, model_context_name=self.model_context_name))
-        list(self.gui_run(to_next_form_name, self.gui_context_name, model_context_name=self.model_context_name))
-        list(self.gui_run(to_first_form_name, self.gui_context_name, model_context_name=self.model_context_name))
-        list(self.gui_run(to_last_form_name, self.gui_context_name, model_context_name=self.model_context_name))
-
     def test_close_form( self ):
         list(self.gui_run(close_form_name, self.gui_context_name, model_context_name=self.model_context_name))
 
 
-backup_action_name = unit_test_context.bind(('backup',), application_action.Backup())
-restore_action_name = unit_test_context.bind(('restore',), application_action.Restore())
-change_logging_action_name = unit_test_context.bind(('change_logging',), ChangeLogging())
-segmentation_fault_action_name = unit_test_context.bind(('segmentation_fault',), application_action.SegmentationFault())
-refresh_action_name = unit_test_context.bind(('refresh',), application_action.Refresh())
-        
 class ApplicationActionsCase(
     RunningProcessCase, GrabMixinCase, ExampleModelMixinCase
     ):
@@ -702,12 +603,7 @@ class ApplicationActionsCase(
 
     images_path = test_view.static_images_path
     model_context_name = ('constant', 'null')
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.gui_run(setup_sample_model_name, ('constant', 'null'), mode=True)
-        cls.gui_run(load_sample_data_name, ('constant', 'null'), mode=True)
+    args = testing_context_args
 
     def setUp(self):
         super( ApplicationActionsCase, self ).setUp()
@@ -739,14 +635,14 @@ class ApplicationActionsCase(
         self.assertTrue(profile_selected)
 
     def test_backup_and_restore( self ):
-        replies = {action_steps.SaveFile: 'unittest-backup.db'}
+        replies = {action_steps.SaveFile: {'selected': 'unittest-backup.db'}}
         generator = self.gui_run(backup_action_name, self.gui_context, None, replies)
         file_saved = False
         for step in generator:
             if isinstance(step, tuple) and step[0] == 'SaveFile':
                 file_saved = True
         self.assertTrue(file_saved)
-        replies = {action_steps.SelectFile: ['unittest-backup.db']}
+        replies = {action_steps.SelectFile: {'selected': ['unittest-backup.db']}}
         generator = self.gui_run(restore_action_name, self.gui_context, None, replies)
         file_selected = False
         for step in generator:
@@ -761,7 +657,10 @@ class ApplicationActionsCase(
                 step.get_object().level = logging.INFO
 
     def test_segmentation_fault( self ):
-        list(self.gui_run(segmentation_fault_action_name, self.gui_context, None))
+        list(self.gui_run(
+            segmentation_fault_action_name, self.gui_context, None,
+            replies={action_steps.MessageBox: {"button": QtWidgets.QMessageBox.StandardButton.No,},}
+        ))
 
 
 class FieldActionCase(TestMetaData, ExampleModelMixinCase):

@@ -219,13 +219,7 @@ and used as a custom action.
             primary_key = self.primary_key(obj)
             if not None in primary_key:
                 primary_key_representation = u','.join([str(v) for v in primary_key])
-                if hasattr(obj, '__unicode__'):
-                    return u'%s %s : %s' % (
-                        str(self.get_verbose_name() or ''),
-                        primary_key_representation,
-                        str(obj)
-                    )
-                elif hasattr(obj, '__str__'):
+                if hasattr(obj, '__str__'):
                     return u'%s %s : %s' % (
                         self.get_verbose_name() or '',
                         primary_key_representation,
@@ -325,6 +319,8 @@ and used as a custom action.
                             columns = [expression]
                         elif isinstance(expression, sql.Select):
                             columns = expression.columns
+                        elif isinstance(expression, sql.elements.TypeCoerce):
+                            columns = expression.base_columns
                         for k, v in self.get_sql_field_attributes(columns).items():
                             # the defaults or the nullable status of the column
                             # does not need to be the default or the nullable
@@ -341,9 +337,9 @@ and used as a custom action.
         try:
             mapper = self.get_mapper()
             property = mapper.get_property(field_name) if mapper else None
-            if isinstance(property, orm.properties.ColumnProperty):
-                columns = property.columns
-                sql_attributes = self.get_sql_field_attributes( columns )
+            if isinstance(property, (orm.properties.ColumnProperty, orm.properties.CompositeProperty)):
+                columns = property.columns[:1]
+                sql_attributes = self.get_sql_field_attributes(columns)
                 attributes.update( sql_attributes )
             elif isinstance(property, orm.properties.RelationshipProperty):
                 target = forced_attributes.get( 'target',

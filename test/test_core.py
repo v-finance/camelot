@@ -22,8 +22,9 @@ from decimal import Decimal
 from sqlalchemy import MetaData, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
-from .test_model import ExampleModelMixinCase, LoadSampleData
+from .test_model import ExampleModelMixinCase
 from .test_orm import EntityMetaMock
+from .testing_context import LoadSampleData
 
 memento_id_counter = 0
 session_id = str(Session().hash_key)
@@ -160,7 +161,7 @@ class ConfCase(unittest.TestCase):
     def test_simple_settings(self):
         settings = SimpleSettings( 'Conceptive Engineering', 'Camelot Test')
         self.assertTrue( settings.ENGINE() )
-        self.assertTrue( settings.CAMELOT_MEDIA_ROOT() )
+        self.assertTrue( settings.CAMELOT_MEDIA_ROOT )
 
 class QtCase(unittest.TestCase):
     """Test the qt binding abstraction module
@@ -904,7 +905,7 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         # Verify the InitialNamingContext is a singleton.
         self.assertEqual(initial_naming_context, InitialNamingContext())
         self.assertEqual(InitialNamingContext(), InitialNamingContext())
-        initial_naming_context.bind('test', object())
+        initial_naming_context.bind('test_singleton', object())
         self.assertEqual(initial_naming_context._bindings, InitialNamingContext()._bindings)
 
     def test_resolve(self):
