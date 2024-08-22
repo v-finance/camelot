@@ -45,6 +45,8 @@ class MonthsEditor(CustomEditor):
                  # Min & max, defined in years.
                  minimum = 0,
                  maximum = 10000,
+                 forever = None,
+                 action_routes=[],
                  field_name='months'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
@@ -56,6 +58,7 @@ class MonthsEditor(CustomEditor):
         self.months_spinbox.setRange(-1, 11)
         self.years_spinbox.setSuffix(_(' years'))
         self.months_spinbox.setSuffix(_(' months'))
+        self.forever = forever
         
         self.years_spinbox.setDecimals(0)
         self.years_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
@@ -66,19 +69,38 @@ class MonthsEditor(CustomEditor):
         self.months_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.months_spinbox.setSingleStep(1)
         self.months_spinbox.setValue(self.months_spinbox.minimum())
-        
-        self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )
-        self.months_spinbox.editingFinished.connect( self._spinbox_editing_finished )
-        
+        self.forever_label = QtWidgets.QLabel(_('Forever'))
+        self.forever_label.setVisible(False)
+
+        self.years_spinbox.editingFinished.connect(self._spinbox_editing_finished)
+        self.months_spinbox.editingFinished.connect(self._spinbox_editing_finished)
+        self.years_spinbox.valueChanged.connect(self._update_forever)
+        self.months_spinbox.valueChanged.connect(self._update_forever)
+
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.years_spinbox)
         layout.addWidget(self.months_spinbox)
+        layout.addWidget(self.forever_label)
+        self.add_actions(action_routes, layout)
+
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
     @QtCore.qt_slot()
     def _spinbox_editing_finished(self):
         self.editingFinished.emit()
+
+    @QtCore.qt_slot(float)
+    def _update_forever(self, d):
+        if self.forever is not None:
+            if (self.forever == self.get_value()):
+                self.years_spinbox.setVisible(False)
+                self.months_spinbox.setVisible(False)
+                self.forever_label.setVisible(True)
+            else:
+                self.years_spinbox.setVisible(True)
+                self.months_spinbox.setVisible(True)
+                self.forever_label.setVisible(False)
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)

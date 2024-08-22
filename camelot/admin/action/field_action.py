@@ -117,6 +117,29 @@ class SelectObject(EditFieldAction):
         state.visible = (model_context.value is None)
         return state
 
+
+class ToggleForeverAction(EditFieldAction):
+
+    icon = Icon('calendar')
+    tooltip = _('Forever')
+    name = 'toggle_forever'
+    render_hint = RenderHint.TOOL_BUTTON
+
+    def model_run(self, model_context, mode):
+        forever = model_context.field_attributes.get('forever')
+        if forever is not None:
+            if model_context.value == forever:
+                model_context.admin.set_field_value(
+                    model_context.obj, model_context.field, None
+                )
+            else:
+                model_context.admin.set_field_value(
+                    model_context.obj, model_context.field, forever
+                )
+            yield None
+
+toggle_forever = ToggleForeverAction()
+
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
 

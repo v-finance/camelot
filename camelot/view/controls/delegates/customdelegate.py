@@ -246,7 +246,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         elif issubclass(editor_cls, editors.LocalFileEditor):
             editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
         elif issubclass(editor_cls, editors.MonthsEditor):
-            editor = editor_cls(parent, self.minimum, self.maximum)
+            editor = editor_cls(parent, self.minimum, self.maximum, self.forever, self.action_routes)
         elif issubclass(editor_cls, editors.TextLineEditor):
             editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type, self.completer_type)
         elif issubclass(editor_cls, editors.TextEditEditor):
