@@ -42,8 +42,8 @@ import re
 from enum import Enum
 
 from sqlalchemy import orm, schema, sql, util
-from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
-                                             DeclarativeMeta )
+from sqlalchemy.orm.decl_api import ( _declarative_constructor,
+                                      DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Integer
 
