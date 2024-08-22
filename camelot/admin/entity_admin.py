@@ -50,6 +50,7 @@ from sqlalchemy import orm, schema, sql
 from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.attributes import instance_state
 from sqlalchemy.orm.exc import UnmappedClassError
+from sqlalchemy.orm.mapper import _mapper_registries
 
 class EntityAdmin(ObjectAdmin):
     """Admin class specific for classes that are mapped by sqlalchemy.
@@ -125,12 +126,10 @@ and used as a custom action.
     
     def __init__(self, app_admin, entity):
         super(EntityAdmin, self).__init__(app_admin, entity)
-        from sqlalchemy.orm.exc import UnmappedClassError
-        from sqlalchemy.orm.mapper import _mapper_registry
         try:
             self.mapper = orm.class_mapper(self.entity)
         except UnmappedClassError as exception:
-            mapped_entities = [str(m) for m in _mapper_registry.keys()]
+            mapped_entities = [str(mapper) for registry in _mapper_registries.keys() for mapper in registry.mappers]
             logger.error(u'%s is not a mapped class, configured mappers include %s'%(self.entity, u','.join(mapped_entities)),
                          exc_info=exception)
             raise exception
@@ -401,13 +400,13 @@ and used as a custom action.
         #
         # In case of a text 'target' field attribute, resolve it
         #
-        from sqlalchemy.orm.mapper import _mapper_registry
         target = field_attributes.get('target', None)
         if isinstance(target, str):
-            for mapped_class in _mapper_registry.keys():
-                if mapped_class.class_.__name__ == target:
-                    field_attributes['target'] = mapped_class.class_
-                    break
+            for registry in _mapper_registries.keys():
+                for mapped_class in registry.mappers:
+                    if mapped_class.class_.__name__ == target:
+                        field_attributes['target'] = mapped_class.class_
+                        break
             else:
                 raise Exception('No mapped class found for target %s'%target)
         super()._expand_field_attributes(field_attributes, field_name)
