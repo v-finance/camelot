@@ -226,9 +226,8 @@ class FixtureVersion( Entity ):
     __tablename__ = 'fixture_version'
     
     fixture_version = Column( Integer, index = True, nullable=False, default=0 )
-    fixture_class = Column( Unicode( 255 ), index = True, nullable=True,
-                            primary_key=True )
-    
+    fixture_class = Column( Unicode( 255 ), index = True, nullable=False, primary_key=True)
+
     @classmethod
     def get_current_version( cls, fixture_class = None, session = None):
         """Get the current version of the fixtures in the database for a certain 
