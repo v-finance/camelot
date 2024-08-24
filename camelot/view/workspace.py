@@ -138,6 +138,6 @@ def show_top_level(view, gui_context_name, state=None):
     # No longer show the window before moving/resizing it to its final position
     #
     apply_form_state(view, parent, state)
-    view.show()
+    # view.show()
 
 
