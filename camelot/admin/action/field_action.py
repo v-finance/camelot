@@ -117,6 +117,29 @@ class SelectObject(EditFieldAction):
         state.visible = (model_context.value is None)
         return state
 
+
+class ToggleForeverAction(EditFieldAction):
+
+    icon = Icon('calendar')
+    tooltip = _('Forever')
+    name = 'toggle_forever'
+    render_hint = RenderHint.TOOL_BUTTON
+
+    def model_run(self, model_context, mode):
+        forever = model_context.field_attributes.get('forever')
+        if forever is not None:
+            if model_context.value == forever:
+                model_context.admin.set_field_value(
+                    model_context.obj, model_context.field, None
+                )
+            else:
+                model_context.admin.set_field_value(
+                    model_context.obj, model_context.field, forever
+                )
+            yield None
+
+toggle_forever = ToggleForeverAction()
+
 class OpenObject(SelectObject):
     """Open the value of an editor in a form view"""
 
@@ -244,7 +267,7 @@ class OpenFile(Action):
         storage = model_context.field_attributes['storage']
         local_path = storage.checkout(model_context.value)
         yield action_steps.UpdateProgress(text=_('Open file'))
-        yield action_steps.OpenFile(local_path)
+        yield action_steps.OpenFile(local_path.as_posix())
 
     def get_state(self, model_context):
         state = super(OpenFile, self).get_state(model_context)

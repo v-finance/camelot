@@ -361,6 +361,7 @@ class ChangeObjects(UpdateTableView):
     """
 
     validate: bool = True
+    qml: bool = False
 
     invalid_rows: List = field(init=False, default_factory=list)
     admin_route: AdminRoute = field(init=False)

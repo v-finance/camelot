@@ -33,7 +33,6 @@ Various ``ActionStep`` subclasses that manipulate the `item_view`
 
 from dataclasses import dataclass, InitVar, field
 from typing import Union, List, Tuple, Any
-import json
 import logging
 
 from ...admin.admin_route import Route, RouteWithRenderHint
@@ -42,13 +41,13 @@ from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.model_context import ObjectsModelContext
 from ...admin.object_admin import ObjectAdmin
+from ...core.cache import ValueCache
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ...view.utils import get_settings_group
-from .. import gui_naming_context
 from ...view.crud_action import CrudActions
 
 LOGGER = logging.getLogger(__name__)
@@ -65,16 +64,6 @@ class Sort( ActionStep, DataclassSerializable ):
     order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
     blocking: bool = False
 
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        step = json.loads(serialized_step)
-        model = gui_context.get_model()
-        if model is not None:
-            model.sort(
-                step["column"],
-                Qt.SortOrder._value2member_map_[step["order"]]
-            )
 
 @dataclass
 class AbstractCrudView(ActionStep, DataclassSerializable):
@@ -187,12 +176,6 @@ class UpdateTableView(AbstractCrudView):
         actions.extend(admin.get_filters())
         actions.extend(admin.get_list_toolbar_actions())
 
-    @classmethod
-    def gui_run(cls, gui_run, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        cls.update_table_view(gui_context.view, step)
-        gui_context.view.change_title(step['title'])
-
 
 @dataclass
 class OpenTableView( UpdateTableView ):
@@ -273,4 +256,9 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     Refresh only the current item view
     """
 
+    model_context: InitVar[Any]
     blocking: bool = False
+
+    def __post_init__(self, model_context):
+        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
+        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)

@@ -281,7 +281,7 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.assert_vertical_size( editor )
         self.assertEqual( editor.get_value(), None )
         self.grab_default_states( editor )
-        self.assert_valid_editor( editor, StoredFile( storage, PurePosixPath('test.txt')).verbose_name )
+        self.assert_valid_editor( editor, StoredFile( storage, PurePosixPath('test.txt'), 'test.txt').verbose_name )
 
     def test_FloatEditor(self):
         # Default or explicitly set behaviour of the minimum and maximum of the float editor was moved to the float delegate
@@ -439,15 +439,6 @@ class EditorsTest(unittest.TestCase, GrabMixinCase):
         self.grab_default_states( editor )
         self.assertEqual( editor.get_value(), 'Plain text' )
         self.assert_valid_editor( editor, 'Plain text' )
-
-    def test_VirtualAddressEditor(self):
-        editor = editors.VirtualAddressEditor(parent=None)
-        self.assert_vertical_size( editor )
-        self.assertEqual( editor.get_value(), None )
-        editor.set_value( ('im','test') )
-        self.grab_default_states( editor )
-        self.assertEqual( editor.get_value(),  ('im','test') )
-        self.assert_valid_editor( editor, ('im','test') )
 
     def test_MonthsEditor(self):
         editor = editors.MonthsEditor(parent=None)
@@ -723,7 +714,7 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
 
     def test_filedelegate(self):
         delegate = delegates.FileDelegate()
-        file = StoredFile(None, PurePosixPath('agreement.pdf'))
+        file = StoredFile(None, PurePosixPath('agreement.pdf'), 'agreement.pdf')
         editor = delegate.createEditor(None, self.option, None)
         self.assertTrue(isinstance(editor, editors.FileEditor))
         self.grab_delegate(delegate, file)
@@ -795,12 +786,6 @@ class DelegateCase(unittest.TestCase, GrabMixinCase):
             CompletionValue(initial_naming_context._bind_object('3'), 'C'),
         ]]
         self.assertEqual(item.roles[ChoicesRole], choices + [none_completion])
-
-    def test_virtualaddressdelegate(self):
-        delegate = delegates.VirtualAddressDelegate()
-        editor = delegate.createEditor(None, self.option, None)
-        self.assertTrue(isinstance(editor, editors.VirtualAddressEditor))
-        self.grab_delegate(delegate, ('email', 'project-camelot@conceptive.be'))
 
     def test_monthsdelegate(self):
         delegate = delegates.MonthsDelegate()

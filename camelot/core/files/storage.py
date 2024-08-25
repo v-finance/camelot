@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from hashlib import sha1
 from pathlib import Path, PurePath
-from typing import Dict, BinaryIO, Tuple, IO, Generator
+from typing import Dict, BinaryIO, Tuple, IO, Generator, Optional
 
 from camelot.core.conf import settings
 from camelot.core.exception import UserException
@@ -15,21 +15,37 @@ logger = logging.getLogger('camelot.core.files.storage')
 
 
 class StoredFile:
-    def __init__(self, storage: 'Storage', name: PurePath):
+    def __init__(self, storage: 'Storage', name: PurePath, verbose_name: str):
         assert isinstance(name, PurePath)
         self.storage = storage
         self.name: PurePath = name
-
-    @property
-    def verbose_name(self) -> str:
-        """The name of the file, as it is to be displayed in the GUI"""
-        return self.name.as_posix()
+        assert isinstance(verbose_name, str)
+        self.verbose_name = verbose_name
 
     def __getstate__(self) -> Dict[str, str]:
         """Returns the key of the file. To support pickling stored files
         in the database in a :class:`camelot.model.memento.Memento` object
         """
         return {'name': self.name.as_posix()}
+
+    def __composite_values__(self):
+        return self, self.verbose_name
+
+    @classmethod
+    def _generate(cls, document: 'StoredFile', verbose_name: str) -> Optional['StoredFile']:
+        """
+        Generates a new StoredFile for use in the composite type. When the document is None, the returned object will
+        be None since there isn't a document value in the db. This function will be called when retrieving values from
+        the database, and should never be manually called.
+
+        :param document: a StoredFile
+        :param verbose_name: the name of the file
+        :return: the generated StoredFile, optionally
+        """
+        if document is None:
+            return None
+        document.verbose_name = verbose_name
+        return document
 
     def __str__(self) -> str:
         return self.verbose_name
@@ -98,7 +114,7 @@ class Storage:
 
         pattern = f'{prefix}*{suffix}'
         upload_to_path = Path(self.upload_to)
-        return (StoredFile(self, PurePath(path.name)) for path in upload_to_path.glob(pattern))
+        return (StoredFile(self, PurePath(path.name), self._verbose_name(path)) for path in upload_to_path.glob(pattern))
 
     def _path(self, name: PurePath) -> PurePath:
         """Get the local filesystem path where the file can be opened using Python standard open
@@ -162,7 +178,8 @@ class Storage:
 
         logger.debug(f'copy file from {local_path} to {to_path}')
         shutil.copy(Path(local_path), Path(to_path))
-        return StoredFile(self, self._process_path(PurePath(to_path)))
+        filepath = self._process_path(PurePath(to_path))
+        return StoredFile(self, filepath, self._verbose_name(filepath, name.name))
 
     def checkin_stream(self, prefix: str, suffix: str, stream: IO) -> StoredFile:
         """Check the data stream as a file into the storage
@@ -192,7 +209,8 @@ class Storage:
             file.write(stream.read())
             logger.debug('written contents to file')
             file.flush()
-        return StoredFile(self, self._process_path(PurePath(to_path)))
+        filepath = self._process_path(PurePath(to_path))
+        return StoredFile(self, filepath, self._verbose_name(filepath, (prefix or '') + (suffix or '')))
 
     def checkout(self, stored_file: StoredFile) -> Path:
         """Check the file out of the storage and return a local filesystem path
@@ -215,14 +233,26 @@ class Storage:
         self.available()
         return Path(self._path(stored_file.name)).open('rb')
 
-    def delete(self, name: PurePath):
+    def delete(self, name: PurePath, recursive=False):
         """
         :param name: The name of the file to be deleted
+        :param recursive: whether to remove directories and their contents recursively, False by default.
         """
-        Path(self._path(name)).unlink(missing_ok=True)
+        path = Path(self._path(name))
+        if recursive and os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            path.unlink(missing_ok=True)
 
     def _process_path(self, path: PurePath) -> PurePath:
         return PurePath(os.path.relpath(path, start=self.upload_to))
+
+    def _verbose_name(self, path: PurePath, name_hint: Optional[str] = None) -> str:
+        """
+        return the verbose name of a path
+        :param path: The path of the file
+        """
+        return name_hint if name_hint != '' and name_hint is not None else path.name
 
 
 class HashStorage(Storage):

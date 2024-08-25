@@ -264,6 +264,14 @@ class Enumeration(types.TypeDecorator):
     def __repr__(self):
         return 'Enumeration()'
 
+
+class StatusEnumeration(Enumeration):
+
+
+    def __repr__(self):
+        return 'StatusEnumeration()'
+
+
 class File(types.TypeDecorator):
     """Sqlalchemy column type to store files.  Only the location of the file is stored
     
@@ -330,7 +338,7 @@ class File(types.TypeDecorator):
         def processor(value):
             if value:
                 value = impl_processor(value)
-                return StoredFile(self.storage, PurePath(value))
+                return StoredFile(self.storage, PurePath(value), value)
               
         return processor
       
@@ -341,6 +349,7 @@ class File(types.TypeDecorator):
     def __repr__(self):
         return 'File()'
 
+
 class Months(types.TypeDecorator):
     """
     Months fields are integer fields that represent a number of months.
@@ -348,6 +357,10 @@ class Months(types.TypeDecorator):
     """
 
     impl = types.Integer
+
+    def __init__(self, forever=None):
+        super().__init__()
+        self.forever = forever
 
     @property
     def python_type(self):
