@@ -406,7 +406,7 @@ class RelatedFilter(AbstractFilterStrategy):
             return entity.id.in_(related_query)
 
     def get_search_clause(self, query, text):
-        entity = query._mapper_zero().entity
+        entity = query._entity_from_pre_ent_zero().entity
 
         field_filter_clauses = []
         for field_strategy in self.field_filters:

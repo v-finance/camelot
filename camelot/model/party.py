@@ -252,8 +252,8 @@ class Country( GeographicBoundary ):
     __mapper_args__ = {'polymorphic_identity': 'country'}
 
     @classmethod
-    def get_or_create( cls, code, name ):
-        country = Country.query.filter_by( code = code ).first()
+    def get_or_create(cls, session, code, name):
+        country = session.query(cls).filter_by(code=code).first()
         if not country:
             country = Country( code = code, name = name )
             orm.object_session( country ).flush()
@@ -398,11 +398,11 @@ class City(GeographicBoundary, WithCountry):
         return u''
 
     @classmethod
-    def get_or_create( cls, country, code, name ):
-        city = City.query.filter_by( code = code, country = country ).first()
+    def get_or_create(cls, session, country, code, name ):
+        city = session.query(City).filter_by( code = code, country = country ).first()
         if not city:
             city = City( code = code, name = name, country = country )
-            orm.object_session( city ).flush()
+            session.flush()
         return city
 
     # TODO: refactor this to MessageEnum after move to vFinance repo.
@@ -532,11 +532,11 @@ class Address( Entity ):
         whereclause=(GeographicBoundary.id == city_geographicboundary_id)), deferred=True)
 
     @classmethod
-    def get_or_create( cls, street1, street2, city, zip_code):
-        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city, zip_code = zip_code ).first()
+    def get_or_create(cls, session, street1, street2, city, zip_code):
+        address = session.query(Address).filter_by( street1 = street1, street2 = street2, city = city, zip_code = zip_code ).first()
         if not address:
             address = cls( street1 = street1, street2 = street2, city = city, zip_code = zip_code )
-            orm.object_session( address ).flush()
+            session.flush()
         return address
 
     def get_messages(self):
@@ -601,10 +601,11 @@ class PartyContactMechanismAdmin( EntityAdmin ):
                                      'name':_('Mechanism')}}
 
     def get_depending_objects(self, contact_mechanism ):
+        session = orm.object_session(contact_mechanism)
         party = contact_mechanism.party
-        if party and (party not in Party.query.session.new):
+        if party and (party not in session.new):
             yield party
-            
+
     def get_compounding_objects( self, contact_mechanism ):
         if contact_mechanism.contact_mechanism:
             yield contact_mechanism.contact_mechanism
@@ -883,7 +884,8 @@ class Person( Party ):
 
     @property
     def note(self) -> Note:
-        for person in self.__class__.query.filter_by(first_name=self.first_name, last_name=self.last_name):
+        session = orm.object_session(self)
+        for person in session.query(self.__class__).filter_by(first_name=self.first_name, last_name=self.last_name):
             if person != self:
                 return _('A person with the same name already exists')
 

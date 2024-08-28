@@ -144,20 +144,20 @@ class PartyCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertTrue(p1 >= p1)
 
     def test_geographic_boundary( self ):
-        belgium = party.Country.get_or_create( code = u'BE', 
-                                               name = u'Belgium' )
+        belgium = party.Country.get_or_create(self.session, code='BE', name='Belgium')
         self.assertTrue( str( belgium ) )
-        city = party.City.get_or_create( country = belgium,
-                                         code = '1000',
-                                         name = 'Brussels' )
+        city = party.City.get_or_create(self.session, country = belgium, code='1000', name='Brussels')
         return city
         
     def test_address( self ):
         city = self.test_geographic_boundary()
-        address = party.Address.get_or_create( street1 = 'Avenue Louise',
-                                               street2 = None,
-                                               city = city,
-                                               zip_code='1000')
+        address = party.Address.get_or_create(
+            self.session,
+            street1='Avenue Louise',
+            street2=None,
+            city=city,
+            zip_code='1000',
+        )
         self.assertTrue( str( address ) )
         return address
 
@@ -414,7 +414,7 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
                                      '..', 
                                      'camelot_example',
                                      'import_example.xlsx' )
-        person_count_before_import = Person.query.count()
+        person_count_before_import = self.session.query(Person).count()
         # begin load csv if fixture version
         if FixtureVersion.get_current_version( u'demo_data' ) == 0:
             reader = XlsReader(example_file)
@@ -423,7 +423,7 @@ class FixtureCase(unittest.TestCase, ExampleModelMixinCase):
             FixtureVersion.set_current_version( u'demo_data', 1 )
             self.session.flush()
         # end load csv if fixture version
-        self.assertTrue( Person.query.count() > person_count_before_import )
+        self.assertTrue( self.session.query(Person).count() > person_count_before_import )
         self.assertEqual( FixtureVersion.get_current_version( u'demo_data' ),
                           1 )
         
@@ -476,8 +476,8 @@ class StatusCase( TestMetaData ):
             session.flush()
             self.assertEqual( invoice.current_status, 'DRAFT' )
             self.assertEqual( invoice.get_status_from_date( 'DRAFT' ), datetime.date(2012,1,1) )
-            draft_invoices = Invoice.query.filter( Invoice.current_status == 'DRAFT' ).count()
-            ready_invoices = Invoice.query.filter( Invoice.current_status == 'READY' ).count()
+            draft_invoices = self.session.query(Invoice).filter( Invoice.current_status == 'DRAFT' ).count()
+            ready_invoices = self.session.query(Invoice).filter( Invoice.current_status == 'READY' ).count()
             #end status enumeration use
             self.assertEqual( draft_invoices, 1 )
             self.assertEqual( ready_invoices, 0 )
