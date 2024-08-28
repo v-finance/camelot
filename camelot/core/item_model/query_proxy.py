@@ -89,7 +89,7 @@ class QueryModelProxy(ListModelProxy):
         # if the object is indexed, no need either to check it
 
         # check if the object is in the query
-        mapper = self._query._mapper_zero()
+        mapper = self._query._entity_from_pre_ent_zero()
         primary_key_values = mapper.primary_key_from_instance(obj)
         primary_key_columns = mapper.primary_key
         query = self.get_query(order_clause=False)
