@@ -671,7 +671,7 @@ class SearchFilter(Action, AbstractModelFilter):
 
                 # If a search order is configured in the entity's entity_args,
                 # sort the query based on the corresponding search strategies order by clauses.
-                entity = query._mapper_zero().entity
+                entity = query._entity_from_pre_ent_zero().entity
                 order_search_by = entity.get_order_search_by()
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
