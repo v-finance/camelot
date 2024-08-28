@@ -180,18 +180,18 @@ class GeographicBoundaryAlternativeName(Entity):
     __tablename__ = 'geographic_boundary_alternative_name'
     
     name = schema.Column(Unicode(100), nullable=False)
-    row_type = schema.Column(sqlalchemy.types.Unicode(40), nullable=True, index=True)
+    row_type = schema.Column(sqlalchemy.types.Unicode(40), nullable=False, index=True)
     language = schema.Column(sqlalchemy.types.Unicode(6), nullable=True)
     
     alternative_name_for_id = schema.Column(sqlalchemy.types.Integer(),
                                             schema.ForeignKey(GeographicBoundary.id, ondelete='cascade', onupdate='cascade'),
                                             nullable = False,
                                             index = True)
-    alternative_name_for = orm.relationship(GeographicBoundary, backref=orm.backref('alternative_names', cascade='all, delete, delete-orphan'))
+    alternative_name_for = orm.relationship(GeographicBoundary, backref=orm.backref('alternative_names', cascade='all, delete, delete-orphan', overlaps="translations"))
     
     __mapper_args__ = {
         'polymorphic_on' : row_type,
-        'polymorphic_identity': None,
+        'polymorphic_identity': 'name',
     }
     
     __table_args__ = (
@@ -204,9 +204,10 @@ class GeographicBoundaryAlternativeName(Entity):
             'ix_geographic_boundary_alternative_name_main_municipality', 'alternative_name_for_id', language.is_(None).self_group(), unique=True,
             postgresql_where=sql.and_(row_type == 'main_municipality', language.is_(None)),
             sqlite_where=sql.and_(row_type == 'main_municipality', language.is_(None))),
-        schema.UniqueConstraint(
-            alternative_name_for_id, language, row_type,
-            name = 'language_unique',
+        schema.Index(
+            'ix_geographic_boundary_alternative_name_language_unique', alternative_name_for_id, language, row_type, unique=True,
+            postgresql_where=(row_type != 'name'),
+            sqlite_where=(row_type != 'name'),
         ),
         schema.CheckConstraint(sql.or_(sql.and_(row_type == 'translation', language.isnot(None)), row_type != 'translation'), name='translation_language'),
     )
