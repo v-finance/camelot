@@ -712,14 +712,6 @@ class EntityBase( object ):
     def __lt__(self, other):
         return id(self) < id(other)
 
-    @hybrid.hybrid_property
-    def query( self ):
-        return Session().query( self.__class__ )
-
-    @query.expression
-    def query( cls ):
-        return Session().query( cls )
-
     @classmethod
     def get_by(cls, *args, **kwargs):
         """
