@@ -59,7 +59,8 @@ class PrimaryKey(types.TypeDecorator):
     
     impl = types.TypeEngine
     _type_affinity = types.Integer
-    
+    cache_ok = True
+
     def load_dialect_impl(self, dialect):
         from camelot.core.orm import options
         return options.DEFAULT_AUTO_PRIMARYKEY_TYPE()
@@ -140,6 +141,7 @@ class RichText(types.TypeDecorator):
 """
     
     impl = types.UnicodeText
+    cache_ok = True
     
     @property
     def python_type(self):
@@ -160,7 +162,8 @@ used too much memory, so now it's implemented using QT.
     """
     
     impl = types.Unicode
-    
+    cache_ok = True
+
     def __init__(self):
         types.TypeDecorator.__init__(self, length=20)
         
@@ -214,6 +217,7 @@ class Enumeration(types.TypeDecorator):
   """
     
     impl = types.Integer
+    cache_ok = True
     
     def __init__(self, choices=[], **kwargs):
         types.TypeDecorator.__init__(self, **kwargs)
