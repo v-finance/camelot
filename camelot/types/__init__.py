@@ -223,7 +223,9 @@ class Enumeration(types.TypeDecorator):
         types.TypeDecorator.__init__(self, **kwargs)
         self._int_to_string = dict(choices)
         self._string_to_int = dict((str_value,int_key) for (int_key,str_value) in choices)
-        self.choices = [value for (_key,value) in choices]
+        # Note: choices needs to be a tuple, as SQLAlchemy's caching needs
+        # the type to be hashable.
+        self.choices = tuple([value for (_key,value) in choices])
         
     def bind_processor(self, dialect):
   
