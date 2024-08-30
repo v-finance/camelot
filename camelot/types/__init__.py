@@ -273,6 +273,7 @@ class Enumeration(types.TypeDecorator):
 
 class StatusEnumeration(Enumeration):
 
+    cache_ok = True
 
     def __repr__(self):
         return 'StatusEnumeration()'
