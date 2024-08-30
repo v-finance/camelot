@@ -18,7 +18,7 @@ from sqlalchemy.ext import hybrid
 from sqlalchemy.orm.session import Session
 
 from camelot.core.files.storage import Storage
-from .test_model import ExampleModelMixinCase
+from .test_core import ExampleModelMixinCase
 from .test_orm import TestMetaData
 from camelot.admin.action import list_filter
 from camelot.admin.application_admin import ApplicationAdmin
@@ -31,7 +31,7 @@ from camelot.core.dataclasses import dataclass
 from camelot.core.naming import initial_naming_context
 from camelot.core.sql import metadata
 from camelot.model.i18n import Translation
-from camelot.model.party import Person, Address
+from .testing_context import Person
 from camelot.view.controls import delegates
 from camelot.types.typing import Color, Directory, File, Note
 from camelot.core.backend import get_root_backend
@@ -291,7 +291,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
                 self._test_file = value 
             
             @property
-            def test_entity(self) -> Address:
+            def test_entity(self) -> Person:
                 return self._test_entity
         
             @test_entity.setter
@@ -299,7 +299,7 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
                 self._test_entity = value  
                 
             @property
-            def test_entitylist(self) -> List[Address]:
+            def test_entitylist(self) -> List[Person]:
                 return self._test_entitylist
         
             @test_entitylist.setter
@@ -373,16 +373,16 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['editable'], True)
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.Many2OneDelegate) 
-        self.assertEqual(fa['target'], Address)
+        self.assertEqual(fa['target'], Person)
         
         completions = admin.get_completions(TypedPropertyClass(), 'test_entity', '')
-        self.assertEqual(completions, [e for e in Session().query(Address).limit(20).all()])
+        self.assertEqual(completions, [e for e in Session().query(Person).limit(20).all()])
         
         fa = admin.get_field_attributes('test_entitylist')
         self.assertEqual(fa['editable'], True)
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.One2ManyDelegate) 
-        self.assertEqual(fa['target'], Address)
+        self.assertEqual(fa['target'], Person)
 
         fa = admin.get_field_attributes('test_color')
         self.assertEqual(fa['editable'], True)
@@ -447,9 +447,9 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
             test_note: Optional[Note] = field(default = 'note', init =False)
             test_dir: Directory = field(default = None, init = False)
             test_file: Optional[File] = field(default = None, init = False)
-            test_entity: Address = field(default = None, init = False)
+            test_entity: Person = field(default = None, init = False)
             test_initvar: InitVar[int] = None
-            test_entitylist: List[Address] = field(default_factory = list, init = False)
+            test_entitylist: List[Person] = field(default_factory = list, init = False)
             test_color: Color = field(default = '#000', init=False)
             
             def __post_init__(self, test_initvar):
@@ -518,10 +518,10 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['editable'], True)
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.Many2OneDelegate) 
-        self.assertEqual(fa['target'], Address)
+        self.assertEqual(fa['target'], Person)
         
         completions = admin.get_completions(TestDataClass(), 'test_entity', '')
-        self.assertEqual(completions, [e for e in Session().query(Address).limit(20).all()])
+        self.assertEqual(completions, [e for e in Session().query(Person).limit(20).all()])
         
         fa = admin.get_field_attributes('test_prop')
         self.assertEqual(fa['editable'], False)
@@ -537,7 +537,7 @@ class DataclassAdminCase(unittest.TestCase, ExampleModelMixinCase):
         self.assertEqual(fa['editable'], True)
         self.assertEqual(fa['nullable'], False)
         self.assertEqual(fa['delegate'], delegates.One2ManyDelegate) 
-        self.assertEqual(fa['target'], Address)        
+        self.assertEqual(fa['target'], Person)        
 
         fa = admin.get_field_attributes('test_color')
         self.assertEqual(fa['editable'], True)

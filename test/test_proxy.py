@@ -4,12 +4,11 @@ import unittest
 from camelot.core.item_model import (
     AbstractModelFilter, ListModelProxy, QueryModelProxy
 )
-from camelot.model.party import Party, Person
 
 LOGGER = logging.getLogger(__name__)
 
-from .test_model import ExampleModelMixinCase
-from .testing_context import LoadSampleData, A
+from .test_core import ExampleModelMixinCase
+from .testing_context import LoadSampleData, A, Party, Person
 
 
 class ListModelProxyCase(unittest.TestCase):

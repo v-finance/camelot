@@ -690,10 +690,12 @@ class ImportFromFile( EditAction ):
                     new_entity_instance = admin.entity()
                     for field_name in row_data_admin.get_columns():
                         attributes = row_data_admin.get_field_attributes(field_name)
-                        from_string = attributes['from_string']
+                        original_field_name = attributes['original_field']
+                        from_string = attributes.get('from_string')
+                        assert from_string is not None, '{} with {} has no from string attribute'.format(field_name, original_field_name)
                         setattr(
                             new_entity_instance,
-                            attributes['original_field'],
+                            original_field_name,
                             from_string(getattr(row, field_name))
                         )
                     admin.add( new_entity_instance )

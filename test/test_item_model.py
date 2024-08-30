@@ -3,8 +3,6 @@ import json
 import logging
 import unittest
 
-from .test_model import ExampleModelMixinCase
-
 from camelot.admin.action.field_action import ClearObject, SelectObject
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.core.item_model import (
@@ -14,15 +12,15 @@ from camelot.core.item_model import (
 )
 from camelot.core.qt import Qt, QtCore, delete, variant_to_py, is_deleted
 from camelot.view.utils import get_settings_group
-from camelot.model.party import Person
 from camelot.test import RunningProcessCase
 from camelot.core.cache import ValueCache
 from camelot.view import action_steps
 from camelot.core.backend import get_root_backend
 
+from .test_core import ExampleModelMixinCase
 from .test_thread import testing_context_args
 from .testing_context import (
-    A, setup_session_name, setup_proxy_name,
+    A, setup_session_name, setup_proxy_name, Person,
     get_data_name, get_collection_name, set_data_name, add_z_name,
     remove_z_name, swap_elements_name, add_element_name, remove_element_name,
     setup_query_proxy_name, get_entity_data_name, insert_object_name,
@@ -627,7 +625,7 @@ class QueryQStandardItemModelCase(
         self.assertTrue( self.item_model.columnCount() > 0 )
         self.item_model.sort( 1, Qt.SortOrder.AscendingOrder )
         # check the query
-        self.assertTrue( self.item_model.columnCount() > 0 )
+        self.assertEqual( self.item_model.columnCount(), 3 )
         rowcount = self._row_count(self.item_model)
         self.assertGreater(rowcount, 1)
         # check the sorting
@@ -658,9 +656,7 @@ class QueryQStandardItemModelCase(
         self.assertEqual( self._data( new_row, 1, self.item_model ), None )
         self.assertFalse( self._data( new_row, 2, self.item_model ) )
         self._set_data( new_row, 0, 'Foo', self.item_model )
-        self.assertFalse( self._data( new_row, 2, self.item_model ) )
         self._set_data( new_row, 1, 'Bar', self.item_model )
-        self.assertTrue( self._data( new_row, 2, self.item_model ) )
         primary_key =  self._data( new_row, 2, self.item_model )
         self.assertEqual( self.get_data(primary_key, 'first_name'), 'Foo')
         self.assertEqual( self.get_data(primary_key, 'last_name'), 'Bar')
@@ -675,9 +671,6 @@ class QueryQStandardItemModelCase(
         # before data is returned : 
         # - count query
         # - person query
-        # - contact mechanism select in load
-        # - address select in load
-        # those last 2 are needed for the validation of the compounding objects
         self.gui_run(apply_filter_name, model_context_name=self.model_context_name)
         self.gui_run(start_query_counter_name)
         item_model = get_root_backend().create_model(get_settings_group(self.admin_route), self.qt_parent)
@@ -689,4 +682,4 @@ class QueryQStandardItemModelCase(
         for step in self.gui_run(stop_query_counter_name):
             if step[0] == action_steps.UpdateProgress.__name__:
                 query_count = step[1]['detail']
-        self.assertEqual(query_count, 4)
+        self.assertEqual(query_count, 2)
