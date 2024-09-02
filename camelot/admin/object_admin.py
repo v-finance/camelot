@@ -37,6 +37,8 @@ from ..data.types import Types
 logger = logging.getLogger('camelot.view.object_admin')
 import typing
 
+from typing_extensions import get_type_hints, Annotated
+
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
 from .admin_route import Route, AdminRoute, register_list_actions, register_form_actions
@@ -640,7 +642,7 @@ be specified using the verbose_name attribute.
         descriptor = self._get_entity_descriptor(field_name)
         if descriptor is not None:
             if isinstance(descriptor, property):
-                return typing.get_type_hints(descriptor.fget, include_extras=True).get('return')
+                return get_type_hints(descriptor.fget, include_extras=True).get('return')
     
     def get_typing_attributes(self, field_type):
         if field_type in _typing_to_python_type:
@@ -657,7 +659,7 @@ be specified using the verbose_name attribute.
                     'target':field_type.__args__[0],
                     'python_type': list,
                     }
-        elif typing.get_origin(field_type) is typing.Annotated:
+        elif typing.get_origin(field_type) is Annotated:
             attributes = self.get_typing_attributes(field_type.__origin__)
             for metadata in field_type.__metadata__:
                 if isinstance(metadata, Types):

@@ -4,7 +4,8 @@ import re
 from camelot.core.utils import ugettext_lazy
 
 from sqlalchemy import util
-from typing import Annotated
+
+from typing_extensions import Annotated
 
 
 class Types(util.OrderedProperties):
