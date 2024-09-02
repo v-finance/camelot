@@ -202,7 +202,17 @@ and used as a custom action.
         change the default query, which selects all rows in the database.
         """
         session = session or Session()
-        return session.query(self.entity)
+        query = session.query(self.entity)
+        # Apply order_by entity arg to attempt to be backwards compatible with the
+        # old order_by mapper arg, removed since SQLAlchemy 1.4.
+        if (order_by := self.entity._get_entity_arg('order_by')) is not None:
+            query = query.order_by(*order_by)
+        else:
+            # If no custom order_by is registered, apply a descending order by clause
+            # on the entity's id
+            query = query.order_by(self.entity.id.desc())
+
+        return query
 
     def get_proxy(self, objects):
         """
