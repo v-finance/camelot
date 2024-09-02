@@ -303,13 +303,21 @@ class RowCount(Action):
 
     name = 'row_count'
 
+    def clear_cache(self, model_context):
+        # clear the whole cache, there might be more efficient means to 
+        # do this.
+        #
+        # clearing the cache also clears the data on which columns and rows
+        # are visible in the model.  this used to be done on each row count,
+        # but spurious row counts thus cause this data to be gone, causing
+        # wrong subsequent updates to one2 many views.
+        #
+        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
+        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
+
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         rows = len(model_context.proxy)
-        # clear the whole cache, there might be more efficient means to 
-        # do this
-        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
-        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
         yield action_steps.RowCount(rows)
 
 rowcount_name = crud_action_context.bind(RowCount.name, RowCount(), True)
@@ -431,7 +439,8 @@ class Deleted(RowCount, UpdateMixin):
         rows = len(model_context.proxy)
         if (row is not None) or (rows != mode['rows']):
             # but updating the view is only needed if the rows changed
-            yield from super(Deleted, self).model_run(model_context, mode)
+            self.clear_cache(model_context)
+            yield from super().model_run(model_context, mode)
 
 deleted_name = crud_action_context.bind(Deleted.name, Deleted(), True)
 
@@ -649,7 +658,8 @@ class Sort(RowCount):
         column, order = mode
         field_name = model_context.static_field_attributes[column]['field_name']
         model_context.proxy.sort(field_name, order!=Qt.SortOrder.AscendingOrder.value)
-        yield from super(Sort, self).model_run(model_context, mode)
+        self.clear_cache(model_context)
+        yield from super().model_run(model_context, mode)
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)

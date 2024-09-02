@@ -27,7 +27,6 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.qt import QtCore, QtWidgets, Qt, delete, is_deleted
 from camelot.core.orm import EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningProcessCase
 from camelot.test.action import MockModelContext
 from camelot.view import action_steps, import_utils, utils
@@ -41,7 +40,6 @@ from camelot.view.forms import Form
 from camelot.view.crud_action import UpdateMixin
 from camelot.view.import_utils import (ColumnMapping, ColumnMappingAdmin, MatchNames)
 from camelot.core.backend import get_root_backend
-from camelot_example.importer import ImportCovers
 
 from sqlalchemy import MetaData, orm, schema, types
 from sqlalchemy.ext.declarative import declarative_base
@@ -51,12 +49,10 @@ from .test_item_model import (
     QueryQStandardItemModelMixinCase, setup_query_proxy_name,
 )
 from .test_orm import TestMetaData, EntityMetaMock
-from .test_model import (
-    ExampleModelMixinCase, 
-)
+from .test_core import ExampleModelMixinCase
 from .test_thread import testing_context_args
 from .testing_context import (
-    Movie, Tag, app_admin, LoadSampleData,
+    Movie, Tag, app_admin, LoadSampleData, Person,
     setup_session_name, dirty_session_action_name,
     custom_action_name, send_document_action_name,
     model_context_action_name, to_first_row_name, to_last_row_name,
@@ -112,11 +108,6 @@ class ActionWidgetsCase(unittest.TestCase, GrabMixinCase):
     """
 
     images_path = test_view.static_images_path
-
-    @classmethod
-    def setUpClass(cls):
-        cls.action = ImportCovers()
-        cls.action_name = initial_naming_context.bind(('import_covers',), cls.action)
 
     def setUp(self):
         get_root_backend().set_visible(True, False)
@@ -380,10 +371,10 @@ class ListActionsCase(
     def test_replace_field_contents( self ):
         action = list_action.ReplaceFieldContents()
         proxy = QueryModelProxy(Session().query(Person))
-        person_model_context = ObjectsModelContext(
+        Person_model_context = ObjectsModelContext(
             app_admin.get_related_admin(Person), proxy, QtCore.QLocale()
         )
-        steps = action.model_run(person_model_context, 'first_name')
+        steps = action.model_run(Person_model_context, 'first_name')
         for step in steps:
             if isinstance(step, ChangeObject):
                 field_value = step.get_object()

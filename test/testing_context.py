@@ -6,6 +6,7 @@
 
 import datetime
 import logging
+from pathlib import PurePosixPath
 
 import sqlalchemy
 from sqlalchemy import event, insert, Table, ForeignKey, Column, orm
@@ -22,13 +23,13 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.icon import CompletionValue
 from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.object_admin import ObjectAdmin
+from camelot.core.files.storage import Storage
 from camelot.core.item_model import QueryModelProxy
 from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, metadata, Session
 from camelot.core.qt import QtCore, QtGui
 from camelot.core.utils import ugettext_lazy as _
 from camelot.model.authentication import AuthenticationMechanism
-from camelot.model.party import Person, Party
 from camelot.test import test_context
 from camelot.view.art import ColorScheme
 from camelot.view import action_steps, forms
@@ -109,10 +110,52 @@ class A(object):
                     B('{0}_{1.x}_3'.format(prefix, obj)),
                     ]
 
+class Party(Entity):
+
+    __tablename__ = 'party'
+
+    row_type = Column(sqlalchemy.types.Unicode(30), nullable=False, index=True)
+    id = Column(sqlalchemy.types.Integer(), primary_key=True, nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_on': row_type
+    }
+
+class Person(Party):
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'person'
+    }
+
+    first_name = Column(sqlalchemy.types.Unicode(30))
+    last_name = Column(sqlalchemy.types.Unicode(25))
+
+    @property
+    def full_name(self) -> str:
+        if (self.first_name is not None) and (self.last_name is not None):
+            return self.first_name + ' ' + self.last_name
+
+    class Admin(EntityAdmin):
+        list_display = ['first_name', 'last_name', 'full_name']
+
+class Organization(Party):
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'organization'
+    }
+
+    name = Column(sqlalchemy.types.Unicode(30))
+
+    class Admin(EntityAdmin):
+        list_display = ['name']
+
 class Movie( Entity ):
 
     __tablename__ = 'movies'
-    
+
+    cover_storage = Storage(upload_to=PurePosixPath('covers'))
+    script_storage = Storage(upload_to=PurePosixPath('script'))
+
     title = Column( sqlalchemy.types.Unicode(60), nullable = False )
     short_description = Column( sqlalchemy.types.Unicode(512) )
     releasedate = Column( sqlalchemy.types.Date )
@@ -121,7 +164,7 @@ class Movie( Entity ):
     #
     # All relation types are covered with their own editor
     #
-    director_party_id = Column(sqlalchemy.types.Integer(), ForeignKey(Person.party_id))
+    director_party_id = Column(sqlalchemy.types.Integer(), ForeignKey(Person.id))
     director = orm.relationship(Person)
 
 # end short movie definition
@@ -130,13 +173,13 @@ class Movie( Entity ):
     # image on disk and keeps the reference to it in the database.
     #
 # begin image definition
-    cover = Column( camelot.types.File( upload_to = 'covers' ) )
+    cover = Column(camelot.types.File(cover_storage))
 # end image definition
     #
     # Or File, which stores a file in the upload_to directory and stores a
     # reference to it in the database
     #
-    script = Column( camelot.types.File( upload_to = 'script' ) )
+    script = Column(camelot.types.File(script_storage))
     description = Column( camelot.types.RichText )
 
     #
@@ -207,7 +250,7 @@ class Movie( Entity ):
 # define filters to be available in the table view
 Movie.Admin.list_filter = [
     list_filter.GroupBoxFilter(Movie.genre),
-    list_filter.GroupBoxFilter(Person.full_name, joins=[Movie.director])
+    list_filter.GroupBoxFilter(Person.last_name, joins=[Movie.director])
 ]
 
 class Cast( Entity ):
@@ -226,7 +269,7 @@ class Cast( Entity ):
 
     def __unicode__(self):
         if self.actor:
-            return self.actor.name
+            return self.actor.last_name
         return ''
 
 class Tag(Entity):
@@ -252,20 +295,12 @@ Tag.movies = orm.relationship(Movie, backref='tags', secondary=t, foreign_keys=[
 
 def load_movie_fixtures(connection):
 
-    connection.execute(insert(Party.__table__),[
-        {"id": 1, "row_type": "person",},
-        {"id": 2, "row_type": "person",},
-        {"id": 3, "row_type": "person",},
-        {"id": 4, "row_type": "person",},
-        {"id": 5, "row_type": "person",},
-        ],)
-
     connection.execute(insert(Person.__table__),[
-        {"id": 1, "first_name": "Stanley", "last_name": "Kubrick"},
-        {"id": 2, "first_name": "Doug", "last_name": "Liman"},
-        {"id": 3, "first_name": "Martin", "last_name": "Campbell"},
-        {"id": 4, "first_name": "John", "last_name": "Lasseter"},
-        {"id": 5, "first_name": "Chris", "last_name": "Columbus"},
+        {"id": 1, "row_type": "person", "first_name": "Stanley", "last_name": "Kubrick",},
+        {"id": 2, "row_type": "person", "first_name": "Doug", "last_name": "Liman",},
+        {"id": 3, "row_type": "person", "first_name": "Martin", "last_name": "Campbell"},
+        {"id": 4, "row_type": "person", "first_name": "John", "last_name": "Lasseter"},
+        {"id": 5, "row_type": "person", "first_name": "Chris", "last_name": "Columbus"},
         ],)
 
     connection.execute(insert(Movie.__table__),[
@@ -458,18 +493,18 @@ class SetupQueryProxy(Action):
 setup_query_proxy_name = test_context.bind(('setup_query_proxy',), SetupQueryProxy(admin_cls=Person.Admin))
 
 class EqualColumnAdmin(Person.Admin):
-    list_display = ['first_name', 'suffix']
+    list_display = ['first_name', 'last_name']
     # begin column width
     field_attributes = {
         'first_name':{'column_width':8},
-        'suffix':{'column_width':8},
+        'last_name':{'column_width':8},
     }
     # end column width
 
 setup_query_proxy_equal_columns_name = test_context.bind(('setup_query_proxy_equal_columns',), SetupQueryProxy(admin_cls=EqualColumnAdmin))
 
 class SmallColumnsAdmin( Person.Admin ):
-    list_display = ['first_name', 'suffix']
+    list_display = ['first_name', 'last_name']
 
 setup_query_proxy_small_columns_name = test_context.bind(('setup_query_proxy_small_columns',), SetupQueryProxy(admin_cls=SmallColumnsAdmin))
 
@@ -602,7 +637,7 @@ class DirtySession(Action):
         #
         person_table = Person.table
         session.execute(
-            person_table.delete().where( person_table.c.party_id == p6.id )
+            person_table.delete().where( person_table.c.id == p6.id )
         )
         yield action_steps.UpdateProgress(detail='Session dirty')
 

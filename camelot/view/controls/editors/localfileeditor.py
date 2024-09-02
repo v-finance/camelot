@@ -86,7 +86,7 @@ class LocalFileEditor( CustomEditor ):
 
     @QtCore.qt_slot()
     def browse_button_clicked(self):
-        current_directory = os.path.dirname( self.get_value() )
+        current_directory = os.path.dirname(self.get_value() or '')
         if self._directory:
             value = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                                directory = current_directory)
