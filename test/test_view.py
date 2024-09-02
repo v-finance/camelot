@@ -13,7 +13,7 @@ from .snippet.background_color import Admin as BackgroundColorAdmin
 from .snippet.fields_with_actions import Coordinate
 from .snippet.form.inherited_form import InheritedAdmin
 from .test_item_model import QueryQStandardItemModelMixinCase
-from .test_model import ExampleModelMixinCase
+from .test_core import ExampleModelMixinCase, Person
 from camelot.admin.action.field_action import FieldActionModelContext
 from camelot.admin.icon import CompletionValue
 from camelot.admin.application_admin import ApplicationAdmin
@@ -23,7 +23,6 @@ from camelot.core.files.storage import Storage, StoredFile
 from camelot.core.item_model import PreviewRole, MinimumRole, MaximumRole, ChoicesRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.qt import Qt, QtCore, QtGui, QtWidgets
-from camelot.model.party import Person
 from camelot.test import GrabMixinCase, RunningProcessCase
 from camelot.view import forms
 from camelot.view.action_steps import OpenFormView, MessageBox
@@ -492,17 +491,14 @@ class FormTest(
         return form_data[1]
         
     def test_form(self):
-        form_data = self._get_serialized_form_display_data(self.person_admin.form_display)
-        self.grab_widget(self.person_admin.form_display.render(self.widgets, form_data))
-        form = forms.Form( ['first_name', 'last_name',
-                            'birthdate', 'passport_number',
-                            'picture', forms.Break(),
-                             forms.Label('End')] )
+        form = forms.Form(['first_name', 'last_name', forms.Break(), forms.Label('End')])
         self.assertTrue( str( form ) )
+        form_data = self._get_serialized_form_display_data(form)
+        self.grab_widget(form.render(self.widgets, form_data))
 
     def test_tab_form(self):
         form = forms.TabForm([('First tab', ['first_name', 'last_name']),
-                              ('Second tab', ['birthdate', 'passport_number'])])
+                              ('Second tab', [forms.Label('foo'), forms.Label('foo')])])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(form.render(self.widgets, form_data))
         form.add_tab_at_index( 'Main', forms.Form(['picture']), 0 )
@@ -515,24 +511,21 @@ class FormTest(
         self.grab_widget(forms.GroupBoxForm.render(self.widgets, form_data))
 
     def test_grid_form(self):
-        form = forms.GridForm([['first_name',          'last_name'],
-                               ['birthdate',           'passport_number'],
-                               [forms.ColumnSpan('picture', 2)              ]
+        form = forms.GridForm([['first_name',          forms.Label('foo')],
+                               [forms.ColumnSpan('last_name', 2)]
                                ])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.GridForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
-        form.append_row( ['personal_title', 'suffix'] )
-        form.append_column( [ forms.Label( str(i) ) for i in range(4) ] )
 
     def test_vbox_form(self):
-        form = forms.VBoxForm([['first_name', 'last_name'], ['birthdate', 'passport_number']])
+        form = forms.VBoxForm([['first_name', 'last_name'], [forms.Label('foo'), forms.Label('foo')]])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.VBoxForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
 
     def test_hbox_form(self):
-        form = forms.HBoxForm([['first_name', 'last_name'], ['birthdate', 'passport_number']])
+        form = forms.HBoxForm([['first_name', 'last_name'], [forms.Label('foo'), forms.Label('foo')]])
         form_data = self._get_serialized_form_display_data(form)
         self.grab_widget(forms.HBoxForm.render(self.widgets, form_data))
         self.assertTrue( str( form ) )
@@ -818,7 +811,7 @@ class ControlsTest(
         model = get_root_backend().create_model(get_settings_group(self.admin_route), widget)
         widget.setModel(model)
         model.setValue(self.model_context_name)
-        model.setColumns(('first_name', 'suffix'))
+        model.setColumns(('first_name', 'last_name'))
         model.submit()
         self.process()
         self.grab_widget( widget )
@@ -838,7 +831,7 @@ class ControlsTest(
         model = get_root_backend().create_model(get_settings_group(self.admin_route), widget)
         widget.setModel(model)
         model.setValue(self.model_context_name)
-        model.setColumns(('first_name', 'suffix',))
+        model.setColumns(('first_name', 'last_name',))
         model.submit()
         self.process()
         self.grab_widget(widget)
