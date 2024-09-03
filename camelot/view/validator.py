@@ -232,6 +232,12 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
         # Emit changed signal as the updated state may affect the validity (and background color).
         self.changed.emit()
 
+    def is_cached_value(self, value):
+        if self.state["ignore_case"] == True:
+            return (self.state["value"] or '').upper() == (value or '').upper()
+        else:
+            return self.state["value"] == value
+
     def validate(self, qtext, position):
         ptext = str(qtext)
         if ptext and self.state:
@@ -250,12 +256,12 @@ class RegexValidator(QtGui.QValidator, AbstractValidator):
                 return (QtGui.QValidator.State.Intermediate, qtext, position)
             else:
                 # If it passed the regex validation, check if the text differs from the state's last value:
-                if ptext == self.state["value"]:
+                if self.is_cached_value(ptext):
                     # If the value did not change, reuse the state's validation result:
                     formatted_value = self.state["formatted_value"]
                     if self.state["valid"]:
                         return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
-                    return (QtGui.QValidator.State.Intermediate, formatted_value, position)
+                    return (QtGui.QValidator.State.Intermediate, formatted_value, len(formatted_value))
 
                 # If the value changed, the state's validation result is invalidated, so perform the regex replace formatting
                 # (if available) awaiting the validator state from being updated.
