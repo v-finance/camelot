@@ -47,10 +47,10 @@ from stdnum.exceptions import InvalidFormat
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
 
-    value: str = ""
-    formatted_value: str = ""
+    value: str = None
+    formatted_value: str = None
     valid: bool = True
-    error_msg: str = ""
+    error_msg: str = None
 
     # Fields that influence how values are sanitized.
     deletechars: str = ''
@@ -62,10 +62,6 @@ class ValidatorState(DataclassSerializable):
 
     def __post_init__(self, info):
         object.__setattr__(self, "info", info or dict())
-        assert self.value is not None
-        assert self.formatted_value is not None
-        assert self.error_msg is not None
-        assert self.deletechars is not None
 
     @hybrid.hybrid_method
     def sanitize(self, value):
@@ -90,8 +86,8 @@ class ValidatorState(DataclassSerializable):
         value = state.sanitize(value)
         return dataclasses.replace(
             state,
-            value=value if value is not None else '',
-            formatted_value=value if value is not None else '',
+            value=value,
+            formatted_value=value,
         )
 
     @classmethod
@@ -146,18 +142,15 @@ class DateValidator(AbstractValidator):
 @dataclass(frozen=True)
 class RegexValidatorState(ValidatorState):
 
-    regex: str = ""
-    regex_repl: str = ""
-    example: str = ""
+    regex: str = None
+    regex_repl: str = None
+    example: str = None
 
     ignore_case: bool = False
     compact: bool = True
 
     def __post_init__(self, info):
         super().__post_init__(info)
-        assert self.regex is not None
-        assert self.regex_repl is not None
-        assert self.example is not None
 
     @classmethod
     def for_value(cls, value, **kwargs):
@@ -165,7 +158,7 @@ class RegexValidatorState(ValidatorState):
         state = super().for_value(value, **kwargs)
 
         # Check if the value matches the regex.
-        if (state.value != "") and (state.regex != ""):
+        if (state.value is not None) and (state.regex is not None):
             if not re.fullmatch(state.regex, state.value, flags=re.IGNORECASE if state.ignore_case else 0):
                 state = dataclasses.replace(
                     state,
@@ -232,9 +225,9 @@ class ZipcodeValidatorState(RegexValidatorState):
         if zip_code_type in zip_code_types:
             zip_code_type = zip_code_types[zip_code_type]
             state.update(
-                regex=zip_code_type.regex or '',
-                regex_repl=zip_code_type.repl or '',
-                example=zip_code_type.example or '',
+                regex=zip_code_type.regex,
+                regex_repl=zip_code_type.repl,
+                example=zip_code_type.example,
             )
         return cls.for_value(value, **state)
 
