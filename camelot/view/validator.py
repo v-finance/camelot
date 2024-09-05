@@ -62,6 +62,10 @@ class ValidatorState(DataclassSerializable):
 
     def __post_init__(self, info):
         object.__setattr__(self, "info", info or dict())
+        assert self.value is not None
+        assert self.formatted_value is not None
+        assert self.error_msg is not None
+        assert self.deletechars is not None
 
     @hybrid.hybrid_method
     def sanitize(self, value):
@@ -86,8 +90,8 @@ class ValidatorState(DataclassSerializable):
         value = state.sanitize(value)
         return dataclasses.replace(
             state,
-            value=value,
-            formatted_value=value,
+            value=value if value is not None else '',
+            formatted_value=value if value is not None else '',
         )
 
     @classmethod
@@ -148,6 +152,12 @@ class RegexValidatorState(ValidatorState):
 
     ignore_case: bool = False
     compact: bool = True
+
+    def __post_init__(self, info):
+        super().__post_init__(info)
+        assert self.regex is not None
+        assert self.regex_repl is not None
+        assert self.example is not None
 
     @classmethod
     def for_value(cls, value, **kwargs):
@@ -222,9 +232,9 @@ class ZipcodeValidatorState(RegexValidatorState):
         if zip_code_type in zip_code_types:
             zip_code_type = zip_code_types[zip_code_type]
             state.update(
-                regex=zip_code_type.regex,
-                regex_repl=zip_code_type.repl,
-                example=zip_code_type.example,
+                regex=zip_code_type.regex or '',
+                regex_repl=zip_code_type.repl or '',
+                example=zip_code_type.example or '',
             )
         return cls.for_value(value, **state)
 
