@@ -37,10 +37,11 @@ logger = logging.getLogger('camelot.view.controls.delegates.plaintextdelegate')
 from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole, ValidatorStateRole, CompleterStateRole
 from ....core.qt import Qt
+from ....core.serializable import json_encoder
 from .customdelegate import CustomDelegate
 
 from camelot.view.controls import editors
-from camelot.view.validator import AbstractValidator, ValidatorState
+from camelot.view.validator import ValidatorState
 
 DEFAULT_COLUMN_WIDTH = 20
 
@@ -68,16 +69,19 @@ class PlainTextDelegate(CustomDelegate):
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
-        item.roles[ValidatorStateRole] = model_context.field_attributes.get('validator_state')
+        validator_state = model_context.field_attributes.get('validator_state')
+        if validator_state is not None:
+            item.roles[ValidatorStateRole] = json_encoder.encode(validator_state)
+        else:
+            item.roles[ValidatorStateRole] = None
         item.roles[CompleterStateRole] = model_context.field_attributes.get('completer_state')
         if model_context.value is not None:
             value = str(model_context.value)
             validator_type = model_context.field_attributes.get('validator_type')
             if validator_type is not None:
-                state = model_context.field_attributes.get('validator_state')
                 # If a ValidatorState is encountered, use it to format the model value:
-                if isinstance(state, ValidatorState):
-                    value = state.formatted_value or value
+                if isinstance(validator_state, ValidatorState):
+                    value = validator_state.formatted_value or value
             item.roles[PreviewRole] = value
             # Set EditRole to possible reformatted value, to apply programatically triggered changes.
             item.roles[Qt.ItemDataRole.EditRole] = value

@@ -116,7 +116,7 @@ class TextLineEditor(CustomEditor):
         validator = self.findChild(QtGui.QValidator, 'validator')
         if (validator is not None) and (validator_state is not None):
             get_root_backend().set_validator_state(
-                validator, json_encoder.encode(validator_state).encode('utf-8')
+                validator, validator_state.encode('utf-8')
             )
 
     def set_tooltip(self, tooltip):

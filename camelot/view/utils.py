@@ -34,7 +34,6 @@ import html.parser as html_parser
 from datetime import datetime, time, date
 import decimal
 import re
-import string
 import logging
 
 from ..core.backend import get_root_backend
