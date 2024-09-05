@@ -49,10 +49,10 @@ from .utils import date_from_string, ParsingError
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
 
-    value: str = None
-    formatted_value: str = None
+    value: str = ""
+    formatted_value: str = ""
     valid: bool = True
-    error_msg: str = None
+    error_msg: str = ""
 
     # Fields that influence how values are sanitized.
     deletechars: str = ''

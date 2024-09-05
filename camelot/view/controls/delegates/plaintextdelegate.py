@@ -72,10 +72,9 @@ class PlainTextDelegate(CustomDelegate):
         item.roles[CompleterStateRole] = model_context.field_attributes.get('completer_state')
         if model_context.value is not None:
             value = str(model_context.value)
-            validator = AbstractValidator.get_validator(model_context.field_attributes.get('validator_type'))
-            if validator is not None:
+            validator_type = model_context.field_attributes.get('validator_type')
+            if validator_type is not None:
                 state = model_context.field_attributes.get('validator_state')
-                validator.set_state(state)
                 # If a ValidatorState is encountered, use it to format the model value:
                 if isinstance(state, ValidatorState):
                     value = state.formatted_value or value
