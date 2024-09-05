@@ -30,7 +30,6 @@
 
 from ....core.backend import get_root_backend
 from ....core.qt import QtCore, QtGui, QtWidgets
-from ....core.serializable import json_encoder
 from camelot.view.completer import AbstractCompleter
 
 from .customeditor import (CustomEditor, set_background_color_palette)
