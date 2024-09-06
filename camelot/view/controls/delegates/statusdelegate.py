@@ -18,6 +18,7 @@ class StatusDelegate(CustomDelegate):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
+        cls.set_item_editability(model_context, item, False)
         choices = model_context.field_attributes.get('choices', [])
         for key, verbose in choices:
             if key == model_context.value:

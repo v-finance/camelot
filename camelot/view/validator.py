@@ -159,7 +159,7 @@ class RegexValidatorState(ValidatorState):
         state = super().for_value(value, **kwargs)
 
         # Check if the value matches the regex.
-        if state.value is not None and state.regex is not None:
+        if (state.value is not None) and (state.regex is not None):
             if not re.fullmatch(state.regex, state.value, flags=re.IGNORECASE if state.ignore_case else 0):
                 state = dataclasses.replace(
                     state,
