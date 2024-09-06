@@ -279,9 +279,9 @@ class ChangeObject(OpenFormView):
 
     """
 
-    subtitle: typing.Union[str, ugettext_lazy, None] = _('Complete the form and press the OK button')
-    accept: typing.Union[str, ugettext_lazy] = _('OK')
-    reject: typing.Union[str, ugettext_lazy] = _('Cancel')
+    subtitle: typing.Union[str, ugettext_lazy, None] = field(init=False, default_factory=lambda: _('Complete the form and press the OK button'))
+    accept: typing.Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('OK'))
+    reject: typing.Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Cancel'))
     blocking: bool = True
 
     def __post_init__(self, value, admin, proxy):
@@ -366,9 +366,9 @@ class ChangeObjects(UpdateTableView):
     invalid_rows: List = field(init=False, default_factory=list)
     admin_route: AdminRoute = field(init=False)
     window_title: str = field(init=False)
-    title: Union[str, ugettext_lazy] = field(init=False, default= _('Data Preview'))
-    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Please review the data below.'))
-    icon: typing.Union[Icon, None] = field(init=False, default=Icon('file-excel'))
+    title: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Data Preview'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Please review the data below.'))
+    icon: typing.Union[Icon, None] = field(init=False, default_factory=lambda: Icon('file-excel'))
 
     def __post_init__( self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)

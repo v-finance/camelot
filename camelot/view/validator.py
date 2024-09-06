@@ -33,9 +33,9 @@ editors or other widgets.
 import dataclasses
 import re
 import stdnum.util
+from typing import Optional
 
 from camelot.core.exception import UserException
-from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.core.utils import ugettext
 from camelot.data.types import zip_code_types
@@ -44,15 +44,14 @@ from dataclasses import dataclass, InitVar
 from sqlalchemy.ext import hybrid
 from stdnum.exceptions import InvalidFormat
 
-from .utils import date_from_string, ParsingError
 
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
 
-    value: str = None
-    formatted_value: str = None
+    value: Optional[str] = None
+    formatted_value: Optional[str] = None
     valid: bool = True
-    error_msg: str = None
+    error_msg: Optional[str] = None
 
     # Fields that influence how values are sanitized.
     deletechars: str = ''
@@ -136,23 +135,10 @@ class AbstractValidator:
         super().__init_subclass__(**kwargs)
         cls.validators[cls.__name__] = cls
 
-    @classmethod
-    def get_validator(cls, validator_type, parent=None):
-        if validator_type is None:
-            return None
-        return cls.validators[validator_type](parent)
 
-    def set_state(self, state):
-        pass
+class DateValidator(AbstractValidator):
+    pass
 
-class DateValidator(QtGui.QValidator):
-
-    def validate(self, input_, pos):
-        try:
-            date_from_string(str(input_))
-        except ParsingError:
-            return (QtGui.QValidator.State.Intermediate, input_, pos)
-        return (QtGui.QValidator.State.Acceptable, input_, pos)
 
 @dataclass(frozen=True)
 class RegexValidatorState(ValidatorState):
@@ -163,6 +149,9 @@ class RegexValidatorState(ValidatorState):
 
     ignore_case: bool = False
     compact: bool = True
+
+    def __post_init__(self, info):
+        super().__post_init__(info)
 
     @classmethod
     def for_value(cls, value, **kwargs):
@@ -218,59 +207,9 @@ class RegexValidatorState(ValidatorState):
             return multi_repl
         return regex_repl
 
-class RegexValidator(QtGui.QValidator, AbstractValidator):
+class RegexValidator(AbstractValidator):
+    pass
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.state = None
-
-    def set_state(self, state):
-        state = state or dict()
-        if not isinstance(state, dict):
-            state = ValidatorState.asdict(state)
-        self.state = state
-        # Emit changed signal as the updated state may affect the validity (and background color).
-        self.changed.emit()
-
-    def is_cached_value(self, value):
-        if self.state["ignore_case"] == True:
-            return (self.state["value"] or '').upper() == (value or '').upper()
-        else:
-            return self.state["value"] == value
-
-    def validate(self, qtext, position):
-        ptext = str(qtext)
-        if ptext and self.state:
-
-            # Perform sanitization based on the state's parameters.
-            if self.state["deletechars"]:
-                for c in self.state["deletechars"]:
-                    ptext = ptext.replace(c, '')
-            if self.state["to_upper"] == True:
-                ptext = ptext.upper()
-
-            # First check if the text validates the regex (if defined)
-            regex = self.state["regex"]
-            flags = re.IGNORECASE if self.state["ignore_case"] == True else 0
-            if regex is not None and re.fullmatch(regex, ptext, flags=flags) is None:
-                return (QtGui.QValidator.State.Intermediate, qtext, position)
-            else:
-                # If it passed the regex validation, check if the text differs from the state's last value:
-                if self.is_cached_value(ptext):
-                    # If the value did not change, reuse the state's validation result:
-                    formatted_value = self.state["formatted_value"]
-                    if self.state["valid"]:
-                        return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
-                    return (QtGui.QValidator.State.Intermediate, formatted_value, len(formatted_value))
-
-                # If the value changed, the state's validation result is invalidated, so perform the regex replace formatting
-                # (if available) awaiting the validator state from being updated.
-                if self.state["regex_repl"] is not None:
-                    formatted_value = re.sub(regex, RegexValidatorState.format_repl(self.state["regex_repl"]), ptext)
-                    return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
-                return (QtGui.QValidator.State.Acceptable, ptext, position)
-
-        return (QtGui.QValidator.State.Acceptable, qtext, 0)
 
 # TODO: once moved to the vFinance repo, the zip_code_types can be
 # refactored as identifier types and this ZipcodeValidatorState
