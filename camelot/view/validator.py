@@ -144,7 +144,7 @@ class DateValidator(AbstractValidator):
 class RegexValidatorState(ValidatorState):
 
     regex: str = None
-    regex_repl: str = None
+    format_repl: str = None
     compact_repl: str = None
     example: str = None
 
@@ -172,8 +172,8 @@ class RegexValidatorState(ValidatorState):
                 value = state.value
                 if state.compact_repl:
                     state = dataclasses.replace(state, value=re.sub(state.regex, cls.replace(state.compact_repl), value))
-                if state.regex_repl:
-                    state = dataclasses.replace(state, formatted_value=re.sub(state.regex, cls.replace(state.regex_repl), value))
+                if state.format_repl:
+                    state = dataclasses.replace(state, formatted_value=re.sub(state.regex, cls.replace(state.format_repl), value))
 
         return state
 
@@ -215,7 +215,7 @@ class ZipcodeValidatorState(RegexValidatorState):
             zip_code_type = zip_code_types[zip_code_type]
             state.update(
                 regex=zip_code_type.regex,
-                regex_repl=zip_code_type.repl,
+                format_repl=zip_code_type.repl,
                 compact_repl=zip_code_type.compact_repl,
                 example=zip_code_type.example,
             )
