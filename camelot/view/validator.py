@@ -33,6 +33,7 @@ editors or other widgets.
 import dataclasses
 import re
 import stdnum.util
+from typing import Optional
 
 from camelot.core.exception import UserException
 from camelot.core.serializable import DataclassSerializable
@@ -47,10 +48,10 @@ from stdnum.exceptions import InvalidFormat
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
 
-    value: str = None
-    formatted_value: str = None
+    value: Optional[str] = None
+    formatted_value: Optional[str] = None
     valid: bool = True
-    error_msg: str = None
+    error_msg: Optional[str] = None
 
     # Fields that influence how values are sanitized.
     deletechars: str = ''
