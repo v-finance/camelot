@@ -134,11 +134,20 @@ class zip_code_type(collections.namedtuple('zip_code_type', ('code', 'regex', 'r
         if self.example is not None:
             return 'e.g: {}'.format(self.example)
 
+    @property
+    def compact_repl(self):
+        """
+        The regex replace pattern used to construct the compact value for this identifier type.
+        This will be the concatenation of only the matched groups of this identifier type's format replace pattern, if defined.
+        """
+        if self.repl is not None:
+            return ''.join(re.findall('\\\\\d+|\|', self.repl))
+
 # TODO: once moved to the vFinance repo, the zip code types can become a
 # subset of the identifier types.
 # This would allow validation to make use of the IdentifierValidatorState.
 zip_code_types = Types(
-  #             #code #regex                                            #regex_repl     #example
+  #             #code #regex                                            #repl           #example
   zip_code_type("AD", "AD\d{3}",                                         None,          "AD100"),
   zip_code_type("AF", "\d{4}",                                           None,          "1057"),
   zip_code_type("AI", "(AI)-?(2640)",                                   "\\1-\\2",      "AI-2640"),
