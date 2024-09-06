@@ -171,9 +171,9 @@ class RegexValidatorState(ValidatorState):
                 # the compact as the formatted value:
                 value = state.value
                 if state.compact_repl:
-                    state = dataclasses.replace(state, value=re.sub(state.regex, cls.format_repl(state.compact_repl), value))
+                    state = dataclasses.replace(state, value=re.sub(state.regex, cls.replace(state.compact_repl), value))
                 if state.regex_repl:
-                    state = dataclasses.replace(state, formatted_value=re.sub(state.regex, cls.format_repl(state.regex_repl), value))
+                    state = dataclasses.replace(state, formatted_value=re.sub(state.regex, cls.replace(state.regex_repl), value))
 
         return state
 
@@ -186,7 +186,7 @@ class RegexValidatorState(ValidatorState):
         return for_obj
 
     @staticmethod
-    def format_repl(regex_repl):
+    def replace(regex_repl):
         if regex_repl is not None and '|' in regex_repl:
             def multi_repl(m):
                 for i, repl in enumerate(regex_repl.split('|'), start=1):
