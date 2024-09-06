@@ -144,11 +144,11 @@ class DateValidator(AbstractValidator):
 class RegexValidatorState(ValidatorState):
 
     regex: str = None
-    regex_repl: str = None
+    format_repl: str = None
+    compact_repl: str = None
     example: str = None
 
     ignore_case: bool = False
-    compact: bool = True
 
     def __post_init__(self, info):
         super().__post_init__(info)
@@ -167,15 +167,14 @@ class RegexValidatorState(ValidatorState):
                     error_msg=InvalidFormat.message,
                 )
             else:
-                # If the regex replacement pattern is defined, use it to construct
-                # both the compact as the formatted value:
-                if state.regex_repl:
-                    state = dataclasses.replace(
-                        state,
-                        value=re.sub(state.regex, cls.compact_repl(state.regex_repl), state.value)\
-                            if state.compact == True else state.value,
-                        formatted_value=re.sub(state.regex, cls.format_repl(state.regex_repl), state.value),
-                    )
+                # If corresponding replacement patterns are defined, use them to construct
+                # the compact as the formatted value:
+                value = state.value
+                if state.compact_repl:
+                    state = dataclasses.replace(state, value=re.sub(state.regex, cls.replace(state.compact_repl), value))
+                if state.format_repl:
+                    state = dataclasses.replace(state, formatted_value=re.sub(state.regex, cls.replace(state.format_repl), value))
+
         return state
 
     @classmethod
@@ -187,18 +186,7 @@ class RegexValidatorState(ValidatorState):
         return for_obj
 
     @staticmethod
-    def compact_repl(regex_repl):
-        if regex_repl is not None:
-            if '|' in regex_repl:
-                def multi_repl(m):
-                    for i, repl in enumerate(regex_repl.split('|'), start=1):
-                        if m.group(i) is not None:
-                            return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
-                return multi_repl
-            return ''.join(re.findall('\\\\\d+', regex_repl))
-
-    @staticmethod
-    def format_repl(regex_repl):
+    def replace(regex_repl):
         if regex_repl is not None and '|' in regex_repl:
             def multi_repl(m):
                 for i, repl in enumerate(regex_repl.split('|'), start=1):
@@ -227,7 +215,8 @@ class ZipcodeValidatorState(RegexValidatorState):
             zip_code_type = zip_code_types[zip_code_type]
             state.update(
                 regex=zip_code_type.regex,
-                regex_repl=zip_code_type.repl,
+                format_repl=zip_code_type.repl,
+                compact_repl=zip_code_type.compact_repl,
                 example=zip_code_type.example,
             )
         return cls.for_value(value, **state)
@@ -249,7 +238,7 @@ class ZipcodeValidatorState(RegexValidatorState):
     @classmethod
     def hint_for_city(cls, city):
         if (state := cls.for_city(city)) is not None and \
-                (example := state.example) is not None:
+           (example := state.example) is not None:
             return 'e.g: {}'.format(example)
 
     @classmethod
