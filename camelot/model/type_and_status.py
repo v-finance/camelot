@@ -62,7 +62,7 @@ from sqlalchemy.ext import hybrid
 from sqlalchemy.ext.declarative import declared_attr
 
 from ..admin.admin_route import register_list_actions
-from ..admin.action import Action, list_filter
+from ..admin.action import Action, list_filter, RenderHint
 from ..admin.entity_admin import EntityAdmin
 from ..core.exception import UserException
 from ..core.item_model.proxy import AbstractModelFilter
@@ -306,6 +306,28 @@ class StatusMixin( object ):
                                   from_date = datetime.date.today(),
                                   thru_date = end_of_times())
         session.flush()
+
+
+class CurrentStatus(Action):
+
+    name = 'current_status'
+    render_hint = RenderHint.STATUS_BUTTON
+    verbose_name = ''
+
+    def get_state(self, model_context):
+        state = super().get_state(model_context)
+        obj = model_context.get_object()
+        if obj is not None:
+            field_attributes = model_context.admin.get_field_attributes(
+                'current_status'
+            )
+            current_status = obj.current_status
+            for value, name in field_attributes['choices']:
+                if value == current_status:
+                    state.verbose_name = name
+                    break
+        return state
+
 
 class ChangeStatus( Action ):
     """
