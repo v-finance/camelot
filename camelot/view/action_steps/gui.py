@@ -119,9 +119,6 @@ class SelectItem(ActionStep, DataclassSerializable):
     title: Union[str, ugettext_lazy] = field(default_factory=lambda: _('Please select'))
     subtitle: Union[str, ugettext_lazy] = field(default_factory=lambda: _('Make a selection and press the OK button.'))
 
-    def __post_init__(self):
-        self.autoaccept = True
-
     @classmethod
     def render(cls, step):
         dialog = ItemSelectionDialog(autoaccept = bool(step['autoaccept']))
