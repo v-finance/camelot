@@ -31,7 +31,7 @@ import cProfile
 import logging
 import itertools
 
-from ...core.naming import initial_naming_context, NameNotFoundException
+from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore, QtWidgets, QtGui
 from ...core.sql import metadata
 from .base import RenderHint
@@ -42,7 +42,7 @@ from camelot.core.orm import Session
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.core.backup import BackupMechanism
 
-"""ModelContext, GuiContext and Actions that run in the context of an 
+"""ModelContext and Actions that run in the context of an 
 application.
 """
 
@@ -78,8 +78,6 @@ class ApplicationActionModelContext(ModelContext):
         self.admin = admin
         self.actions = []
 
-    # Cannot set session in constructor because constructor is called
-    # inside the GUI thread
     @property
     def session( self ):
         return Session()
@@ -150,22 +148,21 @@ class SelectProfileMixin:
                     verbose_name = ugettext('load profiles'),
                     icon = Icon('folder-open')
                 ))
+
                 select_profile = action_steps.SelectItem(items)
-                
                 select_profile.title = ugettext('Profile Selection')
                 if len(profiles):
-                    subtitle = ugettext('Select a stored profile:')
-                else:
-                    subtitle = ugettext('''Load profiles from file or'''
-                                        ''' create a new profile''')
-                select_profile.subtitle = subtitle
-                if last_profile in profiles:
+                    select_profile.subtitle = ugettext('Select a stored profile:')
                     select_profile.value = last_profile_name
-                elif len(profiles):
-                    select_profile.value = None
                 else:
+                    select_profile.subtitle = ugettext(
+                        '''Load profiles from file or'''
+                        ''' create a new profile'''
+                    )
                     select_profile.value = load_profiles_name
+
                 selected_name = yield select_profile
+
                 selected_profile = initial_naming_context.resolve(selected_name)
                 if selected_profile is new_profile:
                     while selected_profile is new_profile:
@@ -345,22 +342,6 @@ Restore the database to disk
                 yield step
 
 
-class Unbind(Action):
-
-    name = 'unbind'
-
-    def model_run(self, model_context, mode):
-        from camelot.view.action_steps import UpdateProgress
-        if len(mode) == 0:
-            yield UpdateProgress()
-        for lease in mode:
-            try:
-                initial_naming_context.unbind(tuple(lease))
-            except NameNotFoundException:
-                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))
-
-unbind_name = application_action_context.bind(Unbind.name, Unbind(), True)
-
 class Profiler( Action ):
     """Start/Stop the runtime profiler.  This action exists for debugging
     purposes, to evaluate where an application spends its time.
@@ -399,6 +380,9 @@ class Exit( Action ):
     def model_run( self, model_context, mode ):
         from camelot.view.action_steps.application import Exit
         yield Exit()
+
+exit_name = application_action_context.bind(Exit.name, Exit(), True)
+
        
 class SegmentationFault( Action ):
     """Create a segmentation fault by reading null, this is to test

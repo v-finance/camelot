@@ -3,7 +3,10 @@ import unittest
 
 from camelot.core.qt import QtCore
 from camelot.view import utils
-from camelot.view.utils import date_from_string, datetime_from_string, int_from_string, time_from_string
+from camelot.view.utils import (
+    date_from_string, datetime_from_string, int_from_string,
+    time_from_string, ParsingError
+)
 
 
 class ViewUtilsCase(unittest.TestCase):
@@ -22,13 +25,16 @@ class ViewUtilsCase(unittest.TestCase):
         
     def test_date_from_string(self):
         result = datetime.date(2011,2,22)
-        self.assertEqual( date_from_string('02222011'), result )
-        self.assertEqual( date_from_string('02-22-2011'), result )
-        self.assertEqual( date_from_string('2-22-2011'), result )
+        self.assertEqual( date_from_string('02/22/2011'), result )
         self.assertEqual( date_from_string('2/22/2011'), result )
-        result = datetime.date(2011,2,2)
-        self.assertEqual( date_from_string('2/2/2011'), result )
-        self.assertEqual( date_from_string('2-2-2011'), result )
+        self.assertEqual( date_from_string('02-22-2011'), result )
+        self.assertEqual( date_from_string('02222011'), result )
+        self.assertEqual( date_from_string('2-22-2011'), result )
+        self.assertEqual( date_from_string(' 2/22/2011 '), result )
+        self.assertEqual( date_from_string(' 02/22 '), result.replace(year=datetime.date.today().year) )
+        self.assertEqual( datetime_from_string(' '), None)
+        with self.assertRaises(ParsingError):
+            datetime_from_string('foo')
         
     def test_datetime_from_string(self):
         result = datetime.datetime(2011,2,22,22,11)
