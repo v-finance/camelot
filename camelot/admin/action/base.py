@@ -238,6 +238,7 @@ class RenderHint(Enum):
     COMBO_BOX = 'combo_box'
     LABEL = 'label'
     STRETCH = 'stretch'
+    STATUS_BUTTON = 'status_button'
 
 
 class Action( ActionStep ):

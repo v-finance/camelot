@@ -34,9 +34,9 @@ import html.parser as html_parser
 from datetime import datetime, time, date
 import decimal
 import re
-import string
 import logging
 
+from ..core.backend import get_root_backend
 from ..core.qt import QtCore
 from camelot.core.utils import ugettext
 
@@ -111,49 +111,10 @@ def date_from_string(s):
     s = s.strip()
     if not s:
         return None
-    f = local_date_format()
-    dt = QtCore.QDate.fromString(s, f)
-    if not dt.isValid():
-        #
-        # if there is a mismatch of 1 in length between format and
-        # string, prepend a 0, to handle the case of 1/11/2011
-        #
-        if len(f) == len(s) + 1:
-            s = '0' + s
-            dt = QtCore.QDate.fromString(s, f)
-    if not dt.isValid():
-        #
-        # try alternative separators
-        #
-        separators = u''.join([c for c in f if c not in string.ascii_letters])
-        if separators:
-            alternative_string = u''.join([(c if c in string.digits else separators[0]) for c in s])
-            dt = QtCore.QDate.fromString(alternative_string, f)
-    if not dt.isValid():
-        # try parsing without separators
-        # attention : using non ascii letters will fail on windows
-        # string.letters then contains non ascii letters of which we don't know the
-        # encoding, so we cannot convert them to unicode to compare them
-        only_letters_format = u''.join([c for c in f if c in string.ascii_letters])
-        only_letters_string = u''.join([c for c in s if c in (string.ascii_letters+string.digits)])
-        dt = QtCore.QDate.fromString(only_letters_string, only_letters_format)
-        if not dt.isValid():
-            # try parsing without the year, and take the current year by default
-            only_letters_format = u''.join([c for c in only_letters_format if c not in ['y']])
-            dt = QtCore.QDate.fromString(only_letters_string, only_letters_format)
-            if not dt.isValid():
-                raise ParsingError()
-#                # try parsing without year and month, and take the current year and month by default
-#                only_letters_format = u''.join([c for c in only_letters_format if c not in ['M']])
-#                dt = QDate.fromString(only_letters_string, only_letters_format)
-#                if not dt.isValid():
-#                    raise ParsingError()
-#                else:
-#                    today = date.today()
-#                    return date(today.year, today.month, dt.day())
-            else:
-                return date(date.today().year, dt.month(), dt.day())
-    return date(dt.year(), dt.month(), dt.day())
+    qdt = get_root_backend().date_from_string(s)
+    if not qdt.isValid():
+        raise ParsingError()
+    return date(qdt.year(), qdt.month(), qdt.day())
 
 def time_from_string(s):
     s = s.strip()
