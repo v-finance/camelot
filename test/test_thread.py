@@ -4,7 +4,6 @@ import time
 
 from camelot.test import RunningProcessCase, ActionMixinCase
 from camelot.core.backend import PythonConnection, get_root_backend
-from camelot.core.naming import initial_naming_context
 from camelot.core.qt import QtCore
 from camelot.view.requests import (
     CancelAction, InitiateAction, SendActionResponse, ThrowActionException
