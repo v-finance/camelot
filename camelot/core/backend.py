@@ -1,4 +1,3 @@
-import collections
 import logging
 import json
 
@@ -85,8 +84,6 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
     multiple responses for the same request to the client.
     """
 
-    _queue = collections.deque()
-
     def __init__(self):
         super().__init__()
         backend = get_root_backend()
@@ -97,36 +94,26 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
         backend.action_runner().onConnected()
 
     @classmethod
-    def _enqueue_serialized_request(cls, serialized_request, response_handler):
-        print('enqueue:', serialized_request)
-        request = json.loads(serialized_request)
-        cls._queue.append((request, response_handler))
-        cls._process_queue()
-
-    @classmethod
-    def _process_queue(cls):
-        while len(cls._queue):
-            try:
-                request, response_handler = cls._queue.popleft()
-                response_handler.send_response(Busy(True))
-                AbstractRequest.handle_request(
-                    request, response_handler, cls
-                    #request, response_handler, response_handler
-                )
-                response_handler.send_response(Busy(False))
-            except Exception as e:
-                LOGGER.error('Unhandled exception in model process', exc_info=e)
-                import traceback
-                traceback.print_exc()
-            except SystemExit:
-                LOGGER.debug('Terminating')
-                raise
-            except:
-                LOGGER.error('Unhandled event in model process')
+    def _execute_serialized_request(cls, serialized_request, response_handler):
+        try:
+            response_handler.send_response(Busy(True))
+            AbstractRequest.handle_request(
+                serialized_request, response_handler, response_handler
+            )
+            response_handler.send_response(Busy(False))
+        except Exception as e:
+            LOGGER.error('Unhandled exception in model process', exc_info=e)
+            import traceback
+            traceback.print_exc()
+        except SystemExit:
+            LOGGER.debug('Terminating')
+            raise
+        except:
+            LOGGER.error('Unhandled event in model process')
 
     @QtCore.qt_slot(QtCore.QByteArray)
     def on_request(self, request):
-        self._enqueue_serialized_request(request.data(), self)
+        self._execute_serialized_request(request.data(), self)
 
     @classmethod
     def send_response(cls, response):
@@ -138,9 +125,5 @@ class PythonConnection(QtCore.QObject, metaclass=QSingleton):
     def send_action_step(cls, gui_context_name, step):
         return cpp_action_step(gui_context_name, type(step).__name__, step._to_bytes())
 
-    @classmethod
-    def has_cancel_request(cls):
-        QtCore.QCoreApplication.instance().processEvents()
-        QtCore.QCoreApplication.instance().sendPostedEvents()
-        print(cls._queue)
+    def has_cancel_request(self):
         return False
