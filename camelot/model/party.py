@@ -519,7 +519,7 @@ class Address( Entity ):
 
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
-        whereclause=(GeographicBoundary.id == city_geographicboundary_id)), deferred=True)
+        whereclause=(GeographicBoundary.id == city_geographicboundary_id)).scalar_subquery(), deferred=True)
 
     @classmethod
     def get_or_create(cls, session, street1, street2, city, zip_code):
