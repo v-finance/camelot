@@ -403,7 +403,7 @@ class RelatedFilter(AbstractFilterStrategy):
 
         if field_filter_clauses:
             related_query = self.get_related_query(query, field_filter_clauses)
-            return entity.id.in_(related_query)
+            return entity.id.in_(related_query.select())
 
     def get_search_clause(self, query, text):
         entity = query._entity_from_pre_ent_zero().entity
