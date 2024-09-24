@@ -364,6 +364,7 @@ class Months(types.TypeDecorator):
     """
 
     impl = types.Integer
+    cache_ok = True
 
     def __init__(self, forever=None):
         super().__init__()

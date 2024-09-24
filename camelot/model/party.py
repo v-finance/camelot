@@ -177,7 +177,7 @@ class GeographicBoundaryAlternativeName(Entity):
                                             schema.ForeignKey(GeographicBoundary.id, ondelete='cascade', onupdate='cascade'),
                                             nullable = False,
                                             index = True)
-    alternative_name_for = orm.relationship(GeographicBoundary, backref=orm.backref('alternative_names', cascade='all, delete, delete-orphan', overlaps="translations"))
+    alternative_name_for = orm.relationship(GeographicBoundary, backref=orm.backref('alternative_names', cascade='all, delete, delete-orphan'))
     
     __mapper_args__ = {
         'polymorphic_on' : row_type,
@@ -226,7 +226,7 @@ class GeographicBoundaryTranslation(GeographicBoundaryAlternativeName):
     
     __mapper_args__ = {'polymorphic_identity': 'translation'}
     
-GeographicBoundary.translations = orm.relationship(GeographicBoundaryTranslation, lazy='dynamic')
+GeographicBoundary.translations = orm.relationship(GeographicBoundaryTranslation, lazy='dynamic', viewonly=True)
 
 class GeographicBoundaryMainMunicipality(GeographicBoundaryAlternativeName):
     
@@ -311,7 +311,7 @@ class City(GeographicBoundary, WithCountry):
                                                schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='restrict', onupdate='cascade'),
                                                nullable=True, index=True)
     administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
-    main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
+    main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic', viewonly=True)
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
 
@@ -519,7 +519,7 @@ class Address( Entity ):
 
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
-        whereclause=(GeographicBoundary.id == city_geographicboundary_id)), deferred=True)
+        whereclause=(GeographicBoundary.id == city_geographicboundary_id)).scalar_subquery(), deferred=True)
 
     @classmethod
     def get_or_create(cls, session, street1, street2, city, zip_code):

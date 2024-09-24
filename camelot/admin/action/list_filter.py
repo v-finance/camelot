@@ -403,7 +403,7 @@ class RelatedFilter(AbstractFilterStrategy):
 
         if field_filter_clauses:
             related_query = self.get_related_query(query, field_filter_clauses)
-            return entity.id.in_(related_query)
+            return entity.id.in_(related_query.select())
 
     def get_search_clause(self, query, text):
         entity = query._entity_from_pre_ent_zero().entity
@@ -416,7 +416,7 @@ class RelatedFilter(AbstractFilterStrategy):
 
         if field_filter_clauses:
             related_query = self.get_related_query(query, field_filter_clauses)
-            return entity.id.in_(related_query)
+            return entity.id.in_(related_query.select())
 
     def field_operand(self, field_strategy, operand):
         """
@@ -629,9 +629,9 @@ class One2ManyFilter(RelatedFilter):
             entity = query._entity_from_pre_ent_zero().entity
             related_query = self.get_related_query(query)
             if operator == Operator.is_empty:
-                return entity.id.notin_(related_query)
+                return entity.id.notin_(related_query.select())
             else:
-                return entity.id.in_(related_query)
+                return entity.id.in_(related_query.select())
         return super().get_clause(query, operator, *operands)
 
     def get_field_strategy(self):
