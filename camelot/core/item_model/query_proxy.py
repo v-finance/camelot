@@ -57,7 +57,7 @@ class QueryModelProxy(ListModelProxy):
             # manipulate the query to circumvent the use of subselects and order by
             # clauses
             query = self.get_query(order_clause=False)
-            mapper = query._mapper_zero()
+            mapper = query._entity_from_pre_ent_zero()
             select = query.order_by(None).as_scalar()
             # search queries might result in outer joins which might result
             # in the same primary key being returned multiple times
@@ -89,7 +89,7 @@ class QueryModelProxy(ListModelProxy):
         # if the object is indexed, no need either to check it
 
         # check if the object is in the query
-        mapper = self._query._mapper_zero()
+        mapper = self._query._entity_from_pre_ent_zero()
         primary_key_values = mapper.primary_key_from_instance(obj)
         primary_key_columns = mapper.primary_key
         query = self.get_query(order_clause=False)
@@ -195,7 +195,7 @@ class QueryModelProxy(ListModelProxy):
 
         order_by, join = [], None
 
-        mapper = self._query._mapper_zero()
+        mapper = self._query._entity_from_pre_ent_zero()
         #
         # First sort according the requested column
         #
@@ -240,15 +240,14 @@ class QueryModelProxy(ListModelProxy):
             # remove existing order clauses, because they might interfer
             # with the requested order from the user, as the existing order
             # clause is first in the list, and put them at the end of the list
-            if query._order_by:
-                for order_by_column in query._order_by:
+            if query._order_by_clauses:
+                for order_by_column in query._order_by_clauses:
                     order_by.append((order_by_column, False))
             #
             # Next sort according to default sort column if any
             #
-            if mapper.order_by:
-                for mapper_order_by in mapper.order_by:
-                    order_by.append((mapper_order_by, False))
+            for mapper_order_by in (mapper.class_._get_entity_arg('order_by') or []):
+                order_by.append((mapper_order_by, False))
             #
             # In the end, sort according to the primary keys of the model, to enforce
             # a unique order in any case

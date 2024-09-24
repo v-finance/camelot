@@ -35,6 +35,7 @@ for i, (name, definition) in enumerate(possible_types):
                                          sqlalchemy.types.ARRAY,
                                          sqlalchemy.types.JSON,
                                          sqlalchemy.types.PickleType,
+                                         sqlalchemy.types.TupleType,
                                          camelot.types.File,
                                          camelot.types.Enumeration) ):
             types_to_test[(i, '%s_%i'%(name, i))] = definition
