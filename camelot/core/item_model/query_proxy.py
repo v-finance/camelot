@@ -57,7 +57,7 @@ class QueryModelProxy(ListModelProxy):
             # manipulate the query to circumvent the use of subselects and order by
             # clauses
             query = self.get_query(order_clause=False)
-            mapper = query._entity_from_pre_ent_zero()
+            mapper = orm.class_mapper(query._entity_from_pre_ent_zero().class_)
             select = query.order_by(None).as_scalar()
             # search queries might result in outer joins which might result
             # in the same primary key being returned multiple times
@@ -89,7 +89,7 @@ class QueryModelProxy(ListModelProxy):
         # if the object is indexed, no need either to check it
 
         # check if the object is in the query
-        mapper = self._query._entity_from_pre_ent_zero()
+        mapper = orm.class_mapper(self._query._entity_from_pre_ent_zero().class_)
         primary_key_values = mapper.primary_key_from_instance(obj)
         primary_key_columns = mapper.primary_key
         query = self.get_query(order_clause=False)
@@ -195,7 +195,7 @@ class QueryModelProxy(ListModelProxy):
 
         order_by, join = [], None
 
-        mapper = self._query._entity_from_pre_ent_zero()
+        mapper = orm.class_mapper(self._query._entity_from_pre_ent_zero().class_)
         #
         # First sort according the requested column
         #
