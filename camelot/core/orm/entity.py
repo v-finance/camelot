@@ -42,8 +42,8 @@ import re
 from enum import Enum
 
 from sqlalchemy import orm, schema, sql, util
-from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
-                                             DeclarativeMeta )
+from sqlalchemy.orm.decl_api import ( _declarative_constructor,
+                                      DeclarativeMeta )
 from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Integer
 
@@ -711,14 +711,6 @@ class EntityBase( object ):
 
     def __lt__(self, other):
         return id(self) < id(other)
-
-    @hybrid.hybrid_property
-    def query( self ):
-        return Session().query( self.__class__ )
-
-    @query.expression
-    def query( cls ):
-        return Session().query( cls )
 
     @classmethod
     def get_by(cls, *args, **kwargs):

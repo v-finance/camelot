@@ -170,7 +170,7 @@ class GeographicBoundaryAlternativeName(Entity):
     __tablename__ = 'geographic_boundary_alternative_name'
     
     name = schema.Column(Unicode(100), nullable=False)
-    row_type = schema.Column(sqlalchemy.types.Unicode(40), nullable=True, index=True)
+    row_type = schema.Column(sqlalchemy.types.Unicode(40), nullable=False, index=True)
     language = schema.Column(sqlalchemy.types.Unicode(6), nullable=True)
     
     alternative_name_for_id = schema.Column(sqlalchemy.types.Integer(),
@@ -181,7 +181,7 @@ class GeographicBoundaryAlternativeName(Entity):
     
     __mapper_args__ = {
         'polymorphic_on' : row_type,
-        'polymorphic_identity': None,
+        'polymorphic_identity': 'name',
     }
     
     __table_args__ = (
@@ -194,9 +194,10 @@ class GeographicBoundaryAlternativeName(Entity):
             'ix_geographic_boundary_alternative_name_main_municipality', 'alternative_name_for_id', language.is_(None).self_group(), unique=True,
             postgresql_where=sql.and_(row_type == 'main_municipality', language.is_(None)),
             sqlite_where=sql.and_(row_type == 'main_municipality', language.is_(None))),
-        schema.UniqueConstraint(
-            alternative_name_for_id, language, row_type,
-            name = 'language_unique',
+        schema.Index(
+            'ix_geographic_boundary_alternative_name_language_unique', alternative_name_for_id, language, row_type, unique=True,
+            postgresql_where=(row_type != 'name'),
+            sqlite_where=(row_type != 'name'),
         ),
         schema.CheckConstraint(sql.or_(sql.and_(row_type == 'translation', language.isnot(None)), row_type != 'translation'), name='translation_language'),
     )
@@ -225,7 +226,7 @@ class GeographicBoundaryTranslation(GeographicBoundaryAlternativeName):
     
     __mapper_args__ = {'polymorphic_identity': 'translation'}
     
-GeographicBoundary.translations = orm.relationship(GeographicBoundaryTranslation, lazy='dynamic')
+GeographicBoundary.translations = orm.relationship(GeographicBoundaryTranslation, lazy='dynamic', viewonly=True)
 
 class GeographicBoundaryMainMunicipality(GeographicBoundaryAlternativeName):
     
@@ -241,8 +242,8 @@ class Country( GeographicBoundary ):
     __mapper_args__ = {'polymorphic_identity': 'country'}
 
     @classmethod
-    def get_or_create( cls, code, name ):
-        country = Country.query.filter_by( code = code ).first()
+    def get_or_create(cls, session, code, name):
+        country = session.query(cls).filter_by(code=code).first()
         if not country:
             country = Country( code = code, name = name )
             orm.object_session( country ).flush()
@@ -310,7 +311,7 @@ class City(GeographicBoundary, WithCountry):
                                                schema.ForeignKey(AdministrativeDivision.geographicboundary_id, ondelete='restrict', onupdate='cascade'),
                                                nullable=True, index=True)
     administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
-    main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic')
+    main_municipality_alternative_names = orm.relationship(GeographicBoundaryMainMunicipality, lazy='dynamic', viewonly=True)
 
     __mapper_args__ = {'polymorphic_identity': 'city'}
 
@@ -387,11 +388,11 @@ class City(GeographicBoundary, WithCountry):
         return u''
 
     @classmethod
-    def get_or_create( cls, country, code, name ):
-        city = City.query.filter_by( code = code, country = country ).first()
+    def get_or_create(cls, session, country, code, name ):
+        city = session.query(City).filter_by( code = code, country = country ).first()
         if not city:
             city = City( code = code, name = name, country = country )
-            orm.object_session( city ).flush()
+            session.flush()
         return city
 
     # TODO: refactor this to MessageEnum after move to vFinance repo.
@@ -518,14 +519,14 @@ class Address( Entity ):
 
     name = orm.column_property(sql.select(
         [street1 + ', ' + sql.func.coalesce(_zip_code, GeographicBoundary.code) + ' ' + GeographicBoundary.name],
-        whereclause=(GeographicBoundary.id == city_geographicboundary_id)), deferred=True)
+        whereclause=(GeographicBoundary.id == city_geographicboundary_id)).scalar_subquery(), deferred=True)
 
     @classmethod
-    def get_or_create( cls, street1, street2, city, zip_code):
-        address = cls.query.filter_by( street1 = street1, street2 = street2, city = city, zip_code = zip_code ).first()
+    def get_or_create(cls, session, street1, street2, city, zip_code):
+        address = session.query(Address).filter_by( street1 = street1, street2 = street2, city = city, zip_code = zip_code ).first()
         if not address:
             address = cls( street1 = street1, street2 = street2, city = city, zip_code = zip_code )
-            orm.object_session( address ).flush()
+            session.flush()
         return address
 
     def get_messages(self):
