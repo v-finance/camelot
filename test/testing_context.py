@@ -6,6 +6,7 @@
 
 import datetime
 import logging
+import time
 from pathlib import PurePosixPath
 
 import sqlalchemy
@@ -706,6 +707,19 @@ class SendDocumentAction( Action ):
 
 send_document_action_name = unit_test_context.bind(('send_document_action',), SendDocumentAction())
 
+class CancelableAction(Action):
+
+    iterations = 10
+    steptime = 3 # every <steptime> seconds
+
+    def model_run(self, model_context, mode):
+        timer = QtCore.QElapsedTimer()
+        timer.start()
+        for i in range(self.iterations):
+            time.sleep(self.steptime)
+            yield action_steps.UpdateProgress(i, self.iterations)
+
+cancelable_action_name = unit_test_context.bind(('cancelable_action',), CancelableAction())
 
 class MainAction(Action):
 
