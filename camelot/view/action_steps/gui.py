@@ -116,11 +116,8 @@ class SelectItem(ActionStep, DataclassSerializable):
     value: str = initial_naming_context._bind_object(None)
     autoaccept: bool = True
 
-    title: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Please select'))
-    subtitle: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Make a selection and press the OK button.'))
-
-    def __post_init__(self):
-        self.autoaccept = True
+    title: Union[str, ugettext_lazy] = field(default_factory=lambda: _('Please select'))
+    subtitle: Union[str, ugettext_lazy] = field(default_factory=lambda: _('Make a selection and press the OK button.'))
 
     @classmethod
     def render(cls, step):
