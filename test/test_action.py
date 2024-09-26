@@ -349,7 +349,7 @@ class ListActionsCase(
 
     def test_import_from_file(self, filename='import_example.csv'):
         replies = {
-            action_steps.SelectFile: {'selected': os.path.join(self.example_folder, filename)},
+            action_steps.SelectFile: {'selected': [os.path.join(self.example_folder, filename)]},
             action_steps.MessageBox: {"button": QtWidgets.QMessageBox.StandardButton.Ok,},
         }
         steps = self.gui_run(import_from_file_name, self.gui_context, None, replies, model_context_name=self.model_context_name)
@@ -633,7 +633,7 @@ class ApplicationActionsCase(
             if isinstance(step, tuple) and step[0] == 'SaveFile':
                 file_saved = True
         self.assertTrue(file_saved)
-        replies = {action_steps.SelectFile: {'selected': 'unittest-backup.db'}}
+        replies = {action_steps.SelectFile: {'selected': ['unittest-backup.db']}}
         generator = self.gui_run(restore_action_name, self.gui_context, None, replies)
         file_selected = False
         for step in generator:
@@ -708,7 +708,7 @@ class FieldActionCase(TestMetaData, ExampleModelMixinCase):
         generator = upload_file.model_run(self.script_context, mode=None)
         for step in generator:
             if isinstance(step, action_steps.SelectFile):
-                generator.send(__file__)
+                generator.send([__file__])
                 file_uploaded = True
         self.assertTrue(file_uploaded)
         self.assertTrue(self.movie.script)
