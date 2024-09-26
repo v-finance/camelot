@@ -194,28 +194,29 @@ class UploadFile(EditFieldAction):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        filename = yield action_steps.SelectFile(self.file_name_filter)
+        filenames = yield action_steps.SelectFile(self.file_name_filter)
         storage = model_context.field_attributes['storage']
-        # the storage cannot checkin empty file names
-        if not file_name:
-            continue
-        remove = False
-        if model_context.field_attributes.get('remove_original'):
-            reply = yield action_steps.MessageBox(
-                text = _('Do you want to remove the original file?'),
-                icon = Icon('question'),
-                title = _('The file will be stored.'),
-                standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes]
-                )
-            if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-                remove = True
-        yield action_steps.UpdateProgress(text='Attaching file')
-        stored_file = storage.checkin(Path(file_name))
-        model_context.admin.set_field_value(
-            model_context.obj, model_context.field, stored_file
-        )
-        if remove:
-            os.remove(file_name)
+        for file_name in filenames:
+            # the storage cannot checkin empty file names
+            if not file_name:
+                continue
+            remove = False
+            if model_context.field_attributes.get('remove_original'):
+                reply = yield action_steps.MessageBox(
+                    text = _('Do you want to remove the original file?'),
+                    icon = Icon('question'),
+                    title = _('The file will be stored.'),
+                    standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes]
+                    )
+                if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+                    remove = True
+            yield action_steps.UpdateProgress(text='Attaching file')
+            stored_file = storage.checkin(Path(file_name))
+            model_context.admin.set_field_value(
+                model_context.obj, model_context.field, stored_file
+            )
+            if remove:
+                os.remove(file_name)
 
     def get_state(self, model_context):
         state = super().get_state(model_context)
