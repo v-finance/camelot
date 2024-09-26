@@ -627,84 +627,83 @@ class ImportFromFile( EditAction ):
                                                 ColumnMappingAdmin )
         super().model_run(model_context, mode)
         admin = model_context.admin
-        file_names = yield action_steps.SelectFile()
-        for file_name in file_names:
-            yield action_steps.UpdateProgress( text = _('Reading data') )
-            #
-            # read the data into temporary row_data objects
-            #
-            if os.path.splitext( file_name )[-1] in ('.xls', '.xlsx'):
-                items = list(XlsReader(file_name))
-            else:
-                detected = chardet.detect(open(file_name, 'rb').read())['encoding']
-                enc = detected or 'utf-8'
-                items = list(UnicodeReader(codecs.open(file_name, encoding=enc), encoding = enc ))
-            collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
-            if len( collection ) < 1:
-                raise UserException( _('No data in file' ) )
-            #
-            # select columns to import
-            #
-            default_fields = [field for field in admin.get_columns()
-                              if admin.get_field_attributes(field).get('editable', True)]
-            mappings = []
-            # 
-            # it should be possible to select not editable fields, to be able to
-            # import foreign keys, these are not editable by default, it might
-            # be better to explicitly allow foreign keys, but this info is not
-            # in the field attributes
-            #
-            all_fields = [(f,str(entity_fa['name'])) for f,entity_fa in 
-                          admin.get_all_fields_and_attributes().items() if entity_fa.get('from_string')]
-            all_fields.sort(key=lambda field_tuple:field_tuple[1])
-            for i, default_field in itertools.zip_longest(range(len(all_fields)),
-                                                          default_fields):
-                mappings.append(ColumnMapping(i, items, default_field))
-            
-    
-            column_mapping_admin = ColumnMappingAdmin(admin,
-                                                      field_choices=all_fields)
-    
-            change_mappings = action_steps.ChangeObjects(mappings, 
-                                                         column_mapping_admin)
-            change_mappings.title = _('Select import column')
-            change_mappings.subtitle = _('Select for each column in which field it should be imported')
-            yield change_mappings
-            #
-            # validate the temporary data
-            #
-            row_data_admin = RowDataAdmin(admin, mappings)
-            yield action_steps.ChangeObjects( collection, row_data_admin )
-            #
-            # Ask confirmation
-            #
-            yield action_steps.MessageBox( icon = Icon('question'),
-                                           title = _('Proceed with import'), 
-                                           text = _('Importing data cannot be undone,\n'
-                                                    'are you sure you want to continue') )
-            #
-            # import the temporary objects into real objects
-            #
-            with model_context.session.begin():
-                for i,row in enumerate(collection):
-                    new_entity_instance = admin.entity()
-                    for field_name in row_data_admin.get_columns():
-                        attributes = row_data_admin.get_field_attributes(field_name)
-                        original_field_name = attributes['original_field']
-                        from_string = attributes.get('from_string')
-                        assert from_string is not None, '{} with {} has no from string attribute'.format(field_name, original_field_name)
-                        setattr(
-                            new_entity_instance,
-                            original_field_name,
-                            from_string(getattr(row, field_name))
-                        )
-                    admin.add( new_entity_instance )
-                    # in case the model is a collection proxy, the new objects should
-                    # be appended
-                    model_context.proxy.append(new_entity_instance)
-                    yield action_steps.UpdateProgress( i + 1, len( collection ), _('Importing data') )
-                yield action_steps.FlushSession( model_context.session )
-            yield action_steps.Refresh()
+        file_name = yield action_steps.SelectFile()
+        yield action_steps.UpdateProgress( text = _('Reading data') )
+        #
+        # read the data into temporary row_data objects
+        #
+        if os.path.splitext( file_name )[-1] in ('.xls', '.xlsx'):
+            items = list(XlsReader(file_name))
+        else:
+            detected = chardet.detect(open(file_name, 'rb').read())['encoding']
+            enc = detected or 'utf-8'
+            items = list(UnicodeReader(codecs.open(file_name, encoding=enc), encoding = enc ))
+        collection = [ RowData(i, row_data) for i, row_data in enumerate( items ) ]
+        if len( collection ) < 1:
+            raise UserException( _('No data in file' ) )
+        #
+        # select columns to import
+        #
+        default_fields = [field for field in admin.get_columns()
+                          if admin.get_field_attributes(field).get('editable', True)]
+        mappings = []
+        # 
+        # it should be possible to select not editable fields, to be able to
+        # import foreign keys, these are not editable by default, it might
+        # be better to explicitly allow foreign keys, but this info is not
+        # in the field attributes
+        #
+        all_fields = [(f,str(entity_fa['name'])) for f,entity_fa in 
+                      admin.get_all_fields_and_attributes().items() if entity_fa.get('from_string')]
+        all_fields.sort(key=lambda field_tuple:field_tuple[1])
+        for i, default_field in itertools.zip_longest(range(len(all_fields)),
+                                                      default_fields):
+            mappings.append(ColumnMapping(i, items, default_field))
+        
+
+        column_mapping_admin = ColumnMappingAdmin(admin,
+                                                  field_choices=all_fields)
+
+        change_mappings = action_steps.ChangeObjects(mappings, 
+                                                     column_mapping_admin)
+        change_mappings.title = _('Select import column')
+        change_mappings.subtitle = _('Select for each column in which field it should be imported')
+        yield change_mappings
+        #
+        # validate the temporary data
+        #
+        row_data_admin = RowDataAdmin(admin, mappings)
+        yield action_steps.ChangeObjects( collection, row_data_admin )
+        #
+        # Ask confirmation
+        #
+        yield action_steps.MessageBox( icon = Icon('question'),
+                                       title = _('Proceed with import'), 
+                                       text = _('Importing data cannot be undone,\n'
+                                                'are you sure you want to continue') )
+        #
+        # import the temporary objects into real objects
+        #
+        with model_context.session.begin():
+            for i,row in enumerate(collection):
+                new_entity_instance = admin.entity()
+                for field_name in row_data_admin.get_columns():
+                    attributes = row_data_admin.get_field_attributes(field_name)
+                    original_field_name = attributes['original_field']
+                    from_string = attributes.get('from_string')
+                    assert from_string is not None, '{} with {} has no from string attribute'.format(field_name, original_field_name)
+                    setattr(
+                        new_entity_instance,
+                        original_field_name,
+                        from_string(getattr(row, field_name))
+                    )
+                admin.add( new_entity_instance )
+                # in case the model is a collection proxy, the new objects should
+                # be appended
+                model_context.proxy.append(new_entity_instance)
+                yield action_steps.UpdateProgress( i + 1, len( collection ), _('Importing data') )
+            yield action_steps.FlushSession( model_context.session )
+        yield action_steps.Refresh()
         
 import_from_file = ImportFromFile()
 

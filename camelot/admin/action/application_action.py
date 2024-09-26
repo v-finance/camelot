@@ -178,9 +178,8 @@ class SelectProfileMixin:
                     file_name = yield action_steps.SaveFile(file_name_filter=cls.file_name_filter)
                     profile_store.write_to_file(file_name)
                 elif selected_profile is load_profiles:
-                    file_names =  yield action_steps.SelectFile(file_name_filter=cls.file_name_filter)
-                    for file_name in file_names:
-                        profile_store.read_from_file(file_name)
+                    file_name =  yield action_steps.SelectFile(file_name_filter=cls.file_name_filter)
+                    profile_store.read_from_file(file_name)
         except CancelRequest:
             # explicit handling of exit when cancel button is pressed,
             # to avoid the use of subgenerators in the main action
@@ -329,17 +328,16 @@ Restore the database to disk
             
     def model_run( self, model_context, mode ):
         from camelot.view.action_steps import UpdateProgress, SelectFile
-        backups = yield SelectFile()
+        backup = yield SelectFile()
         yield UpdateProgress( text = _('Restore in progress') )
-        for backup in backups:
-            backup_mechanism = self.backup_mechanism(backup)
-            restore_iterator = backup_mechanism.restore(metadata.bind)
-            for completed, total, description in restore_iterator:
-                yield UpdateProgress(completed,
-                                     total,
-                                     text = description)
-            for step in super(Restore, self).model_run(model_context, mode):
-                yield step
+        backup_mechanism = self.backup_mechanism(backup)
+        restore_iterator = backup_mechanism.restore(metadata.bind)
+        for completed, total, description in restore_iterator:
+            yield UpdateProgress(completed,
+                                 total,
+                                 text = description)
+        for step in super(Restore, self).model_run(model_context, mode):
+            yield step
 
 
 class Profiler( Action ):
