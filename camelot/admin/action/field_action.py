@@ -194,11 +194,8 @@ class UploadFile(EditFieldAction):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        filename = yield action_steps.SelectFile(self.file_name_filter)
+        file_name = yield action_steps.SelectFile(self.file_name_filter)
         storage = model_context.field_attributes['storage']
-        # the storage cannot checkin empty file names
-        if not file_name:
-            continue
         remove = False
         if model_context.field_attributes.get('remove_original'):
             reply = yield action_steps.MessageBox(
