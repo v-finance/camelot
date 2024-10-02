@@ -29,7 +29,6 @@
 from dataclasses import dataclass
 
 from camelot.admin.action import ActionStep
-from camelot.core.templates import environment
 
 from ...core.serializable import DataclassSerializable
 
