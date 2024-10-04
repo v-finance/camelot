@@ -53,9 +53,9 @@ def prospected_attribute(column_attribute):
      |
      |  class ConcreteEntity(Entity):
      |
-     |     __entity_args__ = {
-     |        'transition_types': types.transition_types,
-     |     }
+     |     __entity_args__ = EntityArgs(
+     |        transition_types=types.transition_types,
+     |     )
      |
      |     apply_from_date = schema.Column(sqlalchemy.types.Date())
      |     duration = schema.Column(sqlalchemy.types.Integer())

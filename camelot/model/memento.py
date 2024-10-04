@@ -48,7 +48,7 @@ from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.object_admin import ObjectAdmin
 from camelot.admin.not_editable_admin import not_editable_admin
 from camelot.core.exception import UserException
-from camelot.core.orm import Entity
+from camelot.core.orm import Entity, EntityArgs
 from camelot.core.utils import ugettext_lazy as _
 from camelot.view.controls import delegates
 from camelot.types import PrimaryKey
@@ -85,10 +85,10 @@ class Memento( Entity ):
                                   index = True )    
     previous_attributes = orm.deferred( schema.Column( PickleType() ) )
 
-    __entity_args__ = {
-        'editable': False
-    }
-    
+    __entity_args__ = EntityArgs(
+        editable=False,
+    )
+
     @property
     def previous( self ):
         previous = self.previous_attributes

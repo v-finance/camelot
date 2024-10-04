@@ -82,7 +82,7 @@ entities = EntityCollection()
 
 
 
-from . entity import EntityBase, EntityMeta
+from . entity import EntityArgs, EntityBase, EntityMeta
 
 
 def setup_all( create_tables=False, *args, **kwargs ):
@@ -111,6 +111,6 @@ def transaction( original_function ):
     return decorated_function
 
 
-__all__ = [obj.__name__ for obj in [Entity, EntityBase, EntityMeta,
+__all__ = [obj.__name__ for obj in [Entity, EntityArgs, EntityBase, EntityMeta,
                                     EntityCollection, setup_all, transaction
                                     ]] + ['Session', 'entities']
