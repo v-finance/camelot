@@ -47,12 +47,42 @@ from sqlalchemy.orm.decl_api import ( _declarative_constructor,
 from sqlalchemy.ext import hybrid
 from sqlalchemy.types import Date, Integer
 
+from typing import List, NamedTuple, Optional, Tuple, Union
+
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
 from . statements import MUTATORS
 from . import Session, options
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
+
+# Type alias for an an instrument column attribute of a :class:`.Entity`.
+EntityAttribute = Union[orm.attributes.InstrumentedAttribute, schema.Column]
+
+class EntityArgs(NamedTuple):
+    """
+    Namedtuple class meant to configure options or register traits for an :class:`.Entity` class,
+    which can be used to facilitate various use cases involving the entity.
+    These options can be passed through via the __entity_args__ class attribute,
+    that supports arguments that reference locally mapped columns directly from within the class declaration (as seen in the examples below).
+    Currently, the following attributes are supported:
+    
+    """
+
+    name: Optional[str] = None
+    discriminator: Optional[Union[Tuple[EntityAttribute, orm.properties.RelationshipProperty], EntityAttribute]] = None
+
+    ranked_by: Optional[Tuple[EntityAttribute, ...]] = None
+    order_by: Optional[List[Union[str, EntityAttribute]]] = None
+    order_search_by: Optional[Union[Tuple[EntityAttribute, ...], EntityAttribute]] = None
+    application_date: Optional[EntityAttribute] = None
+    transition_types: Optional[util.OrderedProperties] = None
+
+    editable: bool = True
+    editable_fields: List[str] = []
+
+    retention_level: Optional[NamedTuple] = None
+    retention_cut_off_date: Optional[EntityAttribute] = None
 
 class EntityClsRegistry(object):
     """
@@ -153,9 +183,9 @@ class EntityMeta( DeclarativeMeta ):
        |     ...
        |     described_by = Column(IntEnum(some_class_types), ...)
        |     ...
-       |     __entity_args__ = {
-       |         'discriminator': described_by,
-       |     }
+       |     __entity_args__ = EntityArgs(
+       |         discriminator = described_by,
+       |     )
        |     ...
        |
        | SomeClass.__types__ == some_class_types
@@ -166,9 +196,9 @@ class EntityMeta( DeclarativeMeta ):
        |     related_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(SomeClass.id))
        |     related_entity = orm.relationship(SomeClass)
        |     ...
-       |     __entity_args__ = {
-       |         'discriminator': (described_by, related_entity),
-       |     }
+       |     __entity_args__ = EntityArgs(
+       |         discriminator = (described_by, related_entity),
+       |     )
        |     ...
        |
        | OtherClass.__types__ == other_class_types
@@ -195,9 +225,9 @@ class EntityMeta( DeclarativeMeta ):
        |     ...
        |     rank = Column(Integer())
        |     ...
-       |     __entity_args__ = {
-       |         'ranked_by': rank,
-       |     }
+       |     __entity_args__ = EntityArgs(
+       |         ranked_by = rank,
+       |     )
        |     ...
        |
        | SomeClass.get_ranked_by() == (SomeClass.rank,)
@@ -214,9 +244,9 @@ class EntityMeta( DeclarativeMeta ):
        |     described_by = Column(IntEnum(some_class_types), ...)
        |     rank = Column(Integer())
        |     ...
-       |     __entity_args__ = {
-       |         'ranked_by': (rank, described_by),
-       |     }
+       |     __entity_args__ = EntityArgs(
+       |         ranked_by = (rank, described_by),
+       |     )
        |     ...
        |
        | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
@@ -279,7 +309,7 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__mapper_args__', dict())
             
-            dict_.setdefault('__entity_args__', dict())
+            dict_.setdefault('__entity_args__', EntityArgs())
             
             for base in bases:
                 if hasattr(base, '__types__'):
@@ -301,8 +331,8 @@ class EntityMeta( DeclarativeMeta ):
         
             entity_args = dict_.get('__entity_args__')
             if entity_args is not None:
-                discriminator = entity_args.get('discriminator')
-                if discriminator is not None:
+
+                if (discriminator := entity_args.discriminator) is not None:
                     (primary_discriminator, *secondary_discriminators) = discriminator if isinstance(discriminator, tuple) else (discriminator,)
                     assert isinstance(primary_discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)),\
                            'Primary discriminator must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
@@ -319,8 +349,7 @@ class EntityMeta( DeclarativeMeta ):
                     for secondary_discriminator in secondary_discriminators:
                         assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must be instances of `orm.properties.RelationshipProperty`'
 
-                ranked_by = entity_args.get('ranked_by')
-                if ranked_by is not None:
+                if (ranked_by := entity_args.ranked_by) is not None:
                     ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
                     for col in ranked_by:
                         assert isinstance(col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Ranked by definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute` or a tuple of those instances'
@@ -329,27 +358,22 @@ class EntityMeta( DeclarativeMeta ):
                         rank_col = rank_col.prop.columns[0]
                     assert isinstance(rank_col.type, Integer), 'The first column/attributes of the ranked by definition, indicating the rank column, should be of type Integer'
 
-                order_search_by = entity_args.get('order_search_by')
-                if order_search_by is not None:
+                if (order_search_by := entity_args.order_search_by) is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
                     assert len(order_search_by) <= 2, 'Can not define more than 2 search order by clauses.'
 
-                application_date = entity_args.get('application_date')
-                if application_date is not None:
+                if (application_date := entity_args.application_date) is not None:
                     assert isinstance(application_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
                     application_date_col = application_date.prop.columns[0] if isinstance(application_date, orm.attributes.InstrumentedAttribute) else application_date
                     assert isinstance(application_date_col.type, Date), 'The application date should be of type Date'
 
-                transition_types = entity_args.get('transition_types')
-                if transition_types is not None:
+                if (transition_types := entity_args.transition_types) is not None:
                     assert isinstance(transition_types, util.OrderedProperties), 'Transition types argument should define enumeration types'
 
-                retention_level = entity_args.get('retention_level')
-                if retention_level is not None:
+                if (retention_level := entity_args.retention_level) is not None:
                     assert retention_level in cls.retention_levels.values(), 'Unsupported retention level'
 
-                retention_cut_off_date = entity_args.get('retention_cut_off_date')
-                if retention_cut_off_date is not None:
+                if (retention_cut_off_date := entity_args.retention_cut_off_date) is not None:
                     assert isinstance(retention_cut_off_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Retention cut-off date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
                     retention_cut_off_date_col = retention_cut_off_date.prop.columns[0] if isinstance(retention_cut_off_date, orm.attributes.InstrumentedAttribute) else retention_cut_off_date
                     assert isinstance(retention_cut_off_date_col.type, Date), 'The retention cut-off date should be of type Date'
@@ -368,12 +392,8 @@ class EntityMeta( DeclarativeMeta ):
                     _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
             # Auto-assign entity_args and name entity argument if not configured explicitly.
-            entity_args = dict_.get('__entity_args__')
-            if entity_args is None:
-                dict_['__entity_args__'] = entity_args = {}
-            entity_name = dict_['__entity_args__'].get('name')
-            if entity_name is None:
-                dict_['__entity_args__']['name'] = entity_name = cls._default_entity_name(cls, classname, dict_)
+            entity_args = dict_.get('__entity_args__', EntityArgs())
+            entity_name = dict_['__entity_args__'].name or cls._default_entity_name(cls, classname, dict_)
             assert isinstance(entity_name, str) and len(entity_name) > 0, 'Name argument in __entity_args__ should be text-based and contain at least 1 character'
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
@@ -462,8 +482,7 @@ class EntityMeta( DeclarativeMeta ):
         """
         Retrieve this entity class discriminator definition.
         """
-        discriminator = cls._get_entity_arg('discriminator')
-        if discriminator is not None:
+        if (discriminator := cls.__entity_args__.discriminator) is not None:
             discriminator = discriminator if isinstance(discriminator, tuple) else (discriminator,)
             discriminator_cols = [
                 getattr(cls, discriminator_col.key) \
@@ -500,15 +519,13 @@ class EntityMeta( DeclarativeMeta ):
         return []
 
     def get_ranked_by(cls):
-        ranked_by = cls._get_entity_arg('ranked_by')
-        if ranked_by is not None:
+        if (ranked_by := cls.__entity_args__.ranked_by) is not None:
             ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
             rank_cols = [getattr(cls, rank_col.key) if isinstance(rank_col, sql.schema.Column) else rank_col for rank_col in ranked_by]
             return tuple(rank_cols)
 
     def get_order_search_by(cls):
-        order_search_by = cls._get_entity_arg('order_search_by')
-        if order_search_by is not None:
+        if (order_search_by := cls.__entity_args__.order_search_by) is not None:
             order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
             order_by_clauses = []
             for order_by in order_search_by:
@@ -522,16 +539,15 @@ class EntityMeta( DeclarativeMeta ):
 
     @property
     def transition_types(cls):
-        return cls._get_entity_arg('transition_types')
+        return cls.__entity_args__.transition_types
 
     @property
     def retention_level(cls):
-        return cls._get_entity_arg('retention_level')
+        return cls.__entity_args__.retention_level
 
     @property
     def retention_cut_off_date(cls):
-        retention_cut_off_date = cls._get_entity_arg('retention_cut_off_date')
-        if retention_cut_off_date is not None:
+        if (retention_cut_off_date := cls.__entity_args__.retention_cut_off_date) is not None:
             mapper = orm.class_mapper(cls)
             return mapper.get_property(retention_cut_off_date.key).class_attribute
 
