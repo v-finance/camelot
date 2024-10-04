@@ -205,7 +205,7 @@ and used as a custom action.
         query = session.query(self.entity)
         # Apply order_by entity arg to attempt to be backwards compatible with the
         # old order_by mapper arg, removed since SQLAlchemy 1.4.
-        if (order_by := self.entity._get_entity_arg('order_by')) is not None:
+        if (order_by := self.entity.__entity_args__.order_by) is not None:
             query = query.order_by(*order_by)
         else:
             # If no custom order_by is registered, apply a descending order by clause
@@ -396,9 +396,9 @@ and used as a custom action.
             #
             pass
         # Check __entity_args__ for 'editable' & 'editable_fields'
-        entity_arg_editable = self.entity._get_entity_arg('editable')
+        entity_arg_editable = self.entity.__entity_args__.editable
         if entity_arg_editable is not None and not entity_arg_editable:
-            entity_arg_editable_fields = self.entity._get_entity_arg('editable_fields')
+            entity_arg_editable_fields = self.entity.__entity_args__.editable_fields
             if entity_arg_editable_fields is None or field_name not in entity_arg_editable_fields:
                 attributes['editable'] = False
         return attributes
@@ -766,10 +766,7 @@ and used as a custom action.
 
         An entity is considered editable if there is no __entity_args__ { 'editable': False }
         """
-        editable = self.entity._get_entity_arg('editable')
-        if editable is None:
-            return True
-        return editable
+        return self.entity.__entity_args__.editable
 
     def _get_field_strategies(self, priority_level=None):
         """

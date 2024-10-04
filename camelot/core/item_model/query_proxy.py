@@ -246,7 +246,7 @@ class QueryModelProxy(ListModelProxy):
             #
             # Next sort according to default sort column if any
             #
-            for mapper_order_by in (mapper.class_._get_entity_arg('order_by') or []):
+            for mapper_order_by in (mapper.class_.__entity_args__.order_by or []):
                 order_by.append((mapper_order_by, False))
             #
             # In the end, sort according to the primary keys of the model, to enforce
