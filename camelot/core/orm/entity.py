@@ -393,7 +393,7 @@ class EntityMeta( DeclarativeMeta ):
 
             # Auto-assign entity_args and name entity argument if not configured explicitly.
             entity_args = dict_.get('__entity_args__', EntityArgs())
-            entity_name = dict_['__entity_args__'].name or cls._default_entity_name(cls, classname, dict_)
+            entity_name = dict_['__entity_args__'].name or cls._default_entity_name(cls, classname)
             assert isinstance(entity_name, str) and len(entity_name) > 0, 'Name argument in __entity_args__ should be text-based and contain at least 1 character'
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
@@ -402,10 +402,14 @@ class EntityMeta( DeclarativeMeta ):
 
         return _class
 
-    def _default_entity_name(cls, classname, dict_):
+    def _default_entity_name(cls, classname):
         # The default format will split the classname by capital letters, and join the lowered result by underscore.
         # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
         return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
+
+    @property
+    def entity_name(cls):
+        return cls.__entity_args__.name or cls._default_entity_name(cls, cls.__name__)
 
     def get_polymorphic_types(cls):
         """
@@ -473,11 +477,6 @@ class EntityMeta( DeclarativeMeta ):
             if (registered_class := cls.__discriminator_cls_registry__.get(None)) is not None:
                 return registered_class
 
-    def _get_entity_arg(cls, key):
-        for cls_ in (cls,) + cls.__mro__:
-            if hasattr(cls_, '__entity_args__') and key in cls_.__entity_args__:
-                return cls_.__entity_args__[key]
-    
     def get_cls_discriminator(cls):
         """
         Retrieve this entity class discriminator definition.
@@ -758,9 +757,9 @@ class EntityBase( object ):
         """
         from camelot.model.authentication import end_of_times
         entity = type(self)
-        assert entity._get_entity_arg('application_date') is not None
+        assert entity.__entity_args__.application_date is not None
         assert isinstance(at, datetime.date)
         mapper = orm.class_mapper(entity)
-        application_date_prop = mapper.get_property(entity._get_entity_arg('application_date').key)
+        application_date_prop = mapper.get_property(entity.__entity_args__.application_date.key)
         application_date = application_date_prop.class_attribute.__get__(self, None)
         return application_date is not None and not (application_date >= end_of_times() or at < application_date)
