@@ -25,7 +25,7 @@ from camelot.admin.model_context import ObjectsModelContext
 from camelot.admin.application_admin import ApplicationAdmin
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.core.qt import QtCore, QtWidgets, Qt, delete, is_deleted
-from camelot.core.orm import EntityBase, Session
+from camelot.core.orm import EntityArgs, EntityBase, Session
 from camelot.core.utils import ugettext_lazy as _
 from camelot.test import GrabMixinCase, RunningProcessCase
 from camelot.test.action import MockModelContext
@@ -434,9 +434,9 @@ class ListActionsCase(
             rank = schema.Column(types.Integer, nullable=False)
             type = schema.Column(types.Unicode, nullable=False)
 
-            __entity_args__ = {
-                'ranked_by': (rank, type)
-            }
+            __entity_args__ = EntityArgs(
+                ranked_by=(rank, type),
+            )
 
             class Admin(EntityAdmin):
                 pass
