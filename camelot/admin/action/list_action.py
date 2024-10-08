@@ -144,10 +144,23 @@ class OpenFormView(Action):
     verbose_name = None
     name = 'open_form_view'
 
+    def get_object(self, model_context, mode):
+        if mode is None:
+            # Use object from model_context (i.e. selection)
+            return model_context.get_object()
+
+        # Workaround for windows, pass row + objId in mode
+        row, objId = mode
+        obj = model_context.get_object(row)
+        if id(obj) != objId:
+            raise UserException('Could not open correct form')
+        return obj
+
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        obj = self.get_object(model_context, mode)
         yield action_steps.OpenFormView(
-            model_context.get_object(), model_context.admin, model_context.proxy
+            obj, model_context.admin, model_context.proxy
         )
 
     def get_state( self, model_context ):
