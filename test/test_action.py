@@ -391,8 +391,9 @@ class ListActionsCase(
         list_model.data(list_model.index(0, 0), Qt.ItemDataRole.DisplayRole)
         list_model.submit()
         self.process()
-        self.view.item_view.setCurrentIndex(list_model.index(0, 0))
-        for step_name, step in self.gui_run(open_form_view_name, self.gui_context,None, model_context_name=self.model_context_name):
+        objId = list_model.headerData(0, Qt.Orientation.Vertical, ObjectRole)
+        for step_name, step in self.gui_run(open_form_view_name, self.gui_context, [0, objId],
+                                            model_context_name=self.model_context_name):
             if step_name == action_steps.OpenFormView.__name__:
                 form = action_steps.OpenFormView.render(step)
                 form_value = form.model.value()
