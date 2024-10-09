@@ -145,10 +145,7 @@ class OpenFormView(Action):
     name = 'open_form_view'
 
     def get_object(self, model_context, mode):
-        if mode is None:
-            # Use object from model_context (i.e. selection)
-            return model_context.get_object()
-
+        assert mode is not None
         # Workaround for windows, pass row + objId in mode
         row, objId = mode
         obj = model_context.get_object(row)
