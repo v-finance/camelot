@@ -144,10 +144,20 @@ class OpenFormView(Action):
     verbose_name = None
     name = 'open_form_view'
 
+    def get_object(self, model_context, mode):
+        assert mode is not None
+        # Workaround for windows, pass row + objId in mode
+        row, objId = mode
+        obj = model_context.get_object(row)
+        if id(obj) != objId:
+            raise UserException('Could not open correct form')
+        return obj
+
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        obj = self.get_object(model_context, mode)
         yield action_steps.OpenFormView(
-            model_context.get_object(), model_context.admin, model_context.proxy
+            obj, model_context.admin, model_context.proxy
         )
 
     def get_state( self, model_context ):
@@ -690,10 +700,12 @@ class ImportFromFile( EditAction ):
                     new_entity_instance = admin.entity()
                     for field_name in row_data_admin.get_columns():
                         attributes = row_data_admin.get_field_attributes(field_name)
-                        from_string = attributes['from_string']
+                        original_field_name = attributes['original_field']
+                        from_string = attributes.get('from_string')
+                        assert from_string is not None, '{} with {} has no from string attribute'.format(field_name, original_field_name)
                         setattr(
                             new_entity_instance,
-                            attributes['original_field'],
+                            original_field_name,
                             from_string(getattr(row, field_name))
                         )
                     admin.add( new_entity_instance )
