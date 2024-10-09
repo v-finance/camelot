@@ -32,7 +32,7 @@ import logging
 
 from ....admin.admin_route import RouteWithRenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
-from ....core.item_model import ActionModeRole
+from ....core.item_model import ActionModeRole, ObjectRole
 from ..view import ViewWithActionsMixin
 from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
@@ -235,7 +235,10 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         table.close_editor()
         # make sure ChangeSelection action is executed before list action
         table.model().submit()
-        self._run_list_context_action(self, None)
+        obj_id = table.model().headerData(index, Qt.Orientation.Vertical, ObjectRole)
+        self._run_list_context_action(
+            self, (index, obj_id)
+        )
 
     @QtCore.qt_slot()
     def menu_triggered(self):
