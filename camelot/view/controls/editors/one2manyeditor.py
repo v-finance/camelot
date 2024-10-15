@@ -236,9 +236,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         # make sure ChangeSelection action is executed before list action
         table.model().submit()
         obj_id = table.model().headerData(index, Qt.Orientation.Vertical, ObjectRole)
-        self._run_list_context_action(
-            self, (index, obj_id)
-        )
+        self._run_list_context_action(self, [index, obj_id])
 
     @QtCore.qt_slot()
     def menu_triggered(self):
