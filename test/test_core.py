@@ -5,7 +5,6 @@ import tempfile
 import unittest
 
 from camelot.core.conf import SimpleSettings, settings
-from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
     AlreadyBoundException, BindingType, Constant, ConstantNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
@@ -16,7 +15,6 @@ from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 from camelot.core.singleton import QSingleton
 from camelot.core.sql import metadata
-from camelot.model.memento import Memento
 from camelot.model.authentication import AuthenticationMechanism
 
 from decimal import Decimal
