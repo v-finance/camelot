@@ -42,7 +42,7 @@ from .item_view import (
     RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
-                         OpenString, WordJinjaTemplate )
+                         OpenString)
 from .orm import (
     CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
     UpdateObjects
@@ -108,6 +108,5 @@ __all__ = [
     PopProgressLevel.__name__,
     SetProgressAnimate.__name__,
     UpdateTableView.__name__,
-    WordJinjaTemplate.__name__,
     ]
 

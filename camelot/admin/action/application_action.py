@@ -162,6 +162,9 @@ class SelectProfileMixin:
                     select_profile.value = load_profiles_name
 
                 selected_name = yield select_profile
+                # FIXME: why is this needed?
+                if not selected_name:
+                    raise CancelRequest()
 
                 selected_profile = initial_naming_context.resolve(selected_name)
                 if selected_profile is new_profile:
