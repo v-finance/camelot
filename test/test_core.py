@@ -5,7 +5,6 @@ import tempfile
 import unittest
 
 from camelot.core.conf import SimpleSettings, settings
-from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
     AlreadyBoundException, BindingType, Constant, ConstantNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
@@ -16,7 +15,6 @@ from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 from camelot.core.singleton import QSingleton
 from camelot.core.sql import metadata
-from camelot.model.memento import Memento
 from camelot.model.authentication import AuthenticationMechanism
 
 from decimal import Decimal
@@ -48,65 +46,7 @@ class ExampleModelMixinCase(object):
         cls.session.expunge_all()
         metadata.bind = None
 
-class MementoCase(unittest.TestCase, ExampleModelMixinCase):
-    """test functions from camelot.core.memento
-    """
-    
-    def setUp(self):
-        super().setUp()
-        self.setup_sample_model()
-        global memento_id_counter
-        custom_memento_types = memento_types + [(100, 'custom')]
-        self.memento = SqlMemento( memento_types = custom_memento_types )
-        memento_id_counter += 1
-        self.id_counter = memento_id_counter
-        self.model = 'TestMemento'
 
-    def tearDown(self):
-        self.tear_down_sample_model()
-
-    def test_memento_table(self):
-        self.session.query(Memento).count()
-
-    def test_lifecycle( self ):
-        memento_changes = [
-            memento_change( self.model, 
-                            [self.id_counter], 
-                            None, 'create' ),            
-            memento_change( self.model, 
-                            [self.id_counter], 
-                            {'name':'foo'}, 'before_update' ),
-            memento_change( self.model, 
-                            [self.id_counter], 
-                            {'name':'bar'}, 'before_delete' ),            
-            ]
-        
-        self.memento.register_changes( memento_changes )
-        changes = list( self.memento.get_changes( self.model,
-                                                  [self.id_counter],
-                                                  {} ) )
-        self.assertEqual( len(changes), 3 )
-        
-    def test_no_error( self ):
-        memento_changes = [
-            memento_change( None, 
-                            [self.id_counter], 
-                            None, None ),                     
-            ]
-        self.memento.register_changes( memento_changes )
-        
-    def test_custom_memento_type( self ):
-        memento_changes = [
-            memento_change( self.model, 
-                            [self.id_counter], 
-                            {}, 'custom' ),                     
-            ]
-        self.memento.register_changes( memento_changes )
-        changes = list( self.memento.get_changes( self.model,
-                                                  [self.id_counter],
-                                                  {} ) )
-        self.assertEqual( len(changes), 1 )
-       
 class ProfileCase(unittest.TestCase):
     """Test the save/restore and selection functions of the database profile
     """
