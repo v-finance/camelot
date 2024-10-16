@@ -307,6 +307,23 @@ class StatusMixin( object ):
                                   thru_date = end_of_times())
         session.flush()
 
+status_colors = {
+    # work_effort_status_types
+    "draft":    '#9E9E9E', # Material.Grey
+    "complete": '#4CAF50', # Material.Green
+    "verified": '#8BC34A', # Material.LightGreen
+    # work_effort_status_types & batch_job_status_types
+    "canceled": '#9C27B0', # Material.Purple
+    # batch_job_status_types
+    "planned":  '#607D8B', # Material.BlueGrey
+    "running":  '#4CAF50', # Material.Green
+    "success":  '#8BC34A', # Material.LightGreen
+    "warnings": '#FF5722', # Material.DeepOrange
+    "errors":   '#F44336', # Material.Red
+    "active":   '#4CAF50', # Material.Green
+    "closed":   '#9E9E9E', # Material.Grey
+    "delayed":  '#FF5722', # Material.DeepOrange
+}
 
 class CurrentStatus(Action):
 
@@ -322,6 +339,7 @@ class CurrentStatus(Action):
                 'current_status'
             )
             current_status = obj.current_status
+            state.color = status_colors[current_status]
             for value, name in field_attributes['choices']:
                 if value == current_status:
                     state.verbose_name = name
