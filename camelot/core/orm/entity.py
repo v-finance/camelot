@@ -278,9 +278,11 @@ class EntityMeta( DeclarativeMeta ):
                     break
             else:
                 dict_.setdefault('__mapper_args__', dict())
-            
+
+            # Assign each new Entity class a unique id.
+            dict_.setdefault('__entity_name__', cls._default_entity_name(cls, classname))
+
             dict_.setdefault('__entity_args__', dict())
-            
             for base in bases:
                 if hasattr(base, '__types__'):
                     break
@@ -356,33 +358,25 @@ class EntityMeta( DeclarativeMeta ):
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
-        if classname != 'Entity' and dict_.get('__tablename__') is not None:
-            for val in dict_.values():
-                if isinstance(val, schema.Column) and val.primary_key: # val.primary_key checks if the primary_key attribute of the Column is set to True
-                    break
-            else:
-                # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
-                # table.primary_key returns an iterator so we can't test the length or something like that
-                table = dict_.get('__table__', None)
-                if table is None or table.primary_key is None:
-                    _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
-
-            # Auto-assign entity_args and name entity argument if not configured explicitly.
-            entity_args = dict_.get('__entity_args__')
-            if entity_args is None:
-                dict_['__entity_args__'] = entity_args = {}
-            entity_name = dict_['__entity_args__'].get('name')
-            if entity_name is None:
-                dict_['__entity_args__']['name'] = entity_name = cls._default_entity_name(cls, classname, dict_)
-            assert isinstance(entity_name, str) and len(entity_name) > 0, 'Name argument in __entity_args__ should be text-based and contain at least 1 character'
+        if classname != 'Entity':
+            if dict_.get('__tablename__') is not None:
+                for val in dict_.values():
+                    if isinstance(val, schema.Column) and val.primary_key: # val.primary_key checks if the primary_key attribute of the Column is set to True
+                        break
+                else:
+                    # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
+                    # table.primary_key returns an iterator so we can't test the length or something like that
+                    table = dict_.get('__table__', None)
+                    if table is None or table.primary_key is None:
+                        _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
             # using the entity's name configured (or auto-assigned) in the __entity_args__
-            initial_naming_context.bind_context(('entity', entity_name), EntityNamingContext(_class))
+            initial_naming_context.bind_context(('entity', _class.__entity_name__), EntityNamingContext(_class))
 
         return _class
 
-    def _default_entity_name(cls, classname, dict_):
+    def _default_entity_name(cls, classname):
         # The default format will split the classname by capital letters, and join the lowered result by underscore.
         # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
         return '_'.join(re.findall('.[^A-Z]*', classname)).lower()

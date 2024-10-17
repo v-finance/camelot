@@ -12,8 +12,8 @@ class EntityMetaMock(EntityMeta):
     with the same name.
     """
 
-    def _default_entity_name(cls, classname, dict_):
-        entity_name = super()._default_entity_name(cls, classname, dict_)
+    def _default_entity_name(cls, classname):
+        entity_name = super()._default_entity_name(cls, classname)
         return '{}_{}'.format(entity_name, id(entity_name))
 
 class TestMetaData( unittest.TestCase ):
