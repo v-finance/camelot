@@ -1122,7 +1122,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             if not inspect(obj).persistent or None in primary_key:
                 raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
-            return ('entity', entity._get_entity_arg('name'), str(session.hash_key), *[str(key) for key in primary_key])
+            return ('entity', entity.__entity_name__, str(session.hash_key), *[str(key) for key in primary_key])
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
         LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
