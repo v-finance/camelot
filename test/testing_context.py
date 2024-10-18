@@ -111,7 +111,7 @@ class A(object):
                     B('{0}_{1.x}_3'.format(prefix, obj)),
                     ]
 
-class Party(Entity):
+class FinancialParty(Entity):
 
     __tablename__ = 'party'
 
@@ -122,7 +122,7 @@ class Party(Entity):
         'polymorphic_on': row_type
     }
 
-class Person(Party):
+class Person(FinancialParty):
 
     __mapper_args__ = {
         'polymorphic_identity': 'person'
@@ -139,7 +139,7 @@ class Person(Party):
     class Admin(EntityAdmin):
         list_display = ['first_name', 'last_name', 'full_name']
 
-class Organization(Party):
+class Organization(FinancialParty):
 
     __mapper_args__ = {
         'polymorphic_identity': 'organization'
