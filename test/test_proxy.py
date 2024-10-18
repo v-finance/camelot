@@ -8,7 +8,7 @@ from camelot.core.item_model import (
 LOGGER = logging.getLogger(__name__)
 
 from .test_core import ExampleModelMixinCase
-from .testing_context import LoadSampleData, A, Party, Person
+from .testing_context import LoadSampleData, A, FinancialParty, Person
 
 
 class ListModelProxyCase(unittest.TestCase):
@@ -223,9 +223,9 @@ class QueryModelProxyCase(ListModelProxyCase, ExampleModelMixinCase):
 
     def test_unique_primary_key(self):
         # A query returns multiple objects with the same primary key
-        query = self.session.query(Party)
+        query = self.session.query(FinancialParty)
         proxy = QueryModelProxy(query)
-        union_all_query = query.union_all(self.session.query(Party)).order_by(Party.id)
+        union_all_query = query.union_all(self.session.query(FinancialParty)).order_by(FinancialParty.id)
         self.assertEqual(union_all_query.count(), query.count()*2)
         # Validate the second and the first element of the union query
         # refer to the same object

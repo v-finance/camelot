@@ -903,8 +903,10 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         self.assertEqual(self.context.resolve(('constant', 'date', '2022', '04', '13')), datetime.date(2022, 4, 13))
         self.assertEqual(self.context.resolve(('constant', 'date', '2021', '02', '05')), datetime.date(2021, 2, 5))
         # Entities
-        self.assertEqual(self.context.resolve(('entity', 'party', session_id, str(entity1.id))), entity1)
-        self.assertEqual(self.context.resolve(('entity', 'party', session_id, str(entity2.id))), entity2)
+        self.assertEqual(self.context.resolve(('entity', 'financial_party', session_id, str(entity1.id))), entity1)
+        self.assertEqual(self.context.resolve(('entity', 'financial_party', session_id, str(entity2.id))), entity2)
+        self.assertEqual(self.context.resolve(('entity', 'organization', session_id, str(entity1.id))), entity1)
+        self.assertEqual(self.context.resolve(('entity', 'person', session_id, str(entity2.id))), entity2)
         self.assertEqual(self.context.resolve(('entity', 'composite_pk_entity', session_id, str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))), self.binary_entity_1)
         self.assertEqual(self.context.resolve(('entity', 'composite_pk_entity', session_id, str(self.binary_entity_2.id_1), str(self.binary_entity_2.id_2))), self.binary_entity_2)
 
