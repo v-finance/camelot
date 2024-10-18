@@ -1,5 +1,4 @@
 import collections
-import re
 
 from camelot.core.utils import ugettext_lazy
 
