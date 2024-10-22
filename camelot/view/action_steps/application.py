@@ -38,7 +38,6 @@ from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
-from ...model.authentication import AuthenticationMechanism
 
 LOGGER = logging.getLogger(__name__)
 
