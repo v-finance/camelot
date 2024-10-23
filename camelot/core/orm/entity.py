@@ -734,11 +734,12 @@ class EntityBase( object ):
 
         :raises: An AssertionError when the application_date is not configured in the entity's __entity_args__.
         """
-        from camelot.model.authentication import end_of_times
+        # @todo : move this method to a place where end of times is known
+        end_of_times = datetime.date(2400, 12, 31)
         entity = type(self)
         assert entity._get_entity_arg('application_date') is not None
         assert isinstance(at, datetime.date)
         mapper = orm.class_mapper(entity)
         application_date_prop = mapper.get_property(entity._get_entity_arg('application_date').key)
         application_date = application_date_prop.class_attribute.__get__(self, None)
-        return application_date is not None and not (application_date >= end_of_times() or at < application_date)
+        return application_date is not None and not (application_date >= end_of_times or at < application_date)
