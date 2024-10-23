@@ -15,7 +15,6 @@ from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 from camelot.core.singleton import QSingleton
 from camelot.core.sql import metadata
-from camelot.model.authentication import AuthenticationMechanism
 
 from decimal import Decimal
 from sqlalchemy import MetaData, schema, types
@@ -36,9 +35,6 @@ class ExampleModelMixinCase(object):
         metadata.create_all(model_engine)
         cls.session = Session()
         cls.session.expunge_all()
-        AuthenticationMechanism.authenticate(
-            metadata.bind, 'database', 'user', ['admin']
-        )
         return model_engine
 
     @classmethod
