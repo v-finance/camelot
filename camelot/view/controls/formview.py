@@ -42,7 +42,7 @@ from ...core.serializable import NamedDataclassSerializable
 from ...core.item_model import ActionModeRole
 from .. import gui_naming_context
 from camelot.core.item_model import VerboseIdentifierRole
-from camelot.view.controls.view import AbstractView
+from camelot.view.controls.view import ViewWithActionsMixin
 from camelot.view.controls.busy_widget import BusyWidget
 from .delegates.delegatemanager import DelegateManager
 
@@ -252,7 +252,7 @@ class FormWidget(QtWidgets.QWidget):
                 #break
         LOGGER.debug( 'done' )
 
-class FormView(AbstractView):
+class FormView(QtWidgets.QWidget, ViewWithActionsMixin):
     """A FormView is the combination of a FormWidget, possible actions and menu
     items
 
@@ -261,8 +261,16 @@ class FormView(AbstractView):
 
     form_widget = FormWidget
 
-    def __init__(self, parent = None):
-        AbstractView.__init__(self, parent)
+    title_changed_signal = QtCore.qt_signal(str)
+
+    @property
+    def view(self):
+        return self
+
+    @QtCore.qt_slot(object)
+    def change_title(self, new_title):
+        """Will emit the title_changed_signal"""
+        self.title_changed_signal.emit(str(new_title))
 
     def setup(
         self, title, admin_route, close_route, model, form_display,

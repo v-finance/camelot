@@ -166,9 +166,6 @@ shortcut confusion and reduce the number of status updates.
 
         :return: `None` or an :class:`camelot.core.memento.SqlMemento` instance
         """
-        from camelot.core.memento import SqlMemento
-        if self._memento == None:
-            self._memento = SqlMemento()
         return self._memento
 
     def get_application_admin( self ):

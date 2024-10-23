@@ -30,8 +30,7 @@ from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.dataclasses import dataclass
 from camelot.core.naming import initial_naming_context
 from camelot.core.sql import metadata
-from camelot.model.i18n import Translation
-from .testing_context import Person
+from .testing_context import Person, Movie
 from camelot.view.controls import delegates
 from camelot.types.typing import Color, Directory, File, Note
 from camelot.core.backend import get_root_backend
@@ -70,22 +69,22 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
 
     def test_not_editable_admin_class_decorator( self ):
 
-        class OriginalAdmin(Translation.Admin):
-            list_actions = [list_filter.ComboBoxFilter(Translation.language)]
+        class OriginalAdmin(Movie.Admin):
+            list_actions = [list_filter.GroupBoxFilter(Movie.genre)]
 
-        original_admin = OriginalAdmin(self.app_admin, Translation)
+        original_admin = OriginalAdmin(self.app_admin, Movie)
         self.assertTrue(len(original_admin.get_list_actions()))
-        self.assertTrue(original_admin.get_field_attributes('value')['editable'])
+        self.assertTrue(original_admin.get_field_attributes('title')['editable'])
         original_related_admin = original_admin.get_related_admin(Person)
 
         #
         # enable the actions
         #
         NewAdmin = not_editable_admin(OriginalAdmin, actions=True)
-        new_admin = NewAdmin(self.app_admin, Translation)
+        new_admin = NewAdmin(self.app_admin, Movie)
         self.assertTrue(len( new_admin.get_list_actions()))
-        self.assertFalse(new_admin.get_field_attributes('value')['editable'])
-        self.assertFalse(new_admin.get_field_attributes('source')['editable'])
+        self.assertFalse(new_admin.get_field_attributes('title')['editable'])
+        self.assertFalse(new_admin.get_field_attributes('rating')['editable'])
         new_related_admin = new_admin.get_related_admin(Person)
         self.assertNotEqual(original_related_admin, new_related_admin)
 
@@ -101,19 +100,19 @@ class ObjectAdminCase(unittest.TestCase, ExampleModelMixinCase):
         # disable the actions
         #
         NewAdmin = not_editable_admin(OriginalAdmin, actions=False)
-        new_admin = NewAdmin( self.app_admin, Translation )
+        new_admin = NewAdmin( self.app_admin, Movie )
         self.assertFalse( len( new_admin.get_list_actions() ) )
-        self.assertFalse( new_admin.get_field_attributes( 'value' )['editable'] )
-        self.assertFalse( new_admin.get_field_attributes( 'source' )['editable'] )
+        self.assertFalse( new_admin.get_field_attributes( 'title' )['editable'] )
+        self.assertFalse( new_admin.get_field_attributes( 'rating' )['editable'] )
 
         #
-        # keep the value field editable
+        # keep the value rating editable
         #
-        NewAdmin = not_editable_admin(OriginalAdmin, editable_fields=['value'])
-        new_admin = NewAdmin( self.app_admin, Translation )
+        NewAdmin = not_editable_admin(OriginalAdmin, editable_fields=['rating'])
+        new_admin = NewAdmin( self.app_admin, Movie )
         self.assertFalse( len( new_admin.get_list_actions() ) )
-        self.assertTrue( new_admin.get_field_attributes( 'value' )['editable'] )
-        self.assertFalse( new_admin.get_field_attributes( 'source' )['editable'] )
+        self.assertTrue( new_admin.get_field_attributes( 'rating' )['editable'] )
+        self.assertFalse( new_admin.get_field_attributes( 'title' )['editable'] )
 
     def test_signature( self ):
         #
