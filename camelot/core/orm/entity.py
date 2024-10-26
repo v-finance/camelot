@@ -235,13 +235,6 @@ class EntityMeta( DeclarativeMeta ):
     * 'editable_fields'
        List of field_names that should be excluded from the globally non-editable registration, if present.
 
-    * 'retention_level'
-       Configures the data retention of the entity, e.g. how long it should be kept in the system before its final archiving or removal.
-
-    * 'retention_cut_off_date'
-       Registers a date attribute of the target entity, which value signals the point at which the entity's retention period begins.
-       This argument is an optional parameter in the retention policy configuration of entities.
-
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
@@ -250,9 +243,6 @@ class EntityMeta( DeclarativeMeta ):
     In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
-
-    # Supported retention levels; is explicitly set in vFinance.__init__.
-    retention_levels = util.OrderedProperties()
 
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
@@ -346,15 +336,6 @@ class EntityMeta( DeclarativeMeta ):
                 if transition_types is not None:
                     assert isinstance(transition_types, util.OrderedProperties), 'Transition types argument should define enumeration types'
 
-                retention_level = entity_args.get('retention_level')
-                if retention_level is not None:
-                    assert retention_level in cls.retention_levels.values(), 'Unsupported retention level'
-
-                retention_cut_off_date = entity_args.get('retention_cut_off_date')
-                if retention_cut_off_date is not None:
-                    assert isinstance(retention_cut_off_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Retention cut-off date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
-                    retention_cut_off_date_col = retention_cut_off_date.prop.columns[0] if isinstance(retention_cut_off_date, orm.attributes.InstrumentedAttribute) else retention_cut_off_date
-                    assert isinstance(retention_cut_off_date_col.type, Date), 'The retention cut-off date should be of type Date'
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
@@ -517,17 +498,6 @@ class EntityMeta( DeclarativeMeta ):
     @property
     def transition_types(cls):
         return cls._get_entity_arg('transition_types')
-
-    @property
-    def retention_level(cls):
-        return cls._get_entity_arg('retention_level')
-
-    @property
-    def retention_cut_off_date(cls):
-        retention_cut_off_date = cls._get_entity_arg('retention_cut_off_date')
-        if retention_cut_off_date is not None:
-            mapper = orm.class_mapper(cls)
-            return mapper.get_property(retention_cut_off_date.key).class_attribute
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
