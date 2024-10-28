@@ -693,10 +693,12 @@ class EntityBase( object ):
         :raises: An AssertionError when the application_date is not configured in the entity's __entity_args__.
         """
         from camelot.model.authentication import end_of_times
+        from vfinance.interface.registry import endpoint_registry
         entity = type(self)
-        assert entity._get_entity_arg('application_date') is not None
+        endpoint = endpoint_registry.get(entity)
+        assert endpoint.application_date is not None
         assert isinstance(at, datetime.date)
         mapper = orm.class_mapper(entity)
-        application_date_prop = mapper.get_property(entity._get_entity_arg('application_date').key)
+        application_date_prop = mapper.get_property(endpoint.application_date.key)
         application_date = application_date_prop.class_attribute.__get__(self, None)
         return application_date is not None and not (application_date >= end_of_times() or at < application_date)
