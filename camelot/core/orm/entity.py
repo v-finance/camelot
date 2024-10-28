@@ -226,9 +226,6 @@ class EntityMeta( DeclarativeMeta ):
        Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
        which should be of type Date.
 
-    * 'transition_types'
-       Enumeration that defines the types of state transitions instances of the entity class can undergo.
-
     * 'editable'
        This entity argument is a flag that when set to False will register the entity class as globally non-editable.
 
@@ -331,11 +328,6 @@ class EntityMeta( DeclarativeMeta ):
                     assert isinstance(application_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
                     application_date_col = application_date.prop.columns[0] if isinstance(application_date, orm.attributes.InstrumentedAttribute) else application_date
                     assert isinstance(application_date_col.type, Date), 'The application date should be of type Date'
-
-                transition_types = entity_args.get('transition_types')
-                if transition_types is not None:
-                    assert isinstance(transition_types, util.OrderedProperties), 'Transition types argument should define enumeration types'
-
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
@@ -494,10 +486,6 @@ class EntityMeta( DeclarativeMeta ):
                 else:
                     order_by_clauses.append(order_by)
             return tuple(order_by_clauses)
-
-    @property
-    def transition_types(cls):
-        return cls._get_entity_arg('transition_types')
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
