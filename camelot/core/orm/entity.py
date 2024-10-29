@@ -684,6 +684,8 @@ class EntityBase( object ):
         from camelot.model.authentication import end_of_times
         # TODO: can be made top-level after transer to the vFinance repo.
         from vfinance.interface.registry import endpoint_registry
+        # @todo : move this method to a place where end of times is known
+        end_of_times = datetime.date(2400, 12, 31)
         entity = type(self)
         endpoint = endpoint_registry.get(entity)
         assert endpoint.application_date is not None
