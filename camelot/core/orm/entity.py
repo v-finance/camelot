@@ -681,7 +681,6 @@ class EntityBase( object ):
 
         :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.registry.Endpoint`.
         """
-        from camelot.model.authentication import end_of_times
         # TODO: can be made top-level after transer to the vFinance repo.
         from vfinance.interface.registry import endpoint_registry
         # @todo : move this method to a place where end of times is known
