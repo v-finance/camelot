@@ -199,7 +199,6 @@ class FormWidget(QtWidgets.QWidget):
                     self.form_display,
                     #self.admin.get_form_display()._to_bytes(),
                 )
-                self.parent().show()
             # after a layout change, the row we want to display might be there
             if widget_mapper.currentIndex() < 0:
                 widget_mapper.setCurrentIndex(self._index)
