@@ -690,4 +690,4 @@ class EntityBase( object ):
         assert endpoint.application_date is not None
         assert isinstance(at, datetime.date)
         application_date = endpoint.application_date.__get__(self, None)
-        return application_date is not None and not (application_date >= end_of_times() or at < application_date)
+        return application_date is not None and not (application_date >= end_of_times or at < application_date)
