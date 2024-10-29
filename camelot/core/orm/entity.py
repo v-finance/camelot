@@ -45,7 +45,7 @@ from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Date, Integer
+from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
@@ -221,14 +221,6 @@ class EntityMeta( DeclarativeMeta ):
        |
        | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
 
-    * 'application_date'
-       Registers the application date attribute of the target entity.
-       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
-       which should be of type Date.
-
-    * 'transition_types'
-       Enumeration that defines the types of state transitions instances of the entity class can undergo.
-
     * 'editable'
        This entity argument is a flag that when set to False will register the entity class as globally non-editable.
 
@@ -325,17 +317,6 @@ class EntityMeta( DeclarativeMeta ):
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
                     assert len(order_search_by) <= 2, 'Can not define more than 2 search order by clauses.'
-
-                application_date = entity_args.get('application_date')
-                if application_date is not None:
-                    assert isinstance(application_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
-                    application_date_col = application_date.prop.columns[0] if isinstance(application_date, orm.attributes.InstrumentedAttribute) else application_date
-                    assert isinstance(application_date_col.type, Date), 'The application date should be of type Date'
-
-                transition_types = entity_args.get('transition_types')
-                if transition_types is not None:
-                    assert isinstance(transition_types, util.OrderedProperties), 'Transition types argument should define enumeration types'
-
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
@@ -494,10 +475,6 @@ class EntityMeta( DeclarativeMeta ):
                 else:
                     order_by_clauses.append(order_by)
             return tuple(order_by_clauses)
-
-    @property
-    def transition_types(cls):
-        return cls._get_entity_arg('transition_types')
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
@@ -698,17 +675,18 @@ class EntityBase( object ):
         """
         Return whether this entity instance is applicable at the given date.
         This method requires the entity class to have its application date range
-        configured by the 'application_date' __entity_args__ argument.
+        configured in a `vfinance.interface.registry.Endpoint`.
         An instance is applicable at the given date when it is later than the instance's
         application date, and the application date is not later than end_of_times.
 
-        :raises: An AssertionError when the application_date is not configured in the entity's __entity_args__.
+        :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.registry.Endpoint`.
         """
         from camelot.model.authentication import end_of_times
+        # TODO: can be made top-level after transer to the vFinance repo.
+        from vfinance.interface.registry import endpoint_registry
         entity = type(self)
-        assert entity._get_entity_arg('application_date') is not None
+        endpoint = endpoint_registry.get(entity)
+        assert endpoint.application_date is not None
         assert isinstance(at, datetime.date)
-        mapper = orm.class_mapper(entity)
-        application_date_prop = mapper.get_property(entity._get_entity_arg('application_date').key)
-        application_date = application_date_prop.class_attribute.__get__(self, None)
+        application_date = endpoint.application_date.__get__(self, None)
         return application_date is not None and not (application_date >= end_of_times() or at < application_date)
