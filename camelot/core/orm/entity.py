@@ -45,7 +45,7 @@ from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Date, Integer
+from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
