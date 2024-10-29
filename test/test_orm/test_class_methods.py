@@ -39,20 +39,15 @@ class TestClassMethods( TestMetaData ):
         with self.session.begin():
             A(name="a1")
             
-        self.assertEqual( A.query.count(), 1 )
-        
-        session_1 = A.query.session
-        self.assertEqual( session_1, Session() )
-        
+        self.assertEqual( self.session.query(A).count(), 1 )
+
         class QueryThread( QtCore.QThread ):
             
             def run( self ):
-                self.query_session_2 = A.query.session
-                self.orm_session_2 = Session()
+                self.session_2 = Session()
         
         thread = QueryThread()
         thread.start()
         thread.wait()
         
-        self.assertNotEqual( session_1, thread.orm_session_2 )
-        self.assertNotEqual( session_1, thread.query_session_2 )
+        self.assertNotEqual(self.session, thread.session_2)

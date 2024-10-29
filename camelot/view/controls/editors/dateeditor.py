@@ -31,11 +31,11 @@ import datetime
 
 
 
+from ....core.backend import get_root_backend
 from ....core.qt import QtCore, QtWidgets, Qt
 
 from .customeditor import CustomEditor, set_background_color_palette
 
-from ...validator import DateValidator
 from camelot.view.art import FontIcon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -56,7 +56,9 @@ class DateEditor(CustomEditor):
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
-        line_edit.setValidator(DateValidator())
+        validator = get_root_backend().validator("DateValidator")
+        validator.setParent(self)
+        line_edit.setValidator(validator)
         line_edit.setObjectName('date_line_edit')
         line_edit.set_minimum_width(str(QtCore.QDate(2000,12,22).toString(self.date_format)))
         line_edit.setPlaceholderText(QtCore.QDate(2000,1,1).toString(self.date_format))

@@ -255,6 +255,6 @@ class BackupMechanism(object):
 
     def copy_table_data(self, from_table, to_table, from_connection, to_connection):
         query = sql.select([from_table])
-        table_data = [row for row in from_connection.execute(query).fetchall()]
+        table_data = [row._mapping for row in from_connection.execute(query).fetchall()]
         if len(table_data):
             to_connection.execute(to_table.insert(), table_data)

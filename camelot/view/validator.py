@@ -33,26 +33,24 @@ editors or other widgets.
 import dataclasses
 import re
 import stdnum.util
+from typing import Optional
 
 from camelot.core.exception import UserException
-from camelot.core.qt import QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.core.utils import ugettext
-from camelot.data.types import zip_code_types
 
 from dataclasses import dataclass, InitVar
 from sqlalchemy.ext import hybrid
 from stdnum.exceptions import InvalidFormat
 
-from .utils import date_from_string, ParsingError
 
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
 
-    value: str = None
-    formatted_value: str = None
+    value: Optional[str] = None
+    formatted_value: Optional[str] = None
     valid: bool = True
-    error_msg: str = None
+    error_msg: Optional[str] = None
 
     # Fields that influence how values are sanitized.
     deletechars: str = ''
@@ -136,33 +134,23 @@ class AbstractValidator:
         super().__init_subclass__(**kwargs)
         cls.validators[cls.__name__] = cls
 
-    @classmethod
-    def get_validator(cls, validator_type, parent=None):
-        if validator_type is None:
-            return None
-        return cls.validators[validator_type](parent)
 
-    def set_state(self, state):
-        pass
+class DateValidator(AbstractValidator):
+    pass
 
-class DateValidator(QtGui.QValidator):
-
-    def validate(self, input_, pos):
-        try:
-            date_from_string(str(input_))
-        except ParsingError:
-            return (QtGui.QValidator.State.Intermediate, input_, pos)
-        return (QtGui.QValidator.State.Acceptable, input_, pos)
 
 @dataclass(frozen=True)
 class RegexValidatorState(ValidatorState):
 
     regex: str = None
-    regex_repl: str = None
+    format_repl: str = None
+    compact_repl: str = None
     example: str = None
 
     ignore_case: bool = False
-    compact: bool = True
+
+    def __post_init__(self, info):
+        super().__post_init__(info)
 
     @classmethod
     def for_value(cls, value, **kwargs):
@@ -170,7 +158,7 @@ class RegexValidatorState(ValidatorState):
         state = super().for_value(value, **kwargs)
 
         # Check if the value matches the regex.
-        if state.value is not None and state.regex is not None:
+        if (state.value is not None) and (state.regex is not None):
             if not re.fullmatch(state.regex, state.value, flags=re.IGNORECASE if state.ignore_case else 0):
                 state = dataclasses.replace(
                     state,
@@ -178,15 +166,14 @@ class RegexValidatorState(ValidatorState):
                     error_msg=InvalidFormat.message,
                 )
             else:
-                # If the regex replacement pattern is defined, use it to construct
-                # both the compact as the formatted value:
-                if state.regex_repl:
-                    state = dataclasses.replace(
-                        state,
-                        value=re.sub(state.regex, cls.compact_repl(state.regex_repl), state.value)\
-                            if state.compact == True else state.value,
-                        formatted_value=re.sub(state.regex, cls.format_repl(state.regex_repl), state.value),
-                    )
+                # If corresponding replacement patterns are defined, use them to construct
+                # the compact as the formatted value:
+                value = state.value
+                if state.compact_repl:
+                    state = dataclasses.replace(state, value=re.sub(state.regex, cls.replace(state.compact_repl), value))
+                if state.format_repl:
+                    state = dataclasses.replace(state, formatted_value=re.sub(state.regex, cls.replace(state.format_repl), value))
+
         return state
 
     @classmethod
@@ -198,18 +185,7 @@ class RegexValidatorState(ValidatorState):
         return for_obj
 
     @staticmethod
-    def compact_repl(regex_repl):
-        if regex_repl is not None:
-            if '|' in regex_repl:
-                def multi_repl(m):
-                    for i, repl in enumerate(regex_repl.split('|'), start=1):
-                        if m.group(i) is not None:
-                            return re.sub(m.re, ''.join(re.findall('\\\\\d+', repl)), m.string)
-                return multi_repl
-            return ''.join(re.findall('\\\\\d+', regex_repl))
-
-    @staticmethod
-    def format_repl(regex_repl):
+    def replace(regex_repl):
         if regex_repl is not None and '|' in regex_repl:
             def multi_repl(m):
                 for i, repl in enumerate(regex_repl.split('|'), start=1):
@@ -218,96 +194,5 @@ class RegexValidatorState(ValidatorState):
             return multi_repl
         return regex_repl
 
-class RegexValidator(QtGui.QValidator, AbstractValidator):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.state = None
-
-    def set_state(self, state):
-        state = state or dict()
-        if not isinstance(state, dict):
-            state = ValidatorState.asdict(state)
-        self.state = state
-        # Emit changed signal as the updated state may affect the validity (and background color).
-        self.changed.emit()
-
-    def validate(self, qtext, position):
-        ptext = str(qtext)
-        if ptext and self.state:
-
-            # Perform sanitization based on the state's parameters.
-            if self.state["deletechars"]:
-                for c in self.state["deletechars"]:
-                    ptext = ptext.replace(c, '')
-            if self.state["to_upper"] == True:
-                ptext = ptext.upper()
-
-            # First check if the text validates the regex (if defined)
-            regex = self.state["regex"]
-            flags = re.IGNORECASE if self.state["ignore_case"] == True else 0
-            if regex is not None and re.fullmatch(regex, ptext, flags=flags) is None:
-                return (QtGui.QValidator.State.Intermediate, qtext, position)
-            else:
-                # If it passed the regex validation, check if the text differs from the state's last value:
-                if ptext == self.state["value"]:
-                    # If the value did not change, reuse the state's validation result:
-                    formatted_value = self.state["formatted_value"]
-                    if self.state["valid"]:
-                        return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
-                    return (QtGui.QValidator.State.Intermediate, formatted_value, position)
-
-                # If the value changed, the state's validation result is invalidated, so perform the regex replace formatting
-                # (if available) awaiting the validator state from being updated.
-                if self.state["regex_repl"] is not None:
-                    formatted_value = re.sub(regex, RegexValidatorState.format_repl(self.state["regex_repl"]), ptext)
-                    return (QtGui.QValidator.State.Acceptable, formatted_value, len(formatted_value))
-                return (QtGui.QValidator.State.Acceptable, ptext, position)
-
-        return (QtGui.QValidator.State.Acceptable, qtext, 0)
-
-# TODO: once moved to the vFinance repo, the zip_code_types can be
-# refactored as identifier types and this ZipcodeValidatorState
-# will become superfluous (as the IdentifierValidatorState can then be used).
-@dataclass(frozen=True)
-class ZipcodeValidatorState(RegexValidatorState):
-
-    deletechars: str = ' -./#,'
-    to_upper: bool = True
-
-    @classmethod
-    def for_type(cls, zip_code_type, value):
-        state = dict()
-        if zip_code_type in zip_code_types:
-            zip_code_type = zip_code_types[zip_code_type]
-            state.update(
-                regex=zip_code_type.regex,
-                regex_repl=zip_code_type.repl,
-                example=zip_code_type.example,
-            )
-        return cls.for_value(value, **state)
-
-    @classmethod
-    def for_city(cls, city):
-        if city is not None:
-            return cls.for_type(city.zip_code_type, city.code)
-        return cls()
-
-    @classmethod
-    def for_addressable(cls, addressable):
-        if addressable is not None:
-            if addressable.city is not None:
-                return cls.for_type(addressable.city.zip_code_type, addressable.zip_code)
-            return cls.for_value(addressable.zip_code)
-        return cls()
-
-    @classmethod
-    def hint_for_city(cls, city):
-        if (state := cls.for_city(city)) is not None and \
-                (example := state.example) is not None:
-            return 'e.g: {}'.format(example)
-
-    @classmethod
-    def hint_for_addressable(cls, addressable):
-        if addressable is not None:
-            return cls.hint_for_city(addressable.city)
+class RegexValidator(AbstractValidator):
+    pass

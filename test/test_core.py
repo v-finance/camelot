@@ -5,7 +5,6 @@ import tempfile
 import unittest
 
 from camelot.core.conf import SimpleSettings, settings
-from camelot.core.memento import SqlMemento, memento_change, memento_types
 from camelot.core.naming import (
     AlreadyBoundException, BindingType, Constant, ConstantNamingContext, EntityNamingContext,
     ImmutableBindingException, initial_naming_context, InitialNamingContext,
@@ -16,75 +15,38 @@ from camelot.core.profile import Profile, ProfileStore
 from camelot.core.qt import QtCore, py_to_variant, variant_to_py
 from camelot.core.singleton import QSingleton
 from camelot.core.sql import metadata
-from camelot.model import party
+from camelot.model.authentication import AuthenticationMechanism
 
 from decimal import Decimal
 from sqlalchemy import MetaData, schema, types
 from sqlalchemy.ext.declarative import declarative_base
 
-from .test_model import ExampleModelMixinCase
 from .test_orm import EntityMetaMock
-from .testing_context import LoadSampleData
+from .testing_context import LoadSampleData, Person, Organization, model_engine
 
 memento_id_counter = 0
 session_id = str(Session().hash_key)
 
-class MementoCase(unittest.TestCase, ExampleModelMixinCase):
-    """test functions from camelot.core.memento
-    """
-    
-    def setUp( self ):
-        super( MementoCase, self ).setUp()
-        self.setup_sample_model()
-        global memento_id_counter
-        custom_memento_types = memento_types + [(100, 'custom')]
-        self.memento = SqlMemento( memento_types = custom_memento_types )
-        memento_id_counter += 1
-        self.id_counter = memento_id_counter
-        self.model = 'TestMemento'
+class ExampleModelMixinCase(object):
 
-    def tearDown(self):
-        self.tear_down_sample_model()
+    @classmethod
+    def setup_sample_model(cls):
+        metadata.bind = model_engine
+        metadata.drop_all(model_engine)
+        metadata.create_all(model_engine)
+        cls.session = Session()
+        cls.session.expunge_all()
+        AuthenticationMechanism.authenticate(
+            metadata.bind, 'database', 'user', ['admin']
+        )
+        return model_engine
 
-    def test_lifecycle( self ):
-        memento_changes = [
-            memento_change( self.model, 
-                            [self.id_counter], 
-                            None, 'create' ),            
-            memento_change( self.model, 
-                            [self.id_counter], 
-                            {'name':'foo'}, 'before_update' ),
-            memento_change( self.model, 
-                            [self.id_counter], 
-                            {'name':'bar'}, 'before_delete' ),            
-            ]
-        
-        self.memento.register_changes( memento_changes )
-        changes = list( self.memento.get_changes( self.model,
-                                                  [self.id_counter],
-                                                  {} ) )
-        self.assertEqual( len(changes), 3 )
-        
-    def test_no_error( self ):
-        memento_changes = [
-            memento_change( None, 
-                            [self.id_counter], 
-                            None, None ),                     
-            ]
-        self.memento.register_changes( memento_changes )
-        
-    def test_custom_memento_type( self ):
-        memento_changes = [
-            memento_change( self.model, 
-                            [self.id_counter], 
-                            {}, 'custom' ),                     
-            ]
-        self.memento.register_changes( memento_changes )
-        changes = list( self.memento.get_changes( self.model,
-                                                  [self.id_counter],
-                                                  {} ) )
-        self.assertEqual( len(changes), 1 )
-       
+    @classmethod
+    def tear_down_sample_model(cls):
+        cls.session.expunge_all()
+        metadata.bind = None
+
+
 class ProfileCase(unittest.TestCase):
     """Test the save/restore and selection functions of the database profile
     """
@@ -910,8 +872,8 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
     def test_resolve(self):
         super().test_resolve()
-        entity1 = party.Organization(name='1')
-        entity2 = party.Person(first_name='Test', last_name='Dummy')
+        entity1 = Organization(name='1')
+        entity2 = Person(first_name='Test', last_name='Dummy')
         self.session.flush()
 
         # Verify that the constant naming contexts are available by default on the initial context:
@@ -941,6 +903,8 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
         self.assertEqual(self.context.resolve(('constant', 'date', '2022', '04', '13')), datetime.date(2022, 4, 13))
         self.assertEqual(self.context.resolve(('constant', 'date', '2021', '02', '05')), datetime.date(2021, 2, 5))
         # Entities
+        self.assertEqual(self.context.resolve(('entity', 'financial_party', session_id, str(entity1.id))), entity1)
+        self.assertEqual(self.context.resolve(('entity', 'financial_party', session_id, str(entity2.id))), entity2)
         self.assertEqual(self.context.resolve(('entity', 'organization', session_id, str(entity1.id))), entity1)
         self.assertEqual(self.context.resolve(('entity', 'person', session_id, str(entity2.id))), entity2)
         self.assertEqual(self.context.resolve(('entity', 'composite_pk_entity', session_id, str(self.binary_entity_1.id_1), str(self.binary_entity_1.id_2))), self.binary_entity_1)
@@ -962,8 +926,8 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
     def test_bind_object(self):
         obj1 = object()
         obj2 = object()
-        entity1 = party.Organization(name='1')
-        entity2 = party.Person(first_name='Test', last_name='Dummy')
+        entity1 = Organization(name='1')
+        entity2 = Person(first_name='Test', last_name='Dummy')
         self.session.flush()
 
         for obj, expected_name in [
@@ -999,7 +963,7 @@ class InitialNamingContextCase(NamingContextCase, ExampleModelMixinCase):
 
         # Only flushed entities should be supported:
         with self.assertRaises(NotImplementedError):
-            self.context._bind_object(party.Person(first_name='Crash test', last_name='Dummy'))
+            self.context._bind_object(Person(first_name='Crash test', last_name='Dummy'))
         self.session.delete(entity1)
         self.session.flush()
         with self.assertRaises(NotImplementedError):
@@ -1089,20 +1053,20 @@ class AbstractEntityNamingContextCase(AbstractNamingContextCase, ExampleModelMix
 
 class PersonEntityNamingContextCase(AbstractEntityNamingContextCase, EntityNamingContextCaseMixin):
 
-    entity = party.Person
-    context_name = ('person',)
+    entity = Person
+    context_name = ('party',)
 
 class OrganizationEntityNamingContextCase(AbstractEntityNamingContextCase, EntityNamingContextCaseMixin):
 
-    entity = party.Organization
-    context_name = ('organization',)
+    entity = Organization
+    context_name = ('party',)
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         # Make sure at least 2 organization exist.
-        org1 = party.Organization( name = 'Test1' )
-        org2 = party.Organization( name = 'Test2' )
+        org1 = Organization( name = 'Test1' )
+        org2 = Organization( name = 'Test2' )
         cls.session.flush()
         cls.compatible_names = [
             (session_id, str(org1.id)),
