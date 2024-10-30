@@ -169,7 +169,7 @@ class SelectProfileMixin:
                         profile_admin = NonEditableProfileAdmin(app_admin, Profile)
                         proxy = profile_admin.get_proxy(profiles)
                         try:
-                            yield action_steps.ChangeObjects(profiles, profile_admin, proxy)
+                            yield action_steps.ChangeObjects(profiles, profile_admin, proxy, qml=True)
                             profile_store.write_profiles(proxy.get_model())
                         except CancelRequest:
                             pass
