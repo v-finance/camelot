@@ -93,15 +93,3 @@ class Types(util.OrderedProperties):
     @classmethod
     def type_str(cls):
         return Annotated[str, cls]
-
-
-sensitivity_level_type = collections.namedtuple('sensitivity_level_type', ('id', 'name', 'description'))
-
-sensitivity_levels = Types(
-    sensitivity_level_type(0, 'insensitive',         'Data field that is insensitive.'),
-    sensitivity_level_type(1, 'identifying',         'Data field that uniquely identifies a person.'),
-    sensitivity_level_type(2, 'quasi_identifying',   'Data field that can be combined with other fields to identify a person.'),
-    sensitivity_level_type(3, 'sensitive_personal',  'Data field containing sensitive personal information.'),
-    sensitivity_level_type(4, 'sensitive_financial', 'Data field containing sensitive financial information'),
-    sensitivity_level_type(5, 'sensitive_health',    'Data field containing sensitive health information'),
-)
