@@ -681,12 +681,13 @@ class EntityBase( object ):
 
         :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.registry.Endpoint`.
         """
-        from camelot.model.authentication import end_of_times
         # TODO: can be made top-level after transer to the vFinance repo.
         from vfinance.interface.registry import endpoint_registry
+        # @todo : move this method to a place where end of times is known
+        end_of_times = datetime.date(2400, 12, 31)
         entity = type(self)
         endpoint = endpoint_registry.get(entity)
         assert endpoint.application_date is not None
         assert isinstance(at, datetime.date)
         application_date = endpoint.application_date.__get__(self, None)
-        return application_date is not None and not (application_date >= end_of_times() or at < application_date)
+        return application_date is not None and not (application_date >= end_of_times or at < application_date)

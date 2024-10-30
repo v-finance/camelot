@@ -30,7 +30,6 @@ from camelot.core.naming import initial_naming_context
 from camelot.core.orm import Entity, metadata, Session
 from camelot.core.qt import QtCore, QtGui
 from camelot.core.utils import ugettext_lazy as _
-from camelot.model.authentication import AuthenticationMechanism
 from camelot.test import test_context
 from camelot.view.art import ColorScheme
 from camelot.view import action_steps, forms
@@ -588,9 +587,6 @@ class SetupSampleModel(Action):
         metadata.create_all(model_engine)
         cls.session = Session()
         cls.session.expunge_all()
-        AuthenticationMechanism.authenticate(
-            metadata.bind, 'database', 'user', ['admin']
-        )
         return model_engine
 
     def model_run(self, model_context, mode):
