@@ -37,7 +37,6 @@ logger = logging.getLogger('camelot.admin.application_admin')
 from .action.base import Action
 from .action.application_action import OpenTableView
 from .admin_route import AdminRoute, register_list_actions, register_form_actions
-from .entity_admin import EntityAdmin
 from .menu import MenuItem
 from .object_admin import ObjectAdmin
 from ..core.orm import Entity
@@ -121,6 +120,8 @@ shortcut confusion and reduce the number of status updates.
         #
         # Cache created ObjectAdmin objects
         #
+        # TODO: move top-level after transfer to vfinance repo.
+        from vfinance.admin.entity_admin import EntityAdmin
         self._object_admin_cache = {}
         self._memento = None
         self.admins = {
@@ -148,7 +149,7 @@ shortcut confusion and reduce the number of status updates.
         :param entity: :class:`class`
         :param admin_class: a subclass of 
             :class:`camelot.admin.object_admin.ObjectAdmin` or
-            :class:`camelot.admin.entity_admin.EntityAdmin`
+            :class:`vfinance.admin.entity_admin.EntityAdmin`
         """
         self.admins[entity] = admin_class
 
