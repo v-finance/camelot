@@ -1,9 +1,5 @@
-import collections
-
 from camelot.core.utils import ugettext_lazy
-
 from sqlalchemy import util
-
 from typing_extensions import Annotated
 
 
