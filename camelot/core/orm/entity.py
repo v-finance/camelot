@@ -455,7 +455,7 @@ class EntityMeta( DeclarativeMeta ):
     def get_secondary_discriminator_types(cls):
         if cls.get_cls_discriminator() is not None:
             (_, *secondary_discriminators) = cls.get_cls_discriminator()
-            return [secondary_discriminator.prop.entity.entity for secondary_discriminator in secondary_discriminators]
+            return [secondary_discriminator.prop.entity.mapper.entity for secondary_discriminator in secondary_discriminators]
         return []
 
     def get_ranked_by(cls):
