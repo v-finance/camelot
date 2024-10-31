@@ -201,10 +201,10 @@ class EntityAction( Action ):
                   entity_admin ):
         """
         :param entity_admin: an instance of 
-            :class:`camelot.admin.entity_admin.EntityAdmin` to be used to
+            :class:`vfinance.admin.entity_admin.EntityAdmin` to be used to
             visualize the entities
         """
-        from camelot.admin.entity_admin import EntityAdmin
+        from vfinance.admin.entity_admin import EntityAdmin
         assert isinstance( entity_admin, EntityAdmin )
         self._entity_admin = entity_admin
         
@@ -212,7 +212,7 @@ class OpenTableView( EntityAction ):
     """An application action that opens a TableView of an Entity
 
     :param entity_admin: an instance of 
-        :class:`camelot.admin.entity_admin.EntityAdmin` to be used to
+        :class:`vfinance.admin.entity_admin.EntityAdmin` to be used to
         visualize the entities
     
     """

@@ -178,9 +178,10 @@ class Profile:
         list_display = ['name', 'dialect', 'host', 'port', 'database']
         form_display = ['name', 'dialect', 'host', 'port', 'database', 'user', 'password', 'media_location', 'locale_language']
         related_toolbar_actions = [
-            list_action.delete_selection,
+            list_action.add_new_profile,
             list_action.duplicate_selection,
-            list_action.add_new_profile
+            list_action.delete_selection,
+            list_action.stretch,
         ]
         list_action = list_action.edit_profile
         field_attributes = {
