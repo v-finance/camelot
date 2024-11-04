@@ -145,6 +145,8 @@ class ActionMixinCase(object):
         Runs an action and simulates replies by the user each time
         a blocking action step is presented.
         """
+        if type(mode) is tuple:
+            mode = list(mode)
         gui_run_name = get_root_backend().run_action(
             gui_context_name, action_name, model_context_name, mode
         )

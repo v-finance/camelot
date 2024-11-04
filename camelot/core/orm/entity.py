@@ -347,9 +347,12 @@ class EntityMeta( DeclarativeMeta ):
         """
         In case of a polymorphic base class with a polymorphic discriminator column
         that is of type Enumeration, return its contained type enumeration.
+        Note: a class which both defines the polymorphic on as a polymoprhic identity,
+        is not considered a polymoprhic base class.
         """
         polymorphic_on = cls.__mapper_args__.get('polymorphic_on')
-        if polymorphic_on is not None:
+        polymorphic_identity = cls.__mapper_args__.get('polymorphic_identity')
+        if polymorphic_on is not None and polymorphic_identity is None:
             polymorphic_on_col = polymorphic_on
             if isinstance(polymorphic_on, orm.attributes.InstrumentedAttribute):
                 polymorphic_on_col = polymorphic_on.prop.columns[0]
@@ -452,7 +455,7 @@ class EntityMeta( DeclarativeMeta ):
     def get_secondary_discriminator_types(cls):
         if cls.get_cls_discriminator() is not None:
             (_, *secondary_discriminators) = cls.get_cls_discriminator()
-            return [secondary_discriminator.prop.entity.entity for secondary_discriminator in secondary_discriminators]
+            return [secondary_discriminator.prop.entity.mapper.entity for secondary_discriminator in secondary_discriminators]
         return []
 
     def get_ranked_by(cls):

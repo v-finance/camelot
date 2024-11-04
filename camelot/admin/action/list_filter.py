@@ -593,7 +593,7 @@ class One2ManyFilter(RelatedFilter):
     def __init__(self, attribute, joins=[], field_filters=[], where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty), self.AssertionMessage.invalid_relationship_attribute.value
-        self.entity = attribute.prop.entity.entity
+        self.entity = attribute.prop.entity.mapper.entity
         self.admin = None
         entity_mapper = orm.class_mapper(self.entity)
         self.primary_key_attributes = [entity_mapper.get_property_by_column(pk).class_attribute for pk in entity_mapper.primary_key]
