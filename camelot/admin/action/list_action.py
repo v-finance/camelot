@@ -28,7 +28,6 @@
 #  ============================================================================
 
 import codecs
-import datetime
 import enum
 import logging
 import itertools
@@ -44,8 +43,6 @@ from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import Types
 
-
-import xlsxwriter
 
 LOGGER = logging.getLogger('camelot.admin.action.list_action')
 
