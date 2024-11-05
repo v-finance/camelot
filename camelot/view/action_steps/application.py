@@ -34,7 +34,6 @@ import typing
 from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.action.application_action import model_context_naming, model_context_counter, exit_name
 from ...admin.admin_route import AdminRoute, Route
-from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
