@@ -77,17 +77,13 @@ class MainWindow(ActionStep, DataclassSerializable):
     (e.g. stopping the model thread).
     """
 
-    admin: InitVar[ApplicationAdmin]
+    window_title: str
     model_context: InitVar(ModelContext) = None
-    window_title: str = field(init=False)
     blocking: bool = False
-    admin_route: Route = field(init=False)
     model_context_name: Route = field(default_factory=list)
     exit_action: Route = field(init=False)
 
-    def __post_init__(self, admin, model_context):
-        self.window_title = admin.get_name()
-        self.admin_route = admin.get_admin_route()
+    def __post_init__(self, model_context):
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self.exit_action = exit_name
 
