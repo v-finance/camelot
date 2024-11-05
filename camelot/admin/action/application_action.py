@@ -405,7 +405,7 @@ def structure_to_application_action(structure, application_admin):
     """Convert a python structure to an ApplicationAction
 
     :param application_admin: the 
-        :class:`camelot.admin.application_admin.ApplicationAdmin` to use to
+        :class:`vfinance.admin.application_admin.ApplicationAdmin` to use to
         create other Admin classes.
     """
     if isinstance(structure, Action):
