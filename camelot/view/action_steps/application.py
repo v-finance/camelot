@@ -193,9 +193,6 @@ class InstallTranslator(ActionStep, DataclassSerializable):
 class RemoveTranslators(ActionStep, DataclassSerializable):
     """
     Unregister all previously installed translators from the application.
-
-    :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
-        object
     """
 
 
