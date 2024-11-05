@@ -199,11 +199,6 @@ class RemoveTranslators(ActionStep, DataclassSerializable):
         object
     """
 
-    admin: InitVar[ApplicationAdmin]
-    admin_route: AdminRoute = field(init=False)
-
-    def __post_init__(self, admin):
-        self.admin_route = admin.get_admin_route()
 
 @dataclass
 class UpdateActionsState(ActionStep, DataclassSerializable):
