@@ -28,10 +28,7 @@
 #  ============================================================================
 import logging
 
-
 from sqlalchemy import types, sql, PrimaryKeyConstraint
-
-from .qt import QtCore
 
 from camelot.core.utils import ugettext as _
 from camelot.core.sql import metadata as default_metadata
@@ -76,26 +73,7 @@ class BackupMechanism(object):
         This method will be called inside the model thread.
         """
         return u'backup'
-    
-    @classmethod
-    def get_default_storage(cls):
-        """
-        :return: a camelot.core.files.storage.Storage object
-        
-        Returns the storage to be used to store default backups.
-        
-        By default, this will return a Storage that puts the backup files
-        in the DataLocation as specified by the QDesktopServices
-        """
-        apps_folder = str(
-            QtCore.QStandardPaths.writableLocation(
-                QtCore.QStandardPaths.DataLocation
-            )
-        )
-        
-        from camelot.core.files.storage import Storage
-        return Storage(upload_to='backups', root=apps_folder)
-        
+
     def backup_table_filter(self, from_table):
         """
         Method used to filter which tables should be backed up, overwrite this method
@@ -212,21 +190,14 @@ class BackupMechanism(object):
         # Proceed with the restore
         #
         import os
-        from camelot.core.files.storage import StoredFile
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData
         from sqlalchemy.pool import NullPool
 
         yield (0, 0, _('Open backup file'))
-        if self.storage:
-            if not self.storage.exists(self.filename):
-                raise Exception('Backup file does not exist')
-            stored_file = StoredFile(self.storage, self.filename)
-            filename = self.storage.checkout( stored_file )
-        else:
-            if not os.path.exists(self.filename):
-                raise Exception('Backup file does not exist')
-            filename = self.filename
+        if not os.path.exists(self.filename):
+            raise Exception('Backup file does not exist')
+        filename = self.filename
         from_engine = create_engine('sqlite:///%s'%filename, poolclass=NullPool )
         from_connection = from_engine.connect()
 
@@ -284,6 +255,6 @@ class BackupMechanism(object):
 
     def copy_table_data(self, from_table, to_table, from_connection, to_connection):
         query = sql.select([from_table])
-        table_data = [row for row in from_connection.execute(query).fetchall()]
+        table_data = [row._mapping for row in from_connection.execute(query).fetchall()]
         if len(table_data):
             to_connection.execute(to_table.insert(), table_data)

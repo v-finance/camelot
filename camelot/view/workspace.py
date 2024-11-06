@@ -90,7 +90,6 @@ def show_top_level(view, gui_context_name, state=None):
     """Show a widget as a top level window.  If a parent window is given, the new
     window will have the same modality as the parent.
 
-    :param view: the widget extend AbstractView
     :param parent: the widget with regard to which the top level
         window will be placed.
     :param state: the state of the form, 'maximized', or 'left' or 'right', ...
@@ -126,7 +125,6 @@ def show_top_level(view, gui_context_name, state=None):
     #
     view.setWindowTitle(' ')
     view.title_changed_signal.connect( view.setWindowTitle )
-    view.icon_changed_signal.connect( view.setWindowIcon )
     view.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
     # parent might be a QWidget or a QWindow
     # the modality should be set before showing the window

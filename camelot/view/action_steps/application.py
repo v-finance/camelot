@@ -38,7 +38,6 @@ from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
-from ...model.authentication import AuthenticationMechanism
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,7 +48,9 @@ class Exit(ActionStep, DataclassSerializable):
     """
 
     return_code: int = 0
-    blocking: bool = False
+    # blocking, since after exit has been instructed, the server should
+    # wait for termination of the client and not continue the action
+    blocking: bool = True
 
 
 @dataclass
@@ -111,7 +112,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
 
     # noinspection PyDataclass
     def __post_init__(self, model_context):
-        self.menu = self._filter_items(self.menu, AuthenticationMechanism.get_current_authentication())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.menu.items, self.action_states)
 

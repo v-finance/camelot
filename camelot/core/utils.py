@@ -34,38 +34,8 @@ import enum
 import logging
 
 from .qt import QtCore, qtranslate
-from sqlalchemy import sql
 
 logger = logging.getLogger('camelot.core.utils')
-
-    ## try to activate the PySide backend of matplotlib
-    ## http://www.scipy.org/Cookbook/Matplotlib/PySide
-    #try:
-        #import matplotlib
-        #matplotlib.rcParams['backend.qt4'] = 'PySide'
-    #except:
-        #pass
-    
-def create_constant_function(constant):
-    return lambda:constant
-
-class CollectionGetterFromObjectGetter(object):
-    """Convert an object getter to a collection getter.  The resulting
-    class is callable and will make sure object_getter is only called
-    once, even if collection getter is called multiple times.
-    """
-
-    def __init__(self, object_getter):
-        """:param object_getter: a function that returns the object to
-        be put in the collection.
-        """
-        self._object_getter = object_getter
-        self._collection = None
-
-    def __call__(self):
-        if not self._collection:
-            self._collection = [self._object_getter()]
-        return self._collection
 
 #
 # Global dictionary containing all user defined translations in the
@@ -76,18 +46,6 @@ _translations_ = {}
 def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
-
-def load_translations(connectable):
-    """Fill the global dictionary of translations with all data from the
-    database, to be able to do fast gui thread lookups of translations"""
-    language = str(QtCore.QLocale().name())
-    from camelot.model.i18n import Translation
-    query = sql.select([Translation.source, Translation.value],
-                       whereclause = sql.and_(Translation.language==language,
-                                              Translation.value!=None,
-                                              Translation.value!=u''))
-    for source, value in connectable.execute(query):
-        _translations_[source] = value
 
 def ugettext(string_to_translate, msgctxt=None):
     """Translate the string_to_translate to the language of the current locale.
@@ -108,19 +66,6 @@ def ugettext(string_to_translate, msgctxt=None):
 
     return result
 
-def dgettext(domain, message):
-    """Like ugettext but look the message up in the specified domain.
-    This uses the Translation table.
-    """
-    assert isinstance(message, str)
-    from camelot.model.i18n import Translation
-    from sqlalchemy import sql
-    query = sql.select( [Translation.value],
-                          whereclause = sql.and_(Translation.language.like('%s%%'%domain),
-                                                 Translation.source==message) ).limit(1)
-    for translation in Translation.query.session.execute(query):
-        return translation[0]
-    return message
 
 class ugettext_lazy(object):
     """Like :function:`ugettext`, but delays the translation until the string

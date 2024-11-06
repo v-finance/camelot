@@ -30,7 +30,7 @@
 
 from dataclasses import dataclass, field
 
-from camelot.core.naming import initial_naming_context
+from camelot.core.naming import initial_naming_context, NameNotFoundException
 
 from .item_view import OpenTableView
 
@@ -73,7 +73,10 @@ class SelectObjects(OpenTableView):
     @classmethod
     def deserialize_result(cls, gui_context, response):
         objects = []
-        model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
+        try:
+            model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
+        except NameNotFoundException:
+            return objects
         proxy = model_context.proxy
         if proxy is not None:
             selected_rows = response['selected_rows']

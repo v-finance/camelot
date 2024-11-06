@@ -90,7 +90,7 @@ class SetColumns(ActionStep, DataclassSerializable):
         elif issubclass(fa['delegate'], delegates.LocalFileDelegate):
             attrs = filter_attributes(fa, ['directory', 'save_as', 'file_filter'])
         elif issubclass(fa['delegate'], delegates.MonthsDelegate):
-            attrs = filter_attributes(fa, ['minimum', 'maximum'])
+            attrs = filter_attributes(fa, ['minimum', 'maximum', 'forever', 'action_routes'])
         elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
             attrs = filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
                                                 'action_routes', 'list_actions', 'list_action'])
@@ -100,8 +100,6 @@ class SetColumns(ActionStep, DataclassSerializable):
             attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type', 'completer_type'])
         elif issubclass(fa['delegate'], delegates.TextEditDelegate):
             attrs = filter_attributes(fa, ['length', 'editable'])
-        elif issubclass(fa['delegate'], delegates.VirtualAddressDelegate):
-            attrs = filter_attributes(fa, ['address_type'])
         return attrs
 
 @dataclass

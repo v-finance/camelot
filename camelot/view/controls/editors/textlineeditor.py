@@ -28,9 +28,8 @@
 #  ============================================================================
 
 
-
+from ....core.backend import get_root_backend
 from ....core.qt import QtCore, QtGui, QtWidgets
-from camelot.view.validator import AbstractValidator
 from camelot.view.completer import AbstractCompleter
 
 from .customeditor import (CustomEditor, set_background_color_palette)
@@ -62,10 +61,15 @@ class TextLineEditor(CustomEditor):
             text_input.setEchoMode(QtWidgets.QLineEdit.EchoMode(echo_mode))
         else:
             text_input.setEchoMode(QtWidgets.QLineEdit.EchoMode.Normal)
-        validator = AbstractValidator.get_validator(validator_type, self)
+        validator = get_root_backend().validator(validator_type)
         if validator is not None:
+            validator.setParent(self)
             validator.setObjectName('validator')
             text_input.setValidator(validator)
+            # Connect the validator's changed signal to the text input's
+            # bg color update, as it may require updating when the validator
+            # state changes.
+            validator.changed.connect(text_input._update_background_color)
         completer = AbstractCompleter.get_completer(completer_type, self)
         if completer is not None:
             completer.setObjectName('completer')
@@ -109,8 +113,10 @@ class TextLineEditor(CustomEditor):
 
     def set_validator_state(self, validator_state):
         validator = self.findChild(QtGui.QValidator, 'validator')
-        if validator is not None:
-            validator.set_state(validator_state)
+        if (validator is not None) and (validator_state is not None):
+            get_root_backend().set_validator_state(
+                validator, validator_state.encode('utf-8')
+            )
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)

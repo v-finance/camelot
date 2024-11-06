@@ -36,6 +36,7 @@ Those fields are stored in the :mod:`camelot.types` module.
 """
 import collections
 import logging
+from pathlib import PurePath
 
 logger = logging.getLogger('camelot.types')
 
@@ -58,7 +59,8 @@ class PrimaryKey(types.TypeDecorator):
     
     impl = types.TypeEngine
     _type_affinity = types.Integer
-    
+    cache_ok = True
+
     def load_dialect_impl(self, dialect):
         from camelot.core.orm import options
         return options.DEFAULT_AUTO_PRIMARYKEY_TYPE()
@@ -139,6 +141,7 @@ class RichText(types.TypeDecorator):
 """
     
     impl = types.UnicodeText
+    cache_ok = True
     
     @property
     def python_type(self):
@@ -159,7 +162,8 @@ used too much memory, so now it's implemented using QT.
     """
     
     impl = types.Unicode
-    
+    cache_ok = True
+
     def __init__(self):
         types.TypeDecorator.__init__(self, length=20)
         
@@ -213,12 +217,15 @@ class Enumeration(types.TypeDecorator):
   """
     
     impl = types.Integer
+    cache_ok = True
     
     def __init__(self, choices=[], **kwargs):
         types.TypeDecorator.__init__(self, **kwargs)
         self._int_to_string = dict(choices)
         self._string_to_int = dict((str_value,int_key) for (int_key,str_value) in choices)
-        self.choices = [value for (_key,value) in choices]
+        # Note: choices needs to be a tuple, as SQLAlchemy's caching needs
+        # the type to be hashable.
+        self.choices = tuple([value for (_key,value) in choices])
         
     def bind_processor(self, dialect):
   
@@ -263,6 +270,15 @@ class Enumeration(types.TypeDecorator):
     def __repr__(self):
         return 'Enumeration()'
 
+
+class StatusEnumeration(Enumeration):
+
+    cache_ok = True
+
+    def __repr__(self):
+        return 'StatusEnumeration()'
+
+
 class File(types.TypeDecorator):
     """Sqlalchemy column type to store files.  Only the location of the file is stored
     
@@ -300,11 +316,11 @@ class File(types.TypeDecorator):
     """
     
     impl = types.Unicode
-    stored_file_implementation = StoredFile
-    
-    def __init__(self, max_length=100, upload_to=u'', storage=Storage, **kwargs):
+
+    def __init__(self, storage, max_length=100, **kwargs):
+        assert isinstance(storage, Storage) or storage is None
         self.max_length = max_length
-        self.storage = storage(upload_to, self.stored_file_implementation)
+        self.storage = storage or Storage(PurePath(''))
         types.TypeDecorator.__init__(self, length=max_length, **kwargs)
         
     def bind_processor(self, dialect):
@@ -315,23 +331,21 @@ class File(types.TypeDecorator):
           
         def processor(value):
             if value is not None:
-                assert isinstance(value, (self.stored_file_implementation))
-                return impl_processor(value.name)
+                assert isinstance(value, StoredFile)
+                return impl_processor(value.name.as_posix())
             return impl_processor(value)
           
         return processor
     
     def result_processor(self, dialect, coltype=None):
-      
         impl_processor = self.impl.result_processor(dialect, coltype)
         if not impl_processor:
             impl_processor = lambda x:x
-            
+
         def processor(value):
-    
             if value:
                 value = impl_processor(value)
-                return self.stored_file_implementation(self.storage, value)
+                return StoredFile(self.storage, PurePath(value), value)
               
         return processor
       
@@ -342,6 +356,7 @@ class File(types.TypeDecorator):
     def __repr__(self):
         return 'File()'
 
+
 class Months(types.TypeDecorator):
     """
     Months fields are integer fields that represent a number of months.
@@ -349,6 +364,11 @@ class Months(types.TypeDecorator):
     """
 
     impl = types.Integer
+    cache_ok = True
+
+    def __init__(self, forever=None):
+        super().__init__()
+        self.forever = forever
 
     @property
     def python_type(self):

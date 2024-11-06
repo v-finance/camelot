@@ -154,6 +154,15 @@ updated state for the widget.
 
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
+
+.. attribute:: shortcut
+
+    The shortcut key sequence to trigger the action.
+
+.. attribute:: color
+
+    A color used to indicate something regarding the action's state. This color
+    can be used as button text color, background or outline for example.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
@@ -164,6 +173,7 @@ updated state for the widget.
     notification: bool = False
     modes: typing.List[Mode] = field(default_factory=list)
     shortcut: typing.Optional[str] = None
+    color: typing.Optional[str] = None
 
 # TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
 #       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
@@ -238,6 +248,7 @@ class RenderHint(Enum):
     COMBO_BOX = 'combo_box'
     LABEL = 'label'
     STRETCH = 'stretch'
+    STATUS_BUTTON = 'status_button'
 
 
 class Action( ActionStep ):

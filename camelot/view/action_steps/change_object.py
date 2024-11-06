@@ -361,6 +361,7 @@ class ChangeObjects(UpdateTableView):
     """
 
     validate: bool = True
+    qml: bool = False
 
     invalid_rows: List = field(init=False, default_factory=list)
     admin_route: AdminRoute = field(init=False)
@@ -423,3 +424,7 @@ class ChangeObjects(UpdateTableView):
         step = json.loads(serialized_step)
         dialog = cls.render(step)
         dialog.async_exec(gui_run)
+
+@dataclass
+class QmlChangeObjects(ChangeObjects):
+    pass

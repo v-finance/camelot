@@ -31,8 +31,13 @@
 
 import inspect
 import logging
+
+from ..data.types import Types
+
 logger = logging.getLogger('camelot.view.object_admin')
 import typing
+
+from typing_extensions import get_type_hints, Annotated
 
 from ..core.item_model.list_proxy import ListModelProxy
 from ..core.qt import Qt
@@ -620,6 +625,7 @@ be specified using the verbose_name attribute.
         #
         # See if there is a descriptor
         #
+
         attributes = dict()
         field_type = self.get_typing(field_name)
         if field_type is not None:
@@ -636,7 +642,7 @@ be specified using the verbose_name attribute.
         descriptor = self._get_entity_descriptor(field_name)
         if descriptor is not None:
             if isinstance(descriptor, property):
-                return typing.get_type_hints(descriptor.fget).get('return')
+                return get_type_hints(descriptor.fget, include_extras=True).get('return')
     
     def get_typing_attributes(self, field_type):
         if field_type in _typing_to_python_type:
@@ -653,6 +659,14 @@ be specified using the verbose_name attribute.
                     'target':field_type.__args__[0],
                     'python_type': list,
                     }
+        elif typing.get_origin(field_type) is Annotated:
+            attributes = self.get_typing_attributes(field_type.__origin__)
+            for metadata in field_type.__metadata__:
+                if isinstance(metadata, Types):
+                    attributes['choices'] = metadata.get_choices()
+                    attributes['delegate'] = delegates.ComboBoxDelegate
+
+            return attributes
         return {}
     
     def get_field_attributes(self, field_name):
@@ -1148,6 +1162,9 @@ be specified using the verbose_name attribute.
     def get_subsystem_object(self, obj):
         """Return the given object's applicable subsystem object."""
         return obj
+
+    def get_subsystem_cls(self):
+        return self.entity
 
     def get_discriminator_value(self, obj):
         """return the given object's discriminator value."""

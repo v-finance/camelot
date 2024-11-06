@@ -42,10 +42,10 @@ import re
 from enum import Enum
 
 from sqlalchemy import orm, schema, sql, util
-from sqlalchemy.ext.declarative.api import ( _declarative_constructor,
-                                             DeclarativeMeta )
+from sqlalchemy.orm.decl_api import ( _declarative_constructor,
+                                      DeclarativeMeta )
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Date, Integer
+from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
@@ -221,26 +221,11 @@ class EntityMeta( DeclarativeMeta ):
        |
        | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
 
-    * 'application_date'
-       Registers the application date attribute of the target entity.
-       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
-       which should be of type Date.
-
-    * 'transition_types'
-       Enumeration that defines the types of state transitions instances of the entity class can undergo.
-
     * 'editable'
        This entity argument is a flag that when set to False will register the entity class as globally non-editable.
 
     * 'editable_fields'
        List of field_names that should be excluded from the globally non-editable registration, if present.
-
-    * 'retention_level'
-       Configures the data retention of the entity, e.g. how long it should be kept in the system before its final archiving or removal.
-
-    * 'retention_cut_off_date'
-       Registers a date attribute of the target entity, which value signals the point at which the entity's retention period begins.
-       This argument is an optional parameter in the retention policy configuration of entities.
 
     Notes on metaclasses
     --------------------
@@ -250,9 +235,6 @@ class EntityMeta( DeclarativeMeta ):
     In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
-
-    # Supported retention levels; is explicitly set in vFinance.__init__.
-    retention_levels = util.OrderedProperties()
 
     # new is called to create a new Entity class
     def __new__( cls, classname, bases, dict_ ):
@@ -278,9 +260,11 @@ class EntityMeta( DeclarativeMeta ):
                     break
             else:
                 dict_.setdefault('__mapper_args__', dict())
-            
+
+            # Assign each new Entity class a unique id.
+            dict_.setdefault('__entity_name__', cls._default_entity_name(cls, classname))
+
             dict_.setdefault('__entity_args__', dict())
-            
             for base in bases:
                 if hasattr(base, '__types__'):
                     break
@@ -334,55 +318,27 @@ class EntityMeta( DeclarativeMeta ):
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
                     assert len(order_search_by) <= 2, 'Can not define more than 2 search order by clauses.'
 
-                application_date = entity_args.get('application_date')
-                if application_date is not None:
-                    assert isinstance(application_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Application date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
-                    application_date_col = application_date.prop.columns[0] if isinstance(application_date, orm.attributes.InstrumentedAttribute) else application_date
-                    assert isinstance(application_date_col.type, Date), 'The application date should be of type Date'
-
-                transition_types = entity_args.get('transition_types')
-                if transition_types is not None:
-                    assert isinstance(transition_types, util.OrderedProperties), 'Transition types argument should define enumeration types'
-
-                retention_level = entity_args.get('retention_level')
-                if retention_level is not None:
-                    assert retention_level in cls.retention_levels.values(), 'Unsupported retention level'
-
-                retention_cut_off_date = entity_args.get('retention_cut_off_date')
-                if retention_cut_off_date is not None:
-                    assert isinstance(retention_cut_off_date, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Retention cut-off date definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
-                    retention_cut_off_date_col = retention_cut_off_date.prop.columns[0] if isinstance(retention_cut_off_date, orm.attributes.InstrumentedAttribute) else retention_cut_off_date
-                    assert isinstance(retention_cut_off_date_col.type, Date), 'The retention cut-off date should be of type Date'
-
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
-        if classname != 'Entity' and dict_.get('__tablename__') is not None:
-            for val in dict_.values():
-                if isinstance(val, schema.Column) and val.primary_key: # val.primary_key checks if the primary_key attribute of the Column is set to True
-                    break
-            else:
-                # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
-                # table.primary_key returns an iterator so we can't test the length or something like that
-                table = dict_.get('__table__', None)
-                if table is None or table.primary_key is None:
-                    _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
-
-            # Auto-assign entity_args and name entity argument if not configured explicitly.
-            entity_args = dict_.get('__entity_args__')
-            if entity_args is None:
-                dict_['__entity_args__'] = entity_args = {}
-            entity_name = dict_['__entity_args__'].get('name')
-            if entity_name is None:
-                dict_['__entity_args__']['name'] = entity_name = cls._default_entity_name(cls, classname, dict_)
-            assert isinstance(entity_name, str) and len(entity_name) > 0, 'Name argument in __entity_args__ should be text-based and contain at least 1 character'
+        if classname != 'Entity':
+            if dict_.get('__tablename__') is not None:
+                for val in dict_.values():
+                    if isinstance(val, schema.Column) and val.primary_key: # val.primary_key checks if the primary_key attribute of the Column is set to True
+                        break
+                else:
+                    # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
+                    # table.primary_key returns an iterator so we can't test the length or something like that
+                    table = dict_.get('__table__', None)
+                    if table is None or table.primary_key is None:
+                        _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
             # using the entity's name configured (or auto-assigned) in the __entity_args__
-            initial_naming_context.bind_context(('entity', entity_name), EntityNamingContext(_class))
+            initial_naming_context.bind_context(('entity', _class.__entity_name__), EntityNamingContext(_class))
 
         return _class
 
-    def _default_entity_name(cls, classname, dict_):
+    def _default_entity_name(cls, classname):
         # The default format will split the classname by capital letters, and join the lowered result by underscore.
         # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
         return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
@@ -391,9 +347,12 @@ class EntityMeta( DeclarativeMeta ):
         """
         In case of a polymorphic base class with a polymorphic discriminator column
         that is of type Enumeration, return its contained type enumeration.
+        Note: a class which both defines the polymorphic on as a polymoprhic identity,
+        is not considered a polymoprhic base class.
         """
         polymorphic_on = cls.__mapper_args__.get('polymorphic_on')
-        if polymorphic_on is not None:
+        polymorphic_identity = cls.__mapper_args__.get('polymorphic_identity')
+        if polymorphic_on is not None and polymorphic_identity is None:
             polymorphic_on_col = polymorphic_on
             if isinstance(polymorphic_on, orm.attributes.InstrumentedAttribute):
                 polymorphic_on_col = polymorphic_on.prop.columns[0]
@@ -496,7 +455,7 @@ class EntityMeta( DeclarativeMeta ):
     def get_secondary_discriminator_types(cls):
         if cls.get_cls_discriminator() is not None:
             (_, *secondary_discriminators) = cls.get_cls_discriminator()
-            return [secondary_discriminator.prop.entity.entity for secondary_discriminator in secondary_discriminators]
+            return [secondary_discriminator.prop.entity.mapper.entity for secondary_discriminator in secondary_discriminators]
         return []
 
     def get_ranked_by(cls):
@@ -519,21 +478,6 @@ class EntityMeta( DeclarativeMeta ):
                 else:
                     order_by_clauses.append(order_by)
             return tuple(order_by_clauses)
-
-    @property
-    def transition_types(cls):
-        return cls._get_entity_arg('transition_types')
-
-    @property
-    def retention_level(cls):
-        return cls._get_entity_arg('retention_level')
-
-    @property
-    def retention_cut_off_date(cls):
-        retention_cut_off_date = cls._get_entity_arg('retention_cut_off_date')
-        if retention_cut_off_date is not None:
-            mapper = orm.class_mapper(cls)
-            return mapper.get_property(retention_cut_off_date.key).class_attribute
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
@@ -712,14 +656,6 @@ class EntityBase( object ):
     def __lt__(self, other):
         return id(self) < id(other)
 
-    @hybrid.hybrid_property
-    def query( self ):
-        return Session().query( self.__class__ )
-
-    @query.expression
-    def query( cls ):
-        return Session().query( cls )
-
     @classmethod
     def get_by(cls, *args, **kwargs):
         """
@@ -742,17 +678,19 @@ class EntityBase( object ):
         """
         Return whether this entity instance is applicable at the given date.
         This method requires the entity class to have its application date range
-        configured by the 'application_date' __entity_args__ argument.
+        configured in a `vfinance.interface.registry.Endpoint`.
         An instance is applicable at the given date when it is later than the instance's
         application date, and the application date is not later than end_of_times.
 
-        :raises: An AssertionError when the application_date is not configured in the entity's __entity_args__.
+        :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.registry.Endpoint`.
         """
-        from camelot.model.authentication import end_of_times
+        # TODO: can be made top-level after transer to the vFinance repo.
+        from vfinance.interface.registry import endpoint_registry
+        # @todo : move this method to a place where end of times is known
+        end_of_times = datetime.date(2400, 12, 31)
         entity = type(self)
-        assert entity._get_entity_arg('application_date') is not None
+        endpoint = endpoint_registry.get(entity)
+        assert endpoint.application_date is not None
         assert isinstance(at, datetime.date)
-        mapper = orm.class_mapper(entity)
-        application_date_prop = mapper.get_property(entity._get_entity_arg('application_date').key)
-        application_date = application_date_prop.class_attribute.__get__(self, None)
-        return application_date is not None and not (application_date >= end_of_times() or at < application_date)
+        application_date = endpoint.application_date.__get__(self, None)
+        return application_date is not None and not (application_date >= end_of_times or at < application_date)
