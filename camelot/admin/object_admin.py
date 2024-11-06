@@ -379,7 +379,7 @@ be specified using the verbose_name attribute.
 
     def get_form_toolbar_actions( self ):
         """
-        By default this function will return the same as :meth:`camelot.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
+        By default this function will return the same as :meth:`vfinance.admin.application_admin.ApplicationAdmin.get_form_toolbar_actions`
 
         :return: a list of :class:`camelot.admin.action.base.Action` objects
             that should be displayed on the toolbar of a form view.  return
@@ -940,7 +940,7 @@ be specified using the verbose_name attribute.
     def get_application_admin( self ):
         """Provide access to the :class:`ApplicationAdmin`
 
-        :return: the :class:`camelot.admin.application_admin.ApplicationAdmin`
+        :return: the :class:`vfinance.admin.application_admin.ApplicationAdmin`
             object for the application.
         """
         return self.app_admin.get_application_admin()
