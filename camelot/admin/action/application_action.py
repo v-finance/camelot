@@ -83,16 +83,6 @@ class ApplicationActionModelContext(ModelContext):
         return Session()
 
 
-class UpdateActions(Action):
-
-    def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-        actions_state = dict()
-        for action in model_context.actions:
-            actions_state[action] = action.get_state(model_context)
-        yield action_steps.UpdateActionsState(model_context, actions_state)
-
-
 class EntityAction( Action ):
     """Generic ApplicationAction that acts upon an Entity class"""
 
