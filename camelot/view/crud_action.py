@@ -16,7 +16,6 @@ from ..core.item_model import (
     ActionModeRole, FocusPolicyRole,
     VisibleRole, NullableRole
 )
-from ..core.exception import log_programming_error
 from ..core.naming import initial_naming_context, NameNotFoundException
 from ..core.qt import Qt, QtGui
 from camelot.core.serializable import DataclassSerializable
@@ -41,9 +40,7 @@ def strip_data_from_object( obj, columns ):
             field_value = getattr( obj, col )
         except (Exception, RuntimeError, TypeError, NameError) as e:
             message = "could not get field '%s' of object of type %s"%(col, obj.__class__.__name__)
-            log_programming_error( logger, 
-                                   message,
-                                   exc_info = e )
+            logger.error(message, exc_info=e)
         finally:
             row_data.append( field_value )
     return row_data
@@ -179,9 +176,7 @@ class UpdateMixin(object):
                 verbose_identifier = admin.get_verbose_identifier(obj)
             except (Exception, RuntimeError, TypeError, NameError) as e:
                 message = "could not get verbose identifier of object of type %s"%(obj.__class__.__name__)
-                log_programming_error(logger,
-                                      message,
-                                      exc_info=e)
+                logger.error(message, exc_info=e)
                 verbose_identifier = u''
             valid = False
             message = None
