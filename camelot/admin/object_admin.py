@@ -280,6 +280,7 @@ be specified using the verbose_name attribute.
     form_state = None
     icon = None # Default
     qml_form = False # Use new QML forms
+    pdf_field = None
 
     def __init__( self, app_admin, entity ):
         """
