@@ -232,21 +232,3 @@ class Exit( Action ):
         yield Exit()
 
 exit_name = application_action_context.bind(Exit.name, Exit(), True)
-
-       
-class SegmentationFault( Action ):
-    """Create a segmentation fault by reading null, this is to test
-        the faulthandling functions.  this method is triggered by pressing
-        :kbd:`Ctrl-Alt-0` in the GUI"""
-
-    name = 'segfault'
-    verbose_name = _('Segmentation Fault')
-    shortcut = QtGui.QKeySequence( QtCore.Qt.Modifier.CTRL.value + QtCore.Qt.Modifier.ALT.value + QtCore.Qt.Key.Key_0.value )
-    
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        ok = yield action_steps.MessageBox( text =  'Are you sure you want to segfault the application',
-                                            standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes] )
-        if ok == QtWidgets.QMessageBox.StandardButton.Yes:
-            import faulthandler
-            faulthandler._read_null()        
