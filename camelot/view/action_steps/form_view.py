@@ -83,6 +83,7 @@ class OpenFormView(AbstractCrudView):
     blocking: bool = False
     qml: bool = False
     auto_update: bool = True
+    pdf: Optional[str] = None
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
@@ -94,6 +95,7 @@ class OpenFormView(AbstractCrudView):
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
         self.qml = admin.qml_form
+        self.pdf = admin.pdf_field
         if proxy is None:
             proxy = admin.get_proxy([value])
             self.row = 0
