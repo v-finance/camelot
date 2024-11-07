@@ -49,7 +49,6 @@ from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
-from . statements import MUTATORS
 from . import Session, options
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
@@ -237,11 +236,6 @@ class EntityMeta( DeclarativeMeta ):
         # don't modify the Entity class itself
         #
         if classname != 'Entity':
-            #
-            # process the mutators
-            #
-            for mutator, args, kwargs in dict_.get( MUTATORS, [] ):
-                mutator.process( dict_, *args, **kwargs )
             #
             # use default tablename if none set
             #
