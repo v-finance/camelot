@@ -26,21 +26,11 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
-import cProfile
-import logging
 import itertools
 
 from ...core.naming import initial_naming_context
-from ...core.qt import Qt, QtCore, QtWidgets, QtGui
-from ...core.sql import metadata
-from .base import RenderHint
-from camelot.admin.icon import Icon, CompletionValue
-from camelot.admin.action.base import Action, Mode, ModelContext
-from camelot.core.exception import CancelRequest
+from camelot.admin.action.base import ModelContext
 from camelot.core.orm import Session
-from camelot.core.utils import ugettext, ugettext_lazy as _
-from camelot.core.backup import BackupMechanism
 
 """ModelContext and Actions that run in the context of an 
 application.
