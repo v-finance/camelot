@@ -31,14 +31,13 @@ import codecs
 import enum
 import logging
 import itertools
-import dataclasses
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtGui, QtWidgets
 from .base import Action, Mode, RenderHint
 
 from camelot.admin.icon import Icon
-from camelot.core.exception import UserException, CancelRequest
+from camelot.core.exception import UserException
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import Types
