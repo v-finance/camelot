@@ -83,47 +83,6 @@ class ApplicationActionModelContext(ModelContext):
         return Session()
 
 
-class EntityAction( Action ):
-    """Generic ApplicationAction that acts upon an Entity class"""
-
-    name = 'entity_action'
-
-    def __init__( self, 
-                  entity_admin ):
-        """
-        :param entity_admin: an instance of 
-            :class:`vfinance.admin.entity_admin.EntityAdmin` to be used to
-            visualize the entities
-        """
-        from vfinance.admin.entity_admin import EntityAdmin
-        assert isinstance( entity_admin, EntityAdmin )
-        self._entity_admin = entity_admin
-        
-class OpenTableView( EntityAction ):
-    """An application action that opens a TableView of an Entity
-
-    :param entity_admin: an instance of 
-        :class:`vfinance.admin.entity_admin.EntityAdmin` to be used to
-        visualize the entities
-    
-    """
-
-    name = 'open_table_view'
-    modes = [ Mode( 'new_tab', _('Open in New Tab') ) ]
-        
-    def get_state( self, model_context ):
-        state = super( OpenTableView, self ).get_state( model_context )
-        state.verbose_name = self.verbose_name or self._entity_admin.get_verbose_name_plural()
-        return state
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        yield action_steps.UpdateProgress(text=_('Open table'))
-        yield action_steps.OpenQmlTableView(
-            self._entity_admin.get_query(),
-            self._entity_admin,
-        )
-
 class Backup( Action ):
     """
 Backup the database to disk
@@ -291,18 +250,3 @@ class SegmentationFault( Action ):
         if ok == QtWidgets.QMessageBox.StandardButton.Yes:
             import faulthandler
             faulthandler._read_null()        
-
-def structure_to_application_action(structure, application_admin):
-    """Convert a python structure to an ApplicationAction
-
-    :param application_admin: the 
-        :class:`vfinance.admin.application_admin.ApplicationAdmin` to use to
-        create other Admin classes.
-    """
-    if isinstance(structure, Action):
-        return structure
-    admin = application_admin.get_related_admin( structure )
-    return OpenTableView(admin.get_query(), admin)
-
-
-
