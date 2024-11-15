@@ -42,7 +42,6 @@ from ..core.serializable import NamedDataclassSerializable
 logger = logging.getLogger('camelot.view.forms')
 
 from ..core.qt import QtCore, QtWidgets
-from ..core.exception import log_programming_error
 
 class AbstractFormElement(NamedDataclassSerializable):
     
@@ -196,7 +195,7 @@ class AbstractForm(AbstractFormElement):
                         c.next_col()
                     size_policy = editor.sizePolicy()
                 else:
-                    log_programming_error(logger, 'widgets should contain a widget for field %s' % str(field))
+                    logger.error('widgets should contain a widget for field %s' % str(field))
             if size_policy and size_policy.verticalPolicy() == QtWidgets.QSizePolicy.Policy.Expanding:
                 has_vertical_expanding_row = True
 
