@@ -32,7 +32,6 @@ import enum
 import logging
 import itertools
 
-from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import QtGui, QtWidgets
 from .base import Action, Mode, RenderHint
 
