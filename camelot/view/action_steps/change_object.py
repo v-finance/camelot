@@ -287,6 +287,7 @@ class ChangeObject(OpenFormView):
     def __post_init__(self, value, admin, proxy):
         super().__post_init__(value, admin, proxy)
         self.title = admin.get_verbose_name()
+        self.qml = True
 
     @staticmethod
     def _add_actions(admin, actions):
