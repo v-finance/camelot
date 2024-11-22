@@ -145,14 +145,18 @@ class GeographicBoundary( Entity ):
         basic_search = False
         
         list_display = ['row_type', 'name', 'code']
-        form_display = Form(
-            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
-             GroupBoxForm(_('NL'), ['name_NL', None], columns=2),
-             GroupBoxForm(_('FR'), ['name_FR', None], columns=2),
-             GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
-             'alternative_names'],
-            columns=2)
-        
+        form_display = Form([
+            GroupBoxForm(_('Master data'), [
+                'name', None,
+                'code', None,
+                forms.Label(_('Coordinates')),
+                'latitude', None,
+                'longitude', None,
+                ], columns=2),
+            'alternative_names',
+            ], columns=2
+        )
+
         form_state = 'right'
         field_attributes = {
             'row_type': {
@@ -423,14 +427,21 @@ class City(GeographicBoundary, WithCountry):
         verbose_name_plural = _('Cities')
 
         list_display = ['id', 'code', 'name', 'administrative_name', 'administrative_division', 'country']
-        form_display = Form(
-            [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
-             GroupBoxForm(_('Administrative division'), ['administrative_division', None], columns=2),
-             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
-             GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
-             GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
-             GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
-             'alternative_names',
+        form_display = Form([
+            GroupBoxForm(_('City'), [
+                forms.Label(_('Master data')),
+                'name', None,
+                'code', None,
+                'country', None,
+                forms.Label(_('Governance')),
+                'main_municipality', None,
+                'administrative_name', None,
+                'administrative_division',
+                forms.Label(_('Coordinates')),
+                'latitude', None,
+                'longitude', None,
+                ], columns=2),
+            'alternative_names',
              WidgetOnlyForm('note')],
             columns=2)
 
