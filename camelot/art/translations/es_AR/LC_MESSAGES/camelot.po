@@ -577,8 +577,8 @@ msgstr "Preparar base de datos para restauración"
 
 #: camelot/core/backup.py:235
 #, python-format
-msgid "Delete data from table %s"
-msgstr "Eliminando datos de la tabla %s"
+msgid "Delete data from table {}"
+msgstr "Eliminando datos de la tabla {}"
 
 #: camelot/core/backup.py:240
 #, python-format
