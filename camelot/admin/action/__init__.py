@@ -30,7 +30,6 @@
 from .application_action import ApplicationActionModelContext
 from .base import Action, ActionStep, Mode, State, RenderHint
 from .list_action import OpenFormView , RowNumberAction
-from .form_action import ShowHistory
 from .field_action import FieldActionModelContext
 
 __all__ = [
@@ -42,6 +41,5 @@ __all__ = [
     Mode.__name__,
     RenderHint.__name__,
     RowNumberAction.__name__,
-    ShowHistory.__name__,
     State.__name__,
     ]
