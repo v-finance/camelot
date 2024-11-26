@@ -554,7 +554,7 @@ msgstr ""
 
 #: camelot/core/backup.py:235
 #, python-format
-msgid "Delete data from table %s"
+msgid "Delete data from table {}"
 msgstr ""
 
 #: camelot/core/backup.py:240

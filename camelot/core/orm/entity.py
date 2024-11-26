@@ -48,8 +48,7 @@ from sqlalchemy.ext import hybrid
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
-from . statements import MUTATORS
-from . import Session, options
+from . import Session
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
 
@@ -197,11 +196,6 @@ class EntityMeta( DeclarativeMeta ):
         #
         if classname != 'Entity':
             #
-            # process the mutators
-            #
-            for mutator, args, kwargs in dict_.get( MUTATORS, [] ):
-                mutator.process( dict_, *args, **kwargs )
-            #
             # use default tablename if none set
             #
             for base in bases:
@@ -274,7 +268,7 @@ class EntityMeta( DeclarativeMeta ):
                     # table.primary_key returns an iterator so we can't test the length or something like that
                     table = dict_.get('__table__', None)
                     if table is None or table.primary_key is None:
-                        _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
+                        _class.id = schema.Column(PrimaryKey(), primary_key=True)
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
             # using the entity's name configured (or auto-assigned) in the __entity_args__
