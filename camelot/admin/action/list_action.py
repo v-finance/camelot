@@ -28,24 +28,20 @@
 #  ============================================================================
 
 import codecs
-import datetime
 import enum
 import logging
 import itertools
-import dataclasses
 
 from ...core.item_model.proxy import AbstractModelFilter
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtGui, QtWidgets
 from .base import Action, Mode, RenderHint
 
 from camelot.admin.icon import Icon
-from camelot.core.exception import UserException, CancelRequest
+from camelot.core.exception import UserException
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import Types
 
-
-import xlsxwriter
 
 LOGGER = logging.getLogger('camelot.admin.action.list_action')
 
@@ -144,10 +140,20 @@ class OpenFormView(Action):
     verbose_name = None
     name = 'open_form_view'
 
+    def get_object(self, model_context, mode):
+        assert mode is not None
+        # Workaround for windows, pass row + objId in mode
+        row, objId = mode
+        obj = model_context.get_object(row)
+        if id(obj) != objId:
+            raise UserException('Could not open correct form')
+        return obj
+
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        obj = self.get_object(model_context, mode)
         yield action_steps.OpenFormView(
-            model_context.get_object(), model_context.admin, model_context.proxy
+            obj, model_context.admin, model_context.proxy
         )
 
     def get_state( self, model_context ):
@@ -269,85 +275,6 @@ class DeleteSelection( EditAction ):
 
 delete_selection = DeleteSelection()
 
-class MoveRankUp(EditAction):
-    """
-    Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly higher within the same rank dimension.
-    Note that ranking higher in this context refers to a rank value that is lower in numerical value.
-    """
-
-    icon = Icon('arrow-up')
-    tooltip = _('Move rank up')
-    verbose_name = _('Move rank up')
-    name = 'move_rank_up'
-
-    def get_obj_to_switch(self, obj_rank, objects):
-        """
-        Based on the given selected object's rank, return the suited rank-object tuple candidate to switch with out of the given list of objects within the same rank dimension.
-        For this rank-up action, this is defined as the object with the lowest rank that is ranked higher as the selected object.
-        Note that ranking higher in this context refers to a rank value that is lower in numerical value, and vice versa.
-        :obj_rank: The rank of the selected object.
-        :objects: list of rank-object tuples within the same rank dimension as the selected object.
-        """
-        return max([(rank, obj) for (rank, obj) in objects if rank < obj_rank] or [(None, None)])
-
-    def model_run( self, model_context, mode ):
-        from camelot.view import action_steps
-        super().model_run(model_context, mode)
-        admin = model_context.admin
-        ranked_by = admin.entity.get_ranked_by()
-        assert ranked_by is not None, self.Message.entity_not_rank_based.value.format(admin.entity)
-        rank_prop = ranked_by[0] if isinstance(ranked_by, tuple) else ranked_by
-        if model_context.selection_count != 1:
-            raise UserException(self.Message.no_single_selection.value)
-        for obj in model_context.get_selection():
-            obj_rank = rank_prop.__get__(obj, None)
-            # Compose a list of rank-object tuples of objects within the same rank dimension.
-            compatible_objects = []
-            for other_obj in model_context.get_collection():
-                for rank_col in ranked_by[1:]:
-                    if rank_col.__get__(obj, None) != rank_col.__get__(other_obj, None):
-                        break
-                else:
-                    compatible_objects.append((rank_prop.__get__(other_obj, None), other_obj))
-
-            # Determine the object to switch it and perform the switch if there's a switch candidate found.
-            obj_to_switch_rank, obj_to_switch = self.get_obj_to_switch(obj_rank, compatible_objects)
-            if obj_to_switch is not None:
-                rank_prop.__set__(obj, obj_to_switch_rank)
-                rank_prop.__set__(obj_to_switch, obj_rank)
-                updated_objects = set(list(admin.get_depending_objects(obj)) + list(admin.get_depending_objects(obj_to_switch)))
-                yield action_steps.UpdateObjects(updated_objects)
-                yield action_steps.FlushSession(model_context.session)
-                for updated_obj in updated_objects:
-                    model_context.session.refresh(updated_obj)
-
-    def get_state(self, model_context):
-        state = super().get_state(model_context)
-        state.enabled = model_context.selection_count == 1
-        return state
-
-move_rank_up = MoveRankUp()
-
-class MoveRankDown(MoveRankUp):
-    """
-    Switch the rank of the selected rank-based row in a table with that of the row that is ranked directly lower within the same rank dimension.
-    Note that ranking lower in this context refers to a rank value that is higher in numerical value.
-    """
-
-    icon = Icon('arrow-down')
-    tooltip = _('Move rank down')
-    verbose_name = _('Move rank down')
-    name = 'move_rank_down'
-
-    def get_obj_to_switch(self, obj_rank, objects):
-        """
-        For this rank-down action, the object to switch with is defined as the object with the highest rank that is ranked lower as the selected object.
-        Note that ranking lower in this context refers to a rank value that is higher in numerical value, and vice versa.
-        """
-        return min([(rank, obj) for (rank, obj) in objects if rank > obj_rank] or [(None, None)])
-
-move_rank_down = MoveRankDown()
-
 class AbstractToPrevious(object):
 
     render_hint = RenderHint.TOOL_BUTTON
@@ -402,200 +329,6 @@ class ToLastRow(AbstractToLast, Action):
 
 to_last_row = ToLastRow()
 
-class ClearMapping(Action):
-    """
-    Clear a selection of mappings
-    """
-
-    verbose_name = _('Clear')
-    name = 'clear_mapping'
-
-    def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-
-        cleared_mappings = list()
-        for mapping in model_context.get_selection():
-            if mapping.field is not None:
-                mapping.field = None
-                cleared_mappings.append(mapping)
-        yield action_steps.UpdateObjects(cleared_mappings)
-
-
-class ExportSpreadsheet(Action):
-    """Export all rows in a table to a spreadsheet"""
-
-    render_hint = RenderHint.TOOL_BUTTON
-    icon = Icon('file-excel') # 'tango/16x16/mimetypes/x-office-spreadsheet.png'
-    tooltip = _('Export to MS Excel')
-    verbose_name = _('Export to MS Excel')
-    name = 'export'
-
-    max_width = 40
-    font_name = 'Calibri'
-    
-    def model_run( self, model_context, mode ):
-        from decimal import Decimal
-        from camelot.view.import_utils import (
-            ColumnMapping, ColumnSelectionAdmin
-        )
-        from camelot.view.utils import (
-            get_settings, local_date_format, local_datetime_format,
-            local_time_format
-        )
-        from camelot.view import action_steps
-        from camelot.admin.action.export_mapping import SaveExportMapping, RestoreExportMapping, RemoveExportMapping
-        #
-        # Select the columns that need to be exported
-        # 
-        yield action_steps.UpdateProgress(text=_('Prepare export'))
-        admin = model_context.admin
-        # Todo : settings should not be accessed from the model
-        settings = get_settings(admin.get_name())
-        settings.beginGroup('export_spreadsheet')
-        all_fields = admin.get_all_fields_and_attributes()
-        field_choices = [(f,str(entity_fa['name'])) for f,entity_fa in
-                         all_fields.items() ]
-        field_choices.sort(key=lambda field_tuple:field_tuple[1])
-        list_columns = admin.get_columns()
-        # the admin might show more columns then fields available, if the
-        # columns are generated dynamically
-        max_mapping_length = max(len(list_columns), len(all_fields))
-        row_data = [None] * max_mapping_length
-        column_range = range(max_mapping_length)
-        mappings = []
-        for i, default_field in itertools.zip_longest(column_range,
-                                                      admin.get_columns(),
-                                                      fillvalue=None):
-            mappings.append(ColumnMapping(i, [row_data], default_field))
-            
-        mapping_admin = ColumnSelectionAdmin(admin, field_choices=field_choices)
-        mapping_admin.related_toolbar_actions = [SaveExportMapping(settings),
-                                                 RestoreExportMapping(settings),
-                                                 RemoveExportMapping(settings),
-                                                 ClearMapping(),
-                                                 ]
-        change_mappings = action_steps.ChangeObjects(mappings, mapping_admin)
-        change_mappings.title = _('Select field')
-        change_mappings.subtitle = _('Specify for each column the field to export')
-        yield change_mappings
-        settings.endGroup()
-        columns = []
-        for i, mapping in enumerate(mappings):
-            if mapping.field is not None:
-                columns.append((mapping.field, all_fields[mapping.field]))
-        #
-        # setup worksheet
-        #
-        yield action_steps.UpdateProgress( text = _('Create worksheet') )
-        filename = action_steps.OpenFile.create_temporary_file( '.xlsx' )
-        workbook = xlsxwriter.Workbook(filename, {'constant_memory': True})
-        sheet = workbook.add_worksheet()
-        
-        #
-        # write styles
-        #
-        title_style = workbook.add_format({
-                                            'font_name':       self.font_name,
-                                            'bold':            True,
-                                            'font_size':       12,
-                                            })
-        header_style = workbook.add_format({
-                                            'font_name':       self.font_name,
-                                            'bold':            True,
-                                            'font_color':      '#FFFFFF',
-                                            'font_size':       10,
-                                            'bg_color':        '#4F81BD',
-                                            'bottom':          1,
-                                            'top':             1,
-                                            'border_color':    '#95B3D7',
-                                            })
-
-        sheet.write(0, 0, admin.get_verbose_name_plural(), title_style)
-        
-        #
-        # create some patterns and formats
-        #
-        date_format = workbook.add_format({'num_format': local_date_format()})
-        datetime_format = workbook.add_format({'num_format': local_datetime_format()})
-        time_format = workbook.add_format({'num_format': local_time_format()})
-        int_format = workbook.add_format({'num_format': '0'})
-        decimal_format = workbook.add_format({'num_format': '0.00'})
-        numeric_style = []
-        for i in range(12):
-            style = workbook.add_format({'num_format': '0.' + ('0' * i)})
-            numeric_style.append(style)
-
-        #
-        # write headers
-        #
-        sheet.autofilter(1, 0, 1, len(columns) - 1)
-        sheet.set_column(0, len(columns) - 1, 20)
-        field_names = []
-        for i, (name, field_attributes) in enumerate( columns ):
-            verbose_name = str( field_attributes.get( 'name', name ) )
-            field_names.append( name )
-            sheet.write(1, i, verbose_name, header_style)
-        
-        #
-        # write data
-        #
-        offset = 2
-        static_attributes = list(admin.get_static_field_attributes(field_names))
-        if model_context.selected_rows:
-            objects = model_context.get_selection( yield_per = 100 )
-        else:
-            objects = model_context.get_collection( yield_per = 100 )
-        for j, obj in enumerate( objects ):
-            dynamic_attributes = admin.get_dynamic_field_attributes( obj, 
-                                                                     field_names )
-            row = offset + j
-            if j % 100 == 0:
-                yield action_steps.UpdateProgress( j + 1, model_context.collection_count )
-            fields = enumerate(zip(field_names, 
-                                             static_attributes,
-                                             dynamic_attributes))
-            for i, (name, attributes, delta_attributes) in fields:
-                attributes.update( delta_attributes )
-                value = getattr( obj, name )
-                style = None
-                if value is not None:
-                    if isinstance( value, Decimal ):
-                        style = decimal_format
-                    elif isinstance( value, list ):
-                        separator = attributes.get('separator', ', ')
-                        value = separator.join([str(el) for el in value])
-                    elif isinstance( value, float ):
-                        precision = attributes.get('precision')
-                        # Set default precision of 2 when precision is undefined, instead of using the default argument of the dictionary's get method,
-                        # as that only handles the precision key not being present, not it being explicitly set to None.
-                        if precision is None:
-                            precision = 2
-                        style = numeric_style[precision]
-                    elif isinstance( value, int ):
-                        style = int_format
-                    elif isinstance( value, datetime.date ):
-                        style = date_format
-                    elif isinstance( value, datetime.datetime ):
-                        style = datetime_format
-                    elif isinstance( value, datetime.time ):
-                        style = time_format
-                    elif attributes.get('to_string') is not None:
-                        value = str(attributes['to_string'](value))
-                    else:
-                        value = str(value)
-                else:
-                    # empty cells should be filled as well, to get the
-                    # borders right
-                    value = ''
-                sheet.write(row, i, value, style)
-
-        yield action_steps.UpdateProgress( text = _('Saving file') )
-        workbook.close()
-        yield action_steps.UpdateProgress( text = _('Opening file') )
-        yield action_steps.OpenFile( filename )
-
-export_spreadsheet = ExportSpreadsheet()
-    
 class SelectAll(Action):
     """Select all rows in a table"""
     
@@ -1115,114 +848,6 @@ class RemoveSelection(DeleteSelection):
 
 remove_selection = RemoveSelection()
 
-class EditProfileMixin:
-
-    database_error_title = ugettext('Could not connect to database, please check host and port')
-    media_location_not_readable_title = ugettext('Media location path is not accessible')
-    media_location_not_writeable_title = ugettext('Media location path is not writeable')
-
-    def validate_profile(self, profile):
-        from camelot.view import action_steps
-        # Validate database settings
-        yield action_steps.UpdateProgress(text=ugettext('Verifying database settings'))
-        engine = None
-        try:
-            #if not profile.dialect:
-            #    raise RuntimeError('No database dialect selected')
-            engine = profile.create_engine()
-            connection = engine.raw_connection()
-            cursor = connection.cursor()
-            cursor.close()
-            connection.close()
-        except Exception as e:
-            exception_box = action_steps.MessageBox(
-                title = self.database_error_title,
-                text = _('Verify driver, host and port or contact your system administrator'),
-                standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok]
-            )
-            exception_box.informative_text = str(e)
-            exception_box.detailed_text = 'Engine : {}'.format(engine)
-            yield exception_box
-            return False
-        # Validate media location
-        info = QtCore.QFileInfo(profile.media_location)
-        if not info.isReadable(): # or not profile.media_location:
-            yield action_steps.MessageBox( title = self.media_location_not_readable_title,
-                                                   text = _('Verify that the path exists and it is readable or contact your system administrator'),
-                                                   standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
-            return False
-        if not info.isWritable():
-            yield action_steps.MessageBox( title = self.media_location_not_writeable_title,
-                                                   text = _('Verify that the path is writeable or contact your system administrator'),
-                                                   standard_buttons = [QtWidgets.QMessageBox.StandardButton.Ok] )
-            return False
-        # Success
-        return True
-
-class AddNewProfile(AddNewObject, EditProfileMixin):
-
-    name = 'add_new_profile'
-
-    def edit_object(self, new_object, model_context, admin):
-        from camelot.view import action_steps
-        from camelot.core.profile import Profile
-        app_admin = admin.get_application_admin()
-        profile_admin = app_admin.get_related_admin(Profile)
-        while True:
-            try:
-                yield action_steps.ChangeObject(new_object, profile_admin)
-            except CancelRequest:
-                # Remove profile
-                model_context.proxy.remove(new_object)
-                yield action_steps.DeleteObjects([new_object])
-                return
-            is_valid = yield from self.validate_profile(new_object)
-            if is_valid:
-                break
-
-add_new_profile = AddNewProfile()
-
-class EditProfile(Action, EditProfileMixin):
-    """Edit a profile and validate it."""
-
-    shortcut = QtGui.QKeySequence.StandardKey.Open
-    icon = Icon('folder')
-    tooltip = _('Edit Profile')
-    name = 'edit_profile'
-
-    def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-        from camelot.core.profile import Profile
-        profile = model_context.get_object()
-        profile_copy = self.copy_profile(profile)
-        app_admin = model_context.admin.get_application_admin()
-        profile_admin = app_admin.get_related_admin(Profile)
-        while True:
-            try:
-                yield action_steps.ChangeObject(profile, profile_admin)
-            except CancelRequest:
-                # Restore profile
-                self.copy_profile(profile_copy, profile)
-                yield action_steps.UpdateObjects([profile])
-                return
-            is_valid = yield from self.validate_profile(profile)
-            if is_valid:
-                break
-
-    def copy_profile(self, from_profile, to_profile=None):
-        from camelot.core.profile import Profile
-        if to_profile is None:
-            to_profile = Profile()
-        for field in dataclasses.fields(Profile):
-            setattr(to_profile, field.name, getattr(from_profile, field.name))
-        return to_profile
-
-    def get_state( self, model_context ):
-        state = Action.get_state(self, model_context)
-        state.verbose_name = str()
-        return state
-
-edit_profile = EditProfile()
 
 class Stretch(Action):
 

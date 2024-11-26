@@ -45,12 +45,10 @@ from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
 from sqlalchemy.ext import hybrid
-from sqlalchemy.types import Integer
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
-from . statements import MUTATORS
-from . import Session, options
+from . import Session
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
 
@@ -182,51 +180,6 @@ class EntityMeta( DeclarativeMeta ):
        All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
        NOTE: this class registration system could possibly be moved to the level of the facade in the future, to not be limited to a single hierarchy for each entity class.
 
-    * 'ranked_by'
-       This entity argument allows registering a rank-based entity class its ranking definition.
-       Like the discriminator argument, it supports the registration of a single column, both directly from or after the class declaration,
-       which should be an Integer type column that holds the numeric rank value.
-       The registered rank definition can be retrieved on an entity class post-declaration using the provided `get_ranked_by` method.
-       See its documentation for more details.
-
-       :example:
-       | class SomeClass(Entity):
-       |     __tablename__ = 'some_tablename'
-       |     ...
-       |     rank = Column(Integer())
-       |     ...
-       |     __entity_args__ = {
-       |         'ranked_by': rank,
-       |     }
-       |     ...
-       |
-       | SomeClass.get_ranked_by() == (SomeClass.rank,)
-
-       Because the ranking dimension of an entity may be more complex than a single ranking column, e.g. for financial roles the ranking dimension is seperated for each role type. 
-       Therefor, the registration also supports a tuple of columns, whereby the first item should be the column that holds the rank value,
-       while the remaining columns act as discriminator of the ranking dimension.
-       This may well include, but not limited to, the discriminator column.
-
-       :example:
-       | class SomeClass(Entity):
-       |     __tablename__ = 'some_tablename'
-       |     ...
-       |     described_by = Column(IntEnum(some_class_types), ...)
-       |     rank = Column(Integer())
-       |     ...
-       |     __entity_args__ = {
-       |         'ranked_by': (rank, described_by),
-       |     }
-       |     ...
-       |
-       | SomeClass.get_ranked_by() == (SomeClass.rank, SomeClass.described_by)
-
-    * 'editable'
-       This entity argument is a flag that when set to False will register the entity class as globally non-editable.
-
-    * 'editable_fields'
-       List of field_names that should be excluded from the globally non-editable registration, if present.
-
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
@@ -242,11 +195,6 @@ class EntityMeta( DeclarativeMeta ):
         # don't modify the Entity class itself
         #
         if classname != 'Entity':
-            #
-            # process the mutators
-            #
-            for mutator, args, kwargs in dict_.get( MUTATORS, [] ):
-                mutator.process( dict_, *args, **kwargs )
             #
             # use default tablename if none set
             #
@@ -303,16 +251,6 @@ class EntityMeta( DeclarativeMeta ):
                     for secondary_discriminator in secondary_discriminators:
                         assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must be instances of `orm.properties.RelationshipProperty`'
 
-                ranked_by = entity_args.get('ranked_by')
-                if ranked_by is not None:
-                    ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
-                    for col in ranked_by:
-                        assert isinstance(col, (sql.schema.Column, orm.attributes.InstrumentedAttribute)), 'Ranked by definition must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute` or a tuple of those instances'
-                    rank_col = ranked_by[0]
-                    if isinstance(rank_col, orm.attributes.InstrumentedAttribute):
-                        rank_col = rank_col.prop.columns[0]
-                    assert isinstance(rank_col.type, Integer), 'The first column/attributes of the ranked by definition, indicating the rank column, should be of type Integer'
-
                 order_search_by = entity_args.get('order_search_by')
                 if order_search_by is not None:
                     order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
@@ -330,7 +268,7 @@ class EntityMeta( DeclarativeMeta ):
                     # table.primary_key returns an iterator so we can't test the length or something like that
                     table = dict_.get('__table__', None)
                     if table is None or table.primary_key is None:
-                        _class.id = schema.Column(PrimaryKey(), **options.DEFAULT_AUTO_PRIMARYKEY_KWARGS)
+                        _class.id = schema.Column(PrimaryKey(), primary_key=True)
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
             # using the entity's name configured (or auto-assigned) in the __entity_args__
@@ -347,9 +285,12 @@ class EntityMeta( DeclarativeMeta ):
         """
         In case of a polymorphic base class with a polymorphic discriminator column
         that is of type Enumeration, return its contained type enumeration.
+        Note: a class which both defines the polymorphic on as a polymoprhic identity,
+        is not considered a polymoprhic base class.
         """
         polymorphic_on = cls.__mapper_args__.get('polymorphic_on')
-        if polymorphic_on is not None:
+        polymorphic_identity = cls.__mapper_args__.get('polymorphic_identity')
+        if polymorphic_on is not None and polymorphic_identity is None:
             polymorphic_on_col = polymorphic_on
             if isinstance(polymorphic_on, orm.attributes.InstrumentedAttribute):
                 polymorphic_on_col = polymorphic_on.prop.columns[0]
@@ -452,15 +393,8 @@ class EntityMeta( DeclarativeMeta ):
     def get_secondary_discriminator_types(cls):
         if cls.get_cls_discriminator() is not None:
             (_, *secondary_discriminators) = cls.get_cls_discriminator()
-            return [secondary_discriminator.prop.entity.entity for secondary_discriminator in secondary_discriminators]
+            return [secondary_discriminator.prop.entity.mapper.entity for secondary_discriminator in secondary_discriminators]
         return []
-
-    def get_ranked_by(cls):
-        ranked_by = cls._get_entity_arg('ranked_by')
-        if ranked_by is not None:
-            ranked_by = ranked_by if isinstance(ranked_by, tuple) else (ranked_by,)
-            rank_cols = [getattr(cls, rank_col.key) if isinstance(rank_col, sql.schema.Column) else rank_col for rank_col in ranked_by]
-            return tuple(rank_cols)
 
     def get_order_search_by(cls):
         order_search_by = cls._get_entity_arg('order_search_by')
