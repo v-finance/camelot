@@ -71,7 +71,9 @@ class SelectObjects(OpenTableView):
         actions.extend(admin.get_select_list_toolbar_actions())
 
     @classmethod
-    def deserialize_result(cls, gui_context, response):
+    def deserialize_result(cls, model_context, response):
+        # the model context that started the action is no the same
+        # as the one in which the selection was made
         objects = []
         try:
             model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
