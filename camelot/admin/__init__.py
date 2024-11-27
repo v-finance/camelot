@@ -26,9 +26,3 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
-from .filter_admin import FilterValueAdmin
-
-__all__ = [
-    FilterValueAdmin.__name__,
-]
