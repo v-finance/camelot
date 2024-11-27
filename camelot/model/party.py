@@ -49,6 +49,7 @@ from sqlalchemy import (
 
 from camelot.admin.entity_admin import EntityAdmin
 from camelot.admin.action import list_filter
+from camelot.core.conf import settings
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import zip_code_types
@@ -59,6 +60,7 @@ from camelot.types.typing import Note
 from camelot.view.controls import delegates
 from camelot.view.forms import Form, GroupBoxForm, WidgetOnlyForm
 from camelot.view.validator import RegexValidator, ZipcodeValidatorState
+from camelot.view import forms
 
 
 class GeographicBoundary( Entity ):
@@ -143,14 +145,18 @@ class GeographicBoundary( Entity ):
         basic_search = False
         
         list_display = ['row_type', 'name', 'code']
-        form_display = Form(
-            [GroupBoxForm(_('General'), ['name', None, 'code'], columns=2),
-             GroupBoxForm(_('NL'), ['name_NL', None], columns=2),
-             GroupBoxForm(_('FR'), ['name_FR', None], columns=2),
-             GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
-             'alternative_names'],
-            columns=2)
-        
+        form_display = Form([
+            GroupBoxForm(_('Master data'), [
+                'name', None,
+                'code', None,
+                forms.Label(_('Coordinates')),
+                'latitude', None,
+                'longitude', None,
+                ], columns=2),
+            'alternative_names',
+            ], columns=2
+        )
+
         form_state = 'right'
         field_attributes = {
             'row_type': {
@@ -333,24 +339,23 @@ class City(GeographicBoundary, WithCountry):
 
     @hybrid.hybrid_method
     def main_municipality_name(self, language=None):
-        matched_mm = default_mm = None
-        for main_municipality in self.alternative_names:
-            # VFIN-2512 : enable eager loading all alternative names, where
-            # each property filters the needed alternative name.
-            if main_municipality.row_type != 'main_municipality':
-                continue
-            if main_municipality.language == language:
-                matched_mm = main_municipality.name
-            elif main_municipality.language is None:
-                default_mm = main_municipality.name
-        return matched_mm or default_mm
+        # VFIN-2512 : enable eager loading all alternative names, where
+        # each property filters the needed alternative name.
+        main_municipalities = [n for n in self.alternative_names if n.row_type == 'main_municipality']
+        main_municipalities.sort(
+            key=lambda c: (c.language!=language, c.language is not None, c.language != settings.profile.locale_language)
+        )
+        for main_municipality in main_municipalities:
+            return main_municipality.name
 
     @main_municipality_name.expression
     def main_municipality_name(cls, language=None):
         return sql.select([GeographicBoundaryMainMunicipality.name])\
                .where(GeographicBoundaryMainMunicipality.alternative_name_for_id == cls.id)\
-               .order_by(GeographicBoundaryMainMunicipality.language==language,
-                         GeographicBoundaryMainMunicipality.language==None)\
+               .order_by(GeographicBoundaryMainMunicipality.language!=language,
+                         GeographicBoundaryMainMunicipality.language.isnot(None),
+                         GeographicBoundaryMainMunicipality.language!=settings.profile.locale_language)\
+               .limit(1)\
                .label('main_municipality_name')
 
     @hybrid.hybrid_method
@@ -422,14 +427,21 @@ class City(GeographicBoundary, WithCountry):
         verbose_name_plural = _('Cities')
 
         list_display = ['id', 'code', 'name', 'administrative_name', 'administrative_division', 'country']
-        form_display = Form(
-            [GroupBoxForm(_('General'), ['name', None, 'code', None, 'country'], columns=2),
-             GroupBoxForm(_('Administrative division'), ['administrative_division', None], columns=2),
-             GroupBoxForm(_('Administrative unit'), ['main_municipality', None, 'administrative_name'], columns=2),
-             GroupBoxForm(_('NL'), ['name_NL', None, 'administrative_name_NL'], columns=2),
-             GroupBoxForm(_('FR'), ['name_FR', None, 'administrative_name_FR'], columns=2),
-             GroupBoxForm(_('Coordinates'), ['latitude', None, 'longitude'], columns=2),
-             'alternative_names',
+        form_display = Form([
+            GroupBoxForm(_('City'), [
+                forms.Label(_('Master data')),
+                'name', None,
+                'code', None,
+                'country', None,
+                forms.Label(_('Governance')),
+                'main_municipality', None,
+                'administrative_name', None,
+                'administrative_division',
+                forms.Label(_('Coordinates')),
+                'latitude', None,
+                'longitude', None,
+                ], columns=2),
+            'alternative_names',
              WidgetOnlyForm('note')],
             columns=2)
 
