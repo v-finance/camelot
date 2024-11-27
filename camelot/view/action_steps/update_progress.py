@@ -97,7 +97,7 @@ updated.
     detail: typing.Union[str, ugettext_lazy, None] = None
     clear_details: bool = False
     title: typing.Union[str, ugettext_lazy, None] = None
-    enlarge: bool = False
+    enlarge: typing.Union[bool, None] = None
     blocking: bool = False
     cancelable: bool = True
     detail_level: int = logging.INFO # To be determined - we currently map to the loglevels from the logging module
