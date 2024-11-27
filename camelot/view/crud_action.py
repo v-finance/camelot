@@ -317,6 +317,17 @@ class RowCount(Action):
 
 rowcount_name = crud_action_context.bind(RowCount.name, RowCount(), True)
 
+class Refresh(RowCount):
+
+    name = 'refresh'
+
+    def model_run(self, model_context, mode):
+        self.clear_cache(model_context)
+        # @todo : rowcount could be send immediately, but for now this would
+        # trigger an infinte client side loop
+        #yield from super().model_run(model_context, mode)
+
+refresh_name = crud_action_context.bind(Refresh.name, Refresh(), True)
 
 class Update(Action, UpdateMixin):
 
@@ -729,3 +740,4 @@ class CrudActions(DataclassSerializable):
     sort: Route = field(init=False, default=sort_name)
     field_action: Route = field(init=False, default=runfieldaction_name)
     completion: Route = field(init=False, default=completion_name)
+    refresh: Route = field(init=False, default=refresh_name)
