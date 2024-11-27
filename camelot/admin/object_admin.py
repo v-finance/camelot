@@ -56,7 +56,7 @@ from camelot.view.field_attributes import _typing_to_python_type
 from camelot.view.controls import delegates
 from .validator.object_validator import ObjectValidator
 
-
+from . import AbstractAdmin
 
 class FieldAttributesList(list):
     """A list with field attributes that documents them for
@@ -88,7 +88,7 @@ DYNAMIC_FIELD_ATTRIBUTES = FieldAttributesList(['tooltip',
                                                 'maximum'])
 
 
-class ObjectAdmin(AdminRoute):
+class ObjectAdmin(AbstractAdmin):
     """The ObjectAdmin class describes the interface that will be used
 to interact with objects of a certain class.  The behaviour of this class
 and the resulting interface can be tuned by specifying specific class
