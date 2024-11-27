@@ -26,3 +26,40 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from typing import List, Union
+
+from camelot.admin.admin_route import Route, AdminRoute
+from camelot.core.item_model.proxy import AbstractModelProxy
+from camelot.core.utils import ugettext_lazy
+
+class AbstractAdmin(AdminRoute):
+
+    def get_admin_route(self) -> Route:
+        raise NotImplementedError
+
+    def get_verbose_name_plural(self) -> Union[str, ugettext_lazy]:
+        raise NotImplementedError
+
+    def get_columns(self) -> List[str]:
+        raise NotImplementedError
+
+    def get_static_field_attributes(self, field_names):
+        raise NotImplementedError
+
+    def get_list_action(self) -> Route:
+        raise NotImplementedError
+
+    def get_proxy(self, objects) -> AbstractModelProxy:
+        raise NotImplementedError
+
+    def _get_search_fields(self, substring):
+        raise NotImplementedError
+
+    def get_list_actions(self):
+        raise NotImplementedError
+
+    def get_filters(self):
+        raise NotImplementedError
+
+    def get_list_toolbar_actions(self):
+        raise NotImplementedError
