@@ -37,6 +37,9 @@ class AbstractAdmin(AdminRoute):
     def get_admin_route(self) -> Route:
         raise NotImplementedError
 
+    def get_verbose_name(self) -> Union[str, ugettext_lazy]:
+        raise NotImplementedError
+
     def get_verbose_name_plural(self) -> Union[str, ugettext_lazy]:
         raise NotImplementedError
 

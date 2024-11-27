@@ -114,7 +114,7 @@ def not_editable_admin( original_admin,
                         allow_deletes=False):
     """Class decorator to make all fields read-only.
 
-    :param original_admin: an :class:`camelot.admin.object_admin.ObjectAdmin` 
+    :param original_admin: an :class:`vfinance.admin.object_admin.ObjectAdmin` 
         class (not an instance)
     :param actions: :const:`True` if the new admin should have its actions 
         enabled, defaults to :const:`False`
