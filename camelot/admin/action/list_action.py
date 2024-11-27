@@ -27,10 +27,8 @@
 #
 #  ============================================================================
 
-import codecs
 import enum
 import logging
-import itertools
 
 from ...core.qt import QtGui, QtWidgets
 from .base import Action, Mode, RenderHint
