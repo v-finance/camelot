@@ -29,60 +29,12 @@
 
 
 
-from ...core.qt import QtGui, QtWidgets
-from camelot.admin.admin_route import register_list_actions
 from camelot.admin.icon import Icon
 from camelot.admin.action.base import Action
+from camelot.core.qt import QtGui, QtWidgets
 from camelot.core.utils import ugettext as _
 
 from .base import RenderHint
-
-
-class ShowHistory( Action ):
-
-    render_hint = RenderHint.TOOL_BUTTON
-    icon = Icon('history') # 'tango/16x16/actions/format-justify-fill.png'
-    verbose_name = _('History')
-    tooltip = _('Show recent changes on this form')
-    name = 'show_history'
-        
-    def model_run( self, model_context, mode ):
-        from ..object_admin import ObjectAdmin
-        from ...view import action_steps
-        from ...view.controls import delegates
-            
-        obj = model_context.get_object()
-        memento = model_context.admin.get_memento()
-        subsystem_obj = model_context.admin.get_subsystem_object(obj)
-        
-        class ChangeAdmin( ObjectAdmin ):
-            verbose_name = _('Change')
-            verbose_name_plural = _('Changes')
-            list_display = ['at', 'by', 'memento_type', 'changes']
-            field_attributes = {'at':{'delegate':delegates.DateTimeDelegate},
-                                'memento_type':{'delegate':delegates.ComboBoxDelegate,
-                                                'choices':memento.memento_types,
-                                                'name':_('Type')} }
-    
-            @register_list_actions('_admin_route')
-            def get_related_toolbar_actions( self, direction ):
-                return []
-            
-        if obj != None:
-            primary_key = model_context.admin.primary_key( obj )
-            if primary_key is not None:
-                if None not in primary_key:
-                    changes = list( memento.get_changes( model = str( subsystem_obj.__class__.__name__ ),
-                                                         primary_key = primary_key,
-                                                         current_attributes = {} ) )
-                    admin = ChangeAdmin( model_context.admin, object )
-                    step = action_steps.ChangeObjects( changes, admin )
-                    step.icon = Icon('history') # 'tango/16x16/actions/format-justify-fill.png'
-                    step.title = _('Recent changes')
-                    step.subtitle = model_context.admin.get_verbose_identifier( obj )
-                    yield step
-
-show_history = ShowHistory()
 
 class CloseForm( Action ):
     """Validte the form can be closed, and close it"""
