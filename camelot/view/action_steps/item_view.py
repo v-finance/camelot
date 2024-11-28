@@ -35,12 +35,12 @@ from dataclasses import dataclass, InitVar, field
 from typing import Union, List, Tuple, Any
 import logging
 
+from ...admin import AbstractAdmin
 from ...admin.admin_route import Route, RouteWithRenderHint
 from ...admin.action import ActionStep, State
 from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.model_context import ObjectsModelContext
-from ...admin.object_admin import ObjectAdmin
 from ...core.cache import ValueCache
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
@@ -51,6 +51,7 @@ from ...view.utils import get_settings_group
 from ...view.crud_action import CrudActions
 
 LOGGER = logging.getLogger(__name__)
+
 
 @dataclass
 class Sort( ActionStep, DataclassSerializable ):
@@ -72,7 +73,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
     """
 
     value: InitVar[Any]
-    admin: InitVar[ObjectAdmin]
+    admin: InitVar[AbstractAdmin]
     proxy: InitVar[AbstractModelProxy] = None
 
     title: Union[str, ugettext_lazy] = field(init=False)
@@ -134,7 +135,7 @@ class Column(DataclassSerializable):
 class UpdateTableView(AbstractCrudView):
     """Change the admin and or value of an existing table view
     
-    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param admin: an `camelot.admin.AbstractAdmin` instance
     :param value: a list of objects or a query
     
     """
@@ -181,7 +182,7 @@ class UpdateTableView(AbstractCrudView):
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
     
-    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param admin: an `camelot.admin.AbstractAdmin` instance
     :param value: a list of objects or a query
 
     .. attribute:: title
@@ -207,7 +208,7 @@ class OpenTableView( UpdateTableView ):
 class OpenQmlTableView(OpenTableView):
     """Open a new table view in the workspace.
     
-    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param admin: an `camelot.admin.AbstractAdmin` instance
     :param value: a list of objects or a query
 
     .. attribute:: title
