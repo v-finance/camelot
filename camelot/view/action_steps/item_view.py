@@ -144,7 +144,7 @@ class UpdateTableView(AbstractCrudView):
         self.close_route = None
         if proxy is None:
             proxy = admin.get_proxy(value)
-        admin._set_proxy_search_filter(self.actions, proxy, search_text)
+        admin._set_search_filter(self.actions, proxy, search_text)
         super().__post_init__(value, admin, proxy)
 
     @staticmethod
