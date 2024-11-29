@@ -55,6 +55,9 @@ class AbstractAdmin(AdminRoute):
     def get_proxy(self, objects) -> AbstractModelProxy:
         raise NotImplementedError
 
+    def _filter_proxy(self, proxy: AbstractModelProxy, search_text: Optional[str]):
+        raise NotImplementedError
+
     def _get_search_fields(self, substring):
         raise NotImplementedError
 
@@ -66,3 +69,4 @@ class AbstractAdmin(AdminRoute):
 
     def get_list_toolbar_actions(self):
         raise NotImplementedError
+
