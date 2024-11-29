@@ -28,7 +28,8 @@
 #  ============================================================================
 from typing import List, Optional, Union
 
-from camelot.admin.admin_route import Route, AdminRoute
+from camelot.admin.action import State
+from camelot.admin.admin_route import AdminRoute, Route, RouteWithRenderHint
 from camelot.core.item_model.proxy import AbstractModelProxy
 from camelot.core.utils import ugettext_lazy
 
@@ -55,9 +56,6 @@ class AbstractAdmin(AdminRoute):
     def get_proxy(self, objects) -> AbstractModelProxy:
         raise NotImplementedError
 
-    def _filter_proxy(self, proxy: AbstractModelProxy, search_text: Optional[str]):
-        raise NotImplementedError
-
     def _get_search_fields(self, substring):
         raise NotImplementedError
 
@@ -70,3 +68,8 @@ class AbstractAdmin(AdminRoute):
     def get_list_toolbar_actions(self):
         raise NotImplementedError
 
+    def _set_search_filter(self, proxy: AbstractModelProxy, actions: List[RouteWithRenderHint], search_text: Optional[str]):
+        raise NotImplementedError
+
+    def _set_filters(self, action_states:List[Tuple[Route, State]], proxy: AbstractModelProxy):
+        raise NotImplementedError
