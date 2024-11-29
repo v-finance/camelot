@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from typing import List, Union
+from typing import List, Optional, Union
 
 from camelot.admin.admin_route import Route, AdminRoute
 from camelot.core.item_model.proxy import AbstractModelProxy
