@@ -92,7 +92,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.actions, self.action_states)
-        self.set_filters(self.action_states, proxy)
+        admin._set_filters(self.action_states, proxy)
         self.group = get_settings_group(admin.get_admin_route())
 
     @staticmethod
@@ -101,20 +101,6 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
             action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
-
-    @staticmethod
-    def set_filters(action_states, model):
-        for action_state in action_states:
-            route = tuple(action_state[0])
-            action = initial_naming_context.resolve(route)
-            if not isinstance(action, Filter):
-                continue
-            state = action_state[1]
-            values = [mode.value for mode in state.modes if mode.checked]
-            # if all modes are checked, replace with [All]
-            if len(values) == len(state.modes):
-                values = [All]
-            model.filter(action, values)
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
@@ -159,7 +145,7 @@ class UpdateTableView(AbstractCrudView):
         self.close_route = None
         if proxy is None:
             proxy = admin.get_proxy(value)
-        admin._filter_proxy(proxy, search_text)
+        admin._set_proxy_search_filter(self.actions, proxy, search_text)
         super().__post_init__(value, admin, proxy)
 
     @staticmethod
