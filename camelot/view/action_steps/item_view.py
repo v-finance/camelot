@@ -159,16 +159,7 @@ class UpdateTableView(AbstractCrudView):
         self.close_route = None
         if proxy is None:
             proxy = admin.get_proxy(value)
-        if search_text is not None:
-            for action_route in self.actions:
-                action = initial_naming_context.resolve(action_route.route)
-                if isinstance(action, SearchFilter):
-                    search_strategies = list(admin._get_search_fields(search_text))
-                    search_value = (search_text, *search_strategies)
-                    proxy.filter(action, search_value)
-                    break
-            else:
-                LOGGER.warn('No SearchFilter found to apply search text')
+        admin._filter_proxy(proxy, search_text)
         super().__post_init__(value, admin, proxy)
 
     @staticmethod
