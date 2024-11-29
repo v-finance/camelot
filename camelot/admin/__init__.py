@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 from camelot.admin.action import State
 from camelot.admin.admin_route import AdminRoute, Route, RouteWithRenderHint

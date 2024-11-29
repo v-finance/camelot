@@ -38,7 +38,6 @@ import logging
 from ...admin import AbstractAdmin
 from ...admin.admin_route import Route, RouteWithRenderHint
 from ...admin.action import ActionStep, State
-from ...admin.action.list_filter import Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.model_context import ObjectsModelContext
 from ...core.cache import ValueCache
