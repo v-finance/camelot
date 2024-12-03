@@ -26,9 +26,10 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from typing import List, Union
+from typing import List, Optional, Tuple, Union
 
-from camelot.admin.admin_route import Route, AdminRoute
+from camelot.admin.action import State
+from camelot.admin.admin_route import AdminRoute, Route, RouteWithRenderHint
 from camelot.core.item_model.proxy import AbstractModelProxy
 from camelot.core.utils import ugettext_lazy
 
@@ -65,4 +66,10 @@ class AbstractAdmin(AdminRoute):
         raise NotImplementedError
 
     def get_list_toolbar_actions(self):
+        raise NotImplementedError
+
+    def _set_search_filter(self, proxy: AbstractModelProxy, actions: List[RouteWithRenderHint], search_text: Optional[str]):
+        raise NotImplementedError
+
+    def _set_filters(self, action_states:List[Tuple[Route, State]], proxy: AbstractModelProxy):
         raise NotImplementedError
