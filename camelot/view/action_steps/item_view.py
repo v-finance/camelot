@@ -35,12 +35,11 @@ from dataclasses import dataclass, InitVar, field
 from typing import Union, List, Tuple, Any
 import logging
 
+from ...admin import AbstractAdmin
 from ...admin.admin_route import Route, RouteWithRenderHint
 from ...admin.action import ActionStep, State
-from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.model_context import ObjectsModelContext
-from ...admin.object_admin import ObjectAdmin
 from ...core.cache import ValueCache
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
@@ -51,6 +50,7 @@ from ...view.utils import get_settings_group
 from ...view.crud_action import CrudActions
 
 LOGGER = logging.getLogger(__name__)
+
 
 @dataclass
 class Sort( ActionStep, DataclassSerializable ):
@@ -72,7 +72,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
     """
 
     value: InitVar[Any]
-    admin: InitVar[ObjectAdmin]
+    admin: InitVar[AbstractAdmin]
     proxy: InitVar[AbstractModelProxy] = None
 
     title: Union[str, ugettext_lazy] = field(init=False)
@@ -91,7 +91,7 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
         model_context = ObjectsModelContext(admin, proxy, QtCore.QLocale())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.actions, self.action_states)
-        self.set_filters(self.action_states, proxy)
+        admin._set_filters(self.action_states, proxy)
         self.group = get_settings_group(admin.get_admin_route())
 
     @staticmethod
@@ -100,20 +100,6 @@ class AbstractCrudView(ActionStep, DataclassSerializable):
             action = initial_naming_context.resolve(action_route.route)
             state = action.get_state(model_context)
             action_states.append((action_route.route, state))
-
-    @staticmethod
-    def set_filters(action_states, model):
-        for action_state in action_states:
-            route = tuple(action_state[0])
-            action = initial_naming_context.resolve(route)
-            if not isinstance(action, Filter):
-                continue
-            state = action_state[1]
-            values = [mode.value for mode in state.modes if mode.checked]
-            # if all modes are checked, replace with [All]
-            if len(values) == len(state.modes):
-                values = [All]
-            model.filter(action, values)
 
     def get_objects(self):
         """Use this method to get access to the objects to change in unit tests
@@ -134,7 +120,7 @@ class Column(DataclassSerializable):
 class UpdateTableView(AbstractCrudView):
     """Change the admin and or value of an existing table view
     
-    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param admin: an `camelot.admin.AbstractAdmin` instance
     :param value: a list of objects or a query
     
     """
@@ -158,16 +144,7 @@ class UpdateTableView(AbstractCrudView):
         self.close_route = None
         if proxy is None:
             proxy = admin.get_proxy(value)
-        if search_text is not None:
-            for action_route in self.actions:
-                action = initial_naming_context.resolve(action_route.route)
-                if isinstance(action, SearchFilter):
-                    search_strategies = list(admin._get_search_fields(search_text))
-                    search_value = (search_text, *search_strategies)
-                    proxy.filter(action, search_value)
-                    break
-            else:
-                LOGGER.warn('No SearchFilter found to apply search text')
+        admin._set_search_filter(self.actions, proxy, search_text)
         super().__post_init__(value, admin, proxy)
 
     @staticmethod
@@ -181,7 +158,7 @@ class UpdateTableView(AbstractCrudView):
 class OpenTableView( UpdateTableView ):
     """Open a new table view in the workspace.
     
-    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param admin: an `camelot.admin.AbstractAdmin` instance
     :param value: a list of objects or a query
 
     .. attribute:: title
@@ -207,7 +184,7 @@ class OpenTableView( UpdateTableView ):
 class OpenQmlTableView(OpenTableView):
     """Open a new table view in the workspace.
     
-    :param admin: an `camelot.admin.object_admin.ObjectAdmin` instance
+    :param admin: an `camelot.admin.AbstractAdmin` instance
     :param value: a list of objects or a query
 
     .. attribute:: title
