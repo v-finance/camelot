@@ -300,24 +300,24 @@ class ChangeObject(OpenFormView):
         """
         return self.get_objects()[0]
 
-    @classmethod
-    def render(self, gui_context, step):
-        """create the dialog. this method is used to unit test
-        the action step."""
-        dialog = ChangeObjectDialog(
-            step['model_context_name'],
-            tuple(step['admin_route']),
-            step['title'],
-            step['form'],
-            step['fields'],
-            step['actions'],
-            step['action_states'],
-            step['accept'],
-            step['reject'],
-        )
-        dialog.set_banner_title(step['title'])
-        dialog.set_banner_subtitle(step['subtitle'])
-        return dialog
+    #@classmethod
+    #def render(self, gui_context, step):
+        #"""create the dialog. this method is used to unit test
+        #the action step."""
+        #dialog = ChangeObjectDialog(
+            #step['model_context_name'],
+            #tuple(step['admin_route']),
+            #step['title'],
+            #step['form'],
+            #step['fields'],
+            #step['actions'],
+            #step['action_states'],
+            #step['accept'],
+            #step['reject'],
+        #)
+        #dialog.set_banner_title(step['title'])
+        #dialog.set_banner_subtitle(step['subtitle'])
+        #return dialog
 
     @classmethod
     def gui_run(cls, gui_run, gui_context, serialized_step):
