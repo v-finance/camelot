@@ -251,11 +251,6 @@ class EntityMeta( DeclarativeMeta ):
                     for secondary_discriminator in secondary_discriminators:
                         assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must be instances of `orm.properties.RelationshipProperty`'
 
-                order_search_by = entity_args.get('order_search_by')
-                if order_search_by is not None:
-                    order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
-                    assert len(order_search_by) <= 2, 'Can not define more than 2 search order by clauses.'
-
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity':
