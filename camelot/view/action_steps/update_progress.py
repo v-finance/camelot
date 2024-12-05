@@ -28,16 +28,14 @@
 #  ============================================================================
 
 from dataclasses import dataclass
-import json
+
+import logging
 import typing
 
-from camelot.core.exception import CancelRequest
-from camelot.core.qt import QtCore, QtWidgets, transferto
 from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
 from ...core.serializable import DataclassSerializable
-from .. import gui_naming_context
-from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
+from camelot.core.backend import cpp_action_step
 
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
@@ -50,18 +48,9 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
     blocking: bool = False
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        # @TODO : this needs to be handled in the action runner
-        if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
-            return
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        if gui_context is None:
-            return
-        progress_dialog = gui_context.get_progress_dialog()
-        if progress_dialog is not None:
-            step = json.loads(serialized_step)
-            progress_dialog.push_level(step['verbose_name'])
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
 
 
 @dataclass
@@ -70,17 +59,10 @@ class PopProgressLevel(ActionStep, DataclassSerializable):
     blocking: bool = False
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        # @TODO : this needs to be handled in the action runner
-        if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
-            return
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        if gui_context is None:
-            return
-        progress_dialog = gui_context.get_progress_dialog()
-        if progress_dialog is not None:
-            progress_dialog.pop_level()
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
+
 
 @dataclass
 class UpdateProgress(ActionStep, DataclassSerializable):
@@ -106,6 +88,7 @@ updated.
     details.
 :param enlarge: increase the size of the window to two thirds of the screen,
     useful when there are a lot of details displayed.
+:param detail_level: maps to the loglevels from the logging module and indicates the cause for the message.
 """
 
     value: typing.Optional[int] = None
@@ -114,64 +97,18 @@ updated.
     detail: typing.Union[str, ugettext_lazy, None] = None
     clear_details: bool = False
     title: typing.Union[str, ugettext_lazy, None] = None
-    enlarge: bool = False
+    enlarge: typing.Union[bool, None] = None
     blocking: bool = False
     cancelable: bool = True
+    detail_level: int = logging.INFO # To be determined - we currently map to the loglevels from the logging module
 
     def __str__(self):
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        """This method will update the progress dialog, if such dialog exists
-        within the GuiContext
-        
-        :param gui_context: a :class:`camelot.admin.action.GuiContext` instance
-        """
-        # @TODO : this needs to be handled in the action runner
-        if is_cpp_gui_context_name(gui_context_name):
-            # C++ QmlProgressDialog
-            response = qml_action_step(gui_context_name, 'UpdateProgress', serialized_step)
-            if response['was_canceled']:
-                # reset progress dialog
-                reset_step = QtCore.QByteArray(json.dumps({ 'reset': True }).encode())
-                qml_action_step(gui_context_name, 'UpdateProgress', reset_step)
-                raise CancelRequest()
-            return
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        if gui_context is None:
-            return
-        progress_dialog = gui_context.get_progress_dialog()
-        if progress_dialog:
-            if isinstance(progress_dialog, QtWidgets.QProgressDialog):
-                step = json.loads(serialized_step)
-                # QProgressDialog
-                if step["maximum"] is not None:
-                    progress_dialog.setMaximum(step["maximum"])
-                if step["value"] is not None:
-                    progress_dialog.setValue(step["value"])
-                progress_dialog.set_cancel_hidden(not step["cancelable"])
-                if step["text"] is not None:
-                    progress_dialog.setLabelText(step["text"])
-                if step["clear_details"] is True:
-                    progress_dialog.clear_details()
-                if step["detail"] is not None:
-                    progress_dialog.add_detail(step["detail"])
-                if step["title"] is not None:
-                    progress_dialog.title = step["title"]
-                if step["enlarge"]:
-                    progress_dialog.enlarge()
-                if step["blocking"]:
-                    progress_dialog.set_ok_hidden(False)
-                    progress_dialog.set_cancel_hidden(True)
-                    progress_dialog.exec()
-                    # https://vfinance.atlassian.net/browse/VFIN-1844
-                    transferto(progress_dialog, progress_dialog)
-                    progress_dialog.set_ok_hidden(True)
-                    progress_dialog.set_cancel_hidden(False)
-                if progress_dialog.wasCanceled():
-                    progress_dialog.reset()
-                    raise CancelRequest()
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
+        # Always send to C++ (even if gui_context_name comes from python)
+        return cpp_action_step(gui_context_name, 'UpdateProgress', serialized_step)
 
 @dataclass
 class SetProgressAnimate(ActionStep, DataclassSerializable):

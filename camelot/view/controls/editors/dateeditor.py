@@ -31,11 +31,11 @@ import datetime
 
 
 
+from ....core.backend import get_root_backend
 from ....core.qt import QtCore, QtWidgets, Qt
 
 from .customeditor import CustomEditor, set_background_color_palette
 
-from ...validator import DateValidator
 from camelot.view.art import FontIcon
 from camelot.view.utils import local_date_format, date_from_string, ParsingError
 from camelot.view.controls.decorated_line_edit import DecoratedLineEdit
@@ -56,7 +56,9 @@ class DateEditor(CustomEditor):
         self.setObjectName( field_name )
         self.date_format = local_date_format()
         line_edit = DecoratedLineEdit()
-        line_edit.setValidator(DateValidator())
+        validator = get_root_backend().validator("DateValidator")
+        validator.setParent(self)
+        line_edit.setValidator(validator)
         line_edit.setObjectName('date_line_edit')
         line_edit.set_minimum_width(str(QtCore.QDate(2000,12,22).toString(self.date_format)))
         line_edit.setPlaceholderText(QtCore.QDate(2000,1,1).toString(self.date_format))
@@ -114,7 +116,6 @@ class DateEditor(CustomEditor):
             line_edit.setFocus()
 
     def line_edit_finished(self):
-        self.setProperty( 'value', self.get_value() )
         self.valueChanged.emit()
         self.editingFinished.emit()
 
@@ -122,12 +123,10 @@ class DateEditor(CustomEditor):
         # explicitely set value on focus out to format the date in case
         # it was entered unformatted
         value = self.get_value()
-        self.set_value( value )
+        self.set_value(value)
         self.editingFinished.emit()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
-        self.setProperty( 'value', value )
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
         if line_edit is not None:
             if value:
@@ -143,13 +142,14 @@ class DateEditor(CustomEditor):
 
     def get_value(self):
         line_edit = self.findChild(QtWidgets.QWidget, 'date_line_edit')
+        value = None
         if line_edit is not None:
             try:
                 date = date_from_string( str( line_edit.text() ) )
                 value = QtCore.QDate(date) if date is not None else None
             except ParsingError:
-                value = None
-        return CustomEditor.get_value(self) or value
+                pass
+        return value
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)

@@ -30,11 +30,9 @@
 
 from dataclasses import dataclass, field
 
-from camelot.core.exception import CancelRequest
-from camelot.core.naming import initial_naming_context
-from camelot.view.action_runner import hide_progress_dialog
+from camelot.core.naming import initial_naming_context, NameNotFoundException
 
-from .item_view import OpenTableView, OpenQmlTableView
+from .item_view import OpenTableView
 
 @dataclass
 class SelectObjects(OpenTableView):
@@ -73,17 +71,14 @@ class SelectObjects(OpenTableView):
         actions.extend(admin.get_select_list_toolbar_actions())
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        with hide_progress_dialog(gui_context):
-            response, model = OpenQmlTableView.render(gui_context, 'SelectObjects', serialized_step)
-            if not response['selection_count']:
-                raise CancelRequest()
-            return response
-
-    @classmethod
-    def deserialize_result(cls, gui_context, response):
+    def deserialize_result(cls, model_context, response):
+        # the model context that started the action is no the same
+        # as the one in which the selection was made
         objects = []
-        model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
+        try:
+            model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
+        except NameNotFoundException:
+            return objects
         proxy = model_context.proxy
         if proxy is not None:
             selected_rows = response['selected_rows']

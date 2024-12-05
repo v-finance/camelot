@@ -228,7 +228,6 @@ class FloatEditor(CustomEditor):
         spinBox.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows if editable else QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         if value is None:
             spinBox.setValue(spinBox.minimum())
@@ -236,10 +235,6 @@ class FloatEditor(CustomEditor):
             spinBox.setValue(float(value))
 
     def get_value(self):
-        value_loading = CustomEditor.get_value(self)
-        if value_loading is not None:
-            return value_loading
-
         spinBox = self.findChild(CustomDoubleSpinBox, 'spinbox')
         spinBox.interpretText()
         value = spinBox.value()
@@ -254,7 +249,7 @@ class FloatEditor(CustomEditor):
         calculator = Calculator(self)
         calculator.setValue(value)
         calculator.calculation_finished_signal.connect( self.calculation_finished )
-        calculator.exec()
+        calculator.open()
 
     @QtCore.qt_slot(str)
     def calculation_finished(self, value):
