@@ -44,7 +44,6 @@ from enum import Enum
 from sqlalchemy import orm, schema, sql, util
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
-from sqlalchemy.ext import hybrid
 
 from ...types import Enumeration, PrimaryKey
 from ..naming import initial_naming_context, EntityNamingContext
@@ -251,11 +250,6 @@ class EntityMeta( DeclarativeMeta ):
                     for secondary_discriminator in secondary_discriminators:
                         assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must be instances of `orm.properties.RelationshipProperty`'
 
-                order_search_by = entity_args.get('order_search_by')
-                if order_search_by is not None:
-                    order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
-                    assert len(order_search_by) <= 2, 'Can not define more than 2 search order by clauses.'
-
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity':
@@ -395,20 +389,6 @@ class EntityMeta( DeclarativeMeta ):
             (_, *secondary_discriminators) = cls.get_cls_discriminator()
             return [secondary_discriminator.prop.entity.mapper.entity for secondary_discriminator in secondary_discriminators]
         return []
-
-    def get_order_search_by(cls):
-        order_search_by = cls._get_entity_arg('order_search_by')
-        if order_search_by is not None:
-            order_search_by = order_search_by if isinstance(order_search_by, tuple) else (order_search_by,)
-            order_by_clauses = []
-            for order_by in order_search_by:
-                if isinstance(order_by, sql.schema.Column):
-                    order_by_clauses.append(getattr(cls, order_by.key))
-                elif isinstance(order_by, hybrid.hybrid_property):
-                    order_by_clauses.append(getattr(cls, order_by.fget.__name__))
-                else:
-                    order_by_clauses.append(order_by)
-            return tuple(order_by_clauses)
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
