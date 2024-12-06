@@ -16,11 +16,12 @@ class ModelRun(object):
     Server side information of an ongoing action run
     """
 
-    def __init__(self, gui_run_name: CompositeName, generator):
+    def __init__(self, gui_run_name: CompositeName, generator, model_context):
         self.gui_run_name = gui_run_name
         self.generator = generator
         self.cancel = False
         self.last_step = None
+        self.model_context = model_context
 
 model_run_names = initial_naming_context.bind_new_context('model_run')
 
@@ -44,7 +45,7 @@ class AbstractRequest(NamedDataclassSerializable):
         )
 
     @classmethod
-    def _next(cls, run, request_data):
+    def _next(cls, run: ModelRun, request_data):
         return None
 
     @classmethod
@@ -92,6 +93,9 @@ class AbstractRequest(NamedDataclassSerializable):
             run = initial_naming_context.resolve(run_name)
         except NameNotFoundException:
             LOGGER.error('Run name not found : {} for request {}'.format(run_name, request_data))
+            return
+        if run is None:
+            LOGGER.error('Request contains no run {}'.format(request_data))
             return
         gui_run_name = run.gui_run_name
         try:
@@ -142,7 +146,9 @@ class InitiateAction(AbstractRequest):
         from .action_steps import PushProgressLevel
         from .responses import ActionStopped, ActionStepped
         gui_run_name = tuple(request_data['gui_run_name'])
-        LOGGER.debug('Run of action {} with mode {}'.format(request_data['action_name'], request_data['mode']))
+        LOGGER.debug('Run of action {} with mode {} on model context {}'.format(
+            request_data['action_name'], request_data['mode'], request_data['model_context']
+        ))
         try:
             action = initial_naming_context.resolve(tuple(request_data['action_name']))
             model_context = initial_naming_context.resolve(tuple(request_data['model_context']))
@@ -169,7 +175,7 @@ class InitiateAction(AbstractRequest):
                 run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=exception
             ))
             return
-        run = ModelRun(gui_run_name, generator)
+        run = ModelRun(gui_run_name, generator, model_context)
         run_name = model_run_names.bind(str(id(run)), run)
         response_handler.send_response(ActionStepped(
             run_name=run_name, gui_run_name=gui_run_name, blocking=False,
@@ -194,7 +200,7 @@ class SendActionResponse(AbstractRequest):
     @classmethod
     def _next(cls, run, request_data):
         response = run.last_step.deserialize_result(
-            None, request_data['response']
+            run.model_context, request_data['response']
         )
         return run.generator.send(response)
 
@@ -229,4 +235,21 @@ class CancelAction(AbstractRequest):
 @dataclass
 class StopProcess(AbstractRequest):
     """Sentinel task to end all tasks to be executed by a process"""
-    pass
+
+    @classmethod
+    def execute(cls, request_data, response_handler, cancel_handler):
+        raise SystemExit(0)
+
+
+@dataclass
+class Unbind(AbstractRequest):
+
+    names: typing.List[CompositeName]
+
+    @classmethod
+    def execute(cls, request_data, response_handler, cancel_handler):
+        for lease in request_data['names']:
+            try:
+                initial_naming_context.unbind(tuple(lease))
+            except NameNotFoundException:
+                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))

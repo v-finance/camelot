@@ -2,7 +2,8 @@
 name pink if its first starts with a capital M"""
 
 from camelot.core.qt import QtGui
-from camelot.model.party import Person
+
+from ..testing_context import Person
 
 def first_name_background_color(person):
     if person.first_name is not None:

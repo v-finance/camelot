@@ -38,16 +38,18 @@ class LabelEditor(QtWidgets.QLabel, AbstractCustomEditor):
     actionTriggered = QtCore.qt_signal(list, object)
     
     def __init__(self, 
-                 parent = None, 
-                 text = "<loading>",
+                 parent = None,
                  field_name = 'label'):
         QtWidgets.QLabel.__init__(self, parent)
         AbstractCustomEditor.__init__(self)
         self.setObjectName( field_name )
-
-        self.text = text
+        self.setFrameStyle(QtWidgets.QFrame.Shape.Panel)# | QtWidgets.QFrame.Shadow.Sunken)
 
     def set_value(self, value):
-        value = AbstractCustomEditor.set_value(self, value)
-        if value:
+        if value is not None:
             self.setText(value)
+        else:
+            self.setText('')
+
+    def get_value(self):
+        return self.text()

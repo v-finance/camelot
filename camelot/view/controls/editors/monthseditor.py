@@ -32,7 +32,6 @@
 from ....core.qt import QtCore, Qt, QtWidgets
 from camelot.core.utils import ugettext as _
 from camelot.view.controls.editors import CustomEditor
-from camelot.view.controls.editors.customeditor import ValueLoading
 from camelot.view.controls.editors.integereditor import CustomDoubleSpinBox
 
 class MonthsEditor(CustomEditor):
@@ -46,6 +45,8 @@ class MonthsEditor(CustomEditor):
                  # Min & max, defined in years.
                  minimum = 0,
                  maximum = 10000,
+                 forever = None,
+                 action_routes=[],
                  field_name='months'):
         CustomEditor.__init__(self, parent)
         self.setSizePolicy( QtWidgets.QSizePolicy.Policy.Preferred,
@@ -57,27 +58,49 @@ class MonthsEditor(CustomEditor):
         self.months_spinbox.setRange(-1, 11)
         self.years_spinbox.setSuffix(_(' years'))
         self.months_spinbox.setSuffix(_(' months'))
+        self.forever = forever
         
         self.years_spinbox.setDecimals(0)
         self.years_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.years_spinbox.setSingleStep(1)
+        self.years_spinbox.setValue(self.years_spinbox.minimum())
         
         self.months_spinbox.setDecimals(0)
         self.months_spinbox.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter)
         self.months_spinbox.setSingleStep(1)
+        self.months_spinbox.setValue(self.months_spinbox.minimum())
+        self.forever_label = QtWidgets.QLabel(_('Forever'))
+        self.forever_label.setVisible(False)
 
-        self.years_spinbox.editingFinished.connect( self._spinbox_editing_finished )
-        self.months_spinbox.editingFinished.connect( self._spinbox_editing_finished )
-        
+        self.years_spinbox.editingFinished.connect(self._spinbox_editing_finished)
+        self.months_spinbox.editingFinished.connect(self._spinbox_editing_finished)
+        self.years_spinbox.valueChanged.connect(self._update_forever)
+        self.months_spinbox.valueChanged.connect(self._update_forever)
+
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.years_spinbox)
         layout.addWidget(self.months_spinbox)
+        layout.addWidget(self.forever_label)
+        self.add_actions(action_routes, layout)
+
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
     @QtCore.qt_slot()
     def _spinbox_editing_finished(self):
         self.editingFinished.emit()
+
+    @QtCore.qt_slot(float)
+    def _update_forever(self, d):
+        if self.forever is not None:
+            if (self.forever == self.get_value()):
+                self.years_spinbox.setVisible(False)
+                self.months_spinbox.setVisible(False)
+                self.forever_label.setVisible(True)
+            else:
+                self.years_spinbox.setVisible(True)
+                self.months_spinbox.setVisible(True)
+                self.forever_label.setVisible(False)
 
     def set_tooltip(self, tooltip):
         super().set_tooltip(tooltip)
@@ -100,7 +123,6 @@ class MonthsEditor(CustomEditor):
 
     def set_value(self, value):
         # will set privates value_is_none and _value_loading
-        value = CustomEditor.set_value(self, value)
         if value is None:
             self.years_spinbox.setValue(self.years_spinbox.minimum())
             self.months_spinbox.setValue(self.months_spinbox.minimum())
@@ -111,8 +133,6 @@ class MonthsEditor(CustomEditor):
             self.months_spinbox.setValue(months)
 
     def get_value(self):
-        if CustomEditor.get_value(self) is ValueLoading:
-            return ValueLoading
         self.years_spinbox.interpretText()
         years = int(self.years_spinbox.value())
         self.months_spinbox.interpretText()

@@ -29,26 +29,27 @@
 
 """Helper classes to create unit tests for Actions."""
 
-class MockModelContext( object ):
+
+from ..admin.model_context import ObjectsModelContext
+from ..core.qt import QtCore
+
+class MockModelContext(ObjectsModelContext):
     """Model Context to be used in unit tests
     
     :param session: the session attributed to this model context, if `None` is
         given, the session of the object is used.
     """
     
-    def __init__( self, session=None ):
+    def __init__(self, session=None):
+        super().__init__(None, None, QtCore.QLocale())
         self._model = []
         self.obj = None
         self.selection = []
-        self.admin = None
         self.mode_name = None
         self.collection_count = 1
         self.current_row = 0
-        self.current_column = None
-        self.current_field_name = None
-        self.field_attributes = {}
         self._session = session
-        
+
     def get_object( self, row=None ):
         return self.obj
         
@@ -63,6 +64,10 @@ class MockModelContext( object ):
     @property
     def selection_count(self):
         return len(self.get_selection())
+
+    @selection_count.setter
+    def selection_count(self, new_value):
+        pass
 
     @property
     def session( self ):

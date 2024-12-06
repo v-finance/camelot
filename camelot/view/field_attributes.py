@@ -127,6 +127,10 @@ _sqlalchemy_to_python_type_ = {
         'to_string': str,
         'search_strategy': list_filter.MonthsFilter,
         'filter_strategy': list_filter.MonthsFilter,
+        'forever': f.forever,
+        'actions': [
+            field_action.ToggleForeverAction(),
+        ] if f.forever is not None else [],
     },
 
     sqlalchemy.types.Integer: lambda f: {
@@ -155,16 +159,6 @@ _sqlalchemy_to_python_type_ = {
         'filter_strategy': list_filter.StringFilter,
     },
 
-    camelot.types.VirtualAddress: lambda f: {
-        'python_type': str,
-        'editable': True,
-        'nullable': True,
-        'delegate': delegates.VirtualAddressDelegate,
-        'from_string' : lambda str:None,
-        'search_strategy': list_filter.NoFilter,
-        'filter_strategy': list_filter.NoFilter,
-    },
-
     camelot.types.RichText: lambda f: {
         'python_type': str,
         'editable': True,
@@ -183,6 +177,20 @@ _sqlalchemy_to_python_type_ = {
         'from_string': lambda s:dict((enumeration_to_string(v), v) for v in f.choices)[s],
         'minimal_column_width':max(itertools.chain((0,), (len(enumeration_to_string(v)) for v in f.choices))),
         'editable': True,
+        'nullable': True,
+        'widget': 'combobox',
+        'to_string': enumeration_to_string,
+        'search_strategy': list_filter.NoFilter,
+        'filter_strategy': list_filter.ChoicesFilter,
+    },
+
+    camelot.types.StatusEnumeration: lambda f: {
+        'delegate': delegates.StatusDelegate,
+        'python_type': str,
+        'choices': [(v, enumeration_to_string(v)) for v in f.choices],
+        'from_string': lambda s:dict((enumeration_to_string(v), v) for v in f.choices)[s],
+        'minimal_column_width':max(itertools.chain((0,), (len(enumeration_to_string(v)) for v in f.choices))),
+        'editable': False,
         'nullable': True,
         'widget': 'combobox',
         'to_string': enumeration_to_string,
@@ -229,6 +237,8 @@ _sqlalchemy_to_python_type_ = {
     },
 }
 
+# when implementing Annotated types with metadata, implement this as a class with [] get, and use case switch to match
+# and return the proper values
 _typing_to_python_type = {
     bool: {
         'python_type': bool,
