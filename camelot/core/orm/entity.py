@@ -39,8 +39,6 @@ import functools
 import logging
 import re
 
-from enum import Enum
-
 from sqlalchemy import orm, schema
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
