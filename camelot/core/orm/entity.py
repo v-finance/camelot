@@ -129,56 +129,6 @@ class EntityMeta( DeclarativeMeta ):
     before switching to SQLAlchemy version 1.4. In that SQLA version, the `sqlalchemy.ext.declarative` package is integrated into `sqlalchemy.orm`
     and the declarative mapping registry style is changed, which impacts this primary key column setting.
 
-    Entity args
-    -----------
-    This metaclass also provides entity classes with a means to configure options or register traits, which can be used to facilitate various use cases involving the entity.
-    These options can be passed through via the __entity_args__ class attribute,
-    that supports arguments that reference locally mapped columns directly from within the class declaration (as seen in the examples below).
-    Currently, the following entity args are supported:
-
-    * 'discriminator'
-       The discriminator definition registers the column or properties by which instances of the entity class can be categorized,
-       on a more broader basis than the primary key identity or polymorphism.
-       This discriminator definition can be a single discriminator property, or a combination of multiple.
-       The primary discriminator should always be an Enumeration type column, which defines the types that are allowed as values for the discriminator column.
-       The enumeration's types and/or type_groups are extracted from its definition and set as class attributes on the entity class.
-       Secondary discriminators should always be relationship properties to a related Entity class.
-
-       :example:
-       | class SomeClass(Entity):
-       |     __tablename__ = 'some_tablename'
-       |     ...
-       |     described_by = Column(IntEnum(some_class_types), ...)
-       |     ...
-       |     __entity_args__ = {
-       |         'discriminator': described_by,
-       |     }
-       |     ...
-       |
-       | SomeClass.__types__ == some_class_types
-       |
-       | class OtherClass(Entity):
-       |     ...
-       |     described_by = Column(IntEnum(other_class_types))
-       |     related_id = schema.Column(sqlalchemy.types.Integer(), schema.ForeignKey(SomeClass.id))
-       |     related_entity = orm.relationship(SomeClass)
-       |     ...
-       |     __entity_args__ = {
-       |         'discriminator': (described_by, related_entity),
-       |     }
-       |     ...
-       |
-       | OtherClass.__types__ == other_class_types
-
-       This metaclass will also provide entity classes with the `get_cls_discriminator` method, which returns the registered discriminator definition,
-       and the `get_discriminator_value` & `set_discriminator_value` method to retrieve or set the discriminator value on a provided entity instance.
-       In unison with the discriminator argument, the metaclass also imparts entity classes with the ability to register and later retrieve classes for concrete discriminator values.
-       These registered classes are stored in the __discriminator_cls_registry__ class argument and registered classes can be retrieved for a specific discriminator value with the 'get_cls_by_discriminator' method.
-       See its documentation for more details.
-
-       All this discriminator and types' functionality can be used by processes higher-up to quicken the creation and insertion process of entity instances, e.g. facades, pull-down add actions, etc..
-       NOTE: this class registration system could possibly be moved to the level of the facade in the future, to not be limited to a single hierarchy for each entity class.
-
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
@@ -212,43 +162,6 @@ class EntityMeta( DeclarativeMeta ):
             dict_.setdefault('__entity_name__', cls._default_entity_name(cls, classname))
 
             dict_.setdefault('__entity_args__', dict())
-            for base in bases:
-                if hasattr(base, '__types__'):
-                    break
-            else:
-                dict_.setdefault('__types__', None)
-            
-            for base in bases:
-                if hasattr(base, '__type_groups__'):
-                    break
-            else:
-                dict_.setdefault('__type_groups__', None)
-            
-            for base in bases:
-                if hasattr(base, '__discriminator_cls_registry__'):
-                    break
-            else:
-                dict_.setdefault('__discriminator_cls_registry__', EntityClsRegistry())
-        
-            entity_args = dict_.get('__entity_args__')
-            if entity_args is not None:
-                discriminator = entity_args.get('discriminator')
-                if discriminator is not None:
-                    (primary_discriminator, *secondary_discriminators) = discriminator if isinstance(discriminator, tuple) else (discriminator,)
-                    assert isinstance(primary_discriminator, (sql.schema.Column, orm.attributes.InstrumentedAttribute)),\
-                           'Primary discriminator must be a single instance of `sql.schema.Column` or an `orm.attributes.InstrumentedAttribute`'
-                    discriminator_col = primary_discriminator
-                    if isinstance(primary_discriminator, orm.attributes.InstrumentedAttribute):
-                        discriminator_col = primary_discriminator.prop.columns[0]
-                    assert isinstance(discriminator_col.type, Enumeration), 'Discriminator column must be of type Enumeration'
-                    assert isinstance(discriminator_col.type.enum, util.OrderedProperties), 'Discriminator column has no enumeration types defined'
-                    dict_['__types__'] = discriminator_col.type.enum
-                    if hasattr(discriminator_col.type.enum, 'get_groups'):
-                        dict_['__type_groups__'] = discriminator_col.type.enum.get_groups()
-                    dict_['__discriminator_cls_registry__'] = EntityClsRegistry()
-                    assert len(secondary_discriminators) <= 1, 'Only a single secondary discriminator is currently supported'
-                    for secondary_discriminator in secondary_discriminators:
-                        assert isinstance(secondary_discriminator, orm.properties.RelationshipProperty), 'Secondary discriminators must be instances of `orm.properties.RelationshipProperty`'
 
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
@@ -280,7 +193,7 @@ class EntityMeta( DeclarativeMeta ):
         In case of a polymorphic base class with a polymorphic discriminator column
         that is of type Enumeration, return its contained type enumeration.
         Note: a class which both defines the polymorphic on as a polymoprhic identity,
-        is not considered a polymoprhic base class.
+        is not considered a polymorphic base class.
         """
         polymorphic_on = cls.__mapper_args__.get('polymorphic_on')
         polymorphic_identity = cls.__mapper_args__.get('polymorphic_identity')
