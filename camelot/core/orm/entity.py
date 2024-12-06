@@ -205,57 +205,8 @@ class EntityMeta( DeclarativeMeta ):
                 return polymorphic_on_col.type.enum
 
     def get_cls_by_discriminator(cls, primary_discriminator, *secondary_discriminators):
-        """
-        Retrieve the corresponding class for the given discriminator value if one is registered on this class or its base.
-        This can be the class that is specifically registered for the given discriminator value, or a possible registered default class otherwise.
-        Providing no value will also return the default registered class if present.
-        Additionally, in case of a polymorphic base class, passing one of the polymorphic identities will also retrieve
-        the entity corresponding to the identity based on the polymorphic map.
-
-        :param primary_discriminator: can be one of either following values:
-          * None: will lookup a possible registered default class
-          * a member of a sqlalchemy.util.OrderedProperties instance.
-            If this class or its base have types registration enabled, this should be a member of the set __types__ or a member of the
-            __type_groups__, that get auto-set in case the set types are grouped.
-        :param secondary_discriminators: optional secondary Entity class or instance discriminator values.
-        :return: the class that is registered for the given discriminator values, which inherits from the class where the discriminators are registered on, or the class itself if not.
-                 In case the primary discriminator value is:
-                   * None; the registered default class will be returned, if present.
-                   * a member of the allowed __type_groups__; a possible registered class for the type group will be returned, or the registered default class otherwise.
-                   * a member of the allowed __types__; a possible registered class for the type will be returned,
-                     otherwise a possible registered class for the group of the type, if applicable, and otherwise the registered default class.
-                 In the latter two cases, the secondary discriminators may discriminate between multi-level discriminated registered classes.
-                 Examples:
-                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_type.name) == CertainTypeClass
-                  | BaseClass.get_cls_by_discriminator(allowed_type_groups.certain_registered_type_group.name) == RegisteredClassForGroup
-                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_unregistered_type.name) == RegisteredDefaultClass
-                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_type.name, Organization) == CertainTypeClassWithOrganization
-                  | BaseClass.get_cls_by_discriminator(allowed_types.certain_type.name, Person) == CertainTypeClassWithPerson
-        :raises : an AttributeException when the given argument is not a valid type
-        """
-        if 'polymorphic_on' in cls.__mapper_args__ and primary_discriminator in cls.__mapper__.polymorphic_map:
-            return cls.__mapper__.polymorphic_map[primary_discriminator].entity
-        if cls.__types__ is not None:
-            if primary_discriminator in cls.__types__:
-                # Support passing secondary discriminator arguments both on the instance as the class level.
-                secondary_discriminators = [
-                    secondary_discriminator.__class__ if not isinstance(secondary_discriminator, EntityMeta) \
-                    else secondary_discriminator for secondary_discriminator in secondary_discriminators]
-
-                # First check if a class is registered under a single-type discriminatory value.
-                if (registered_class := cls.__discriminator_cls_registry__.get(primary_discriminator, *secondary_discriminators)) is not None:
-                    return registered_class
-
-                # If no single-type registration exists, try with its type group (if applicable).
-                if cls.__type_groups__ is not None and \
-                   (type_group := cls.__types__[primary_discriminator].grouped_by) is not None and \
-                   (registered_class := cls.__discriminator_cls_registry__.get(
-                       type_group.name, *secondary_discriminators, discriminator_type=EntityClsRegistry.DiscriminatorType.group)) is not None:
-                    return registered_class
-
-            # If no other more concrete class registration is found, return a default class registration if it exists.
-            if (registered_class := cls.__discriminator_cls_registry__.get(None)) is not None:
-                return registered_class
+        from vfinance.interface.registry import endpoint_registry
+        return endpoint_registry.get(cls).get_cls_by_discriminator(primary_discriminator, *secondary_discriminators)
 
     def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
@@ -266,15 +217,8 @@ class EntityMeta( DeclarativeMeta ):
         """
         Retrieve this entity class discriminator definition.
         """
-        discriminator = cls._get_entity_arg('discriminator')
-        if discriminator is not None:
-            discriminator = discriminator if isinstance(discriminator, tuple) else (discriminator,)
-            discriminator_cols = [
-                getattr(cls, discriminator_col.key) \
-                if isinstance(discriminator_col, (sql.schema.Column, orm.properties.RelationshipProperty)) \
-                else discriminator_col for discriminator_col in discriminator
-            ]
-            return tuple(discriminator_cols)
+        from vfinance.interface.registry import endpoint_registry
+        return endpoint_registry.get(cls).get_cls_discriminator()
 
     def get_discriminator_value(cls, entity_instance):
         """Return the given entity instance's discriminator value."""
@@ -290,7 +234,9 @@ class EntityMeta( DeclarativeMeta ):
         if discriminator is not None:
             (primary_discriminator, *secondary_discriminators) = discriminator
             if primary_discriminator_value is not None:
-                assert primary_discriminator_value in cls.__types__.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
+                from vfinance.interface.registry import endpoint_registry
+                endpoint = endpoint_registry.get(cls)
+                assert primary_discriminator_value in endpoint.discriminator_types.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
                 primary_discriminator.__set__(entity_instance, primary_discriminator_value)
                 for secondary_discriminator_prop, secondary_discriminator_value in zip(secondary_discriminators, secondary_discriminator_values):
                     entity = secondary_discriminator_prop.prop.entity.entity
@@ -298,10 +244,8 @@ class EntityMeta( DeclarativeMeta ):
                     secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
 
     def get_secondary_discriminator_types(cls):
-        if cls.get_cls_discriminator() is not None:
-            (_, *secondary_discriminators) = cls.get_cls_discriminator()
-            return [secondary_discriminator.prop.entity.mapper.entity for secondary_discriminator in secondary_discriminators]
-        return []
+        from vfinance.interface.registry import endpoint_registry
+        return endpoint_registry.get(cls).get_secondary_discriminator_types()
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
