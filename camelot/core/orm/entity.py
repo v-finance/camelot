@@ -120,6 +120,11 @@ class EntityMeta( DeclarativeMeta ):
         # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
         return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
 
+    @property
+    def endpoint(cls):
+        from vfinance.interface.registry import endpoint_registry
+        return endpoint_registry.get(cls)
+
     def get_polymorphic_types(cls):
         """
         In case of a polymorphic base class with a polymorphic discriminator column
@@ -137,8 +142,7 @@ class EntityMeta( DeclarativeMeta ):
                 return polymorphic_on_col.type.enum
 
     def get_cls_by_discriminator(cls, primary_discriminator, *secondary_discriminators):
-        from vfinance.interface.registry import endpoint_registry
-        return endpoint_registry.get(cls).get_cls_by_discriminator(primary_discriminator, *secondary_discriminators)
+        return cls.endpoint.get_cls_by_discriminator(primary_discriminator, *secondary_discriminators)
 
     def _get_entity_arg(cls, key):
         for cls_ in (cls,) + cls.__mro__:
@@ -149,8 +153,7 @@ class EntityMeta( DeclarativeMeta ):
         """
         Retrieve this entity class discriminator definition.
         """
-        from vfinance.interface.registry import endpoint_registry
-        return endpoint_registry.get(cls).get_cls_discriminator()
+        return cls.endpoint.get_cls_discriminator()
 
     def get_discriminator_value(cls, entity_instance):
         """Return the given entity instance's discriminator value."""
@@ -166,9 +169,7 @@ class EntityMeta( DeclarativeMeta ):
         if discriminator is not None:
             (primary_discriminator, *secondary_discriminators) = discriminator
             if primary_discriminator_value is not None:
-                from vfinance.interface.registry import endpoint_registry
-                endpoint = endpoint_registry.get(cls)
-                assert primary_discriminator_value in endpoint.discriminator_types.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
+                assert primary_discriminator_value in cls.endpoint.discriminator_types.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
                 primary_discriminator.__set__(entity_instance, primary_discriminator_value)
                 for secondary_discriminator_prop, secondary_discriminator_value in zip(secondary_discriminators, secondary_discriminator_values):
                     entity = secondary_discriminator_prop.prop.entity.entity
@@ -176,8 +177,7 @@ class EntityMeta( DeclarativeMeta ):
                     secondary_discriminator_prop.__set__(entity_instance, secondary_discriminator_value)
 
     def get_secondary_discriminator_types(cls):
-        from vfinance.interface.registry import endpoint_registry
-        return endpoint_registry.get(cls).get_secondary_discriminator_types()
+        return cls.endpoint.get_secondary_discriminator_types()
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
