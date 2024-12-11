@@ -93,8 +93,6 @@ class EntityMeta( DeclarativeMeta ):
             # Assign each new Entity class a unique id.
             dict_.setdefault('__entity_name__', cls._default_entity_name(cls, classname))
 
-            dict_.setdefault('__entity_args__', dict())
-
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity':
@@ -110,7 +108,7 @@ class EntityMeta( DeclarativeMeta ):
                         _class.id = schema.Column(PrimaryKey(), primary_key=True)
 
             # Bind an EntityNamingContext to the initial naming context for the entity class
-            # using the entity's name configured (or auto-assigned) in the __entity_args__
+            # using the entity's name, configured (or auto-assigned) with __entity_name__
             initial_naming_context.bind_context(('entity', _class.__entity_name__), EntityNamingContext(_class))
 
         return _class
@@ -144,11 +142,6 @@ class EntityMeta( DeclarativeMeta ):
     def get_cls_by_discriminator(cls, primary_discriminator, *secondary_discriminators):
         return cls.endpoint.get_cls_by_discriminator(primary_discriminator, *secondary_discriminators)
 
-    def _get_entity_arg(cls, key):
-        for cls_ in (cls,) + cls.__mro__:
-            if hasattr(cls_, '__entity_args__') and key in cls_.__entity_args__:
-                return cls_.__entity_args__[key]
-    
     def get_cls_discriminator(cls):
         """
         Retrieve this entity class discriminator definition.
