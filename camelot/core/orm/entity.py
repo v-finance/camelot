@@ -142,25 +142,17 @@ class EntityMeta( DeclarativeMeta ):
     def get_cls_by_discriminator(cls, primary_discriminator, *secondary_discriminators):
         return cls.endpoint.get_cls_by_discriminator(primary_discriminator, *secondary_discriminators)
 
-    def get_cls_discriminator(cls):
-        """
-        Retrieve this entity class discriminator definition.
-        """
-        return cls.endpoint.get_cls_discriminator()
-
     def get_discriminator_value(cls, entity_instance):
         """Return the given entity instance's discriminator value."""
         assert isinstance(entity_instance, cls)
-        discriminator = cls.get_cls_discriminator()
-        if discriminator is not None:
-            return tuple([discriminator_prop.__get__(entity_instance, None) for discriminator_prop in discriminator])
+        if cls.endpoint.discriminator is not None:
+            return tuple([discriminator_prop.__get__(entity_instance, None) for discriminator_prop in cls.endpoint.discriminator])
 
     def set_discriminator_value(cls, entity_instance, primary_discriminator_value, *secondary_discriminator_values):
         """Set the given entity instance's discriminator with the provided discriminator value."""
         assert isinstance(entity_instance, cls)
-        discriminator = cls.get_cls_discriminator()
-        if discriminator is not None:
-            (primary_discriminator, *secondary_discriminators) = discriminator
+        if cls.endpoint.discriminator is not None:
+            (primary_discriminator, *secondary_discriminators) = cls.endpoint.discriminator
             if primary_discriminator_value is not None:
                 assert primary_discriminator_value in cls.endpoint.discriminator_types.__members__, '{} is not a valid discriminator value for this entity.'.format(primary_discriminator_value)
                 primary_discriminator.__set__(entity_instance, primary_discriminator_value)
