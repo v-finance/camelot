@@ -30,7 +30,7 @@
 
 from dataclasses import dataclass, field
 
-from camelot.core.naming import initial_naming_context
+from camelot.core.naming import initial_naming_context, NameNotFoundException
 
 from .item_view import OpenTableView
 
@@ -39,7 +39,7 @@ class SelectObjects(OpenTableView):
     """Select one or more object from a query.  The `yield` of this action step
     return a list of objects.
 
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
+    :param admin: a :class:`camelot.admin.AbstractAdmin` object
     :param search_text: a default string on which to search for in the selection
         dialog
     :param value: a query or a list of object from which the selection should
@@ -71,9 +71,14 @@ class SelectObjects(OpenTableView):
         actions.extend(admin.get_select_list_toolbar_actions())
 
     @classmethod
-    def deserialize_result(cls, gui_context, response):
+    def deserialize_result(cls, model_context, response):
+        # the model context that started the action is no the same
+        # as the one in which the selection was made
         objects = []
-        model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
+        try:
+            model_context = initial_naming_context.resolve(tuple(response['model_context_name']))
+        except NameNotFoundException:
+            return objects
         proxy = model_context.proxy
         if proxy is not None:
             selected_rows = response['selected_rows']

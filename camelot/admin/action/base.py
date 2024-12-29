@@ -154,6 +154,15 @@ updated state for the widget.
 
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
+
+.. attribute:: shortcut
+
+    The shortcut key sequence to trigger the action.
+
+.. attribute:: color
+
+    A color used to indicate something regarding the action's state. This color
+    can be used as button text color, background or outline for example.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
@@ -164,6 +173,7 @@ updated state for the widget.
     notification: bool = False
     modes: typing.List[Mode] = field(default_factory=list)
     shortcut: typing.Optional[str] = None
+    color: typing.Optional[str] = None
 
 # TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
 #       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
@@ -208,14 +218,13 @@ return immediately and the :meth:`model_run` will not be blocked.
         raise Exception('This should not happen')
 
     @classmethod
-    def deserialize_result(cls, gui_context, serialized_result):
+    def deserialize_result(cls, model_context: ModelContext, serialized_result):
         """
-        :param gui_context:  An object of type
-            :class:`camelot.admin.action.GuiContext`, which is the context
-            of this action available in the *GUI thread*.  What is in the
-            context depends on how the action was called.
+        :param model_context:  An object of type
+            :class:`camelot.admin.action.ModelContext`, which is the context
+            on which the action was started.
 
-        :param serialized_result: The serialized result comming from the client.
+        :param serialized_result: The serialized result coming from the client.
 
         :return: The deserialized result. The default implementation returns the
             serialized result as is. This function can be reimplemented to change

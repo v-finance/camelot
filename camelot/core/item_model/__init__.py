@@ -34,10 +34,7 @@ of `QObject`, but pure Python helper classes.
 """
 
 from ..qt import Qt
-
-from .list_proxy import ListModelProxy
 from .proxy import AbstractModelProxy, AbstractModelFilter
-from .query_proxy import QueryModelProxy
 
 #
 # Custom Roles
@@ -77,8 +74,6 @@ class ProxyDict(dict):
 __all__ = [
     AbstractModelFilter.__name__,
     AbstractModelProxy.__name__,
-    ListModelProxy.__name__,
     ProxyDict.__name__,
-    QueryModelProxy.__name__,
 ]
 

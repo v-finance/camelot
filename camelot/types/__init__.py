@@ -62,13 +62,11 @@ class PrimaryKey(types.TypeDecorator):
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        from camelot.core.orm import options
-        return options.DEFAULT_AUTO_PRIMARYKEY_TYPE()
+        return types.Integer()
     
     @property
     def python_type(self):
-        from camelot.core.orm import options
-        return options.DEFAULT_AUTO_PRIMARYKEY_TYPE().python_type
+        return types.Integer().python_type
 
     def __repr__(self):
         return 'PrimaryKey()'

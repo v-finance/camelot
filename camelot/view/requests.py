@@ -16,11 +16,12 @@ class ModelRun(object):
     Server side information of an ongoing action run
     """
 
-    def __init__(self, gui_run_name: CompositeName, generator):
+    def __init__(self, gui_run_name: CompositeName, generator, model_context):
         self.gui_run_name = gui_run_name
         self.generator = generator
         self.cancel = False
         self.last_step = None
+        self.model_context = model_context
 
 model_run_names = initial_naming_context.bind_new_context('model_run')
 
@@ -44,7 +45,7 @@ class AbstractRequest(NamedDataclassSerializable):
         )
 
     @classmethod
-    def _next(cls, run, request_data):
+    def _next(cls, run: ModelRun, request_data):
         return None
 
     @classmethod
@@ -174,7 +175,7 @@ class InitiateAction(AbstractRequest):
                 run_name=('constant', 'null'), gui_run_name=gui_run_name, exception=exception
             ))
             return
-        run = ModelRun(gui_run_name, generator)
+        run = ModelRun(gui_run_name, generator, model_context)
         run_name = model_run_names.bind(str(id(run)), run)
         response_handler.send_response(ActionStepped(
             run_name=run_name, gui_run_name=gui_run_name, blocking=False,
@@ -199,7 +200,7 @@ class SendActionResponse(AbstractRequest):
     @classmethod
     def _next(cls, run, request_data):
         response = run.last_step.deserialize_result(
-            None, request_data['response']
+            run.model_context, request_data['response']
         )
         return run.generator.send(response)
 
