@@ -106,8 +106,8 @@ class EntityMeta( DeclarativeMeta ):
 
     @property
     def endpoint(cls):
-        from vfinance.interface.endpoint import endpoint_registry
-        return endpoint_registry.get(cls)
+        from vfinance.interface.endpoint import Endpoint
+        return Endpoint.get(cls)
 
     def get_polymorphic_types(cls):
         """
@@ -355,13 +355,10 @@ class EntityBase( object ):
 
         :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.endpoint.Endpoint`.
         """
-        # TODO: can be made top-level after transer to the vFinance repo.
-        from vfinance.interface.endpoint import endpoint_registry
         # @todo : move this method to a place where end of times is known
         end_of_times = datetime.date(2400, 12, 31)
         entity = type(self)
-        endpoint = endpoint_registry.get(entity)
-        assert endpoint.application_date is not None
+        assert entity.endpoint.application_date is not None
         assert isinstance(at, datetime.date)
-        application_date = endpoint.application_date.__get__(self, None)
+        application_date = entity.endpoint.application_date.__get__(self, None)
         return application_date is not None and not (application_date >= end_of_times or at < application_date)
