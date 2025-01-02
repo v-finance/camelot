@@ -37,14 +37,12 @@ These classes can be reused if a custom base class is needed.
 import datetime
 import functools
 import logging
-import re
 
 from sqlalchemy import orm, schema
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
 
 from ...types import Enumeration, PrimaryKey
-from ..naming import initial_naming_context, EntityNamingContext
 from . import Session
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
