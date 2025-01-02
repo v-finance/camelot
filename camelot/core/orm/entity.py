@@ -90,9 +90,6 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__mapper_args__', dict())
 
-            # Assign each new Entity class a unique id.
-            dict_.setdefault('__entity_name__', cls._default_entity_name(cls, classname))
-
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity':
@@ -107,16 +104,7 @@ class EntityMeta( DeclarativeMeta ):
                     if table is None or table.primary_key is None:
                         _class.id = schema.Column(PrimaryKey(), primary_key=True)
 
-            # Bind an EntityNamingContext to the initial naming context for the entity class
-            # using the entity's name, configured (or auto-assigned) with __entity_name__
-            initial_naming_context.bind_context(('entity', _class.__entity_name__), EntityNamingContext(_class))
-
         return _class
-
-    def _default_entity_name(cls, classname):
-        # The default format will split the classname by capital letters, and join the lowered result by underscore.
-        # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
-        return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
 
     @property
     def endpoint(cls):
