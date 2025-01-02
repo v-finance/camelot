@@ -120,7 +120,7 @@ class EntityMeta( DeclarativeMeta ):
 
     @property
     def endpoint(cls):
-        from vfinance.interface.registry import endpoint_registry
+        from vfinance.interface.endpoint import endpoint_registry
         return endpoint_registry.get(cls)
 
     def get_polymorphic_types(cls):
@@ -363,14 +363,14 @@ class EntityBase( object ):
         """
         Return whether this entity instance is applicable at the given date.
         This method requires the entity class to have its application date range
-        configured in a `vfinance.interface.registry.Endpoint`.
+        configured in a `vfinance.interface.endpoint.Endpoint`.
         An instance is applicable at the given date when it is later than the instance's
         application date, and the application date is not later than end_of_times.
 
-        :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.registry.Endpoint`.
+        :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.endpoint.Endpoint`.
         """
         # TODO: can be made top-level after transer to the vFinance repo.
-        from vfinance.interface.registry import endpoint_registry
+        from vfinance.interface.endpoint import endpoint_registry
         # @todo : move this method to a place where end of times is known
         end_of_times = datetime.date(2400, 12, 31)
         entity = type(self)

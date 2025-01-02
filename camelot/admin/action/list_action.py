@@ -62,7 +62,7 @@ class EditAction(Action):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
-    to be non-editable using its :vfinance.interface.registry.Endpoint:.
+    to be non-editable using its :vfinance.interface.endpoint.Endpoint:.
     """
 
     name = 'edit_action'
@@ -473,7 +473,7 @@ class AddNewObjectMixin(object):
         if not self.modes and admin is not None and issubclass(admin.entity, Entity):
 
             # TODO: move top-level after future move to vfinance repo.
-            from vfinance.interface.registry import endpoint_registry
+            from vfinance.interface.endpoint import endpoint_registry
             endpoint = endpoint_registry.get(admin.entity)
 
             # TODO: for now, dynamic or custom types behaviour has been moved to a types field_attributes on one2many relation fields.
