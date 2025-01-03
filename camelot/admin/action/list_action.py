@@ -472,10 +472,7 @@ class AddNewObjectMixin(object):
         admin = self.get_admin(model_context)
         if not self.modes and admin is not None and issubclass(admin.entity, Entity):
 
-            # TODO: move top-level after future move to vfinance repo.
-            from vfinance.interface.endpoint import endpoint_registry
-            endpoint = endpoint_registry.get(admin.entity)
-
+            endpoint = admin.entity.endpoint
             # TODO: for now, dynamic or custom types behaviour has been moved to a types field_attributes on one2many relation fields.
             #       To be determined if this is the best way to go...
             types = model_context.field_attributes.get('types')
