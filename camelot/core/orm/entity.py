@@ -37,14 +37,12 @@ These classes can be reused if a custom base class is needed.
 import datetime
 import functools
 import logging
-import re
 
 from sqlalchemy import orm, schema
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
 
 from ...types import Enumeration, PrimaryKey
-from ..naming import initial_naming_context, EntityNamingContext
 from . import Session
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
@@ -90,9 +88,6 @@ class EntityMeta( DeclarativeMeta ):
             else:
                 dict_.setdefault('__mapper_args__', dict())
 
-            # Assign each new Entity class a unique id.
-            dict_.setdefault('__entity_name__', cls._default_entity_name(cls, classname))
-
         _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
         # adds primary key column to the class
         if classname != 'Entity':
@@ -107,21 +102,12 @@ class EntityMeta( DeclarativeMeta ):
                     if table is None or table.primary_key is None:
                         _class.id = schema.Column(PrimaryKey(), primary_key=True)
 
-            # Bind an EntityNamingContext to the initial naming context for the entity class
-            # using the entity's name, configured (or auto-assigned) with __entity_name__
-            initial_naming_context.bind_context(('entity', _class.__entity_name__), EntityNamingContext(_class))
-
         return _class
-
-    def _default_entity_name(cls, classname):
-        # The default format will split the classname by capital letters, and join the lowered result by underscore.
-        # e.g. classname 'ThisIsATestClass' will result in the entity name 'this_is_a_test_class'
-        return '_'.join(re.findall('.[^A-Z]*', classname)).lower()
 
     @property
     def endpoint(cls):
-        from vfinance.interface.registry import endpoint_registry
-        return endpoint_registry.get(cls)
+        from vfinance.interface.endpoint import Endpoint
+        return Endpoint.get(cls)
 
     def get_polymorphic_types(cls):
         """
@@ -363,19 +349,16 @@ class EntityBase( object ):
         """
         Return whether this entity instance is applicable at the given date.
         This method requires the entity class to have its application date range
-        configured in a `vfinance.interface.registry.Endpoint`.
+        configured in a `vfinance.interface.endpoint.Endpoint`.
         An instance is applicable at the given date when it is later than the instance's
         application date, and the application date is not later than end_of_times.
 
-        :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.registry.Endpoint`.
+        :raises: An AssertionError when the application_date is not configured in a `vfinance.interface.endpoint.Endpoint`.
         """
-        # TODO: can be made top-level after transer to the vFinance repo.
-        from vfinance.interface.registry import endpoint_registry
         # @todo : move this method to a place where end of times is known
         end_of_times = datetime.date(2400, 12, 31)
         entity = type(self)
-        endpoint = endpoint_registry.get(entity)
-        assert endpoint.application_date is not None
+        assert entity.endpoint.application_date is not None
         assert isinstance(at, datetime.date)
-        application_date = endpoint.application_date.__get__(self, None)
+        application_date = entity.endpoint.application_date.__get__(self, None)
         return application_date is not None and not (application_date >= end_of_times or at < application_date)
