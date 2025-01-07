@@ -62,7 +62,7 @@ class EditAction(Action):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
-    to be non-editable using __entity_args__ = { 'editable': False }.
+    to be non-editable using its :vfinance.interface.endpoint.Endpoint:.
     """
 
     name = 'edit_action'
@@ -472,20 +472,20 @@ class AddNewObjectMixin(object):
         admin = self.get_admin(model_context)
         if not self.modes and admin is not None and issubclass(admin.entity, Entity):
 
+            endpoint = admin.entity.endpoint
             # TODO: for now, dynamic or custom types behaviour has been moved to a types field_attributes on one2many relation fields.
             #       To be determined if this is the best way to go...
             types = model_context.field_attributes.get('types')
             if types is not None:
-                # Verify the custom type set is a subset of the registered types.
+                # Verify the custom type set is a subset of the registered discriminator types.
                 assert isinstance(types, Types)
-                assert all([t.name in admin.entity.__types__.__members__ for t in types])
+                assert all([t.name in endpoint.discriminator_types.__members__ for t in types])
                 return types.get_modes()
 
-            polymorphic_types = admin.entity.get_polymorphic_types()
-            if admin.entity.__types__ is not None:
-                return admin.entity.__types__.get_modes()
+            if endpoint.discriminator_types is not None:
+                return endpoint.discriminator_types.get_modes()
 
-            elif polymorphic_types is not None:
+            elif (polymorphic_types := admin.entity.get_polymorphic_types()) is not None:
                 return polymorphic_types.get_modes()
 
         return self.modes
