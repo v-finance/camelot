@@ -74,12 +74,17 @@ the default mode.
 .. attribute:: modes: 
 
     Optionally, a list of sub modes.
+    
+.. attribute:: enabled:
+
+    Flag indicating whether mode should be enabled or not.
     """
 
     value: Any
     verbose_name: typing.Union[str, ugettext_lazy]
     icon: typing.Union[Icon, None] = None
     modes: typing.List[Mode] = field(default_factory=list)
+    enabled: bool = True
 
     def __post_init__(self):
         for mode in self.modes:
@@ -99,12 +104,14 @@ the default mode.
             menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
             if self.icon is not None:
                 menu.setIcon(from_admin_icon(self.icon).getQIcon())
+                menu.setEnabled(self.enabled)
             parent.addMenu(menu)
             return menu
         else:
             action = QtGui.QAction( parent )
             action.setData( self.value )
             action.setText( str(self.verbose_name) )
+            action.setEnabled(self.enabled)
             if self.icon is None:
                 action.setIconVisibleInMenu(False)
             else:
