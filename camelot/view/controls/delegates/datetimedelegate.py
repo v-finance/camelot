@@ -48,12 +48,8 @@ class DateTimeDelegate(DateDelegate, metaclass=DocumentationMetaclass):
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
-            #value_str = str(locale.toString(model_context.value, QtCore.QLocale.FormatType.ShortFormat))
             value_str = str(QtCore.QDateTime(model_context.value).toString(local_datetime_format()))
             item.roles[PreviewRole] = value_str
-            print(type(model_context.value), model_context.value)
-            print(QtCore.QDateTime(model_context.value).toString(local_datetime_format()))
-            
         return item
 
 
