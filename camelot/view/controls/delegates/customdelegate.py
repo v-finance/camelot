@@ -41,8 +41,10 @@ from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole,
     ChoicesRole, VisibleRole, NullableRole
 )
+from ....core.backend import get_root_backend
 from ..action_widget import AbstractActionWidget
 from camelot.view.controls import editors
+from camelot.view.controls import delegates
 from camelot.view.crud_action import DataCell
 from dataclasses import dataclass, InitVar
 from typing import Any, ClassVar
@@ -226,33 +228,36 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         :param option: use an option with version 5 to indicate the widget
         will be put onto a form
         """
-        editor_cls = self.get_editor_class()
-        if issubclass(editor_cls, (editors.BoolEditor, editors.ColorEditor, editors.LanguageEditor,
-                                   editors.NoteEditor, editors.RichTextEditor)):
-            editor = editor_cls(parent)
-        elif issubclass(editor_cls, (editors.ChoicesEditor, editors.Many2OneEditor,
-                                     editors.FileEditor)):
-            editor = editor_cls(parent, self.action_routes)
-        elif issubclass(editor_cls, editors.DateEditor):
-            editor = editor_cls(parent, self.nullable)
-        elif issubclass(editor_cls, editors.DbImageEditor):
-            editor = editor_cls(parent, self.preview_width, self.preview_height, self.max_size)
-        elif issubclass(editor_cls, editors.FloatEditor):
-            editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)
-        elif issubclass(editor_cls, editors.IntegerEditor):
-            editor = editor_cls(parent, self.calculator, option)
-        elif issubclass(editor_cls, editors.LabelEditor):
-            editor = editor_cls(parent)
-        elif issubclass(editor_cls, editors.LocalFileEditor):
-            editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
-        elif issubclass(editor_cls, editors.MonthsEditor):
-            editor = editor_cls(parent, self.minimum, self.maximum, self.forever, self.action_routes)
-        elif issubclass(editor_cls, editors.TextLineEditor):
-            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type, self.completer_type)
-        elif issubclass(editor_cls, editors.TextEditEditor):
-            editor = editor_cls(parent, self.length, self.editable)
+        if isinstance(self, delegates.DateTimeDelegate):
+            editor = get_root_backend().create_date_time_editor(parent, self.nullable)        
+        elif isinstance(self, delegates.DateDelegate):
+            editor = get_root_backend().create_date_editor(parent, self.nullable)
         else:
-            raise NotImplementedError()
+            editor_cls = self.get_editor_class()
+            if issubclass(editor_cls, (editors.BoolEditor, editors.ColorEditor, editors.LanguageEditor,
+                                       editors.NoteEditor, editors.RichTextEditor)):
+                editor = editor_cls(parent)
+            elif issubclass(editor_cls, (editors.ChoicesEditor, editors.Many2OneEditor,
+                                         editors.FileEditor)):
+                editor = editor_cls(parent, self.action_routes)
+            elif issubclass(editor_cls, editors.DbImageEditor):
+                editor = editor_cls(parent, self.preview_width, self.preview_height, self.max_size)
+            elif issubclass(editor_cls, editors.FloatEditor):
+                editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)
+            elif issubclass(editor_cls, editors.IntegerEditor):
+                editor = editor_cls(parent, self.calculator, option)
+            elif issubclass(editor_cls, editors.LabelEditor):
+                editor = editor_cls(parent)
+            elif issubclass(editor_cls, editors.LocalFileEditor):
+                editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
+            elif issubclass(editor_cls, editors.MonthsEditor):
+                editor = editor_cls(parent, self.minimum, self.maximum, self.forever, self.action_routes)
+            elif issubclass(editor_cls, editors.TextLineEditor):
+                editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type, self.completer_type)
+            elif issubclass(editor_cls, editors.TextEditEditor):
+                editor = editor_cls(parent, self.length, self.editable)
+            else:
+                raise NotImplementedError()
         assert editor != None
         assert isinstance(editor, QtWidgets.QWidget)
         if option.version != 5:

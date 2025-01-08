@@ -73,7 +73,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def _close_editor(self, editor, hint):
         self.closeEditor.emit(editor, hint )
 
-    @QtCore.qt_slot(list, object)
+    #@QtCore.qt_slot(list, object)
     def editorActionTriggered(self, route, mode):
         self.actionTriggered.emit(route, mode, self.sender())
 
