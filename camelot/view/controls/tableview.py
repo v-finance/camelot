@@ -73,10 +73,7 @@ class TableWidget(QtWidgets.QTableView):
                              QtWidgets.QAbstractItemView.EditTrigger.CurrentChanged)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
                            QtWidgets.QSizePolicy.Policy.Expanding)
-        try:
-            self.horizontalHeader().setClickable(True)
-        except AttributeError:
-            self.horizontalHeader().setSectionsClickable(True)
+        self.horizontalHeader().setSectionsClickable(True)
         self._header_font_required = QtWidgets.QApplication.font()
         self._header_font_required.setBold(True)
         line_height = QtGui.QFontMetrics(QtWidgets.QApplication.font()

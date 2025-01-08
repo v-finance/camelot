@@ -142,6 +142,12 @@ class InitiateAction(AbstractRequest):
     mode: typing.Union[str, dict, list, int]
 
     @classmethod
+    def _next(cls, run: ModelRun, request_data):
+        # initiate action should implement next to make sure the action
+        # continues until its first step right after starting the action
+        return next(run.generator)
+
+    @classmethod
     def execute(cls, request_data, response_handler, cancel_handler):
         from .action_steps import PushProgressLevel
         from .responses import ActionStopped, ActionStepped
