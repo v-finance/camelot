@@ -228,7 +228,9 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         :param option: use an option with version 5 to indicate the widget
         will be put onto a form
         """
-        if isinstance(self, delegates.DateDelegate):
+        if isinstance(self, delegates.DateTimeDelegate):
+            editor = get_root_backend().create_date_time_editor(parent, self.nullable)        
+        elif isinstance(self, delegates.DateDelegate):
             editor = get_root_backend().create_date_editor(parent, self.nullable)
         else:
             editor_cls = self.get_editor_class()
