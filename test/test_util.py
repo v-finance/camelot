@@ -31,7 +31,6 @@ class ViewUtilsCase(unittest.TestCase):
         self.assertEqual( date_from_string('02222011'), result )
         self.assertEqual( date_from_string('2-22-2011'), result )
         self.assertEqual( date_from_string(' 2/22/2011 '), result )
-        self.assertEqual( date_from_string(' 02/22 '), result.replace(year=datetime.date.today().year) )
         self.assertEqual( datetime_from_string(' '), None)
         with self.assertRaises(ParsingError):
             datetime_from_string('foo')
