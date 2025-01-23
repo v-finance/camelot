@@ -16,7 +16,6 @@ from ..core.item_model import (
     ActionModeRole, FocusPolicyRole,
     VisibleRole, NullableRole
 )
-from ..core.exception import log_programming_error
 from ..core.naming import initial_naming_context, NameNotFoundException
 from ..core.qt import Qt, QtGui
 from camelot.core.serializable import DataclassSerializable
@@ -41,9 +40,7 @@ def strip_data_from_object( obj, columns ):
             field_value = getattr( obj, col )
         except (Exception, RuntimeError, TypeError, NameError) as e:
             message = "could not get field '%s' of object of type %s"%(col, obj.__class__.__name__)
-            log_programming_error( logger, 
-                                   message,
-                                   exc_info = e )
+            logger.error(message, exc_info=e)
         finally:
             row_data.append( field_value )
     return row_data
@@ -179,9 +176,7 @@ class UpdateMixin(object):
                 verbose_identifier = admin.get_verbose_identifier(obj)
             except (Exception, RuntimeError, TypeError, NameError) as e:
                 message = "could not get verbose identifier of object of type %s"%(obj.__class__.__name__)
-                log_programming_error(logger,
-                                      message,
-                                      exc_info=e)
+                logger.error(message, exc_info=e)
                 verbose_identifier = u''
             valid = False
             message = None
@@ -322,6 +317,17 @@ class RowCount(Action):
 
 rowcount_name = crud_action_context.bind(RowCount.name, RowCount(), True)
 
+class Refresh(RowCount):
+
+    name = 'refresh'
+
+    def model_run(self, model_context, mode):
+        self.clear_cache(model_context)
+        # @todo : rowcount could be send immediately, but for now this would
+        # trigger an infinte client side loop
+        #yield from super().model_run(model_context, mode)
+
+refresh_name = crud_action_context.bind(Refresh.name, Refresh(), True)
 
 class Update(Action, UpdateMixin):
 
@@ -734,3 +740,4 @@ class CrudActions(DataclassSerializable):
     sort: Route = field(init=False, default=sort_name)
     field_action: Route = field(init=False, default=runfieldaction_name)
     completion: Route = field(init=False, default=completion_name)
+    refresh: Route = field(init=False, default=refresh_name)

@@ -59,15 +59,14 @@ class PrimaryKey(types.TypeDecorator):
     
     impl = types.TypeEngine
     _type_affinity = types.Integer
-    
+    cache_ok = True
+
     def load_dialect_impl(self, dialect):
-        from camelot.core.orm import options
-        return options.DEFAULT_AUTO_PRIMARYKEY_TYPE()
+        return types.Integer()
     
     @property
     def python_type(self):
-        from camelot.core.orm import options
-        return options.DEFAULT_AUTO_PRIMARYKEY_TYPE().python_type
+        return types.Integer().python_type
 
     def __repr__(self):
         return 'PrimaryKey()'
@@ -140,6 +139,7 @@ class RichText(types.TypeDecorator):
 """
     
     impl = types.UnicodeText
+    cache_ok = True
     
     @property
     def python_type(self):
@@ -160,7 +160,8 @@ used too much memory, so now it's implemented using QT.
     """
     
     impl = types.Unicode
-    
+    cache_ok = True
+
     def __init__(self):
         types.TypeDecorator.__init__(self, length=20)
         
@@ -214,12 +215,15 @@ class Enumeration(types.TypeDecorator):
   """
     
     impl = types.Integer
+    cache_ok = True
     
     def __init__(self, choices=[], **kwargs):
         types.TypeDecorator.__init__(self, **kwargs)
         self._int_to_string = dict(choices)
         self._string_to_int = dict((str_value,int_key) for (int_key,str_value) in choices)
-        self.choices = [value for (_key,value) in choices]
+        # Note: choices needs to be a tuple, as SQLAlchemy's caching needs
+        # the type to be hashable.
+        self.choices = tuple([value for (_key,value) in choices])
         
     def bind_processor(self, dialect):
   
@@ -267,6 +271,7 @@ class Enumeration(types.TypeDecorator):
 
 class StatusEnumeration(Enumeration):
 
+    cache_ok = True
 
     def __repr__(self):
         return 'StatusEnumeration()'
@@ -357,6 +362,7 @@ class Months(types.TypeDecorator):
     """
 
     impl = types.Integer
+    cache_ok = True
 
     def __init__(self, forever=None):
         super().__init__()

@@ -109,6 +109,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
             selection_model.currentRowChanged.connect(
                 self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
             )
+            selection_model.selectionChanged.connect(
+                self.selection_changed, type=Qt.ConnectionType.QueuedConnection
+            )
 
     @property
     def item_view(self):
@@ -168,7 +171,12 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)
 
+    @QtCore.qt_slot(QtCore.QModelIndex, QtCore.QModelIndex)
     def current_row_changed(self, current=None, previous=None):
+        self.update_list_action_states()
+
+    @QtCore.qt_slot('QItemSelection', 'QItemSelection')
+    def selection_changed(self, selected, deselected):
         self.update_list_action_states()
 
     @QtCore.qt_slot('QStringList', QtCore.QByteArray)
@@ -236,9 +244,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
         # make sure ChangeSelection action is executed before list action
         table.model().submit()
         obj_id = table.model().headerData(index, Qt.Orientation.Vertical, ObjectRole)
-        self._run_list_context_action(
-            self, (index, obj_id)
-        )
+        self._run_list_context_action(self, [index, obj_id])
 
     @QtCore.qt_slot()
     def menu_triggered(self):

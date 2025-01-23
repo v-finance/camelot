@@ -115,7 +115,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         self.buttons_widget().setLayout( layout )
         self._change_complete(model, False)
         cancel_button.pressed.connect( self.reject )
-        ok_button.pressed.connect( self.accept )
+        ok_button.pressed.connect( self.on_accept )
         # set the actions in the actions panel
         self.set_actions(form_actions)
         for action_route, action_state in action_states:
@@ -139,6 +139,11 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
         self.run_action(self.sender(), self.gui_context_name, self.model_context_name, None)
+
+    def on_accept(self):
+        # VFIN-3090: Make sure to submit values when accepting
+        self.widget_mapper.submit()
+        self.accept()
 
     @QtCore.qt_slot()
     def menu_triggered(self):
@@ -287,6 +292,7 @@ class ChangeObject(OpenFormView):
     def __post_init__(self, value, admin, proxy):
         super().__post_init__(value, admin, proxy)
         self.title = admin.get_verbose_name()
+        #self.qml = True
 
     @staticmethod
     def _add_actions(admin, actions):

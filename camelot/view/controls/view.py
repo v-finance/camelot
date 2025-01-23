@@ -34,7 +34,7 @@ import logging
 
 from ...admin.action import RenderHint
 from ...core.backend import get_root_backend
-from ...core.qt import QtCore, QtGui, QtWidgets
+from ...core.qt import QtWidgets
 from .action_widget import AbstractActionWidget
 
 LOGGER = logging.getLogger(__name__)
@@ -104,46 +104,3 @@ class ViewWithActionsMixin(object):
             root_backend.run_action(
                 gui_context_name, action_name, model_context_name, mode
             )
-
-
-class AbstractView(QtWidgets.QWidget, ViewWithActionsMixin):
-    """A string used to format the title of the view ::
-    title_format = 'Movie rental overview'
-
-    .. attribute:: header_widget
-
-    The widget class to be used as a header in the table view::
-
-    header_widget = None
-    """
-
-    title_format = ''
-    header_widget = None
-
-    title_changed_signal = QtCore.qt_signal(str)
-    icon_changed_signal = QtCore.qt_signal(QtGui.QIcon)
-    close_clicked_signal = QtCore.qt_signal()
-
-    @property
-    def view(self):
-        return self
-
-    @QtCore.qt_slot()
-    def validate_close(self):
-        return True
-
-    @QtCore.qt_slot()
-    def refresh(self):
-        """Refresh the data in the current view"""
-        pass
-
-    @QtCore.qt_slot(object)
-    def change_title(self, new_title):
-        """Will emit the title_changed_signal"""
-        #import sip
-        #if not sip.isdeleted(self):
-        self.title_changed_signal.emit(str(new_title))
-        
-    @QtCore.qt_slot(object)
-    def change_icon(self, new_icon):
-        self.icon_changed_signal.emit(new_icon)

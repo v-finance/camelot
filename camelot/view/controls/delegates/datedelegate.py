@@ -34,7 +34,6 @@ from ....core.item_model import PreviewRole
 from ....core.qt import Qt, QtCore
 from camelot.core.naming import initial_naming_context
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
 from camelot.core.constants import camelot_small_icon_width
 from camelot.view.utils import local_date_format
 
@@ -53,7 +52,7 @@ class DateDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.DateEditor
+        raise NotImplementedError
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
