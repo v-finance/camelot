@@ -47,7 +47,7 @@ from camelot.view.controls import editors
 from camelot.view.controls import delegates
 from camelot.view.crud_action import DataCell
 from dataclasses import dataclass, InitVar
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 
 
 
@@ -150,6 +150,17 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         self._font_metrics = QtGui.QFontMetrics(QtWidgets.QApplication.font())
         self._height = self._font_metrics.lineSpacing() + 10
         self._width = self._font_metrics.averageCharWidth() * 20
+
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        """
+        Use this delegate to turn a value into its previewed string representation.
+
+        :param value: the value to turn to a string represented by this delegate.
+        :param locale: the `QLocale` to be used to display locale dependent values.
+        :param field_attributes: field attribute that may influence the conversion.
+        """
+        raise NotImplementedError
 
     @classmethod
     def get_editor_class(cls):
