@@ -27,8 +27,12 @@
 #
 #  ============================================================================
 
+from camelot.core import constants
+from camelot.core.naming import initial_naming_context
+from camelot.view.controls import editors
+
 from dataclasses import dataclass
-from typing import ClassVar, Any
+from typing import Any, ClassVar, Optional
 
 from ....core.qt import Qt
 from ....core.item_model import (
@@ -36,9 +40,6 @@ from ....core.item_model import (
     MinimumRole, MaximumRole
 )
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.core import constants
-from camelot.core.naming import initial_naming_context
-from camelot.view.controls import editors
 
 long_int = int
 
@@ -56,6 +57,16 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return editors.IntegerEditor
 
     @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            value_str = locale.toString(long_int(value))
+            if field_attributes.get('suffix') is not None:
+                value_str = value_str + ' ' + str(field_attributes.get('suffix'))
+            if field_attributes.get('prefix') is not None:
+                value_str = str(field_attributes.get('prefix')) + ' ' + value_str
+            return value_str
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         minimum, maximum = model_context.field_attributes.get('minimum'), model_context.field_attributes.get('maximum')
         minimum = minimum if minimum is not None else constants.camelot_minfloat
@@ -69,12 +80,7 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         item.roles[MaximumRole] = maximum
         if model_context.value is not None:
             item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
-            value_str = locale.toString(long_int(model_context.value))
-            if model_context.field_attributes.get('suffix') is not None:
-                value_str = value_str + ' ' + str(model_context.field_attributes.get('suffix'))
-            if model_context.field_attributes.get('prefix') is not None:
-                value_str = str(model_context.field_attributes.get('prefix')) + ' ' + value_str
-            item.roles[PreviewRole] = value_str
+            item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
 
     def setEditorData(self, editor, index):

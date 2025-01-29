@@ -27,10 +27,11 @@
 #
 #  ============================================================================
 
+from camelot.view.controls import editors
 from dataclasses import dataclass
+from typing import Optional
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
 
 @dataclass
 class LabelDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
@@ -44,6 +45,6 @@ class LabelDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     def get_editor_class(cls):
         return editors.LabelEditor
 
-
-
-
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        return value

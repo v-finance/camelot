@@ -1,12 +1,15 @@
-from dataclasses import dataclass
 import logging
-logger = logging.getLogger('camelot.view.controls.delegates.dbimagedelegate')
+
+from camelot.core.qt import QtGui, QtCore, Qt
+from camelot.view.controls import editors
+
+from dataclasses import dataclass
+from typing import Optional
 
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate
-from camelot.core.qt import QtGui, QtCore, Qt
 
-from camelot.view.controls import editors
+logger = logging.getLogger(__name__)
 
 @dataclass
 class DbImageDelegate(CustomDelegate):
@@ -19,7 +22,11 @@ class DbImageDelegate(CustomDelegate):
     @classmethod
     def get_editor_class(cls):
         return editors.DbImageEditor
-    
+
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        return None
+
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
