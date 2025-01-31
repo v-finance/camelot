@@ -27,11 +27,12 @@
 #
 #  ============================================================================
 
+from camelot.view.controls import editors
 from dataclasses import dataclass
+from typing import Optional
 
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
 
 @dataclass
 class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
@@ -42,13 +43,16 @@ class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return editors.BoolEditor
 
     @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            if value == True:
+                return '\u2611' # checkmark
+            return '\u2610' # checkbox
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, True)
         if model_context.value is not None:
-            if model_context.value == True:
-                value_str = '\u2611' # checkmark
-            else:
-                value_str = '\u2610' # checkbox
-            item.roles[PreviewRole] = value_str
+            item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
