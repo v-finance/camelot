@@ -3,7 +3,7 @@ import json
 import logging
 import typing
 
-from ..core.exception import CancelRequest
+from ..core.exception import CancelRequest, GuiException
 from ..core.naming import (
     CompositeName, NamingException, NameNotFoundException, initial_naming_context
 )
@@ -126,6 +126,7 @@ class AbstractRequest(NamedDataclassSerializable):
         except StopIteration as e:
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except Exception as e:
+            LOGGER.error('Unhandled exception', exc_info=e)
             cls._send_stop_message(
                 ('constant', 'null'), gui_run_name, response_handler, e
             )
@@ -222,7 +223,8 @@ class ThrowActionException(AbstractRequest):
 
     @classmethod
     def _next(cls, run, request_data):
-        return run.generator.throw(Exception(request_data['exception']))
+        LOGGER.warn("User interface raised exception while handling action {}".format(request_data))
+        return run.generator.throw(GuiException(request_data['exception']))
 
 
 @dataclass

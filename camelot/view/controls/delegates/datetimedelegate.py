@@ -27,12 +27,14 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
-
 from camelot.core.item_model import PreviewRole
 from camelot.core.qt import Qt, QtCore
 from camelot.core.naming import initial_naming_context
 from camelot.view.utils import local_datetime_format
+
+from dataclasses import dataclass
+from typing import Optional
+
 from .customdelegate import DocumentationMetaclass
 from .datedelegate import DateDelegate
 
@@ -43,15 +45,15 @@ class DateTimeDelegate(DateDelegate, metaclass=DocumentationMetaclass):
     editable: bool = True
 
     @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            return str(QtCore.QDateTime(value).toString(local_datetime_format()))
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
-            value_str = str(QtCore.QDateTime(model_context.value).toString(local_datetime_format()))
-            item.roles[PreviewRole] = value_str
+            item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
-
-
-
-

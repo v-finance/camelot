@@ -27,15 +27,16 @@
 #
 #  ============================================================================
 
+from camelot.core.naming import initial_naming_context
+from camelot.view.controls.editors import MonthsEditor
+from camelot.view.controls.delegates.customdelegate import CustomDelegate, DocumentationMetaclass
+
 from dataclasses import dataclass, field
-from typing import ClassVar, Any, List
+from typing import Any, ClassVar, List, Optional
 
 from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, qtranslate
-from camelot.core.naming import initial_naming_context
-from camelot.view.controls.editors import MonthsEditor
-from camelot.view.controls.delegates.customdelegate import CustomDelegate, DocumentationMetaclass
 
 @dataclass
 class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
@@ -56,20 +57,25 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return MonthsEditor
 
     @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            forever = field_attributes.get('forever')
+            if (forever is not None) and (value==forever):
+                value_str = qtranslate('Forever')
+            else:
+                value_str = ''
+                years, months = divmod(value, 12)
+                if years!=0:
+                    value_str = qtranslate('%n years', n=years) + ' '
+                if months!=0:
+                    value_str = value_str + qtranslate('%n months', n=months)
+            return value_str
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             item.roles[Qt.ItemDataRole.EditRole] = initial_naming_context._bind_object(model_context.value)
-            forever = model_context.field_attributes.get('forever')
-            if (forever is not None) and (model_context.value==forever):
-                value_str = qtranslate('Forever')
-            else:
-                value_str = ''
-                years, months = divmod(model_context.value, 12)
-                if years!=0:
-                    value_str = qtranslate('%n years', n=years) + ' '
-                if months!=0:
-                    value_str = value_str + qtranslate('%n months', n=months)
-            item.roles[PreviewRole] = value_str
+            item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
