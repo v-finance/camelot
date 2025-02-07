@@ -26,18 +26,19 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
-from dataclasses import dataclass
-
 import logging
-logger = logging.getLogger('camelot.view.controls.delegates.localfiledelegate')
+
+from camelot.view.controls import editors
+from dataclasses import dataclass
+from typing import Optional
 
 from ....core.item_model import PreviewRole, DirectoryRole
 from ....core.qt import Qt
 from .customdelegate import CustomDelegate
 from .customdelegate import DocumentationMetaclass
 
-from camelot.view.controls import editors
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
@@ -54,12 +55,17 @@ class LocalFileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return editors.LocalFileEditor
 
     @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            return str(value)
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         item.roles[DirectoryRole] = model_context.field_attributes.get('directory', False)
         if model_context.value is not None:
-            item.roles[PreviewRole] = str(model_context.value)
+            item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
 
     def setEditorData(self, editor, index):

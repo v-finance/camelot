@@ -27,10 +27,11 @@
 #
 #  ============================================================================
 
+from camelot.view.controls.editors import LanguageEditor
 from dataclasses import dataclass
+from typing import Optional
 
 from .plaintextdelegate import PlainTextDelegate
-from camelot.view.controls.editors import LanguageEditor
 
 @dataclass
 class LanguageDelegate( PlainTextDelegate ):
@@ -41,6 +42,10 @@ class LanguageDelegate( PlainTextDelegate ):
     @classmethod
     def get_editor_class(cls):
         return LanguageEditor
+
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        return value
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

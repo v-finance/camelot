@@ -27,10 +27,11 @@
 #
 #  ============================================================================
 
+from camelot.view.controls.editors.noteeditor import NoteEditor
 from dataclasses import dataclass
+from typing import Optional
 
 from .texteditdelegate import TextEditDelegate, DocumentationMetaclass
-from camelot.view.controls.editors.noteeditor import NoteEditor
 
 @dataclass
 class NoteDelegate(TextEditDelegate, metaclass=DocumentationMetaclass):
@@ -38,6 +39,10 @@ class NoteDelegate(TextEditDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_editor_class(cls):
         return NoteEditor
+
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        return value
 
     @classmethod
     def get_standard_item(cls, locale, model_context):

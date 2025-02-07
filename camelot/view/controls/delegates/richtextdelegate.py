@@ -28,6 +28,7 @@
 #  ============================================================================
 
 from dataclasses import dataclass
+from typing import Optional
 
 from ....core.item_model import PreviewRole
 
@@ -50,12 +51,15 @@ class RichTextDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return editors.RichTextEditor
 
     @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            value_str = u' '.join(text_from_richtext(value))[:256]
+            return str(value_str)
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
-            value_str = u' '.join(text_from_richtext(model_context.value))[:256]
-            item.roles[PreviewRole] = str(value_str)
+            item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
-
-

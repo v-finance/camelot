@@ -27,12 +27,13 @@
 #
 #  ============================================================================
 
+from camelot.view.controls import editors
 from dataclasses import dataclass
+from typing import Optional
 
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
 
 @dataclass
 class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
@@ -46,12 +47,15 @@ class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return editors.TextEditEditor
 
     @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            return str(value)
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
-            item.roles[PreviewRole] = str(model_context.value)
+            item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
             item.roles[Qt.ItemDataRole.EditRole] = item.roles[PreviewRole]
         return item
-
-
