@@ -36,7 +36,6 @@ Each editor at least supports these features :
 
 """
 
-from .booleditor import BoolEditor
 from .choiceseditor import ChoicesEditor
 from .coloreditor import ColorEditor
 from .customeditor import CustomEditor
@@ -57,7 +56,6 @@ from .labeleditor import LabelEditor
 from .monthseditor import MonthsEditor
 
 __all__ = [
-    BoolEditor.__name__,
     ChoicesEditor.__name__,
     ColorEditor.__name__,
     CustomEditor.__name__,

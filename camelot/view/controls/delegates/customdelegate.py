@@ -243,9 +243,11 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
             editor = get_root_backend().create_date_time_editor(parent, self.nullable)        
         elif isinstance(self, delegates.DateDelegate):
             editor = get_root_backend().create_date_editor(parent, self.nullable)
+        elif isinstance(self, delegates.BoolDelegate):
+            editor = get_root_backend().create_bool_editor(parent, True)
         else:
             editor_cls = self.get_editor_class()
-            if issubclass(editor_cls, (editors.BoolEditor, editors.ColorEditor, editors.LanguageEditor,
+            if issubclass(editor_cls, (editors.ColorEditor, editors.LanguageEditor,
                                        editors.NoteEditor, editors.RichTextEditor)):
                 editor = editor_cls(parent)
             elif issubclass(editor_cls, (editors.ChoicesEditor, editors.Many2OneEditor,

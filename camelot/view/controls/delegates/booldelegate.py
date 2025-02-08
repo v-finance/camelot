@@ -40,7 +40,7 @@ class BoolDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.BoolEditor
+        raise NotImplementedError
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
