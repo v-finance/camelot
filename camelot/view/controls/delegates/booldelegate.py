@@ -27,7 +27,6 @@
 #
 #  ============================================================================
 
-from camelot.view.controls import editors
 from dataclasses import dataclass
 from typing import Optional
 
