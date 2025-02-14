@@ -52,7 +52,7 @@ def resource_filename(module_name, filename):
     """
     # return pkg_resources.resource_filename( module_name, filename )
     ref = importlib_resources.files(module_name) / filename
-    return importlib_resources.as_file(ref)
+    return str(ref)
 
 def resource_string(module_name, filename):
     """load a file as a string using pkg_resources"""
