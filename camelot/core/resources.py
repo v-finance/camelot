@@ -41,7 +41,7 @@ when running from a bootstrapper, we'll try to use pgk_resources, even when
 runnin from within a zip file.
 """
 
-import pkg_resources
+import importlib_resources
 import logging
 
 logger = logging.getLogger('camelot.core.resources')
@@ -50,11 +50,15 @@ def resource_filename(module_name, filename):
     """Return the absolute path to a file in a directory
     using pkg_resources
     """
-    return pkg_resources.resource_filename( module_name, filename )
+    # return pkg_resources.resource_filename( module_name, filename )
+    ref = importlib_resources.files(module_name) / filename
+    return importlib_resources.as_file(ref)
 
 def resource_string(module_name, filename):
     """load a file as a string using pkg_resources"""
-    return pkg_resources.resource_string( module_name, filename )
+    # return pkg_resources.resource_string( module_name, filename )
+    ref = importlib_resources.files(module_name).joinpath(filename)
+    return ref.read_bytes()
 
 
 
