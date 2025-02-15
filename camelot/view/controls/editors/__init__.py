@@ -39,7 +39,6 @@ Each editor at least supports these features :
 from .customeditor import CustomEditor
 from .fileeditor import FileEditor
 from .floateditor import FloatEditor
-from .dbimageeditor import DbImageEditor
 from .integereditor import IntegerEditor
 from .languageeditor import LanguageEditor
 from .localfileeditor import LocalFileEditor
@@ -57,7 +56,6 @@ __all__ = [
     CustomEditor.__name__,
     FileEditor.__name__,
     FloatEditor.__name__,
-    DbImageEditor.__name__,
     IntegerEditor.__name__,
     LabelEditor.__name__,
     LanguageEditor.__name__,
