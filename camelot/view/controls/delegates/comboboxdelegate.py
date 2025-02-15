@@ -38,7 +38,6 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 from ....core.item_model import PreviewRole, ChoicesRole
 from ....core.naming import initial_naming_context
 from ....core.qt import Qt
-from camelot.view.controls import editors
 from ....admin.icon import CompletionValue
 from ....admin.admin_route import Route
 from ...art import ColorScheme
@@ -55,7 +54,7 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.ChoicesEditor
+        return None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:

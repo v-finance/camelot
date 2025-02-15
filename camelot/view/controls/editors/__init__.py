@@ -36,8 +36,6 @@ Each editor at least supports these features :
 
 """
 
-from .choiceseditor import ChoicesEditor
-from .coloreditor import ColorEditor
 from .customeditor import CustomEditor
 from .fileeditor import FileEditor
 from .floateditor import FloatEditor
@@ -56,8 +54,6 @@ from .labeleditor import LabelEditor
 from .monthseditor import MonthsEditor
 
 __all__ = [
-    ChoicesEditor.__name__,
-    ColorEditor.__name__,
     CustomEditor.__name__,
     FileEditor.__name__,
     FloatEditor.__name__,
