@@ -247,7 +247,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
             editor = get_root_backend().create_editor(parent, delegate_cls_name, column_attributes)
         elif issubclass(editor_cls, (editors.LanguageEditor, editors.NoteEditor, editors.RichTextEditor)):
             editor = editor_cls(parent)
-        elif issubclass(editor_cls, (editors.Many2OneEditor, editors.FileEditor)):
+        elif issubclass(editor_cls, editors.Many2OneEditor):
             editor = editor_cls(parent, self.action_routes)
         elif issubclass(editor_cls, editors.FloatEditor):
             editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)

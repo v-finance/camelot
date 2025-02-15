@@ -45,11 +45,12 @@ from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.art import from_admin_icon
-from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
+from ...core.backend import get_root_backend
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from .. import gui_naming_context
+from ..controls.delegates import ComboBoxDelegate
 from .crud import CompletionValue
 
 
@@ -73,7 +74,7 @@ class ItemSelectionDialog(StandaloneWizardPage):
         self.autoaccept = autoaccept
         self.set_default_buttons()
         layout = QtWidgets.QVBoxLayout()
-        combobox = editors.ChoicesEditor(action_routes=[])
+        combobox = get_root_backend().create_editor(None, ComboBoxDelegate.__name__, {"action_routes": []})
         combobox.setObjectName( 'combobox' )
         combobox.editingFinished.connect( self._combobox_activated )
         layout.addWidget( combobox )

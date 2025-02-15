@@ -34,7 +34,6 @@ from camelot.core.qt import Qt
 from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
 
 @dataclass
 class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
@@ -46,7 +45,7 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.FileEditor
+        return None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:

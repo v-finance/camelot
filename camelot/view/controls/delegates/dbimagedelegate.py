@@ -1,7 +1,6 @@
 import logging
 
 from camelot.core.qt import QtGui, QtCore, Qt
-from camelot.view.controls import editors
 
 from dataclasses import dataclass
 from typing import Optional
