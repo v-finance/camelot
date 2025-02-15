@@ -86,6 +86,5 @@ class Types(util.OrderedProperties):
             if t.id == type_id:
                 return t.name
 
-    @classmethod
-    def type_str(cls):
-        return Annotated[str, cls]
+    def type_str(self):
+        return Annotated[str, self]
