@@ -86,8 +86,8 @@ class AbstractCustomEditor(object):
         self.field_label = label
         # set label might be called after a set_visible/set_nullable, so
         # immediately update the attributes of the label
-        self.field_label.set_visible(self._visible)
-        self.field_label.set_nullable(self.nullable)
+        self.field_label.setProperty('visible', self._visible)
+        self.field_label.setProperty('nullable', self.nullable)
 
     def set_editable(self, editable):
         pass
@@ -95,7 +95,7 @@ class AbstractCustomEditor(object):
     def set_nullable(self, nullable):
         self.nullable = nullable
         if self.field_label is not None:
-            self.field_label.set_nullable(nullable)
+            self.field_label.setProperty('nullable', nullable)
 
     def set_tooltip(self, tooltip):
         self.setToolTip(str(tooltip or ''))
@@ -104,7 +104,7 @@ class AbstractCustomEditor(object):
         self._visible = visible
         self.setVisible(visible)
         if self.field_label is not None:
-            self.field_label.set_visible(visible)
+            self.field_label.setProperty('visible', visible)
 
     def set_focus_policy(self, focus_policy):
         pass

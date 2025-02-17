@@ -29,7 +29,7 @@
 
 import logging
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 logger = logging.getLogger('camelot.view.controls.delegates.comboboxdelegate')
 
@@ -38,7 +38,6 @@ from .customdelegate import CustomDelegate, DocumentationMetaclass
 from ....core.item_model import PreviewRole, ChoicesRole
 from ....core.naming import initial_naming_context
 from ....core.qt import Qt
-from camelot.view.controls import editors
 from ....admin.icon import CompletionValue
 from ....admin.admin_route import Route
 from ...art import ColorScheme
@@ -55,7 +54,19 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.ChoicesEditor
+        return None
+
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        choices = field_attributes.get('choices', [])
+        for key, verbose in choices:
+            if key == value:
+                return str(verbose)
+        if value is None:
+            return ' '
+        # the model has a value that is not in the list of choices,
+        # still try to display it
+        return str(value)
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
@@ -79,23 +90,14 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if not none_available:
             choicesData.append(none_item)
 
-        for key, verbose in choices:
-            if key == model_context.value:
-                item.roles[PreviewRole] = str(verbose)
-                break
-        else:
-            if model_context.value is None:
-                item.roles[PreviewRole] = ' '
-            else:
-                # the model has a value that is not in the list of choices,
-                # still try to display it
-                item.roles[PreviewRole] = str(model_context.value)
-                choicesData.append(CompletionValue(
-                    value=initial_naming_context._bind_object(model_context.value),
-                    verbose_name=str(model_context.value),
-                    background = ColorScheme.VALIDATION_ERROR.name(),
-                    virtual = True
-                    )._to_dict())
+        item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
+        if model_context.value not in (None, *[key for key, verbose in choices]):
+            choicesData.append(CompletionValue(
+                value=initial_naming_context._bind_object(model_context.value),
+                verbose_name=str(model_context.value),
+                background = ColorScheme.VALIDATION_ERROR.name(),
+                virtual = True
+                )._to_dict())
         item.roles[ChoicesRole] = choicesData
         return item
 

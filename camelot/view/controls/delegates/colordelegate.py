@@ -27,11 +27,11 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
-
-from camelot.core.qt import Qt
+from camelot.core.qt import Qt, QtGui
 from camelot.core.naming import initial_naming_context
-from camelot.view.controls import editors
+
+from dataclasses import dataclass
+from typing import Optional
 
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -41,12 +41,24 @@ class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.ColorEditor
+        return None
+
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        return value
+
+    @classmethod
+    def to_qcolor(self, value, invalid):
+        if isinstance(value, QtGui.QColor):
+            return value
+        if (value is not None) and QtGui.QColor.isValidColor(value):
+            return QtGui.QColor(value)
+        return QtGui.QColor(invalid)
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
-        color = editors.ColorEditor.to_qcolor(model_context.value, Qt.GlobalColor.transparent)
+        color = cls.to_qcolor(model_context.value, Qt.GlobalColor.transparent)
         # only the BackgroundRole should be of type color, the EditRole should
         # be of type str
         item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(color)

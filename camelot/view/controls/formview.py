@@ -93,12 +93,12 @@ class FormEditors(QtCore.QObject):
         return widget_editor
 
     def create_label( self, field_name, editor, parent ):
-        from camelot.view.controls.field_label import FieldLabel
         from camelot.view.controls.editors.wideeditor import WideEditor
         widget_label = None
         if self._fields[field_name]['hide_title'] == False:
-            widget_label = FieldLabel(
-                self._fields[field_name]['verbose_name'], parent,
+            widget_label = get_root_backend().create_field_label(
+                self._fields[field_name]['verbose_name'],
+                parent
             )
             widget_label.setObjectName('%s_label'%field_name)
             if not isinstance(editor, WideEditor):

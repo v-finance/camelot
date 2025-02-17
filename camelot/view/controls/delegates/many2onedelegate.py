@@ -28,7 +28,7 @@
 #  ============================================================================
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 import logging
 
 from ....admin.admin_route import Route
@@ -40,7 +40,7 @@ from ....core.item_model import (
 from .. import editors
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
-logger = logging.getLogger('camelot.view.controls.delegates.many2onedelegate')
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
@@ -65,6 +65,20 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return editors.Many2OneEditor
 
     @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            admin = field_attributes['admin']
+            try:
+                verbose_name = admin.get_verbose_object_name(value)
+            except Exception as e:
+                verbose_name = ''
+                logger.error(
+                    'Could not call get_verbose_object_name on {}'.format(type(admin).__name__),
+                    exc_info=e
+                )
+            return verbose_name
+
+    @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
         cls.set_item_editability(model_context, item, False)
@@ -73,16 +87,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         # custom delegate class
         item.roles[Qt.ItemDataRole.EditRole] = value_name
         if model_context.value is not None:
-            admin = model_context.field_attributes['admin']
-            try:
-                verbose_name = admin.get_verbose_object_name(model_context.value)
-            except Exception as e:
-                verbose_name = ''
-                logger.error(
-                    'Could not call get_verbose_object_name on {}'.format(type(admin).__name__),
-                    exc_info=e
-                )
-            item.roles[PreviewRole] = verbose_name
+            item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
 
     def createEditor(self, parent, option, index):

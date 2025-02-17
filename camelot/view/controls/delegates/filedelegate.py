@@ -28,13 +28,12 @@
 #  ============================================================================
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 from camelot.core.qt import Qt
 from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
 
 @dataclass
 class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
@@ -46,7 +45,13 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.FileEditor
+        return None
+
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is not None:
+            return value.verbose_name
+        return str()
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
@@ -58,10 +63,8 @@ class FileDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             # and the storage itself is not known in the naming contexts.
             # so enabling this might require making the storage itself available
             # as a naming context, which might be a good idea ...
-            item.roles[Qt.ItemDataRole.EditRole] = model_context.value.verbose_name 
-            item.roles[PreviewRole] = model_context.value.verbose_name
-        else:
-            item.roles[PreviewRole] = str()
+            item.roles[Qt.ItemDataRole.EditRole] = model_context.value.verbose_name
+        item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
 
 

@@ -119,6 +119,8 @@ class AbstractForm(AbstractFormElement):
         # make sure all columns have the same width
         for i in range(columns * 2):
             if i % 2:
+                form_layout.setColumnStretch(i, 2)
+            else:
                 form_layout.setColumnStretch(i, 1)
 
         row_span = 1
