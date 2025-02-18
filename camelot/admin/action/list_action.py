@@ -37,10 +37,12 @@ import dataclasses
 from ...core.item_model.proxy import AbstractModelFilter
 from ...core.qt import QtCore, QtGui, QtWidgets
 from .base import Action, Mode, RenderHint
+
+from camelot.admin.icon import Icon
 from camelot.core.exception import UserException, CancelRequest
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
-from camelot.admin.icon import Icon
+from camelot.data.types import Types
 
 
 import xlsxwriter
@@ -142,10 +144,20 @@ class OpenFormView(Action):
     verbose_name = None
     name = 'open_form_view'
 
+    def get_object(self, model_context, mode):
+        assert mode is not None
+        # Workaround for windows, pass row + objId in mode
+        row, objId = mode
+        obj = model_context.get_object(row)
+        if id(obj) != objId:
+            raise UserException('Could not open correct form')
+        return obj
+
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        obj = self.get_object(model_context, mode)
         yield action_steps.OpenFormView(
-            model_context.get_object(), model_context.admin, model_context.proxy
+            obj, model_context.admin, model_context.proxy
         )
 
     def get_state( self, model_context ):
@@ -252,7 +264,7 @@ class DeleteSelection( EditAction ):
                                                    _('Removing') )
                 model_context.admin.delete(obj)
         else:
-            yield action_steps.RefreshItemView()
+            yield action_steps.RefreshItemView(model_context)
         yield action_steps.UpdateObjects(depending_objects)
         yield action_steps.FlushSession( model_context.session )
 
@@ -538,8 +550,12 @@ class ExportSpreadsheet(Action):
         # write data
         #
         offset = 2
-        static_attributes = list(admin.get_static_field_attributes(field_names)) 
-        for j, obj in enumerate( model_context.get_collection( yield_per = 100 ) ):
+        static_attributes = list(admin.get_static_field_attributes(field_names))
+        if model_context.selected_rows:
+            objects = model_context.get_selection( yield_per = 100 )
+        else:
+            objects = model_context.get_collection( yield_per = 100 )
+        for j, obj in enumerate( objects ):
             dynamic_attributes = admin.get_dynamic_field_attributes( obj, 
                                                                      field_names )
             row = offset + j
@@ -684,10 +700,12 @@ class ImportFromFile( EditAction ):
                     new_entity_instance = admin.entity()
                     for field_name in row_data_admin.get_columns():
                         attributes = row_data_admin.get_field_attributes(field_name)
-                        from_string = attributes['from_string']
+                        original_field_name = attributes['original_field']
+                        from_string = attributes.get('from_string')
+                        assert from_string is not None, '{} with {} has no from string attribute'.format(field_name, original_field_name)
                         setattr(
                             new_entity_instance,
-                            attributes['original_field'],
+                            original_field_name,
                             from_string(getattr(row, field_name))
                         )
                     admin.add( new_entity_instance )
@@ -913,7 +931,7 @@ class SetFilters(Action, AbstractModelFilter):
 
         if filter_values != new_filter_values:
             model_context.proxy.filter(self, new_filter_values)
-            yield action_steps.RefreshItemView()
+            yield action_steps.RefreshItemView(model_context)
         new_state = self._get_state(model_context, new_filter_values)
         yield action_steps.UpdateActionsState(model_context, {self: new_state})
 
@@ -959,7 +977,20 @@ class AddNewObjectMixin(object):
         Create a new entity instance based on the given model_context as an instance of the given admin's entity.
         This is done in the given session, or the default session if it is not yet attached to a session.
         """
-        if issubclass(admin.entity, Entity):
+        secondary_discriminator_values = []
+        if issubclass(admin.get_subsystem_cls(), Entity):
+            from camelot.view import action_steps
+            # In case the subsystem class has secondary related entity discriminators defined,
+            # prompt the user to select entity instances to instantiate them before creating the object
+            # itself, as they are required to retrieve the correct registered facade class.
+            for entity_cls in admin.entity.get_secondary_discriminator_types():
+                related_admin = admin.get_related_admin(entity_cls)
+                selected_object = yield action_steps.SelectObject(related_admin.get_query(), related_admin)
+                if selected_object is not None:
+                    secondary_discriminator_values.append(selected_object)
+
+            # Resolve admin again based on the now fully qualified discriminator values, to create the object with.
+            admin = self.get_admin(model_context, mode, secondary_discriminator_values)
             new_object = admin.entity(_session=session)
         else:
             new_object = admin.entity()
@@ -968,6 +999,9 @@ class AddNewObjectMixin(object):
         self.get_proxy(model_context, admin).append(admin.get_subsystem_object(new_object))
         # Give the default fields their value
         admin.set_defaults(new_object)
+
+        # Set the discriminator value, if defined.
+        admin.set_discriminator_value(new_object, mode, *secondary_discriminator_values)
         return new_object
         yield
 
@@ -1007,15 +1041,27 @@ class AddNewObjectMixin(object):
     def get_modes(self, model_context):
         """
         Determine and/or construct the applicable modes for this add action based on the given model_context.
-        This will either be the explicitly set modes, or modes constructed based on registere types for the admin.
+        This will either be the explicitly set modes, or modes constructed based on registered/set types for the admin.
         """
         admin = self.get_admin(model_context)
         if not self.modes and admin is not None and issubclass(admin.entity, Entity):
+
+            # TODO: for now, dynamic or custom types behaviour has been moved to a types field_attributes on one2many relation fields.
+            #       To be determined if this is the best way to go...
+            types = model_context.field_attributes.get('types')
+            if types is not None:
+                # Verify the custom type set is a subset of the registered types.
+                assert isinstance(types, Types)
+                assert all([t.name in admin.entity.__types__.__members__ for t in types])
+                return types.get_modes()
+
             polymorphic_types = admin.entity.get_polymorphic_types()
             if admin.entity.__types__ is not None:
                 return admin.entity.__types__.get_modes()
+
             elif polymorphic_types is not None:
                 return polymorphic_types.get_modes()
+
         return self.modes
 
     def get_default_admin(self, model_context, mode=None):

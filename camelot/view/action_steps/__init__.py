@@ -32,9 +32,8 @@ from .application import (
     MainMenu, UpdateActionsState, SetThemeColors, Authenticate, StartProfiler,
     StopProfiler,
 )
-from .change_object import ChangeObject, ChangeObjects
-from .form_view import (OpenFormView, ToFirstForm, ToLastForm, ToNextForm,
-                        ToPreviousForm)
+from .change_object import ChangeObject, ChangeObjects, QmlChangeObjects
+from .form_view import OpenFormView, HighlightForm
 from .gui import (
     CloseView, MessageBox, Refresh, SelectItem
 )
@@ -43,7 +42,7 @@ from .item_view import (
     RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
 from .open_file import ( OpenFile, OpenStream,
-                         OpenString, WordJinjaTemplate )
+                         OpenString)
 from .orm import (
     CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
     UpdateObjects
@@ -79,10 +78,12 @@ __all__ = [
     NavigationPanel.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
+    HighlightForm.__name__,
     OpenStream.__name__,
     OpenString.__name__,
     OpenTableView.__name__,
     OpenQmlTableView.__name__,
+    QmlChangeObjects.__name__,
     Refresh.__name__,
     RefreshItemView.__name__,
     RemoveTranslators.__name__,
@@ -97,12 +98,8 @@ __all__ = [
     Sort.__name__,
     StartProfiler.__name__,
     StopProfiler.__name__,
-    ToFirstForm.__name__,
     ToFirstRow.__name__,
-    ToLastForm.__name__,
     ToLastRow.__name__,
-    ToNextForm.__name__,
-    ToPreviousForm.__name__,
     Update.__name__,
     UpdateActionsState.__name__,
     UpdateObjects.__name__,
@@ -111,6 +108,5 @@ __all__ = [
     PopProgressLevel.__name__,
     SetProgressAnimate.__name__,
     UpdateTableView.__name__,
-    WordJinjaTemplate.__name__,
     ]
 

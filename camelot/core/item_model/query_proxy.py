@@ -147,13 +147,20 @@ class QueryModelProxy(ListModelProxy):
         indexed_object_count = 0
         for obj in query.all():
             # check if the object is not present with another index,
-            if self._indexed_objects.get(obj) is None:
+            current_index = self._indexed_objects.get(obj)
+            if current_index is None:
                 # find a free index for each of the object, the object
                 # cannot be at the free_index, since otherwise it would
                 # have been indexed
                 while self._indexed_objects.get(free_index) is not None:
                     free_index += 1
                 self._indexed_objects[free_index] = obj
+                # the free index is consumed, increase it to asume a next one
+                free_index += 1
+            elif current_index == free_index:
+                # the object is at the free index, it doesn't need to be
+                # indexed, but the free index is consumed
+                free_index += 1
             else:
                 # if it is, the query_limit could have been higher
                 indexed_object_count += 1

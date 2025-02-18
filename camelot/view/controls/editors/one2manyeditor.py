@@ -30,13 +30,11 @@
 import json
 import logging
 
-from ....admin.action.base import GuiContext
 from ....admin.admin_route import RouteWithRenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
-from ....core.item_model import ActionModeRole
-from ... import gui_naming_context
+from ....core.item_model import ActionModeRole, ObjectRole
 from ..view import ViewWithActionsMixin
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
 from ..tableview import TableWidget
 from .wideeditor import WideEditor
@@ -45,7 +43,7 @@ from .customeditor import CustomEditor
 LOGGER = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
 
 
-class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext):
+class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     """
     :param admin: the Admin interface for the objects on the one side of the
     relation
@@ -87,7 +85,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             self.trigger_list_action
         )
         self.action_routes = dict()
-        model = get_qml_root_backend().createModel(get_settings_group(admin_route), table)
+        model = get_root_backend().create_model(get_settings_group(admin_route), table)
         model.actionStateChanged.connect(self.action_state_changed)
         table.setModel(model)
         self.admin_route = admin_route
@@ -98,9 +96,7 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         layout.addWidget(toolbar)
         self.setLayout(layout)
         self._new_message = None
-        self.list_gui_context_name = gui_naming_context.bind(
-            ('transient', str(id(self))), self
-        )
+        self.list_gui_context_name = tuple(model.guiContextName())
         self.add_actions(action_routes, toolbar)
         self.set_right_toolbar_actions(list_actions, toolbar)
         self.set_columns(columns)
@@ -112,6 +108,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
             # signal is emitted
             selection_model.currentRowChanged.connect(
                 self.current_row_changed, type=Qt.ConnectionType.QueuedConnection
+            )
+            selection_model.selectionChanged.connect(
+                self.selection_changed, type=Qt.ConnectionType.QueuedConnection
             )
 
     @property
@@ -172,7 +171,12 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         current_index = table.currentIndex()
         table.model().change_selection(selection_model, current_index)
 
+    @QtCore.qt_slot(QtCore.QModelIndex, QtCore.QModelIndex)
     def current_row_changed(self, current=None, previous=None):
+        self.update_list_action_states()
+
+    @QtCore.qt_slot('QItemSelection', 'QItemSelection')
+    def selection_changed(self, selected, deselected):
         self.update_list_action_states()
 
     @QtCore.qt_slot('QStringList', QtCore.QByteArray)
@@ -218,9 +222,6 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
                     table.setColumnWidth(i, txtwidth)
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
-        #if collection is None:
-            #collection = ListModelProxy([])
         model = self.get_model()
         if model is not None:
             # even if the collection 'is' the same object as the current
@@ -241,8 +242,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin, GuiContext)
         # close the editor to prevent certain Qt crashes
         table.close_editor()
         # make sure ChangeSelection action is executed before list action
-        table.model().onTimeout()
-        self._run_list_context_action(self, None)
+        table.model().submit()
+        obj_id = table.model().headerData(index, Qt.Orientation.Vertical, ObjectRole)
+        self._run_list_context_action(self, [index, obj_id])
 
     @QtCore.qt_slot()
     def menu_triggered(self):

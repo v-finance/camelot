@@ -29,8 +29,6 @@
 from dataclasses import dataclass
 
 from camelot.admin.action import ActionStep
-from camelot.core.templates import environment
-from camelot.view.qml_view import qml_action_step
 
 from ...core.serializable import DataclassSerializable
 
@@ -76,10 +74,6 @@ class OpenFile( ActionStep, DataclassSerializable ):
         os.close( file_descriptor )
         return file_name
 
-    @classmethod
-    def gui_run( cls, gui_context_name, serialized_step ):
-        qml_action_step(gui_context_name, 'OpenFile', serialized_step)
-
 class OpenStream( OpenFile ):
     """Write a stream to a temporary file and open that file with the 
     preferred application of the user.
@@ -113,48 +107,4 @@ class OpenString( OpenFile ):
         output_stream.write( string )
         output_stream.close()
         super( OpenString, self ).__init__( file_name )
-
-class WordJinjaTemplate( OpenFile ):
-    """Render a jinja template into a temporary file and open that
-    file with microsoft word through the use of COM objects.
-    
-    :param environment: a :class:`jinja2.Environment` object to be used
-        to load templates from.
-        
-    :param template: the name of the template as it can be fetched from
-        the Jinja environment.
-    
-    :param suffix: the suffix of the temporary file to create, this will
-        determine the application used to open the file.
-        
-    :param context: a dictionary with objects to be used when rendering
-        the template
-    """
-   
-    def __init__( self,
-                  template, 
-                  context={},
-                  environment = environment,
-                  suffix='.xml' ):
-        path = self.create_temporary_file( suffix )
-        template = environment.get_template( template )
-        template_stream = template.stream( context )
-        template_stream.dump( open( path, 'wb' ), encoding='utf-8' )
-        super( WordJinjaTemplate, self ).__init__( path )
-        
-    def gui_run( self, gui_context_name ):
-        try:
-            import pythoncom
-            import win32com.client
-            pythoncom.CoInitialize()
-            word_app = win32com.client.Dispatch("Word.Application")
-            word_app.Visible = True
-            doc = word_app.Documents.Open( self.path )
-            doc.Activate()
-            word_app.Activate()
-        # fallback in case of not on windows
-        except ImportError:
-            super( WordJinjaTemplate, self ).gui_run( gui_context_name )
-
-
 

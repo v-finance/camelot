@@ -29,14 +29,21 @@
 
 """ Tableview """
 
+import json
 import logging
 
-from camelot.view.model_thread import object_thread
+from ...admin.icon import Icon
+from ...core.item_model import (
+    PreviewRole, ActionRoutesRole, ActionStatesRole, ActionModeRole
+)
 from ...core.qt import QtCore, QtGui, QtWidgets, Qt
+from ...core.utils import ugettext
+from ..art import from_admin_icon
 
 
 logger = logging.getLogger('camelot.view.controls.tableview')
 
+copy_icon = Icon('copy')
 
 class TableWidget(QtWidgets.QTableView):
     """
@@ -59,7 +66,6 @@ class TableWidget(QtWidgets.QTableView):
     def __init__(self, lines_per_row=1, parent=None):
         QtWidgets.QTableView.__init__(self, parent)
         logger.debug('create TableWidget')
-        assert object_thread(self)
         self._columns_changed = dict()
         self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.SelectedClicked |
@@ -67,10 +73,7 @@ class TableWidget(QtWidgets.QTableView):
                              QtWidgets.QAbstractItemView.EditTrigger.CurrentChanged)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
                            QtWidgets.QSizePolicy.Policy.Expanding)
-        try:
-            self.horizontalHeader().setClickable(True)
-        except AttributeError:
-            self.horizontalHeader().setSectionsClickable(True)
+        self.horizontalHeader().setSectionsClickable(True)
         self._header_font_required = QtWidgets.QApplication.font()
         self._header_font_required.setBold(True)
         line_height = QtGui.QFontMetrics(QtWidgets.QApplication.font()
@@ -86,6 +89,51 @@ class TableWidget(QtWidgets.QTableView):
             self._save_section_width)
         self.verticalScrollBar().sliderPressed.connect(self._slider_pressed)
         self.horizontalScrollBar().sliderPressed.connect(self._slider_pressed)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.customContextMenu)
+
+    @QtCore.qt_slot(bool)
+    def copy(self, checked):
+        action = self.sender()
+        data = action.data()
+        QtGui.QGuiApplication.instance().clipboard().setText(data)
+
+    @QtCore.qt_slot(bool)
+    def popup_action(self, checked):
+        action = self.sender()
+        data = action.data()
+        row, column, route = data
+        model = self.model()
+        if model is not None:
+            index = model.index(row, column)
+            model.setData(index, json.dumps([route, None]), ActionModeRole)
+
+
+    @QtCore.qt_slot(QtCore.QPoint)
+    def customContextMenu(self, pos):
+        index = self.indexAt(pos)
+        if(index.isValid()):
+            if not bool(index.flags() & Qt.ItemFlag.ItemIsEditable):
+                action_states = json.loads(index.data(ActionStatesRole))
+                action_routes = json.loads(index.data(ActionRoutesRole))
+                menu = QtWidgets.QMenu(self)
+                copy_action = QtGui.QAction(menu)
+                copy_action.setIcon(from_admin_icon(copy_icon).getQIcon())
+                copy_action.setData(index.data(PreviewRole))
+                copy_action.triggered.connect(self.copy)
+                copy_action.setText(ugettext("Copy"))
+                menu.addAction(copy_action)
+                for route, state in zip(action_routes, action_states):
+                    action = QtGui.QAction(menu)
+                    icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
+                    action.setIcon(from_admin_icon(icon).getQIcon())
+                    action.setVisible(state["visible"])
+                    action.setText(state["tooltip"])
+                    action.setEnabled(state["enabled"])
+                    action.setData((index.row(), index.column(), route))
+                    action.triggered.connect(self.popup_action)
+                    menu.addAction(action)
+                menu.popup(self.viewport().mapToGlobal(pos))
 
     @QtCore.qt_slot()
     def selectAll(self):
@@ -102,7 +150,6 @@ class TableWidget(QtWidgets.QTableView):
 
     def timerEvent(self, event):
         """ On timer event, save changed column widths to the model """
-        assert object_thread(self)
         for logical_index, new_width in self._columns_changed.items():
             if self.horizontalHeader().isSectionHidden(logical_index):
                 # don't save the width of a hidden section, since this will
@@ -141,13 +188,11 @@ class TableWidget(QtWidgets.QTableView):
         # there is no need to start the timer, since this is done by the
         # QAbstractItemView itself for doing the layout, here we only store
         # which column needs to be saved.
-        assert object_thread(self)
         self._columns_changed[logical_index] = new_width
 
     @QtCore.qt_slot(int)
     def horizontal_section_clicked(self, logical_index):
         """Update the sorting of the model and the header"""
-        assert object_thread(self)
         header = self.horizontalHeader()
         order = Qt.SortOrder.AscendingOrder
         if not header.isSortIndicatorShown():
@@ -167,14 +212,12 @@ class TableWidget(QtWidgets.QTableView):
 
         those assertion failures only exist in QT debug builds.
         """
-        assert object_thread(self)
         current_index = self.currentIndex()
         if not current_index.isValid():
             return
         self.closePersistentEditor(current_index)
 
     def setModel(self, model):
-        assert object_thread(self)
         #
         # An editor might be open that is no longer available for the new
         # model.  Not closing this editor, results in assertion failures
@@ -252,7 +295,6 @@ class TableWidget(QtWidgets.QTableView):
         self.model().changeSelection([current.row(), current.row()], current.row(), current.column())
 
     def keyPressEvent(self, e):
-        assert object_thread(self)
         if self.hasFocus() and e.key() in (QtCore.Qt.Key.Key_Enter,
                                            QtCore.Qt.Key.Key_Return):
             self.keyboard_selection_signal.emit()
