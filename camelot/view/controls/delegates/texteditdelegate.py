@@ -27,7 +27,6 @@
 #
 #  ============================================================================
 
-from camelot.view.controls import editors
 from dataclasses import dataclass
 from typing import Optional
 
@@ -44,7 +43,7 @@ class TextEditDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.TextEditEditor
+        raise NotImplementedError
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:

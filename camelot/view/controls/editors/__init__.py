@@ -44,16 +44,13 @@ from .localfileeditor import LocalFileEditor
 from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
 from .textlineeditor import TextLineEditor
-from .textediteditor import TextEditEditor
 from .noteeditor import NoteEditor
-from .labeleditor import LabelEditor
 from .monthseditor import MonthsEditor
 
 __all__ = [
     CustomEditor.__name__,
     FloatEditor.__name__,
     IntegerEditor.__name__,
-    LabelEditor.__name__,
     LanguageEditor.__name__,
     LocalFileEditor.__name__,
     Many2OneEditor.__name__,
@@ -61,7 +58,6 @@ __all__ = [
     NoteEditor.__name__,
     One2ManyEditor.__name__,
     TextLineEditor.__name__,
-    TextEditEditor.__name__,
 ]
 
 
