@@ -37,13 +37,12 @@ from ..view import ViewWithActionsMixin
 from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
 from ..tableview import TableWidget
-from .wideeditor import WideEditor
 from .customeditor import CustomEditor
 
 LOGGER = logging.getLogger('camelot.view.controls.editors.onetomanyeditor')
 
 
-class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
+class One2ManyEditor(CustomEditor, ViewWithActionsMixin):
     """
     :param admin: the Admin interface for the objects on the one side of the
     relation
@@ -120,6 +119,9 @@ class One2ManyEditor(CustomEditor, WideEditor, ViewWithActionsMixin):
     @property
     def view(self):
         return self
+
+    def is_wide(self):
+        return True
 
     def get_window(self):
         return self.window()

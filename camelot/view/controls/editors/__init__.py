@@ -43,10 +43,8 @@ from .languageeditor import LanguageEditor
 from .localfileeditor import LocalFileEditor
 from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
-from .richtexteditor import RichTextEditor
 from .textlineeditor import TextLineEditor
 from .textediteditor import TextEditEditor
-from .wideeditor import WideEditor
 from .noteeditor import NoteEditor
 from .labeleditor import LabelEditor
 from .monthseditor import MonthsEditor
@@ -62,10 +60,8 @@ __all__ = [
     MonthsEditor.__name__,
     NoteEditor.__name__,
     One2ManyEditor.__name__,
-    RichTextEditor.__name__,
     TextLineEditor.__name__,
     TextEditEditor.__name__,
-    WideEditor.__name__,
 ]
 
 

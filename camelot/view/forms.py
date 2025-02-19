@@ -110,7 +110,6 @@ class AbstractForm(AbstractFormElement):
         :return: a :class:`QtWidgets.QWidget` into which the form is rendered
         """
         logger.debug('rendering %s' % cls.__name__)
-        from camelot.view.controls.editors.wideeditor import WideEditor
         form_widget = QtWidgets.QWidget(parent)
         form_layout = QtWidgets.QGridLayout()
         
@@ -179,7 +178,7 @@ class AbstractForm(AbstractFormElement):
             else:
                 editor = widgets.create_editor(field, form_widget)
                 if editor is not None:
-                    if isinstance(editor, WideEditor):
+                    if editor.is_wide():
                         c.next_empty_row()
                         col_span = 2 * columns
                         label = widgets.create_label(field, editor, form_widget)
