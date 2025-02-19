@@ -244,7 +244,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
             delegate_cls_name, column_attributes = tuple(index.model().headerData(
                 column, Qt.Orientation.Horizontal, ColumnAttributesRole
             ))
-            editor = get_root_backend().create_editor(parent, delegate_cls_name, column_attributes)
+            editor = get_root_backend().create_editor(parent, delegate_cls_name, column_attributes, option)
         elif issubclass(editor_cls, (editors.LanguageEditor, editors.NoteEditor, editors.RichTextEditor)):
             editor = editor_cls(parent)
         elif issubclass(editor_cls, editors.Many2OneEditor):

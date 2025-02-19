@@ -55,7 +55,8 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.FloatEditor
+        return  None
+        #return editors.FloatEditor
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
