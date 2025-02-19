@@ -89,6 +89,9 @@ class AbstractCustomEditor(object):
         self.field_label.setProperty('visible', self._visible)
         self.field_label.setProperty('nullable', self.nullable)
 
+    def is_wide(self):
+        return False
+
     def set_editable(self, editable):
         pass
 

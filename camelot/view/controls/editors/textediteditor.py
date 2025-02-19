@@ -30,11 +30,9 @@
 
 
 from ....core.qt import QtCore, QtWidgets
-from .wideeditor import WideEditor
 from .customeditor import AbstractCustomEditor
 
-
-class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
+class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor):
 
     editingFinished = QtCore.qt_signal()
     actionTriggered = QtCore.qt_signal(list, object)
@@ -48,6 +46,9 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
         self.setObjectName(field_name)
         AbstractCustomEditor.__init__(self)
         self.setReadOnly(not editable)
+
+    def is_wide(self):
+        return True
 
     def set_value(self, value):
         if value is not None:
