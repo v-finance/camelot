@@ -29,26 +29,24 @@
 
 """Manages icons and artworks"""
 
-import os
+import importlib_resources
 import json
+import logging
+import os
 
 from ..core.qt import QtCore, QtGui, QtWidgets
 
-import logging
-logger = logging.getLogger('camelot.view.art')
+logger = logging.getLogger(__name__)
 
 def file_(name):
-    from camelot.core.resources import resource_filename
     import camelot
-    return resource_filename(camelot.__name__, 'art/%s'%name)
+    ref = importlib_resources.files(camelot.__name__) / 'art/%s'%name
+    return str(ref)
 
 def read(fname):
     import camelot
-    from camelot.core.resources import resource_string
-    return resource_string(
-        camelot.__name__,
-        'art/%s' % fname,
-    )
+    ref = importlib_resources.files(camelot.__name__).joinpath('art/%s' % fname)
+    return ref.read_bytes()
 
 class Pixmap(object):
     """Load pixmaps from the camelot art library"""
@@ -76,8 +74,7 @@ class Pixmap(object):
         """Obsolete : avoid this method, since it will copy the resource file
         from its package and copy it to a temp folder if the resource is
         packaged."""
-        from camelot.core.resources import resource_filename
-        pth = resource_filename(self._module_name, 'art/%s'%(self._path))
+        pth = str(importlib_resources.files(self._module_name) / 'art/%s'%(self._path))
         if os.path.exists(pth):
             return pth
         else:
@@ -87,14 +84,14 @@ class Pixmap(object):
         """QPixmaps can only be used in the gui thread"""
         if self._cached_pixmap:
             return self._cached_pixmap
-        from camelot.core.resources import resource_string
         qpm = QtGui.QPixmap()
         p = os.path.join('art', self._path)
         try:
             # For some reason this throws a unicode error if the path contains an accent (cf windows username)
             #  this happens only here, not for icons further on in the application
             #  so they see no splash screen, tant pis
-            r = resource_string(self._module_name, p)
+
+            r = importlib_resources.files(self._module_name).joinpath(p).read_bytes()
             qpm.loadFromData(r)
         except Exception as e:
             logger.warn(u'Could not load pixmap "%s" from module: %s, encountered exception' % (p, self._module_name), exc_info=e)
