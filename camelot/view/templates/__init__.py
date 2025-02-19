@@ -26,14 +26,9 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from jinja2 import FileSystemLoader
-from camelot.core.resources import resource_filename
-
 import camelot.view
+import importlib_resources
 
-loader = FileSystemLoader(resource_filename(camelot.view.__name__, 'templates'))
+from jinja2 import FileSystemLoader
 
-
-
-
-
+loader = FileSystemLoader(str(importlib_resources.files(camelot.view.__name__) / 'templates'))
