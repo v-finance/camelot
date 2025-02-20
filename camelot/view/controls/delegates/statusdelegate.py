@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .customdelegate import CustomDelegate
-from .. import editors
 from ....core.item_model import PreviewRole
 
 logger = logging.getLogger(__name__)
@@ -14,7 +13,7 @@ class StatusDelegate(CustomDelegate):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.LabelEditor
+        return None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
