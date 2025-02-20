@@ -27,7 +27,6 @@
 #
 #  ============================================================================
 
-from camelot.view.controls.editors import LanguageEditor
 from dataclasses import dataclass
 from typing import Optional
 
@@ -41,7 +40,7 @@ class LanguageDelegate( PlainTextDelegate ):
     
     @classmethod
     def get_editor_class(cls):
-        return LanguageEditor
+        return None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
