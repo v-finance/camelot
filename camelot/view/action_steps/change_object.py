@@ -94,7 +94,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
         form_widget.set_model(model)
 
         note_layout = QtWidgets.QVBoxLayout()
-        note = editors.NoteEditor( parent=self )
+        note = get_root_backend().create_editor(None, 'NoteDelegate', {})
         note.set_value(None)
         note.setObjectName('note')
         note_layout.addWidget(form_widget)
@@ -221,7 +221,7 @@ class ChangeObjectsDialog( StandaloneWizardPage ):
         model.headerDataChanged.connect(self.header_data_changed)
         table_widget.set_value(objects)
         table_widget.setObjectName( 'table_widget' )
-        note = editors.NoteEditor( parent=self )
+        note = get_root_backend().create_editor(self, 'NoteDelegate', {})
         note.set_value(None)
         note.setObjectName( 'note' )
         layout = QtWidgets.QVBoxLayout()

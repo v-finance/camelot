@@ -42,7 +42,6 @@ from .integereditor import IntegerEditor
 from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
 from .textlineeditor import TextLineEditor
-from .noteeditor import NoteEditor
 from .monthseditor import MonthsEditor
 
 __all__ = [
@@ -51,7 +50,6 @@ __all__ = [
     IntegerEditor.__name__,
     Many2OneEditor.__name__,
     MonthsEditor.__name__,
-    NoteEditor.__name__,
     One2ManyEditor.__name__,
     TextLineEditor.__name__,
 ]
