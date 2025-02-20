@@ -39,7 +39,6 @@ Each editor at least supports these features :
 from .customeditor import CustomEditor
 from .floateditor import FloatEditor
 from .integereditor import IntegerEditor
-from .localfileeditor import LocalFileEditor
 from .many2oneeditor import Many2OneEditor
 from .one2manyeditor import One2ManyEditor
 from .textlineeditor import TextLineEditor
@@ -50,7 +49,6 @@ __all__ = [
     CustomEditor.__name__,
     FloatEditor.__name__,
     IntegerEditor.__name__,
-    LocalFileEditor.__name__,
     Many2OneEditor.__name__,
     MonthsEditor.__name__,
     NoteEditor.__name__,
