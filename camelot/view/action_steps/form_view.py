@@ -165,3 +165,8 @@ class HighlightForm(ActionStep, DataclassSerializable):
     #group_box: Optional[?] = None
     form_state: Optional[str] = None
     field_name: Optional[str] = None
+
+@dataclass
+class CloseMenu(ActionStep, DataclassSerializable):
+
+    action_menu_route: Optional[Route] = None # Menu to close

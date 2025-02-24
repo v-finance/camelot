@@ -33,7 +33,7 @@ from .application import (
     StopProfiler,
 )
 from .change_object import ChangeObject, ChangeObjects, QmlChangeObjects
-from .form_view import OpenFormView, HighlightForm
+from .form_view import OpenFormView, HighlightForm, CloseMenu
 from .gui import (
     CloseView, MessageBox, Refresh, SelectItem
 )
@@ -61,6 +61,7 @@ __all__ = [
     ChangeSelection.__name__,
     ClearSelection.__name__,
     SetSelection.__name__,
+    CloseMenu.__name__,
     CloseView.__name__,
     Completion.__name__,
     CompletionValue.__name__,
