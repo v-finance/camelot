@@ -95,7 +95,6 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if option.version != 5:
             editor.setAutoFillBackground(True)
         editor.editingFinished.connect(self.commitAndCloseEditor)
-        editor.completionPrefixChanged.connect(self.completion_prefix_changed)
         return editor
 
     def setEditorData(self, editor, index):
@@ -111,11 +110,3 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         super().setEditorData(editor, index)
         verbose_name = index.model().data(index, PreviewRole)
         editor.set_verbose_name(verbose_name)
-        editor.index = index
-
-    @QtCore.qt_slot(str)
-    def completion_prefix_changed(self, prefix):
-        editor = self.sender()
-        index = editor.index
-        if (index is not None) and (index.model() is not None):
-            index.model().setData(index, prefix, CompletionPrefixRole)

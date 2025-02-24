@@ -41,6 +41,7 @@ class DelegateManager(QtWidgets.QItemDelegate):
   """
 
     actionTriggered = QtCore.qt_signal(list, object, QtWidgets.QWidget)
+    completionPrefixChanged = QtCore.qt_signal(str, QtWidgets.QWidget)
 
     def __init__(self, parent=None):
         QtWidgets.QItemDelegate.__init__(self, parent)
@@ -77,12 +78,16 @@ class DelegateManager(QtWidgets.QItemDelegate):
     def editorActionTriggered(self, route, mode):
         self.actionTriggered.emit(route, mode, self.sender())
 
+    def editorCompletionPrefixChanged(self, prefix):
+        self.completionPrefixChanged.emit(prefix, self.sender())
+
     def createEditor(self, parent, option, index):
         """Use a custom delegate createEditor method if it exists"""
         try:
             delegate = self.get_column_delegate(index)
             editor = delegate.createEditor(parent, option, index)
             editor.actionTriggered.connect(self.editorActionTriggered)
+            editor.completionPrefixChanged.connect(self.editorCompletionPrefixChanged)
         except Exception as e:
             logger.error('Programming Error : could not createEditor editor data for editor at column %s'%(index.column()), exc_info=e)
             return QtWidgets.QWidget( parent = parent )
