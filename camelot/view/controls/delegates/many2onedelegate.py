@@ -33,11 +33,8 @@ import logging
 
 from ....admin.admin_route import Route
 from ....core.naming import initial_naming_context
-from ....core.qt import Qt, QtCore
-from ....core.item_model import (
-    PreviewRole, CompletionPrefixRole, CompletionsRole
-)
-from .. import editors
+from ....core.qt import Qt
+from ....core.item_model import PreviewRole, CompletionsRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 logger = logging.getLogger(__name__)
@@ -89,13 +86,6 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         if model_context.value is not None:
             item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
-
-    def createEditor(self, parent, option, index):
-        editor = editors.Many2OneEditor(parent, self.action_routes)
-        if option.version != 5:
-            editor.setAutoFillBackground(True)
-        editor.editingFinished.connect(self.commitAndCloseEditor)
-        return editor
 
     def setEditorData(self, editor, index):
         if index.model() is None:
