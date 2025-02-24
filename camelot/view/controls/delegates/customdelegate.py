@@ -43,7 +43,6 @@ from ....core.item_model import (
 )
 from ....core.backend import get_root_backend
 from ..action_widget import AbstractActionWidget
-from camelot.view.controls import editors
 from camelot.view.crud_action import DataCell
 from dataclasses import dataclass, InitVar
 from typing import Any, ClassVar, Optional
@@ -238,15 +237,11 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         :param option: use an option with version 5 to indicate the widget
         will be put onto a form
         """
-        editor_cls = self.get_editor_class()
-        if editor_cls is None:
-            column = index.column()
-            delegate_cls_name, column_attributes = tuple(index.model().headerData(
-                column, Qt.Orientation.Horizontal, ColumnAttributesRole
-            ))
-            editor = get_root_backend().create_editor(parent, delegate_cls_name, column_attributes, option.version)
-        elif issubclass(editor_cls, editors.TextLineEditor):
-            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type, self.completer_type)
+        column = index.column()
+        delegate_cls_name, column_attributes = tuple(index.model().headerData(
+            column, Qt.Orientation.Horizontal, ColumnAttributesRole
+        ))
+        editor = get_root_backend().create_editor(parent, delegate_cls_name, column_attributes, option.version)
 
         assert editor != None
         assert isinstance(editor, QtWidgets.QWidget)

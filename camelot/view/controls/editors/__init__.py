@@ -38,12 +38,10 @@ Each editor at least supports these features :
 
 from .customeditor import CustomEditor
 from .one2manyeditor import One2ManyEditor
-from .textlineeditor import TextLineEditor
 
 __all__ = [
     CustomEditor.__name__,
     One2ManyEditor.__name__,
-    TextLineEditor.__name__,
 ]
 
 
