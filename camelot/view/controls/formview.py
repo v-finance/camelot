@@ -93,7 +93,6 @@ class FormEditors(QtCore.QObject):
         return widget_editor
 
     def create_label( self, field_name, editor, parent ):
-        from camelot.view.controls.editors.wideeditor import WideEditor
         widget_label = None
         if self._fields[field_name]['hide_title'] == False:
             widget_label = get_root_backend().create_field_label(
@@ -101,7 +100,7 @@ class FormEditors(QtCore.QObject):
                 parent
             )
             widget_label.setObjectName('%s_label'%field_name)
-            if not isinstance(editor, WideEditor):
+            if not editor.is_wide():
                 widget_label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
             editor.set_label(widget_label)
         return widget_label
