@@ -43,7 +43,6 @@ from ....core.item_model import (
 )
 from ....core.backend import get_root_backend
 from ..action_widget import AbstractActionWidget
-from camelot.view.controls import editors
 from camelot.view.crud_action import DataCell
 from dataclasses import dataclass, InitVar
 from typing import Any, ClassVar, Optional
@@ -238,27 +237,11 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         :param option: use an option with version 5 to indicate the widget
         will be put onto a form
         """
-        editor_cls = self.get_editor_class()
-        if editor_cls is None:
-            column = index.column()
-            delegate_cls_name, column_attributes = tuple(index.model().headerData(
-                column, Qt.Orientation.Horizontal, ColumnAttributesRole
-            ))
-            editor = get_root_backend().create_editor(parent, delegate_cls_name, column_attributes)
-        elif issubclass(editor_cls, (editors.NoteEditor)):
-            editor = editor_cls(parent)
-        elif issubclass(editor_cls, editors.Many2OneEditor):
-            editor = editor_cls(parent, self.action_routes)
-        elif issubclass(editor_cls, editors.FloatEditor):
-            editor = editor_cls(parent, self.calculator, self.decimal, self.action_routes, option)
-        elif issubclass(editor_cls, editors.IntegerEditor):
-            editor = editor_cls(parent, self.calculator, option)
-        elif issubclass(editor_cls, editors.LocalFileEditor):
-            editor = editor_cls(parent, self.directory, self.save_as, self.file_filter)
-        elif issubclass(editor_cls, editors.MonthsEditor):
-            editor = editor_cls(parent, self.minimum, self.maximum, self.forever, self.action_routes)
-        elif issubclass(editor_cls, editors.TextLineEditor):
-            editor = editor_cls(parent, self.length, self.echo_mode, self.column_width, self.action_routes, self.validator_type, self.completer_type)
+        column = index.column()
+        delegate_cls_name, column_attributes = tuple(index.model().headerData(
+            column, Qt.Orientation.Horizontal, ColumnAttributesRole
+        ))
+        editor = get_root_backend().create_editor(parent, delegate_cls_name, column_attributes, option.version)
 
         assert editor != None
         assert isinstance(editor, QtWidgets.QWidget)

@@ -28,7 +28,6 @@
 #  ============================================================================
 
 from camelot.core.naming import initial_naming_context
-from camelot.view.controls.editors import MonthsEditor
 from camelot.view.controls.delegates.customdelegate import CustomDelegate, DocumentationMetaclass
 
 from dataclasses import dataclass, field
@@ -54,7 +53,7 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return MonthsEditor
+        return None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
