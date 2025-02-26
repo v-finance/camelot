@@ -40,7 +40,6 @@ from ....core.qt import Qt
 from ....core.serializable import json_encoder
 from .customdelegate import CustomDelegate
 
-from camelot.view.controls import editors
 from camelot.view.validator import ValidatorState
 
 DEFAULT_COLUMN_WIDTH = 20
@@ -63,7 +62,7 @@ class PlainTextDelegate(CustomDelegate):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.TextLineEditor
+        return None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:

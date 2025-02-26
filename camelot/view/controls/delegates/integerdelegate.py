@@ -29,7 +29,6 @@
 
 from camelot.core import constants
 from camelot.core.naming import initial_naming_context
-from camelot.view.controls import editors
 
 from dataclasses import dataclass
 from typing import Any, ClassVar, Optional
@@ -54,7 +53,7 @@ class IntegerDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.IntegerEditor
+        return None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:

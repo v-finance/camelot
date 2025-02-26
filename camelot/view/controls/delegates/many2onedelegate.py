@@ -33,11 +33,8 @@ import logging
 
 from ....admin.admin_route import Route
 from ....core.naming import initial_naming_context
-from ....core.qt import Qt, QtCore
-from ....core.item_model import (
-    PreviewRole, CompletionPrefixRole, CompletionsRole
-)
-from .. import editors
+from ....core.qt import Qt
+from ....core.item_model import PreviewRole, CompletionsRole
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 logger = logging.getLogger(__name__)
@@ -62,7 +59,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.Many2OneEditor
+        return None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
@@ -90,14 +87,6 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
         return item
 
-    def createEditor(self, parent, option, index):
-        editor = editors.Many2OneEditor(parent, self.action_routes)
-        if option.version != 5:
-            editor.setAutoFillBackground(True)
-        editor.editingFinished.connect(self.commitAndCloseEditor)
-        editor.completionPrefixChanged.connect(self.completion_prefix_changed)
-        return editor
-
     def setEditorData(self, editor, index):
         if index.model() is None:
             return
@@ -111,11 +100,3 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         super().setEditorData(editor, index)
         verbose_name = index.model().data(index, PreviewRole)
         editor.set_verbose_name(verbose_name)
-        editor.index = index
-
-    @QtCore.qt_slot(str)
-    def completion_prefix_changed(self, prefix):
-        editor = self.sender()
-        index = editor.index
-        if (index is not None) and (index.model() is not None):
-            index.model().setData(index, prefix, CompletionPrefixRole)

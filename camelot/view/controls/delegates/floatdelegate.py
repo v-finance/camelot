@@ -39,7 +39,6 @@ from ....core.item_model import (
 from ....core.qt import Qt
 from camelot.core.naming import initial_naming_context
 from .customdelegate import CustomDelegate, DocumentationMetaclass
-from camelot.view.controls import editors
 from camelot.core import constants
 
 
@@ -55,7 +54,7 @@ class FloatDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     @classmethod
     def get_editor_class(cls):
-        return editors.FloatEditor
+        return  None
 
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:

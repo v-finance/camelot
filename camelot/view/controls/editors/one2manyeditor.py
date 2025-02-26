@@ -32,7 +32,7 @@ import logging
 
 from ....admin.admin_route import RouteWithRenderHint
 from ....core.qt import Qt, QtCore, QtWidgets, is_deleted
-from ....core.item_model import ActionModeRole, ObjectRole
+from ....core.item_model import ActionModeRole, ObjectRole, CompletionPrefixRole
 from ..view import ViewWithActionsMixin
 from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
@@ -206,6 +206,18 @@ class One2ManyEditor(CustomEditor, ViewWithActionsMixin):
             index = table.currentIndex()
             model.setData(index, json.dumps([route, mode]), ActionModeRole)
 
+    @QtCore.qt_slot(str)
+    def editorCompletionPrefixChanged(self, prefix):
+        table = self.findChild(QtWidgets.QWidget, 'table')
+        if table is not None:
+            model = table.model()
+            if model is None:
+                return
+            if is_deleted(model):
+                return
+            index = table.currentIndex()
+            model.setData(index, prefix, CompletionPrefixRole)
+
     @QtCore.qt_slot(object)
     def set_columns(self, columns):
         from ..delegates.delegatemanager import DelegateManager
@@ -213,6 +225,7 @@ class One2ManyEditor(CustomEditor, ViewWithActionsMixin):
         if table is not None:
             delegate = DelegateManager(parent=self)
             delegate.actionTriggered.connect(self.editorActionTriggered)
+            delegate.completionPrefixChanged.connect(self.editorCompletionPrefixChanged)
             table.setItemDelegate(delegate)
             model = table.model()
             if model is not None:
