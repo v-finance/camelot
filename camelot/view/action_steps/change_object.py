@@ -306,7 +306,7 @@ class ChangeObject(OpenFormView):
         return self.get_objects()[0]
 
     @classmethod
-    def render(self, gui_context=None, step=None):
+    def render(self, step):
         raise NotImplementedError
 
     #@classmethod
