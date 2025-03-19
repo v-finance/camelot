@@ -331,7 +331,7 @@ class ChangeObject(OpenFormView):
     @classmethod
     def gui_run(cls, gui_run, gui_context, serialized_step):
         step = json.loads(serialized_step)
-        dialog = cls.render(gui_context, step)
+        dialog = cls.render(step)
         apply_form_state(dialog, None, step['form_state'])
         dialog.async_exec(gui_run)
 
