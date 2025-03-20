@@ -60,7 +60,7 @@ class ViewWithActionsMixin(object):
         elif render_hint == RenderHint.COMBO_BOX:
             qobject = QtWidgets.QComboBox(parent)
             qobject.activated.connect(self.combobox_activated)
-        elif render_hint == RenderHint.PUSH_BUTTON:
+        elif render_hint in (RenderHint.PUSH_BUTTON, RenderHint.STATUS_BUTTON):
             qobject = QtWidgets.QPushButton(parent)
             qobject.clicked.connect(self.button_clicked)
         elif render_hint == RenderHint.LABEL:
