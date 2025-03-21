@@ -122,7 +122,7 @@ class GeographicBoundary( Entity ):
             postgresql_ops={"name": "gin_trgm_ops"},
             postgresql_using='gin'
         ),
-        schema.CheckConstraint("code !~ '[-\\s\\./#,]'", name='code', _create_rule=is_postgres),
+        schema.CheckConstraint("code ~ '[^-\\s\\./#,]'", name='code', _create_rule=is_postgres),
         schema.CheckConstraint("code GLOB '*[^-. /#,]*'", name='code', _create_rule=is_sqlite),
     )
 
@@ -481,7 +481,7 @@ class Address( Entity ):
     _administrative_division = orm.relationship(AdministrativeDivision, foreign_keys=[administrative_division_id])
 
     __table_args__ = (
-        schema.CheckConstraint("_zip_code !~ '[-\\s\\./#,]'", name='zip_code', _create_rule=is_postgres),
+        schema.CheckConstraint("_zip_code ~ '[^-\\s\\./#,]'", name='zip_code', _create_rule=is_postgres),
         schema.CheckConstraint("_zip_code GLOB '*[^-. /#,]*'", name='zip_code', _create_rule=is_sqlite),
     )
 
