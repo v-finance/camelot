@@ -89,6 +89,7 @@ updated.
 :param enlarge: increase the size of the window to two thirds of the screen,
     useful when there are a lot of details displayed.
 :param detail_level: maps to the loglevels from the logging module and indicates the cause for the message.
+:param exc_info: contained exception traceback information to be displayed in the details.
 """
 
     value: typing.Optional[int] = None
@@ -101,6 +102,7 @@ updated.
     blocking: bool = False
     cancelable: bool = True
     detail_level: int = logging.INFO # To be determined - we currently map to the loglevels from the logging module
+    exc_info: typing.Optional[str] = None
 
     def __str__(self):
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
