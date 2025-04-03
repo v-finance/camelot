@@ -160,6 +160,8 @@ class HighlightForm(ActionStep, DataclassSerializable):
     action_route: Optional[Route] = None # Action to highlight
     action_menu_route: Optional[Route] = None # Menu to open
     action_menu_mode: Optional[str] = None # Menu mode (verbose name) to highlight
+    select_all: bool = False
+    select_row: Optional[int] = None
 
     #action_cls_state: Optional[?] = None
     #group_box: Optional[?] = None
