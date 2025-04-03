@@ -384,6 +384,7 @@ class ChangeObjects(UpdateTableView):
         super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
+        self.qml = True
         if self.validate:
             validator = admin.get_validator()
             for row, obj in enumerate(value):
