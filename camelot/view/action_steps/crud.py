@@ -96,6 +96,13 @@ class SetColumns(ActionStep, DataclassSerializable):
                                                 'action_routes', 'list_actions', 'list_action'])
             attrs['group'] = get_settings_group(attrs['admin_route'])
             attrs['crud_actions'] = CrudActions(None) # FIXME: admin arg
+            # define default states for actions when the model itself is not yet known
+            list_actions_states = []
+            for list_action in attrs['list_actions']:
+                list_actions_states.append((
+                    list_action.route, State()
+                ))
+            attrs['list_actions_states'] = list_actions_states
         elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
             attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type', 'completer_type'])
         elif issubclass(fa['delegate'], delegates.TextEditDelegate):
