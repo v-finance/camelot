@@ -33,7 +33,6 @@ import itertools
 
 from ....admin.action import State
 from ....admin.admin_route import Route, RouteWithRenderHint
-from ....admin.action.base import State
 from ....admin.action.application_action import model_context_naming, model_context_counter
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context

@@ -98,7 +98,7 @@ class SetColumns(ActionStep, DataclassSerializable):
             attrs['crud_actions'] = CrudActions(None) # FIXME: admin arg
             # define default states for actions when the model itself is not yet known
             list_actions_states = []
-            for list_action in attrs['list_actions']:
+            for list_action in attrs.get('list_actions', []):
                 list_actions_states.append((
                     list_action.route, State()
                 ))
