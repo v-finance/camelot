@@ -28,10 +28,11 @@
 #  ============================================================================
 
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import itertools
 
 from ....admin.admin_route import Route, RouteWithRenderHint
+from ....admin.action.base import State
 from ....admin.action.application_action import model_context_naming, model_context_counter
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
@@ -59,6 +60,7 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     rows: int = 5
     action_routes: List[Route] = field(default_factory=list)
     list_actions: List[RouteWithRenderHint] = field(default_factory=list)
+    list_actions_states: List[Tuple[Route, State]] = field(default_factory=list)
     list_action: Optional[Route] = None
     crud_actions: CrudActions = field(default_factory=list)
     group: List[str] = field(default_factory=list)
