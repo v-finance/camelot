@@ -62,4 +62,5 @@ class ColorDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         # only the BackgroundRole should be of type color, the EditRole should
         # be of type str
         item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(color)
+        cls.set_item_editability(model_context, item, True)
         return item
