@@ -148,10 +148,17 @@ class OpenFormView(AbstractCrudView):
             show_top_level(formview, gui_context_name, step['form_state'])
 
 @dataclass
+class HighlightField(DataclassSerializable):
+
+    label: str = None # The label of the field to search for
+    action_route: Optional[Route] = None # Field action to highlight
+    action_mode: Optional[str] = None # The mode of the action to highlight
+
+@dataclass
 class HighlightForm(ActionStep, DataclassSerializable):
 
     tab: Optional[str] = None # The form tab
-    label: Optional[str] = None # A field label to highlight
+    label: Optional[HighlightField] = None # A field label to highlight
     label_delegate: bool = False # Highlight delegate associated with label
     label_delegate_focus: bool = False # Focus delegate associated with label
     table_label: Optional[str] = None # Label of the table for table_row and table_column
