@@ -255,6 +255,7 @@ class RenderHint(Enum):
     LABEL = 'label'
     STRETCH = 'stretch'
     STATUS_BUTTON = 'status_button'
+    DROP = 'drop'
 
 
 class Action( ActionStep ):
