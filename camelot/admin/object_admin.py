@@ -276,6 +276,7 @@ be specified using the verbose_name attribute.
     related_toolbar_actions = []
     onetomany_field_actions = [field_action.add_new_object]
     manytomany_field_actions = [field_action.add_existing_object]
+    rank_actions = []
     field_attributes = {}
     form_state = None
     icon = None # Default
