@@ -93,7 +93,8 @@ class SetColumns(ActionStep, DataclassSerializable):
             attrs = filter_attributes(fa, ['minimum', 'maximum', 'forever', 'action_routes'])
         elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
             attrs = filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
-                                                'action_routes', 'list_actions', 'list_action'])
+                                                'action_routes', 'list_actions', 'list_action',
+                                                'drop_action_route'])
             attrs['group'] = get_settings_group(attrs['admin_route'])
             attrs['crud_actions'] = CrudActions(None) # FIXME: admin arg
             # define default states for actions when the model itself is not yet known
