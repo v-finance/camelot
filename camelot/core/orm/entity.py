@@ -327,24 +327,6 @@ class EntityBase( object ):
     def __lt__(self, other):
         return id(self) < id(other)
 
-    @classmethod
-    def get_by(cls, *args, **kwargs):
-        """
-        Returns the first instance of this class matching the given criteria.
-        This is equivalent to:
-        session.query(MyClass).filter_by(...).first()
-        """
-        return Session().query( cls ).filter_by(*args, **kwargs).first()
-
-    @classmethod
-    def get(cls, *args, **kwargs):
-        """
-        Return the instance of this class based on the given identifier,
-        or None if not found. This is equivalent to:
-        session.query(MyClass).get(...)
-        """
-        return Session().query( cls ).get(*args, **kwargs)
-
     def is_applicable_at(self, at):
         """
         Return whether this entity instance is applicable at the given date.
