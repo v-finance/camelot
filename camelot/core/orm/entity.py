@@ -166,7 +166,7 @@ class EntityMeta( DeclarativeMeta ):
 # to reuse them in parts unrelated to EntityBase
 #
 
-def update_or_create_entity( cls, data, surrogate = True ):
+def update_or_create_entity( cls, data, session, surrogate = True):
     mapper = orm.class_mapper( cls )
     if mapper.polymorphic_on is not None:
         # assume the mapper is polymorphic on a column, otherwise we're unable
@@ -186,12 +186,12 @@ def update_or_create_entity( cls, data, surrogate = True ):
     # if all pk are present and not None
     if not [1 for p in pk_props if data.get( p.key ) is None]:
         pk_tuple = tuple( [data[prop.key] for prop in pk_props] )
-        record = cls.query.get(pk_tuple)
+        record = session.query.get(pk_tuple)
         if record is None:
-            record = cls()
+            record = cls(_session=session)
     else:
         if surrogate:
-            record = cls()
+            record = cls(_session=session)
         else:
             raise Exception("cannot create non surrogate without pk")
     dict_to_entity( record, data )
@@ -208,6 +208,7 @@ def dict_to_entity( entity, data ):
     # that's not 100% reliable, so we'll need an override
 
     mapper = orm.object_mapper( entity )
+    session = orm.object_session(entity)
 
     for key, value in data.items():
         if isinstance( value, dict ):
@@ -221,7 +222,7 @@ def dict_to_entity( entity, data ):
                dbvalue is not None:
                 dict_to_entity( dbvalue, value )
             else:
-                record = update_or_create_entity( rel_class, value)
+                record = update_or_create_entity( rel_class, value, session,)
                 setattr(entity, key, record)
         elif isinstance(value, list) and \
              value and isinstance(value[0], dict):
@@ -233,7 +234,7 @@ def dict_to_entity( entity, data ):
                     raise Exception(
                         'Cannot send mixed (dict/non dict) data '
                         'to list relationships in from_dict data.')
-                record = update_or_create_entity( rel_class, row)
+                record = update_or_create_entity( rel_class, row,  session)
                 new_attr_value.append(record)
             setattr(entity, key, new_attr_value)
         else:
@@ -294,8 +295,8 @@ class EntityBase( object ):
             setattr( self, key, value )
 
     @classmethod
-    def update_or_create( cls, data, surrogate = True ):
-        return update_or_create_entity( cls, data, surrogate )
+    def update_or_create( cls, data, session, surrogate = True ):
+        return update_or_create_entity( cls, data, session, surrogate )
 
     def from_dict( self, data ):
         """
@@ -326,24 +327,6 @@ class EntityBase( object ):
 
     def __lt__(self, other):
         return id(self) < id(other)
-
-    @classmethod
-    def get_by(cls, *args, **kwargs):
-        """
-        Returns the first instance of this class matching the given criteria.
-        This is equivalent to:
-        session.query(MyClass).filter_by(...).first()
-        """
-        return Session().query( cls ).filter_by(*args, **kwargs).first()
-
-    @classmethod
-    def get(cls, *args, **kwargs):
-        """
-        Return the instance of this class based on the given identifier,
-        or None if not found. This is equivalent to:
-        session.query(MyClass).get(...)
-        """
-        return Session().query( cls ).get(*args, **kwargs)
 
     def is_applicable_at(self, at):
         """
