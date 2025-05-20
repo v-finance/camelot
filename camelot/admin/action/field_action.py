@@ -32,12 +32,9 @@ editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """
 
-import os
-from pathlib import Path
-
 from sqlalchemy import orm
 
-from ...core.qt import QtWidgets, QtGui
+from ...core.qt import QtGui
 from ...core.utils import ugettext_lazy as _
 from ...admin.icon import Icon
 from .base import Action, RenderHint
@@ -182,114 +179,6 @@ class ClearObject(EditFieldAction):
         state = super(ClearObject, self).get_state(model_context)
         state.visible = (model_context.value is not None)
         return state
-
-class UploadFile(EditFieldAction):
-    """Upload a new file into the storage of the field"""
-
-    icon = Icon('plus') # 'tango/16x16/actions/list-add.png'
-    tooltip = _('Attach file')
-    file_name_filter = 'All files (*)'
-    name = 'attach_file'
-    render_hint = RenderHint.TOOL_BUTTON
-
-    def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-        filenames = yield action_steps.SelectFile(self.file_name_filter)
-        storage = model_context.field_attributes['storage']
-        for file_name in filenames:
-            # the storage cannot checkin empty file names
-            if not file_name:
-                continue
-            remove = False
-            if model_context.field_attributes.get('remove_original'):
-                reply = yield action_steps.MessageBox(
-                    text = _('Do you want to remove the original file?'),
-                    icon = Icon('question'),
-                    title = _('The file will be stored.'),
-                    standard_buttons = [QtWidgets.QMessageBox.StandardButton.No, QtWidgets.QMessageBox.StandardButton.Yes]
-                    )
-                if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-                    remove = True
-            yield action_steps.UpdateProgress(text='Attaching file')
-            stored_file = storage.checkin(Path(file_name))
-            model_context.admin.set_field_value(
-                model_context.obj, model_context.field, stored_file
-            )
-            if remove:
-                os.remove(file_name)
-
-    def get_state(self, model_context):
-        state = super().get_state(model_context)
-        state.enabled = (state.enabled is True) and (model_context.value is None)
-        state.visible = (model_context.value is None)
-        return state
-
-class DetachFile(EditFieldAction):
-    """Set the new value of the editor to `None`, leaving the
-    actual file in the storage alone"""
-
-    icon = Icon('trash') # 'tango/16x16/actions/edit-delete.png'
-    tooltip = _('Detach file')
-    message_title = _('Detach this file ?')
-    message_text = _('If you continue, you will no longer be able to open this file.')
-    name = 'detach_file'
-    render_hint = RenderHint.TOOL_BUTTON
-
-    def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-        buttons = [QtWidgets.QMessageBox.StandardButton.Yes, QtWidgets.QMessageBox.StandardButton.No]
-        answer = yield action_steps.MessageBox(title=self.message_title,
-                                               text=self.message_text,
-                                               standard_buttons=buttons)
-        if answer == QtWidgets.QMessageBox.StandardButton.Yes:
-            model_context.admin.set_field_value(
-                model_context.obj, model_context.field, None
-            )
-            yield None
-
-    def get_state(self, model_context):
-        state = super().get_state(model_context)
-        state.enabled = (state.enabled is True) and (model_context.value is not None)
-        state.visible = (model_context.value is not None)
-        return state
-
-class OpenFile(Action):
-    """Open the file shown in the editor"""
-
-    icon = Icon('folder-open') # 'tango/16x16/actions/document-open.png'
-    tooltip = _('Open file')
-    name = 'open_file'
-    render_hint = RenderHint.TOOL_BUTTON
-
-    def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-        yield action_steps.UpdateProgress(text=_('Checkout file'))
-        storage = model_context.field_attributes['storage']
-        local_path = storage.checkout(model_context.value)
-        yield action_steps.UpdateProgress(text=_('Open file'))
-        yield action_steps.OpenFile(local_path.as_posix())
-
-    def get_state(self, model_context):
-        state = super(OpenFile, self).get_state(model_context)
-        state.enabled = model_context.value is not None
-        state.visible = state.enabled
-        return state
-
-class SaveFile(OpenFile):
-    """Copy the file shown in the editor to another location"""
-
-    icon = Icon('save') # 'tango/16x16/actions/document-save-as.png'
-    tooltip = _('Save as')
-    name = 'file_save_as'
-
-    def model_run(self, model_context, mode):
-        from camelot.view import action_steps
-        stored_file = model_context.value
-        storage = model_context.field_attributes['storage']
-        local_path = yield action_steps.SaveFile()
-        with open(local_path, 'wb') as destination:
-            yield action_steps.UpdateProgress(text=_('Saving file'))
-            destination.write(storage.checkout_stream(stored_file).read())
 
 
 class AddNewObject(AddNewObjectMixin, EditFieldAction):

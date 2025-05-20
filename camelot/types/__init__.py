@@ -268,15 +268,6 @@ class Enumeration(types.TypeDecorator):
     def __repr__(self):
         return 'Enumeration()'
 
-
-class StatusEnumeration(Enumeration):
-
-    cache_ok = True
-
-    def __repr__(self):
-        return 'StatusEnumeration()'
-
-
 class File(types.TypeDecorator):
     """Sqlalchemy column type to store files.  Only the location of the file is stored
     
