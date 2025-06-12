@@ -14,7 +14,7 @@ from ..core.item_model import (
     ObjectRole, PreviewRole,
     ActionRoutesRole, ActionStatesRole, CompletionsRole,
     ActionModeRole, FocusPolicyRole,
-    VisibleRole, NullableRole
+    VisibleRole, NullableRole, IsStatusRole
 )
 from ..core.naming import initial_naming_context, NameNotFoundException
 from ..core.qt import Qt, QtGui
@@ -101,6 +101,7 @@ invalid_item.roles[ActionModeRole] = None
 invalid_item.roles[FocusPolicyRole] = Qt.FocusPolicy.NoFocus
 invalid_item.roles[VisibleRole] = True
 invalid_item.roles[NullableRole] = True
+invalid_item.roles[IsStatusRole] = False
 
 
 class UpdateMixin(object):
@@ -299,7 +300,7 @@ class RowCount(Action):
     name = 'row_count'
 
     def clear_cache(self, model_context):
-        # clear the whole cache, there might be more efficient means to 
+        # clear the whole cache, there might be more efficient means to
         # do this.
         #
         # clearing the cache also clears the data on which columns and rows
@@ -391,7 +392,7 @@ class Created(Action, UpdateMixin):
                 continue
             columns = tuple(range(len(model_context.static_field_attributes)))
             changed_ranges.extend(self.add_data(model_context, row, columns, obj, True))
-        yield action_steps.Created(changed_ranges) 
+        yield action_steps.Created(changed_ranges)
 
     def __repr__(self):
         return '{0.__class__.__name__}'.format(self)
@@ -580,7 +581,7 @@ class SetData(Update, ChangedObjectMixin):
                 continue
             #
             # the object might have been deleted while an editor was open
-            # 
+            #
             if admin.is_deleted(obj):
                 continue
             changed = False
@@ -618,7 +619,7 @@ class SetData(Update, ChangedObjectMixin):
                 fields = [field_name]
                 for fa in admin.get_dynamic_field_attributes(obj, fields):
                     # if editable is not in the field_attributes dict, it wasn't
-                    # dynamic but static, so earlier checks should have 
+                    # dynamic but static, so earlier checks should have
                     # intercepted this change
                     if fa.get('editable', True) == True:
                         # interrupt inner loop, so outer loop can be continued
@@ -629,7 +630,7 @@ class SetData(Update, ChangedObjectMixin):
                 try:
                     admin.set_field_value(obj, field_name, new_value)
                     #
-                    # setting this attribute, might trigger a default function 
+                    # setting this attribute, might trigger a default function
                     # to return a value, that was not returned before
                     #
                     admin.set_defaults(obj)

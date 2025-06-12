@@ -49,7 +49,7 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     forever: int = None
     action_routes: List[Route] = field(default_factory=list)
 
-    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight
 
     @classmethod
     def get_editor_class(cls):
