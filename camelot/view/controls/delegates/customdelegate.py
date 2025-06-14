@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -39,7 +39,7 @@ from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole, ColumnAttributesRole,
-    ChoicesRole, VisibleRole, NullableRole
+    ChoicesRole, VisibleRole, NullableRole, IsStatusRole
 )
 from ....core.backend import get_root_backend
 from ..action_widget import AbstractActionWidget
@@ -78,15 +78,15 @@ def DocumentationMetaclass(name, bases, dct):
                 add_field_attribute_item(arg)
 
     if 'editor' in dct:
-        
+
         row_separator = '+' + '-'*40 + '+' + '-'*90 + '+'
         row_format = """| %-38s | %-88s |"""
-        states = {'editable':['editable=True'], 
+        states = {'editable':['editable=True'],
                   'disabled':['editable=False'],
-                  'editable_tooltip':['editable=True', "tooltip='tooltip'"], 
+                  'editable_tooltip':['editable=True', "tooltip='tooltip'"],
                   'disabled_tooltip':['editable=False', "tooltip='tooltip'"],
-                  'editable_background_color':['editable=True', 'background_color=ColorScheme.green'], 
-                  'disabled_background_color':['editable=False', 'background_color=ColorScheme.green']                  
+                  'editable_background_color':['editable=True', 'background_color=ColorScheme.green'],
+                  'disabled_background_color':['editable=False', 'background_color=ColorScheme.green']
                   }
 
         dct['__doc__'] = dct['__doc__'] + '\n\nBy default, creates a %s as its editor.\n\n'%dct['editor'].__name__
@@ -101,7 +101,7 @@ def DocumentationMetaclass(name, bases, dct):
                     image = ''
                 dct['__doc__'] = dct['__doc__'] + row_format%(attr, image) + '\n'
             dct['__doc__'] = dct['__doc__'] + row_separator + '\n'
-        
+
         dct['__doc__'] = dct['__doc__'] + '\nStatic attributes supported by this editor : \n'
         args, _varargs, _varkw,  _defaults = inspect.getargspec(dct['editor'].__init__)
         for arg in args:
@@ -137,7 +137,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
 
     _parent: InitVar[QtCore.QObject] = None
 
-    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignLeft
 
     def __post_init__(self, parent):
         """:param parent: the parent object for the delegate
@@ -222,6 +222,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
             item.roles[Qt.ItemDataRole.BackgroundRole] = initial_naming_context._bind_object(background_color)
         item.roles[VisibleRole] = model_context.field_attributes.get('visible', True)
         item.roles[NullableRole] = model_context.field_attributes.get('nullable', True)
+        item.roles[IsStatusRole] = False
         # FIXME: move choices to delegates that actually use it?
         choices = model_context.field_attributes.get('choices')
         if choices is not None:
@@ -284,7 +285,7 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         self.set_default_editor_data(editor, index)
         #
         # first set the field attributes, as these may change the 'state' of the
-        # editor to properly display and hold the value, eg 'precision' of a 
+        # editor to properly display and hold the value, eg 'precision' of a
         # float might be changed
         #
         value = index.model().data(index, Qt.ItemDataRole.EditRole)

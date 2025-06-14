@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .customdelegate import CustomDelegate
-from ....core.item_model import PreviewRole
+from ....core.qt import Qt
+from ....core.item_model import PreviewRole, IsStatusRole
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class StatusDelegate(CustomDelegate):
             if key == value:
                 return str(verbose)
         else:
-            assert (value is None) or False        
+            assert (value is None) or False
 
     @classmethod
     def get_standard_item(cls, locale, model_context):
@@ -30,6 +31,8 @@ class StatusDelegate(CustomDelegate):
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
+        item.roles[Qt.ItemDataRole.TextAlignmentRole] = Qt.AlignmentFlag.AlignHCenter
+        item.roles[IsStatusRole] = True
         return item
 
     def setEditorData(self, editor, index):
