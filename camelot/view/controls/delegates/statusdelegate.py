@@ -1,10 +1,12 @@
 import logging
+
+from camelot.core.item_model import IsStatusRole, PreviewRole
+from camelot.core.qt import Qt
+
 from dataclasses import dataclass
 from typing import Optional
 
 from .customdelegate import CustomDelegate
-from ....core.qt import Qt
-from ....core.item_model import PreviewRole, IsStatusRole
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,9 @@ class StatusDelegate(CustomDelegate):
         cls.set_item_editability(model_context, item, False)
         if model_context.value is not None:
             item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
+            if (types := model_context.field_attributes.get('types')) is not None and model_context.value in types:
+                if (color := types[model_context.value].color) is not None:
+                    item.roles[Qt.ItemDataRole.ForegroundRole] = color
         item.roles[Qt.ItemDataRole.TextAlignmentRole] = Qt.AlignmentFlag.AlignHCenter
         item.roles[IsStatusRole] = True
         return item
