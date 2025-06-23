@@ -13,7 +13,7 @@
 #      * Neither the name of Conceptive Engineering nor the
 #        names of its contributors may be used to endorse or promote products
 #        derived from this software without specific prior written permission.
-#  
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 #  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 #  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -49,7 +49,7 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     forever: int = None
     action_routes: List[Route] = field(default_factory=list)
 
-    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+    horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight
 
     @classmethod
     def get_editor_class(cls):
@@ -58,8 +58,8 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
         if value is not None:
-            forever = field_attributes.get('forever')
-            if (forever is not None) and (value==forever):
+            forever = field_attributes.get('forever', -2) or 0
+            if value == forever:
                 value_str = qtranslate('Forever')
             else:
                 value_str = ''
