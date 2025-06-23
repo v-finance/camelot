@@ -38,11 +38,11 @@ import datetime
 import functools
 import logging
 
-from sqlalchemy import orm, schema
+from sqlalchemy import orm, schema, types
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
 
-from ...types import Enumeration, PrimaryKey
+from ...types import PrimaryKey
 from . import Session
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
@@ -122,7 +122,7 @@ class EntityMeta( DeclarativeMeta ):
             polymorphic_on_col = polymorphic_on
             if isinstance(polymorphic_on, orm.attributes.InstrumentedAttribute):
                 polymorphic_on_col = polymorphic_on.prop.columns[0]
-            if isinstance(polymorphic_on_col.type, Enumeration):
+            if isinstance(polymorphic_on_col.type, types.Integer):
                 return polymorphic_on_col.type.enum
 
     def get_cls_by_discriminator(cls, primary_discriminator, *secondary_discriminators):
