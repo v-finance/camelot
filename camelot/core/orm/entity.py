@@ -38,7 +38,7 @@ import datetime
 import functools
 import logging
 
-from sqlalchemy import orm, schema, types
+from sqlalchemy import orm, schema
 from sqlalchemy.orm.decl_api import ( _declarative_constructor,
                                       DeclarativeMeta )
 
@@ -46,6 +46,14 @@ from ...types import PrimaryKey
 from . import Session
 
 LOGGER = logging.getLogger('camelot.core.orm.entity')
+
+class EnumerationColumnTypeMixin(object):
+    """
+    Mixin class to signal a column types is based on an enumeration.
+    Used by the EntityMeta to enumerate all polymorphic types.
+
+    Might be removed in the future, when all row types are IntEnum based.
+    """
 
 class EntityMeta( DeclarativeMeta ):
     """
@@ -122,7 +130,7 @@ class EntityMeta( DeclarativeMeta ):
             polymorphic_on_col = polymorphic_on
             if isinstance(polymorphic_on, orm.attributes.InstrumentedAttribute):
                 polymorphic_on_col = polymorphic_on.prop.columns[0]
-            if isinstance(polymorphic_on_col.type, types.Integer):
+            if isinstance(polymorphic_on_col.type, EnumerationColumnTypeMixin):
                 return polymorphic_on_col.type.enum
 
     def get_cls_by_discriminator(cls, primary_discriminator, *secondary_discriminators):
