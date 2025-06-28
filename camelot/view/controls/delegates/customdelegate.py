@@ -34,12 +34,11 @@ import dataclasses
 
 from camelot.core.naming import initial_naming_context
 
-from ....admin.icon import CompletionValue
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
     ActionRoutesRole, ActionStatesRole, ColumnAttributesRole,
-    ChoicesRole, VisibleRole, NullableRole, IsStatusRole
+    VisibleRole, NullableRole, IsStatusRole
 )
 from ....core.backend import get_root_backend
 from ..action_widget import AbstractActionWidget
@@ -223,14 +222,14 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         item.roles[VisibleRole] = model_context.field_attributes.get('visible', True)
         item.roles[NullableRole] = model_context.field_attributes.get('nullable', True)
         item.roles[IsStatusRole] = False
-        # FIXME: move choices to delegates that actually use it?
-        choices = model_context.field_attributes.get('choices')
-        if choices is not None:
-            choices = [CompletionValue(
-                value=initial_naming_context._bind_object(obj),
-                verbose_name=verbose_name
-                )._to_dict() for obj, verbose_name in choices]
-        item.roles[ChoicesRole] = choices
+        # # FIXME: move choices to delegates that actually use it?
+        # choices = model_context.field_attributes.get('choices')
+        # if choices is not None:
+        #     choices = [CompletionValue(
+        #         value=initial_naming_context._bind_object(obj),
+        #         verbose_name=verbose_name
+        #         )._to_dict() for obj, verbose_name in choices]
+        # item.roles[ChoicesRole] = choices
         return item
 
     def createEditor(self, parent, option, index):
