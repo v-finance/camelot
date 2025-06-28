@@ -111,3 +111,17 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         editor.set_value(value)
         # update actions
         self.update_field_action_states(editor, index)
+
+@dataclass
+class EnumDelegate(ComboBoxDelegate):
+    """
+    An enum delegate is a specialized combobox delegate that uses the fact that
+    the set out of which the choices are made is fixed.  That is, the set of choices
+    itself might change, but each choice is a member of a fixed set of values.
+    """
+
+    @classmethod
+    def value_to_string(cls, value, locale, field_attributes) -> Optional[str]:
+        if value is None:
+            return ' '
+        return field_attributes['types'].get_verbose_name(value)

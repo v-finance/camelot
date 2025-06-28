@@ -29,7 +29,7 @@
 from .delegatemanager import DelegateManager
 from .booldelegate import BoolDelegate
 from .colordelegate import ColorDelegate
-from .comboboxdelegate import ComboBoxDelegate
+from .comboboxdelegate import ComboBoxDelegate, EnumDelegate
 from .customdelegate import CustomDelegate
 from .datedelegate import DateDelegate
 from .datetimedelegate import DateTimeDelegate
@@ -57,6 +57,7 @@ __all__ = [
     CustomDelegate.__name__,
     DateDelegate.__name__,
     DateTimeDelegate.__name__,
+    EnumDelegate.__name__,
     FileDelegate.__name__,
     FloatDelegate.__name__,
     DbImageDelegate.__name__,
