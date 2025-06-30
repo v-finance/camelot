@@ -542,7 +542,6 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
-        from vfinance.data.types import crud_types
         yield from super().model_run(model_context, mode)
         # Scroll to last row so that the user sees the newly added object in the list.
         yield action_steps.ToLastRow(wait_for_new_row=True)
