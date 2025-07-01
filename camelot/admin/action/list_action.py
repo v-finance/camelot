@@ -85,19 +85,21 @@ class EditAction(Action):
         # Check if the action is authorized to perform this action's CRUD operation on the level of the entity
         admin = model_context.admin
         from vfinance.data.types import crud_types
-        if admin and not admin.entity.endpoint.operation_authorized(crud_types[self.crud_type]):
-            state.visible = False
-            state.enabled = False
+        if admin and admin.endpoint:
+            if not admin.endpoint.operation_authorized(crud_types[self.crud_type]):
+                state.visible = False
+                state.enabled = False
         return state
 
     def model_run( self, model_context, mode ):
         # Check if the action is authorized on the level of the entity
         # and on the level of the selected objects, if present.
         from vfinance.data.types import crud_types
-        endpoint = model_context.admin.entity.endpoint
-        for obj in model_context.get_selection():
-            endpoint.operation_authorized_or_raise(crud_types[self.crud_type], obj)
-        endpoint.operation_authorized_or_raise(crud_types[self.crud_type])
+        if model_context.admin.endpoint:
+            endpoint = model_context.admin.endpoint
+            for obj in model_context.get_selection():
+                endpoint.operation_authorized_or_raise(crud_types[self.crud_type], obj)
+            endpoint.operation_authorized_or_raise(crud_types[self.crud_type])
 
 
 class CloseList(Action):
@@ -449,7 +451,8 @@ class AddNewObjectMixin(object):
         admin = self.get_admin(model_context, mode)
         assert admin is not None # required by vfinance/test/test_facade/test_asset.py
         # Check if the action is authorized to create a new object.
-        admin.entity.endpoint.operation_authorized_or_raise(crud_types.CREATE)
+        if admin.endpoint:
+            admin.endpoint.operation_authorized_or_raise(crud_types.CREATE)
 
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin, mode)
@@ -486,7 +489,7 @@ class AddNewObjectMixin(object):
         admin = self.get_admin(model_context)
         if not self.modes and admin is not None and issubclass(admin.entity, Entity):
 
-            endpoint = admin.entity.endpoint
+            endpoint = admin.endpoint
             # TODO: for now, dynamic or custom types behaviour has been moved to a types field_attributes on one2many relation fields.
             #       To be determined if this is the best way to go...
             types = model_context.field_attributes.get('types')
