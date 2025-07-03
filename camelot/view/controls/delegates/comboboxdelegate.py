@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-
+import functools
 import logging
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -51,6 +51,8 @@ none_item = CompletionValue(none_name, verbose_name=' ')._to_dict()
 class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     action_routes: List[Route] = field(default_factory=list)
+    # choices can be static, so they are not required to go in the standard item
+    choices: Optional[List[CompletionValue]] = field(default_factory=list)
 
     @classmethod
     def get_editor_class(cls):
@@ -69,15 +71,7 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
         return str(value)
 
     @classmethod
-    def get_standard_item(cls, locale, model_context):
-        item = super().get_standard_item(locale, model_context)
-        value_name = initial_naming_context._bind_object(model_context.value)
-        # eventually, all values should be names, so this should happen in the
-        # custom delegate class
-        item.roles[Qt.ItemDataRole.EditRole] = value_name
-        cls.set_item_editability(model_context, item, True)
-        choices = model_context.field_attributes.get('choices', [])
-
+    def get_choices_data(cls, choices) -> List[CompletionValue]:
         none_available = False
         choicesData = []
         for obj, verbose_name in choices:
@@ -89,16 +83,28 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
                 )._to_dict())
         if not none_available:
             choicesData.append(none_item)
+        return choicesData
 
+    @classmethod
+    def get_standard_item(cls, locale, model_context):
+        item = super().get_standard_item(locale, model_context)
+        value_name = initial_naming_context._bind_object(model_context.value)
+        # eventually, all values should be names, so this should happen in the
+        # custom delegate class
+        item.roles[Qt.ItemDataRole.EditRole] = value_name
+        cls.set_item_editability(model_context, item, True)
         item.roles[PreviewRole] = cls.value_to_string(model_context.value, locale, model_context.field_attributes)
-        if model_context.value not in (None, *[key for key, verbose in choices]):
-            choicesData.append(CompletionValue(
-                value=initial_naming_context._bind_object(model_context.value),
-                verbose_name=str(model_context.value),
-                background = ColorScheme.VALIDATION_ERROR.name(),
-                virtual = True
-                )._to_dict())
-        item.roles[ChoicesRole] = choicesData
+        choices = model_context.field_attributes.get('choices')
+        if choices is not None:
+            choicesData = cls.get_choices_data(choices)
+            if value_name not in (completion['value'] for completion in choicesData):
+                choicesData = choicesData + [CompletionValue(
+                    value=initial_naming_context._bind_object(model_context.value),
+                    verbose_name=str(model_context.value),
+                    background = ColorScheme.VALIDATION_ERROR.name(),
+                    virtual = True
+                    )._to_dict()]
+            item.roles[ChoicesRole] = choicesData
         return item
 
     def setEditorData(self, editor, index):
