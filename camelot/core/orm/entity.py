@@ -76,8 +76,34 @@ class EntityMeta( DeclarativeMeta ):
     which is an OOP anti-pattern as classes should not know about their subclasses.
     """
 
+    @classmethod
+    def __prepare__(metacls, name, bases, status=None, **kwargs):
+        """
+        Generates the class's namespace.
+        :param status:
+            The status of the entity class, which determines the mutability of its instances on the global level.
+            By default, the status is set to :vfinance.data.types.data_status_types.readonly:,
+            meaning that all instances of this entity are immutable and can never be modified.
+            When the status is set to :vfinance.data.types.data_status_types.mutable:, the instances of this entity
+            can be modified, but its mutability can be further refined on the instance level using dedicated status attributes..
+        """
+        from vfinance.data.types import data_status_types
+        namespace = super().__prepare__(name, bases, **kwargs)
+        if status is not None:
+            if status not in data_status_types.values():
+                raise ValueError('Class keyword argument `status` must be a valid data status type.')
+            namespace['__status__'] = status
+            return namespace
+
+        for base in bases:
+            if hasattr(base, '__status__'):
+                break
+        else:
+            namespace.setdefault('__status__', data_status_types.readonly)
+        return namespace
+
     # new is called to create a new Entity class
-    def __new__( cls, classname, bases, dict_ ):
+    def __new__( cls, classname, bases, namespace, **kwargs):
         #
         # don't modify the Entity class itself
         #
@@ -89,24 +115,24 @@ class EntityMeta( DeclarativeMeta ):
                 if hasattr(base, '__tablename__'):
                     break
             else:
-                dict_.setdefault('__tablename__', classname.lower())
+                namespace.setdefault('__tablename__', classname.lower())
             for base in bases:
                 if hasattr(base, '__mapper_args__'):
                     break
             else:
-                dict_.setdefault('__mapper_args__', dict())
+                namespace.setdefault('__mapper_args__', dict())
 
-        _class = super( EntityMeta, cls ).__new__( cls, classname, bases, dict_ )
+        _class = super( EntityMeta, cls ).__new__( cls, classname, bases, namespace )
         # adds primary key column to the class
         if classname != 'Entity':
-            if dict_.get('__tablename__') is not None:
-                for val in dict_.values():
+            if namespace.get('__tablename__') is not None:
+                for val in namespace.values():
                     if isinstance(val, schema.Column) and val.primary_key: # val.primary_key checks if the primary_key attribute of the Column is set to True
                         break
                 else:
                     # table.primary_key.issubset([]) tests if there are no primary keys(aka tests if empty)
                     # table.primary_key returns an iterator so we can't test the length or something like that
-                    table = dict_.get('__table__', None)
+                    table = namespace.get('__table__', None)
                     if table is None or table.primary_key is None:
                         _class.id = schema.Column(PrimaryKey(), primary_key=True)
 
@@ -160,12 +186,12 @@ class EntityMeta( DeclarativeMeta ):
 
     # init is called after the creation of the new Entity class, and can be
     # used to initialize it
-    def __init__( cls, classname, bases, dict_ ):
+    def __init__( cls, classname, bases, namespace, **kwargs):
         #
         # Calling DeclarativeMeta's __init__ creates the mapper and
         # the table for this class
         #
-        super( EntityMeta, cls ).__init__( classname, bases, dict_ )
+        super( EntityMeta, cls ).__init__( classname, bases, namespace )
         if '__table__' in cls.__dict__:
             setattr( cls, 'table', cls.__dict__['__table__'] )
 
