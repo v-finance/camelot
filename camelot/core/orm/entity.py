@@ -85,7 +85,7 @@ class EntityMeta( DeclarativeMeta ):
             By default, the status is set to :vfinance.data.types.data_status_types.readonly:,
             meaning that all instances of this entity are immutable and can never be modified.
             When the status is set to :vfinance.data.types.data_status_types.mutable:, the instances of this entity
-            can be modified, but its mutability can be further refined on the instance level using dedicated status attributes..
+            can be modified in general, but their individual mutability is determined by the status of each instance.
         """
         from vfinance.data.types import data_status_types
         namespace = super().__prepare__(name, bases, **kwargs)
