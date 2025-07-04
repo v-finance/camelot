@@ -87,6 +87,7 @@ class EntityMeta( DeclarativeMeta ):
             When the status is set to :vfinance.data.types.data_status_types.mutable:, the instances of this entity
             can be modified in general, but their individual mutability is determined by the status of each instance.
         """
+        # TODO: move top-level after merge to vfinance repo.
         from vfinance.data.types import data_status_types
         namespace = super().__prepare__(name, bases, **kwargs)
         if status is not None:
