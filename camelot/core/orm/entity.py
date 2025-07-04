@@ -380,8 +380,7 @@ class EntityBase( object ):
         application_date = entity.endpoint.application_date.__get__(self, None)
         return application_date is not None and not (application_date >= end_of_times or at < application_date)
 
-    @property
-    def current_status(self):
+    def get_current_status(self):
         """
         Return the current status of this entity instance.
         By default, the status is determined by the `__status__` attribute of the entity class.
