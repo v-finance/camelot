@@ -194,7 +194,7 @@ class One2ManyEditor(CustomEditor, ViewWithActionsMixin):
         if table is not None:
             return table.model()
 
-    @QtCore.qt_slot(list, object)
+    @QtCore.qt_slot("QStringList", "QVariant")
     def editorActionTriggered(self, route, mode):
         table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
@@ -223,7 +223,7 @@ class One2ManyEditor(CustomEditor, ViewWithActionsMixin):
         from ..delegates.delegatemanager import DelegateManager
         table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
-            delegate = DelegateManager(parent=self)
+            delegate = get_root_backend().create_crud_item_model_delegate(self)
             delegate.actionTriggered.connect(self.editorActionTriggered)
             delegate.completionPrefixChanged.connect(self.editorCompletionPrefixChanged)
             table.setItemDelegate(delegate)

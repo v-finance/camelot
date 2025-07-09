@@ -26,7 +26,6 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import functools
 import logging
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -88,7 +87,7 @@ class ComboBoxDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     @classmethod
     def get_standard_item(cls, locale, model_context):
         item = super().get_standard_item(locale, model_context)
-        value_name = initial_naming_context._bind_object(model_context.value)
+        value_name = list(initial_naming_context._bind_object(model_context.value))
         # eventually, all values should be names, so this should happen in the
         # custom delegate class
         item.roles[Qt.ItemDataRole.EditRole] = value_name
