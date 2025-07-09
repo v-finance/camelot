@@ -50,7 +50,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
     opend successfull.
     """
 
-    path: InitVar(str)
+    path: InitVar[str]
     type: str="url" # "content" or "url"
 
     url: str = field(init=False, default=None)
@@ -70,6 +70,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
         # set url of content
         # open bestand + lees in
         # convert -> base64 (content)
+        self._path = path
         if self.type not in ("content", "url"):
                     raise ValueError(f"Invalid type: {self.type}. Must be 'content' or 'url'.")
         self.filename = os.path.basename(path)
@@ -78,20 +79,20 @@ class OpenFile( ActionStep, DataclassSerializable ):
             self.url = path
         elif self.type == "content":
             if not os.path.isfile(path):
-                raise FileNotFoundError(f"File not found: {self.path}")
+                raise FileNotFoundError(f"File not found: {path}")
             with open(path, "rb") as f:
                 raw_data = f.read()
                 self.content = base64.b64encode(raw_data).decode("utf-8")
 
     def __str__( self ):
-        return u'Open file {}'.format( self.path )
+        return u'Open file {}'.format( self._path )
     
     def get_path( self ):
         """
         :return: the path to the file that will be opened, use this method
         to verify the content of the file in unit tests
         """
-        return self.path
+        return self._path
 
     @classmethod
     def create_temporary_file( cls, suffix ):
@@ -107,38 +108,3 @@ class OpenFile( ActionStep, DataclassSerializable ):
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
         os.close( file_descriptor )
         return file_name
-
-class OpenStream( OpenFile ):
-    """Write a stream to a temporary file and open that file with the 
-    preferred application of the user.
-    
-    :param stream: the byte stream to write to a file
-    :param suffix: the suffix of the temporary file
-    """
-
-    def __init__( self, stream, suffix='.txt' ):
-        import os
-        import tempfile
-        file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
-        output_stream = os.fdopen( file_descriptor, 'wb' )
-        output_stream.write( stream.read() )
-        output_stream.close()
-        super( OpenStream, self ).__init__( file_name )
-
-class OpenString( OpenFile ):
-    """Write a string to a temporary file and open that file with the
-    preferred application of the user.
-        
-    :param string: the binary string to write to a file
-    :param suffix: the suffix of the temporary file
-    """
-
-    def __init__( self, string, suffix='.txt' ):
-        import os
-        import tempfile
-        file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
-        output_stream = os.fdopen( file_descriptor, 'wb' )
-        output_stream.write( string )
-        output_stream.close()
-        super( OpenString, self ).__init__( file_name )
-
