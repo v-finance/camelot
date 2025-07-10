@@ -220,7 +220,6 @@ class One2ManyEditor(CustomEditor, ViewWithActionsMixin):
 
     @QtCore.qt_slot(object)
     def set_columns(self, columns):
-        from ..delegates.delegatemanager import DelegateManager
         table = self.findChild(QtWidgets.QWidget, 'table')
         if table is not None:
             delegate = get_root_backend().create_crud_item_model_delegate(self)
