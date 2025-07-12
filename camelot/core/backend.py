@@ -2,7 +2,7 @@ import logging
 import json
 
 from camelot.core.qt import QtWidgets, QtCore
-from ..view.requests import AbstractRequest, CancelRequest
+from ..view.requests import AbstractRequest
 from ..view.responses import Busy
 from .singleton import QSingleton
 
