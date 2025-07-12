@@ -120,20 +120,6 @@ class SelectItem(ActionStep, DataclassSerializable):
     subtitle: Union[str, ugettext_lazy] = field(default_factory=lambda: _('Make a selection and press the OK button.'))
 
     @classmethod
-    def render(cls, step):
-        dialog = ItemSelectionDialog(autoaccept = bool(step['autoaccept']))
-        dialog.set_choices(step['items'])
-        dialog.set_value(step['value'])
-        dialog.setWindowTitle(step['title'])
-        dialog.set_banner_subtitle(step['subtitle'])
-        return dialog
-
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        dialog = cls.render(step = json.loads(serialized_step))
-        dialog.async_exec(gui_run)
-
-    @classmethod
     def deserialize_result(cls, gui_context_name, result):
         if result is not None:
             return tuple(result)
