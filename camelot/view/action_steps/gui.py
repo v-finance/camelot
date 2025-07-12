@@ -30,7 +30,7 @@
 """
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
-import functools
+
 from io import StringIO
 import json
 import typing
@@ -44,7 +44,6 @@ from camelot.admin.icon import Icon
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
-from camelot.view.art import from_admin_icon
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
 from ...core.backend import get_root_backend
 from ...core.qt import QtCore, QtWidgets, is_deleted
@@ -121,20 +120,6 @@ class SelectItem(ActionStep, DataclassSerializable):
     subtitle: Union[str, ugettext_lazy] = field(default_factory=lambda: _('Make a selection and press the OK button.'))
 
     @classmethod
-    def render(cls, step):
-        dialog = ItemSelectionDialog(autoaccept = bool(step['autoaccept']))
-        dialog.set_choices(step['items'])
-        dialog.set_value(step['value'])
-        dialog.setWindowTitle(step['title'])
-        dialog.set_banner_subtitle(step['subtitle'])
-        return dialog
-
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        dialog = cls.render(step = json.loads(serialized_step))
-        dialog.async_exec(gui_run)
-
-    @classmethod
     def deserialize_result(cls, gui_context_name, result):
         if result is not None:
             return tuple(result)
@@ -199,21 +184,6 @@ class MessageBox( ActionStep, DataclassSerializable ):
         self.text = str(self.text)
         self.informative_text = ''
         self.detailed_text = ''
-
-    @classmethod
-    def render(cls, step):
-        """create the message box. this method is used to unit test
-        the action step."""
-        message_box = QtWidgets.QMessageBox(
-            QtWidgets.QMessageBox.Icon.NoIcon, step["title"], step["text"],
-            QtWidgets.QMessageBox.StandardButton(
-                functools.reduce(lambda a, b: a | b, step["standard_buttons"])
-            ))
-        if step.get("icon"):
-            message_box.setIconPixmap(from_admin_icon(Icon(**step["icon"])).getQPixmap())
-        message_box.setInformativeText(str(step["informative_text"] or ''))
-        message_box.setDetailedText(str(step["detailed_text"] or ''))
-        return message_box
 
     @classmethod
     def deserialize_result(cls, gui_context_name, result):
