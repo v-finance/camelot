@@ -370,16 +370,6 @@ class TabForm(AbstractForm):
     def __str__(self):
         return 'TabForm { %s\n        }' % (u'\n  '.join('%s : %s' % (label, str(form)) for label, form in self.tabs))
 
-    def add_tab_at_index(self, tab_label, tab_form, index):
-        """Add a tab to the form at the specified index
-
-        :param tab_label: the name to the tab
-        :param tab_form: the form to display in the tab or a list of field names.
-        :param index: the position of tab in the tabs list.
-        """
-        tab_form = structure_to_form(tab_form)
-        self.tabs.insert(index, (tab_label, tab_form))
-
     def add_tab(self, tab_label, tab_form):
         """Add a tab to the form
 
