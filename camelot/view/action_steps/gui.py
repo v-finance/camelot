@@ -31,26 +31,22 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-from io import StringIO
 import json
-import typing
 import traceback
-from typing import List, Union
-
+import typing
 from dataclasses import dataclass, field
+from io import StringIO
+from typing import List, Union
 
 from camelot.admin.action.base import ActionStep
 from camelot.admin.icon import Icon
 from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
-from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from ...core.backend import get_root_backend
-from ...core.qt import QtCore, QtWidgets, is_deleted
-from ...core.serializable import DataclassSerializable
-from .. import gui_naming_context
-from ..controls.delegates import ComboBoxDelegate
 from .crud import CompletionValue
+from .. import gui_naming_context
+from ...core.qt import QtWidgets, is_deleted
+from ...core.serializable import DataclassSerializable
 
 
 @dataclass
@@ -60,44 +56,6 @@ class Refresh( ActionStep, DataclassSerializable ):
 
     blocking: bool = False
 
-class ItemSelectionDialog(StandaloneWizardPage):
-
-    def __init__( self,
-                  window_title=None,
-                  autoaccept=False):
-        """
-        :param autoaccept: if True, the value of the ComboBox is immediately
-        accepted after selecting it.
-        """
-        super(ItemSelectionDialog, self).__init__(window_title = window_title)
-        self.autoaccept = autoaccept
-        self.set_default_buttons()
-        layout = QtWidgets.QVBoxLayout()
-        combobox = get_root_backend().create_editor(None, ComboBoxDelegate.__name__, {"action_routes": []}, 5)
-        combobox.setObjectName( 'combobox' )
-        combobox.editingFinished.connect( self._combobox_activated )
-        layout.addWidget( combobox )
-        self.main_widget().setLayout(layout)
-
-    @QtCore.qt_slot()
-    def _combobox_activated(self):
-        if self.autoaccept:
-            self.accept()
-
-    def set_choices(self, choices):
-        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
-        if combobox != None:
-            combobox.set_choices(choices)
-
-    def get_value(self):
-        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
-        if combobox != None:
-            return combobox.get_value()
-
-    def set_value(self, value):
-        combobox = self.findChild( QtWidgets.QWidget, 'combobox' )
-        if combobox != None:
-            return combobox.set_value(value)
 
 @dataclass
 class SelectItem(ActionStep, DataclassSerializable):
