@@ -39,7 +39,6 @@ from ...admin.icon import Icon
 from ...core.qt import QtWidgets, QtGui
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
-from ...view.art import from_admin_icon
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -102,9 +101,6 @@ the default mode.
         """
         if self.modes:
             menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
-            if self.icon is not None:
-                menu.setIcon(from_admin_icon(self.icon).getQIcon())
-                menu.setEnabled(self.enabled)
             parent.addMenu(menu)
             return menu
         else:
@@ -112,11 +108,7 @@ the default mode.
             action.setData( self.value )
             action.setText( str(self.verbose_name) )
             action.setEnabled(self.enabled)
-            if self.icon is None:
-                action.setIconVisibleInMenu(False)
-            else:
-                action.setIcon(from_admin_icon(self.icon).getQIcon())
-                action.setIconVisibleInMenu(True)
+            action.setIconVisibleInMenu(False)
             return action
 
 @dataclass
