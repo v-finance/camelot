@@ -122,7 +122,7 @@ class AbstractRequest(NamedDataclassSerializable):
                     result = run.generator.throw(CancelRequest())
                 else:
                     result = next(run.generator)
-        except CancelRequest as e:
+        except CancelRequest:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             # After the iterator raised a CancelRequest, it will still raise
             # a StopIteration, so there is no need to stop the action now.
