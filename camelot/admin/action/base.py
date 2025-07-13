@@ -377,9 +377,6 @@ with a view.
         """
         yield
 
-    def gui_run( self, gui_context_name ):
-        raise Exception('This should not happen')
-
     def get_state( self, model_context ):
         """
         This method is called inside the Model thread to verify if

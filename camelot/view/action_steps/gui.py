@@ -31,7 +31,6 @@
 Various ``ActionStep`` subclasses that manipulate the GUI of the application.
 """
 
-import json
 import traceback
 import typing
 from dataclasses import dataclass, field
@@ -44,8 +43,7 @@ from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from .crud import CompletionValue
-from .. import gui_naming_context
-from ...core.qt import QtWidgets, is_deleted
+from ...core.qt import QtWidgets
 from ...core.serializable import DataclassSerializable
 
 
@@ -97,15 +95,6 @@ class CloseView(ActionStep, DataclassSerializable):
 
     blocking: bool = False
     accept: bool = True
-
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        # python implementation, still used for FormView
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        step = json.loads(serialized_step)
-        view = gui_context.view
-        if view is not None and not is_deleted(view):
-            view.close_view(step["accept"])
 
 
 @dataclass
