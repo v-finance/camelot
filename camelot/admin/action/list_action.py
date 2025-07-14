@@ -152,6 +152,9 @@ class OpenFormView(Action):
         row, objId = mode
         obj = model_context.get_object(row)
         if id(obj) != objId:
+            LOGGER.warn('The select object on model_context {4} has id {0} at row {3}, while the request is to open the object with id {1} at row {2}'.format(
+                id(obj), objId, row, model_context.current_row, id(model_context)
+            ))
             raise UserException('Could not open correct form')
         return obj
 

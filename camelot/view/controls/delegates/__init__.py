@@ -26,7 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-from .delegatemanager import DelegateManager
+
 from .booldelegate import BoolDelegate
 from .colordelegate import ColorDelegate
 from .comboboxdelegate import ComboBoxDelegate, EnumDelegate
@@ -50,7 +50,6 @@ from .labeldelegate import LabelDelegate
 from .monthsdelegate import MonthsDelegate
 
 __all__ = [
-    DelegateManager.__name__,
     BoolDelegate.__name__,
     ColorDelegate.__name__,
     ComboBoxDelegate.__name__,
