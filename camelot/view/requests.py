@@ -122,11 +122,13 @@ class AbstractRequest(NamedDataclassSerializable):
                     result = run.generator.throw(CancelRequest())
                 else:
                     result = next(run.generator)
-        except CancelRequest:
+        except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
             # After the iterator raised a CancelRequest, it will still raise
             # a StopIteration, so there is no need to stop the action now.
-            # cls._stop_action(run_name, gui_run_name, response_handler, e)
+            # However not doing so results in the progress popup not being
+            # popped in certain cases (eg run forward all schedules -> cancel)
+            cls._stop_action(run_name, gui_run_name, response_handler, e)
         except StopIteration as e:
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except Exception as e:
