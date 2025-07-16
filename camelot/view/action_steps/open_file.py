@@ -36,6 +36,7 @@ from camelot.admin.action import ActionStep
 
 from ...core.serializable import DataclassSerializable
 
+from camelot.core.backend import get_root_backend
 
 @dataclass
 class OpenFile( ActionStep, DataclassSerializable ):
@@ -51,7 +52,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
     """
 
     path: InitVar[str]
-    type: str="url" # "content" or "url"
+    type: str="websocket" # "content" or "url" or "websocket"
 
     url: str = field(init=False, default=None)
     content: str = field(init=False, default=None)
@@ -61,7 +62,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
 
     def __post_init__(self, path):
         self._path = path
-        if self.type not in ("content", "url"):
+        if self.type not in ("content", "url", "websocket"):
                     raise ValueError(f"Invalid type: {self.type}. Must be 'content' or 'url'.")
         self.filename = os.path.basename(path)
         if self.type == "url":
@@ -73,6 +74,8 @@ class OpenFile( ActionStep, DataclassSerializable ):
             with open(path, "rb") as f:
                 raw_data = f.read()
                 self.content = base64.b64encode(raw_data).decode("utf-8")
+        elif self.type == "websocket":
+            get_root_backend().create_file_transfer_server(12345, path)
 
     def __str__( self ):
         return u'Open file {}'.format( self._path )
