@@ -52,7 +52,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
     """
 
     path: InitVar[str]
-    type: str="websocket" # "content" or "url" or "websocket"
+    type: str="url" # "content" or "url" or "websocket"
 
     url: str = field(init=False, default=None)
     content: str = field(init=False, default=None)
@@ -63,7 +63,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
     def __post_init__(self, path):
         self._path = path
         if self.type not in ("content", "url", "websocket"):
-                    raise ValueError(f"Invalid type: {self.type}. Must be 'content' or 'url'.")
+                    raise ValueError(f"Invalid type: {self.type}. Must be 'content', 'url' or 'websocket'.")
         self.filename = os.path.basename(path)
         if self.type == "url":
             # Assume path is already a valid URL or file path to be used as a URL
