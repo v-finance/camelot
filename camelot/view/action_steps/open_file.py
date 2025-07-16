@@ -52,7 +52,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
     """
 
     path: InitVar[str]
-    type: str="url" # "content" or "url" or "websocket"
+    type: str="url" # "url", "content" or "websocket"
 
     url: str = field(init=False, default=None)
     content: str = field(init=False, default=None)
