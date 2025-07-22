@@ -36,8 +36,6 @@ from camelot.admin.action import ActionStep
 
 from ...core.serializable import DataclassSerializable
 
-from camelot.core.backend import get_root_backend
-
 @dataclass
 class OpenFile( ActionStep, DataclassSerializable ):
     """
