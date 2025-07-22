@@ -71,8 +71,14 @@ class SetColumns(ActionStep, DataclassSerializable):
     def get_delegate_state(self, static_field_attributes):
         fa = static_field_attributes
         attrs = {}
-        if issubclass(fa['delegate'], (delegates.ComboBoxDelegate, delegates.Many2OneDelegate,
-                                       delegates.FileDelegate)):
+        if issubclass(fa['delegate'], (delegates.EnumDelegate,)):
+            attrs = filter_attributes(fa, ['action_routes'])
+            attrs['choices'] = delegates.ComboBoxDelegate.get_choices_data(
+                fa['types'].get_choices()
+            )
+        elif issubclass(fa['delegate'], (delegates.ComboBoxDelegate,)):
+            attrs = filter_attributes(fa, ['action_routes'])
+        elif issubclass(fa['delegate'], (delegates.Many2OneDelegate, delegates.FileDelegate)):
             attrs = filter_attributes(fa, ['action_routes'])
         elif issubclass(fa['delegate'], delegates.DateDelegate):
             attrs = filter_attributes(fa, ['nullable'])

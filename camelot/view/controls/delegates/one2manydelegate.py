@@ -37,7 +37,6 @@ from ....admin.action.application_action import model_context_naming, model_cont
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
 from ....core.qt import Qt
-from ....view.controls import editors
 from ....view.crud_action import CrudActions
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
@@ -80,14 +79,6 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
             one2many_model_context_name = model_context_naming.bind(str(next(model_context_counter)), one2many_model_context)
             item.roles[Qt.ItemDataRole.EditRole] = one2many_model_context_name
         return item
-
-    def createEditor( self, parent, option, index ):
-        logger.debug( 'create a one2many editor' )
-        editor = editors.One2ManyEditor(parent, self.admin_route, self.column_width, self.columns,
-                                        self.rows, self.action_routes, self.list_actions,
-                                        self.list_action)
-        editor.editingFinished.connect(self.commitAndCloseEditor)
-        return editor
 
     def setEditorData( self, editor, index ):
         logger.debug( 'set one2many editor data' )

@@ -27,16 +27,13 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
-
 import logging
 import typing
+from dataclasses import dataclass
 
-from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
+from camelot.core.utils import ugettext_lazy
 from ...core.serializable import DataclassSerializable
-from camelot.core.backend import cpp_action_step
-
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
@@ -47,21 +44,11 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
     verbose_name: str
     blocking: bool = False
 
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        # Always send to C++ (even if gui_context_name comes from python)
-        cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
-
 
 @dataclass
 class PopProgressLevel(ActionStep, DataclassSerializable):
 
     blocking: bool = False
-
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        # Always send to C++ (even if gui_context_name comes from python)
-        cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
 
 
 @dataclass
@@ -107,12 +94,7 @@ updated.
     def __str__(self):
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
 
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        # Always send to C++ (even if gui_context_name comes from python)
-        return cpp_action_step(gui_context_name, 'UpdateProgress', serialized_step)
 
 @dataclass
 class SetProgressAnimate(ActionStep, DataclassSerializable):
-
     animate: bool

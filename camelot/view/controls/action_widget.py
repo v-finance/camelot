@@ -27,11 +27,10 @@
 #
 #  ============================================================================
 
-from ...core.qt import QtGui, QtWidgets
-
-from ...admin.icon import Icon
 from ...admin.action import Mode
-from camelot.view.art import from_admin_icon
+from ...admin.icon import Icon
+from ...core.qt import QtWidgets
+
 
 class AbstractActionWidget(object):
 
@@ -53,11 +52,6 @@ class AbstractActionWidget(object):
         cls._set_menu(toolbutton, state, toolbutton, slot)
         if state['verbose_name'] is not None:
             toolbutton.setText( str( state['verbose_name'] ) )
-        if state['icon'] is not None:
-            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
-            toolbutton.setIcon( from_admin_icon(icon).getQIcon() )
-        else:
-            toolbutton.setIcon( QtGui.QIcon() )
         if state['tooltip'] is not None:
             toolbutton.setToolTip( str( state['tooltip'] ) )
         else:
@@ -72,11 +66,6 @@ class AbstractActionWidget(object):
         cls.set_widget_state(push_button, state)
         if state['verbose_name'] is not None:
             push_button.setText( str( state['verbose_name'] ) )
-        if state['icon'] is not None:
-            icon = Icon(state['icon']['name'], state['icon']['pixmap_size'], state['icon']['color'])
-            push_button.setIcon( from_admin_icon(icon).getQIcon() )
-        else:
-            push_button.setIcon( QtGui.QIcon() )
         if state['tooltip'] is not None:
             push_button.setToolTip( str( state['tooltip'] ) )
         else:
