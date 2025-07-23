@@ -26,12 +26,17 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+import base64
 from dataclasses import dataclass
+import os
+
+from dataclasses import field, InitVar
 
 from camelot.admin.action import ActionStep
 
 from ...core.serializable import DataclassSerializable
 
+from camelot.core.backend import get_root_backend
 
 @dataclass
 class OpenFile( ActionStep, DataclassSerializable ):
@@ -43,21 +48,44 @@ class OpenFile( ActionStep, DataclassSerializable ):
     :param file_name: the absolute path to the file to open
     
     The :keyword:`yield` statement will return :const:`True` if the file was
-    opend successfull.
+    opened successfully.
     """
 
-    path: str
+    path: InitVar[str]
+    type: str="url" # "url", "content" or "websocket"
+
+    url: str = field(init=False, default=None)
+    content: str = field(init=False, default=None)
+    filename: str = field(init=False, default=None)
+
     blocking: bool = False
 
+    def __post_init__(self, path):
+        self._path = path
+        if self.type not in ("content", "url", "websocket"):
+                    raise ValueError(f"Invalid type: {self.type}. Must be 'content', 'url' or 'websocket'.")
+        self.filename = os.path.basename(path)
+        if self.type == "url":
+            # Assume path is already a valid URL or file path to be used as a URL
+            self.url = path
+        elif self.type == "content":
+            if not os.path.isfile(path):
+                raise FileNotFoundError(f"File not found: {path}")
+            with open(path, "rb") as f:
+                raw_data = f.read()
+                self.content = base64.b64encode(raw_data).decode("utf-8")
+        elif self.type == "websocket":
+            get_root_backend().create_file_transfer_server(12345, path)
+
     def __str__( self ):
-        return u'Open file {}'.format( self.path )
+        return u'Open file {}'.format( self._path )
     
     def get_path( self ):
         """
         :return: the path to the file that will be opened, use this method
         to verify the content of the file in unit tests
         """
-        return self.path
+        return self._path
 
     @classmethod
     def create_temporary_file( cls, suffix ):
@@ -73,38 +101,3 @@ class OpenFile( ActionStep, DataclassSerializable ):
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
         os.close( file_descriptor )
         return file_name
-
-class OpenStream( OpenFile ):
-    """Write a stream to a temporary file and open that file with the 
-    preferred application of the user.
-    
-    :param stream: the byte stream to write to a file
-    :param suffix: the suffix of the temporary file
-    """
-
-    def __init__( self, stream, suffix='.txt' ):
-        import os
-        import tempfile
-        file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
-        output_stream = os.fdopen( file_descriptor, 'wb' )
-        output_stream.write( stream.read() )
-        output_stream.close()
-        super( OpenStream, self ).__init__( file_name )
-
-class OpenString( OpenFile ):
-    """Write a string to a temporary file and open that file with the
-    preferred application of the user.
-        
-    :param string: the binary string to write to a file
-    :param suffix: the suffix of the temporary file
-    """
-
-    def __init__( self, string, suffix='.txt' ):
-        import os
-        import tempfile
-        file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
-        output_stream = os.fdopen( file_descriptor, 'wb' )
-        output_stream.write( string )
-        output_stream.close()
-        super( OpenString, self ).__init__( file_name )
-

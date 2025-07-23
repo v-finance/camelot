@@ -31,21 +31,16 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import Dict, Optional
 from dataclasses import dataclass, field
-import json
+from typing import Dict, Optional
 
-from ..controls.formview import FormView
+from .item_view import AbstractCrudView
 from ..forms import AbstractForm
-from ..workspace import show_top_level
-from ...admin.action.base import ActionStep, RenderHint
+from ...admin.action.base import ActionStep
 from ...admin.admin_route import Route, AdminRoute
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
-from ...view.utils import get_settings_group
-from ...core.backend import get_root_backend
-from .item_view import AbstractCrudView
 
 
 @dataclass
@@ -118,34 +113,6 @@ class OpenFormView(AbstractCrudView):
     def get_admin(self):
         """Use this method to get access to the admin in unit tests"""
         return initial_naming_context.resolve(self.admin_route)
-
-    @classmethod
-    def render(self, step):
-        form = FormView()
-        model = get_root_backend().create_model(get_settings_group(step['admin_route']), form)
-        model.setValue(step['model_context_name'])
-        columns = [ fn for fn, fa in step['fields']]
-        model.setColumns(columns)
-        form.setup(
-            title=step['title'], admin_route=step['admin_route'],
-            close_route=tuple(step['close_route']), model=model,
-            fields=step['fields'], form_display=step['form'],
-            index=step['row']
-        )
-        form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
-        for action_route, action_state in step['action_states']:
-            form.set_action_state(form, tuple(action_route), action_state)
-        return form
-
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        step = json.loads(serialized_step)
-        formview = cls.render(step)
-        if formview is not None:
-            formview.setObjectName('form.{}.{}'.format(
-                step['admin_route'], id(formview)
-            ))
-            show_top_level(formview, gui_context_name, step['form_state'])
 
 @dataclass
 class HighlightField(DataclassSerializable):
