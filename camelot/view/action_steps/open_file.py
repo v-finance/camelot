@@ -36,8 +36,6 @@ from camelot.admin.action import ActionStep
 
 from ...core.serializable import DataclassSerializable
 
-from camelot.core.backend import get_root_backend
-
 @dataclass
 class OpenFile( ActionStep, DataclassSerializable ):
     """
@@ -75,7 +73,7 @@ class OpenFile( ActionStep, DataclassSerializable ):
                 raw_data = f.read()
                 self.content = base64.b64encode(raw_data).decode("utf-8")
         elif self.type == "websocket":
-            get_root_backend().create_file_transfer_server(12345, path)
+            self.url = path
 
     def __str__( self ):
         return u'Open file {}'.format( self._path )
