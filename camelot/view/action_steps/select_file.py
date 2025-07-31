@@ -104,9 +104,9 @@ class SaveFile( SelectActionStep, DataclassSerializable ):
 
     url: str = field(default=None)
     file_name_filter: str = field(default=None)
-    type: str = "url"  # "url" or "websocket"
     proposed_file_name: str = field(default=None)
     open_dir: bool = field(default=False)
+    type: str = "url"  # "url" or "websocket"
 
     caption = _('Save')
 
