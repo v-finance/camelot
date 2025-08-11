@@ -48,9 +48,10 @@ class OpenFile( ActionStep, DataclassSerializable ):
     The :keyword:`yield` statement will return :const:`True` if the file was
     opened successfully.
     """
+    # TODO FIXME: Documentation needs to be updated
 
     path: InitVar[str]
-    type: str="url" # "url", "content" or "websocket"
+    type: str = "url"   # "url", "content" or "websocket"
 
     url: str = field(init=False, default=None)
     content: str = field(init=False, default=None)
