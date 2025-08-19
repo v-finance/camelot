@@ -39,7 +39,7 @@ from sqlalchemy import orm
 from ...core.qt import QtGui
 from ...core.utils import ugettext_lazy as _
 from ...admin.icon import Icon
-from .base import Action, EndpointAction, RenderHint
+from .base import EndpointAction, RenderHint
 from .list_action import AddNewObjectMixin
 from .application_action import ApplicationActionModelContext
 
