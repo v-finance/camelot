@@ -32,8 +32,9 @@ import logging
 import typing
 
 from enum import Enum
+from camelot.core.orm import Entity
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, List
 
 from ...admin.icon import Icon
 from ...core.qt import QtWidgets, QtGui
@@ -363,12 +364,15 @@ with a view.
     def model_run( self, model_context, mode ):
         """A generator that yields :class:`camelot.admin.action.ActionStep`
         objects.  This generator can be called in the *model thread*.
-        
+        It also provides a authorized or raise hook that can be used to
+        verify if the user is authorized to run the action.
+
         :param context:  An object of type
             :class:`camelot.admin.action.ModelContext`.
             What is in the  context depends on how the action was called.
         """
-        yield
+        self.is_authorized_or_raise(model_context)
+        yield from ()
 
     def get_state( self, model_context ):
         """
@@ -384,7 +388,65 @@ with a view.
         state.tooltip = self.get_tooltip()
         state.modes = self.modes
         state.shortcut = self.shortcut
+        if not self.is_authorized(model_context):
+            state.enabled = False
         return state
 
+    def is_authorized(self, model_context) -> bool:
+        """
+        Check if the user is authorized to run this action.
+        This will be used to disable the action if not authorized.
+        """
+        return True
 
+    def is_authorized_or_raise(self, model_context):
+        """
+        Check if the user is authorized to run this action and raise an exception
+        if not authorized. This will be used to prevent the action from being
+        executed if the user is not authorized.
+        """
+        pass
 
+class EndpointAction(Action):
+    """
+    Action that is associated with a CRUD operation on an endpoint.
+    This action will check if the user is authorized to perform the operation
+    on the endpoint before executing the action.
+    """
+
+    name = 'endpoint_action'
+    operation = 'UPDATE'
+
+    def get_endpoint(self, model_context):
+        """
+        Get the endpoint associated with the CRUD operation for this action.
+        """
+        raise NotImplementedError
+
+    def get_instances(self, model_context) -> List[Entity]:
+        """
+        Get the instances that are affected by this action.
+        This method should return a list of instances that are relevant
+        for the CRUD operation defined by this action.
+        """
+        raise NotImplementedError
+
+    def is_authorized(self, model_context) -> bool:
+        from vfinance.data.types import crud_types
+        if endpoint := self.get_endpoint(model_context):
+            for instance in self.get_instances(model_context):
+                if self.operation == crud_types.CREATE.name:
+                    return endpoint.operation_authorized(crud_types[self.operation], parents=[instance])
+                return endpoint.operation_authorized(crud_types[self.operation], instance)
+            return endpoint.operation_authorized(crud_types[self.operation])
+        return True
+
+    def is_authorized_or_raise(self, model_context):
+        from vfinance.data.types import crud_types
+        if endpoint := self.get_endpoint(model_context):
+            for instance in self.get_instances(model_context):
+                if self.operation == crud_types.CREATE.name:
+                    endpoint.operation_authorized_or_raise(crud_types[self.operation], parents=[instance])
+                else:
+                    endpoint.operation_authorized_or_raise(crud_types[self.operation], instance)
+            endpoint.operation_authorized_or_raise(crud_types[self.operation])
