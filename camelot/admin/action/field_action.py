@@ -32,12 +32,14 @@ editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """
 
+from camelot.core.orm import EntityBase
+
 from sqlalchemy import orm
 
 from ...core.qt import QtGui
 from ...core.utils import ugettext_lazy as _
 from ...admin.icon import Icon
-from .base import Action, RenderHint
+from .base import Action, EndpointAction, RenderHint
 from .list_action import AddNewObjectMixin
 from .application_action import ApplicationActionModelContext
 
@@ -74,7 +76,7 @@ class FieldActionModelContext(ApplicationActionModelContext):
         self.field_attributes = {}
 
 
-class EditFieldAction(Action):
+class EditFieldAction(EndpointAction):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the field are set to  not-editable
     or the admin is not editable"""
@@ -86,7 +88,18 @@ class EditFieldAction(Action):
         state = super().get_state(model_context)
         # editability at the level of the field
         state.enabled = model_context.field_attributes.get('editable', False)
+
         return state
+
+    def get_endpoint(self, model_context):
+        from vfinance.model.endpoint import Endpoint
+        cls = model_context.obj.__class__
+        if issubclass(cls, EntityBase):
+            return Endpoint.get_or_raise(cls)
+
+    def get_instances(self, model_context):
+        return [model_context.admin.get_subsystem_object(model_context.obj)]
+
 
 class SelectObject(EditFieldAction):
     """Allows the user to select an object, and set the selected object as
@@ -99,6 +112,7 @@ class SelectObject(EditFieldAction):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        yield from super().model_run(model_context, mode)
         field_admin = model_context.field_attributes.get('admin')
         if field_admin is not None:
             selected_object = yield action_steps.SelectObject(field_admin.get_query(), field_admin)
@@ -123,6 +137,7 @@ class ToggleForeverAction(EditFieldAction):
     render_hint = RenderHint.TOOL_BUTTON
 
     def model_run(self, model_context, mode):
+        yield from super().model_run(model_context, mode)
         forever = model_context.field_attributes.get('forever')
         if forever is not None:
             if model_context.value == forever:
@@ -146,6 +161,7 @@ class OpenObject(SelectObject):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        yield from super().model_run(model_context, mode)
         obj = model_context.value
         # Disregard the case of having no value, or having multiple defined.
         if obj is not None and not isinstance(obj, list):
@@ -154,10 +170,10 @@ class OpenObject(SelectObject):
             yield action_steps.OpenFormView(obj, admin)
 
     def get_state(self, model_context):
-        state = super(OpenObject, self).get_state(model_context)
+        state = super().get_state(model_context)
         obj = model_context.value
-        state.visible = (obj is not None and not isinstance(obj, list))
-        state.enabled = (obj is not None and not isinstance(obj, list))
+        if state.enabled:
+            state.enabled = (obj is not None and not isinstance(obj, list))
         return state
 
 class ClearObject(EditFieldAction):
@@ -168,6 +184,7 @@ class ClearObject(EditFieldAction):
     name = 'clear_object'
 
     def model_run(self, model_context, mode):
+        yield from super().model_run(model_context, mode)
         field_admin = model_context.field_attributes.get('admin')
         if field_admin is not None:
             model_context.admin.set_field_value(
@@ -176,12 +193,12 @@ class ClearObject(EditFieldAction):
             yield None
 
     def get_state(self, model_context):
-        state = super(ClearObject, self).get_state(model_context)
+        state = super().get_state(model_context)
         state.visible = (model_context.value is not None)
         return state
 
 
-class AddNewObject(AddNewObjectMixin, EditFieldAction):
+class AddNewObject(EditFieldAction, AddNewObjectMixin):
     """Add a new object to a collection. Depending on the
     'create_inline' field attribute, a new form is opened or not.
 
@@ -195,6 +212,12 @@ class AddNewObject(AddNewObjectMixin, EditFieldAction):
     verbose_name = _('New')
     name = 'new_object'
     render_hint = RenderHint.TOOL_BUTTON
+
+    operation = 'CREATE'
+
+    def model_run(self, model_context, mode):
+        yield from super().model_run(model_context, mode)
+        yield from super().add_new_object(model_context, mode)
 
     def get_proxy(self, model_context, admin):
         return model_context.value
@@ -211,6 +234,10 @@ class AddNewObject(AddNewObjectMixin, EditFieldAction):
             state.enabled = False
         return state
 
+    def get_endpoint(self, model_context):
+        admin = self.get_default_admin(model_context)
+        return admin.endpoint
+
 add_new_object = AddNewObject()
 
 class AddExistingObject(EditFieldAction):
@@ -224,7 +251,7 @@ class AddExistingObject(EditFieldAction):
     
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context, mode)
+        yield from super().model_run(model_context, mode)
         field_admin = model_context.field_attributes.get('admin')
         if field_admin is not None:
             objs_to_add = yield action_steps.SelectObjects(field_admin.get_query(), field_admin)
