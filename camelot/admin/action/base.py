@@ -31,15 +31,17 @@ from __future__ import annotations
 import logging
 import typing
 
-from enum import Enum
+from camelot.admin.icon import Icon
+from camelot.core.exception import UserException
 from camelot.core.orm import Entity
-from dataclasses import dataclass, field
-from typing import Any, List
+from camelot.core.qt import QtWidgets, QtGui
+from camelot.core.serializable import DataclassSerializable
+from camelot.core.utils import ugettext_lazy
 
-from ...admin.icon import Icon
-from ...core.qt import QtWidgets, QtGui
-from ...core.serializable import DataclassSerializable
-from ...core.utils import ugettext_lazy
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Generator, List
+
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -389,15 +391,25 @@ with a view.
         state.modes = self.modes
         state.shortcut = self.shortcut
         if not self.is_authorized(model_context):
+            # As the authorization of the action (and the editability of the used admin's fields) may be influenced
+            # by a status, the action may only be disabled, not enabled, as otherwise
+            # the action may be enabled while the used admin fields are not.
             state.enabled = False
         return state
+
+    def get_authorization_messages(self, model_context) -> Generator[str, None, None]:
+        """
+        This method is called to check if the user is authorized to run this action.
+        It should yield messages that will be shown to the user if they are not authorized.
+        """
+        yield from ()
 
     def is_authorized(self, model_context) -> bool:
         """
         Check if the user is authorized to run this action.
         This will be used to disable the action if not authorized.
         """
-        return True
+        return not list(self.get_authorization_messages(model_context))
 
     def is_authorized_or_raise(self, model_context):
         """
@@ -405,7 +417,8 @@ with a view.
         if not authorized. This will be used to prevent the action from being
         executed if the user is not authorized.
         """
-        pass
+        for msg in self.get_authorization_messages(model_context):
+            raise UserException(msg)
 
 class EndpointAction(Action):
     """
@@ -431,22 +444,12 @@ class EndpointAction(Action):
         """
         raise NotImplementedError
 
-    def is_authorized(self, model_context) -> bool:
+    def get_authorization_messages(self, model_context) -> Generator[str, None, None]:
         from vfinance.data.types import crud_types
         if endpoint := self.get_endpoint(model_context):
             for instance in self.get_instances(model_context):
                 if self.operation == crud_types.CREATE.name:
-                    return endpoint.operation_authorized(crud_types[self.operation], parents=[instance])
-                return endpoint.operation_authorized(crud_types[self.operation], instance)
-            return endpoint.operation_authorized(crud_types[self.operation])
-        return True
-
-    def is_authorized_or_raise(self, model_context):
-        from vfinance.data.types import crud_types
-        if endpoint := self.get_endpoint(model_context):
-            for instance in self.get_instances(model_context):
-                if self.operation == crud_types.CREATE.name:
-                    endpoint.operation_authorized_or_raise(crud_types[self.operation], parents=[instance])
+                    yield from endpoint.get_authorization_messages(crud_types[self.operation], parents=[instance])
                 else:
-                    endpoint.operation_authorized_or_raise(crud_types[self.operation], instance)
-            endpoint.operation_authorized_or_raise(crud_types[self.operation])
+                    yield from endpoint.get_authorization_messages(crud_types[self.operation], instance)
+            yield from endpoint.get_authorization_messages(crud_types[self.operation])
