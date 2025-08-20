@@ -40,7 +40,7 @@ from camelot.core.utils import ugettext_lazy
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Generator, Optional, Tuple
+from typing import Any, Generator
 
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
