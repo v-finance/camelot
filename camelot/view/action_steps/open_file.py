@@ -34,7 +34,7 @@ from dataclasses import field, InitVar
 
 from camelot.admin.action import ActionStep
 
-from ...core.serializable import DataclassSerializable
+from ...core.serializable import DataclassSerializable, Serializable
 
 @dataclass
 class OpenFile( ActionStep, DataclassSerializable ):
@@ -100,3 +100,25 @@ class OpenFile( ActionStep, DataclassSerializable ):
         file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
         os.close( file_descriptor )
         return file_name
+
+@dataclass
+class DirectoryInfo(Serializable):
+    exists: bool
+    readable: bool
+    writable: bool
+
+@dataclass
+class ClientDirectoryInfo(ActionStep, DataclassSerializable):
+    """
+    Retrieve information about a client side directory.
+
+    :param path: the absolute path to the directory
+
+    The :keyword:`yield` statement will return a `DirectoryInfo` object.
+    """
+
+    path: [str]
+
+    @classmethod
+    def deserialize_result(cls, model_context, response):
+        return DirectoryInfo._from_bytes(response)
