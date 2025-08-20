@@ -40,7 +40,7 @@ from camelot.core.utils import ugettext_lazy
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Generator, List
+from typing import Any, Generator, Optional, Tuple
 
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
@@ -436,20 +436,17 @@ class EndpointAction(Action):
         """
         raise NotImplementedError
 
-    def get_instances(self, model_context) -> List[Entity]:
+    def get_operation_targets(self, model_context) -> Generator[Entity, None, None]:
         """
-        Get the instances that are affected by this action.
-        This method should return a list of instances that are relevant
-        for the CRUD operation defined by this action.
+        Get the instances that are the targets of the CRUD operation defined by this action.
+        This method should be implemented by subclasses to yield tuples, each containing an optional target instance
+        and a tuple of possible parent instances relevant for the CRUD operation defined by this action.
         """
         raise NotImplementedError
 
     def get_authorization_messages(self, model_context) -> Generator[str, None, None]:
         from vfinance.data.types import crud_types
         if endpoint := self.get_endpoint(model_context):
-            for instance in self.get_instances(model_context):
-                if self.operation == crud_types.CREATE.name:
-                    yield from endpoint.get_authorization_messages(crud_types[self.operation], parents=[instance])
-                else:
-                    yield from endpoint.get_authorization_messages(crud_types[self.operation], instance)
+            for instance in self.get_operation_targets(model_context):
+                yield from endpoint.get_authorization_messages(crud_types[self.operation], instance)
             yield from endpoint.get_authorization_messages(crud_types[self.operation])

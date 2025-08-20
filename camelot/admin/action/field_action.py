@@ -32,9 +32,10 @@ editing a single field on a form or in a table.  This module contains the
 various actions that are beyond the icons shown in the editors of a form.
 """
 
-from camelot.core.orm import EntityBase
+from camelot.core.orm import Entity, EntityBase
 
 from sqlalchemy import orm
+from typing import Generator
 
 from ...core.qt import QtGui
 from ...core.utils import ugettext_lazy as _
@@ -97,8 +98,8 @@ class EditFieldAction(EndpointAction):
         if issubclass(cls, EntityBase):
             return Endpoint.get_or_raise(cls)
 
-    def get_instances(self, model_context):
-        return [model_context.admin.get_subsystem_object(model_context.obj)]
+    def get_operation_targets(self, model_context) -> Generator[Entity, None, None]:
+        yield model_context.admin.get_subsystem_object(model_context.obj)
 
 
 class SelectObject(EditFieldAction):
@@ -235,8 +236,13 @@ class AddNewObject(EditFieldAction, AddNewObjectMixin):
         return state
 
     def get_endpoint(self, model_context):
-        admin = self.get_default_admin(model_context)
-        return admin.endpoint
+        return self.get_default_admin(model_context).endpoint
+
+    def get_authorization_messages(self, model_context) -> Generator[str, None, None]:
+        from vfinance.data.types import crud_types
+        if endpoint := self.get_endpoint(model_context):
+            for instance in self.get_operation_targets(model_context):
+                yield from endpoint.get_authorization_messages(crud_types[self.operation], parents=[instance])
 
 add_new_object = AddNewObject()
 

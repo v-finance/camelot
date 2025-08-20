@@ -39,6 +39,8 @@ from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import Types
 
+from typing import Generator
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -85,9 +87,8 @@ class EditAction(EndpointAction):
     def get_endpoint(self, model_context):
         return model_context.admin.endpoint
 
-    def get_instances(self, model_context):
-        return list(model_context.get_selection())
-
+    def get_operation_targets(self, model_context) -> Generator[Entity, None, None]:
+        return model_context.get_selection()
 
 class CloseList(Action):
     """
