@@ -87,9 +87,13 @@ class EditFieldAction(EndpointAction):
     def get_state(self, model_context):
         assert isinstance(model_context, FieldActionModelContext)
         state = super().get_state(model_context)
-        # editability at the level of the field
-        state.enabled = model_context.field_attributes.get('editable', False)
-
+        # Enable action based on the editability at the level of the field.
+        # For admins that work on an endpoint, the editability of the field
+        # is based on the authorization of the UPDATE operation, so skip for
+        # other operations in such case.
+        # TODO FIXME: to be revised.
+        if self.operation == 'UPDATE' or not self.get_endpoint(model_context):
+            state.enabled = model_context.field_attributes.get('editable', False)
         return state
 
     def get_endpoint(self, model_context):
@@ -218,7 +222,7 @@ class AddNewObject(EditFieldAction, AddNewObjectMixin):
 
     def model_run(self, model_context, mode):
         yield from super().model_run(model_context, mode)
-        yield from super().add_new_object(model_context, mode)
+        yield from self.add_new_object(model_context, mode)
 
     def get_proxy(self, model_context, admin):
         return model_context.value
@@ -236,7 +240,8 @@ class AddNewObject(EditFieldAction, AddNewObjectMixin):
         return state
 
     def get_endpoint(self, model_context):
-        return self.get_default_admin(model_context).endpoint
+        if admin := self.get_default_admin(model_context):
+            return admin.endpoint
 
     def get_authorization_messages(self, model_context) -> Generator[str, None, None]:
         from vfinance.data.types import crud_types
