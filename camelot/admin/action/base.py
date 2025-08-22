@@ -406,10 +406,13 @@ with a view.
 
     def is_authorized(self, model_context) -> bool:
         """
-        Check if the user is authorized to run this action.
+        Check if this action is authorized to run.
         This will be used to disable the action if not authorized.
         """
-        return not list(self.get_authorization_messages(model_context))
+        # If there are any messages, the action is not authorized to run.
+        for _ in self.get_authorization_messages(model_context):
+            return False
+        return True
 
     def is_authorized_or_raise(self, model_context):
         """
