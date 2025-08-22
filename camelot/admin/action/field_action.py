@@ -105,6 +105,22 @@ class EditFieldAction(EndpointAction):
     def get_operation_targets(self, model_context) -> Generator[Entity, None, None]:
         yield model_context.admin.get_subsystem_object(model_context.obj)
 
+    @classmethod
+    def get_owner(cls, model_context):
+        """
+        The owner of a field action is straight forward accessible through
+        the model context.
+        """
+        return model_context.obj
+
+    def is_authorized(self, model_context):
+        # Action is not authorized when there is not owner,
+        # or when the owner is not persistent yet and the field is a collection (onetomany, manytomany).
+        if (owner := self.get_owner(model_context)) is None or \
+           (model_context.field_attributes.get('direction', False) in ('onetomany', 'manytomany' ) and not model_context.admin.is_persistent(owner)):
+            return False
+        return super().is_authorized(model_context)
+
 
 class SelectObject(EditFieldAction):
     """Allows the user to select an object, and set the selected object as
