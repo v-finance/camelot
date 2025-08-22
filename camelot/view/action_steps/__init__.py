@@ -41,7 +41,7 @@ from .item_view import (
     Sort, OpenTableView, UpdateTableView, ClearSelection, SetSelection,
     RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
-from .open_file import ( OpenFile )
+from .open_file import (OpenFile, ClientDirectoryInfo)
 from .orm import (
     CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
     UpdateObjects
@@ -59,6 +59,7 @@ __all__ = [
     ChangeObjects.__name__,
     ChangeSelection.__name__,
     ClearSelection.__name__,
+    ClientDirectoryInfo.__name__,
     SetSelection.__name__,
     CloseMenu.__name__,
     CloseView.__name__,
