@@ -114,10 +114,10 @@ class EditFieldAction(EndpointAction):
         return model_context.obj
 
     def is_authorized(self, model_context):
-        # Action is not authorized when there is not owner,
-        # or when the owner is not persistent yet and the field is a collection (onetomany, manytomany).
+        # Action is not authorized to work on a collection (onetomany, manytomany) if the owning instance is not persistent yet.
         if (owner := self.get_owner(model_context)) is None or \
-           (model_context.field_attributes.get('direction', False) in ('onetomany', 'manytomany' ) and not model_context.admin.is_persistent(owner)):
+           (model_context.field_attributes.get('direction', False) in ('onetomany', 'manytomany' ) and \
+            not model_context.admin.is_persistent(owner)):
             return False
         return super().is_authorized(model_context)
 
