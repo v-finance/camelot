@@ -77,30 +77,29 @@ class EntityMeta( DeclarativeMeta ):
     """
 
     @classmethod
-    def __prepare__(metacls, name, bases, status=None, **kwargs):
+    def __prepare__(metacls, name, bases, access_level=None, **kwargs):
         """
         Generates the class's namespace.
-        :param status:
-            The status of the entity class, which determines the mutability of its instances on the global level.
-            By default, the status is set to :vfinance.data.types.data_status_types.readonly:,
+        :param access_level:
+            The access level of the entity class, which determines which CRUD operations are allowed on instances of this entity.
+            It must be one of the values defined in :vfinance.data.types.data_access_levels:
+            By default, the status is set to :vfinance.data.types.data_access_levels.readonly:,
             meaning that all instances of this entity are immutable and can never be modified.
-            When the status is set to :vfinance.data.types.data_status_types.mutable:, the instances of this entity
-            can be modified in general, but their individual mutability is determined by the status of each instance.
         """
         # TODO: move top-level after merge to vfinance repo.
         from vfinance.data.types import data_access_levels
         namespace = super().__prepare__(name, bases, **kwargs)
-        if status is not None:
-            if status not in data_access_levels.values():
+        if access_level is not None:
+            if access_level not in data_access_levels.values():
                 raise ValueError('Class keyword argument `status` must be a valid data status type.')
-            namespace['__status__'] = status
+            namespace['__access_level__'] = access_level
             return namespace
 
         for base in bases:
-            if hasattr(base, '__status__'):
+            if hasattr(base, '__access_level__'):
                 break
         else:
-            namespace.setdefault('__status__', data_access_levels.readonly)
+            namespace.setdefault('__access_level__', data_access_levels.readonly)
         return namespace
 
     # new is called to create a new Entity class
@@ -381,10 +380,20 @@ class EntityBase( object ):
         application_date = entity.endpoint.application_date.__get__(self, None)
         return application_date is not None and not (application_date >= end_of_times or at < application_date)
 
+    def get_access_level(self):
+        """
+        Return the current access level of this entity instance.
+        If the entity instance has a status, the access level of that status is returned.
+        Otherwise, the class's access level is returned.
+        """
+        if current_status := self.get_current_status() is not None:
+            return current_status.access_level
+        return self.__access_level__
+
     def get_current_status(self):
         """
         Return the current status of this entity instance.
-        By default, the status is determined by the `__status__` attribute of the entity class.
+        By default, this method returns None.
         Override this method in subclasses to provide custom status handling on the instance level.
         """
-        return self.__status__
+        return None
