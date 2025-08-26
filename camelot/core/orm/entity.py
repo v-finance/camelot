@@ -88,10 +88,10 @@ class EntityMeta( DeclarativeMeta ):
             can be modified in general, but their individual mutability is determined by the status of each instance.
         """
         # TODO: move top-level after merge to vfinance repo.
-        from vfinance.data.types import data_status_types
+        from vfinance.data.types import data_access_levels
         namespace = super().__prepare__(name, bases, **kwargs)
         if status is not None:
-            if status not in data_status_types.values():
+            if status not in data_access_levels.values():
                 raise ValueError('Class keyword argument `status` must be a valid data status type.')
             namespace['__status__'] = status
             return namespace
@@ -100,7 +100,7 @@ class EntityMeta( DeclarativeMeta ):
             if hasattr(base, '__status__'):
                 break
         else:
-            namespace.setdefault('__status__', data_status_types.readonly)
+            namespace.setdefault('__status__', data_access_levels.readonly)
         return namespace
 
     # new is called to create a new Entity class
