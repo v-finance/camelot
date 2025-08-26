@@ -386,7 +386,7 @@ class EntityBase( object ):
         If the entity instance has a status, the access level of that status is returned.
         Otherwise, the class's access level is returned.
         """
-        if current_status := self.get_current_status() is not None:
+        if (current_status := self.get_current_status()) is not None:
             return current_status.access_level
         return self.__access_level__
 
