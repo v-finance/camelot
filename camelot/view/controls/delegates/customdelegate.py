@@ -27,8 +27,6 @@
 #
 #  ============================================================================
 
-
-import json
 import logging
 import dataclasses
 
@@ -37,11 +35,9 @@ from camelot.core.naming import initial_naming_context
 from ....core.qt import QtGui, QtCore, QtWidgets, Qt
 from ....core.serializable import json_encoder, NamedDataclassSerializable
 from ....core.item_model import (
-    ActionRoutesRole, ActionStatesRole, ColumnAttributesRole,
+    ActionRoutesRole, ActionStatesRole,
     VisibleRole, NullableRole, IsStatusRole
 )
-from ....core.backend import get_root_backend
-from ..action_widget import AbstractActionWidget
 from camelot.view.crud_action import DataCell
 from dataclasses import dataclass, InitVar
 from typing import Any, ClassVar, Optional
@@ -232,85 +228,5 @@ class CustomDelegate(NamedDataclassSerializable, QtWidgets.QItemDelegate, metacl
         # item.roles[ChoicesRole] = choices
         return item
 
-    def createEditor(self, parent, option, index):
-        """
-        :param option: use an option with version 5 to indicate the widget
-        will be put onto a form
-        """
-        column = index.column()
-        delegate_cls_name, column_attributes = tuple(index.model().headerData(
-            column, Qt.Orientation.Horizontal, ColumnAttributesRole
-        ))
-        editor = get_root_backend().create_editor(parent, delegate_cls_name, column_attributes, option.version)
-
-        assert editor != None
-        assert isinstance(editor, QtWidgets.QWidget)
-        if option.version != 5:
-            editor.setAutoFillBackground(True)
-        editor.editingFinished.connect( self.commitAndCloseEditor )
-        return editor
-
     def sizeHint(self, option, index):
         return QtCore.QSize(self._width, self._height)
-
-    #@QtCore.qt_slot()
-    # not yet converted to new style sig slot because sender doesn't work
-    # in certain versions of pyqt
-    def commitAndCloseEditor(self):
-        editor = self.sender()
-        assert editor != None
-        assert isinstance(editor, QtWidgets.QWidget)
-        self.commitData.emit(editor)
-        # * Closing the editor results in the calculator not working
-        # * not closing the editor results in the virtualaddresseditor not
-        #   getting closed always
-        #self.closeEditor.emit( editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint )
-
-    def set_default_editor_data(self, editor, index):
-        editable = bool(index.flags() & Qt.ItemFlag.ItemIsEditable)
-        nullable = bool(index.data(NullableRole))
-        visible = bool(index.data(VisibleRole))
-        tooltip = index.data(Qt.ItemDataRole.ToolTipRole)
-        background_color = index.data(Qt.ItemDataRole.BackgroundRole)
-        editor.set_editable(editable)
-        editor.set_nullable(nullable)
-        editor.set_visible(visible)
-        editor.set_tooltip(tooltip)
-        editor.set_background_color(background_color)
-
-    def setEditorData(self, editor, index):
-        if index.model() is None:
-            return
-        self.set_default_editor_data(editor, index)
-        #
-        # first set the field attributes, as these may change the 'state' of the
-        # editor to properly display and hold the value, eg 'precision' of a
-        # float might be changed
-        #
-        value = index.model().data(index, Qt.ItemDataRole.EditRole)
-        editor.set_value(value)
-        # update actions
-        self.update_field_action_states(editor, index)
-
-    def update_field_action_states(self, editor, index):
-        action_states = json.loads(index.model().data(index, ActionStatesRole))
-        action_routes = json.loads(index.model().data(index, ActionRoutesRole))
-        if len(action_routes) == 0:
-            return
-        for action_route, action_state in zip(action_routes, action_states):
-            for action_widget in editor.findChildren(QtWidgets.QToolButton):
-                action_route_of_widget = action_widget.property('action_route')
-                if action_route_of_widget is None:
-                    continue
-                if list(action_route_of_widget)==action_route:
-                    AbstractActionWidget.set_toolbutton_state(
-                        action_widget, action_state, editor.action_menu_triggered
-                    )
-                    break
-            else:
-                LOGGER.error('action route not found {} in editor'.format(
-                    action_route
-                ))
-
-    def setModelData(self, editor, model, index):
-        model.setData(index, editor.get_value())
