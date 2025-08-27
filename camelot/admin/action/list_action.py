@@ -219,12 +219,7 @@ class DeleteSelection( EditAction ):
         if model_context.selection_count <= 0:
             return
 
-        # Check if all objects to removed are permitted to do so,
-        # and raised otherwise.
         objects_to_remove = list( model_context.get_selection() )
-        for obj in objects_to_remove:
-            admin.deletable_or_raise(obj)
-
         answer = yield action_steps.MessageBox(
             title = ugettext('Remove %s %s ?')%( model_context.selection_count, ugettext('rows') ),
             icon = Icon('question'), 
