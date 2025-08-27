@@ -426,8 +426,8 @@ with a view.
 class EndpointAction(Action):
     """
     Action that is associated with a CRUD operation on an endpoint.
-    This action will check if the user is authorized to perform the operation
-    on the endpoint before executing the action.
+    This action will use the endpoint's authorization mechanism to check
+    if the action is authorized to run.
     """
 
     name = 'endpoint_action'
@@ -442,8 +442,10 @@ class EndpointAction(Action):
     def get_operation_targets(self, model_context) -> Generator[Entity, None, None]:
         """
         Get the instances that are the targets of the CRUD operation defined by this action.
-        This method should be implemented by subclasses to yield tuples, each containing an optional target instance
-        and a tuple of possible parent instances relevant for the CRUD operation defined by this action.
+        This method should be implemented as a generator yielding the target instances.
+        If the operation is not instance specific (e.g. CREATE), this method can yield nothing
+        and the authorization will be checked on the endpoint level only.
+
         """
         raise NotImplementedError
 
