@@ -246,15 +246,6 @@ class AddNewObject(EditFieldAction, AddNewObjectMixin):
     def get_default_admin(self, model_context, mode=None):
         return model_context.field_attributes.get('admin')
 
-    def get_state(self, model_context):
-        assert isinstance(model_context, FieldActionModelContext)
-        state = super().get_state(model_context)
-        admin = model_context.field_attributes.get('admin')
-        if (admin is not None) and not admin.is_editable():
-            state.visible = False
-            state.enabled = False
-        return state
-
     def get_endpoint(self, model_context):
         if admin := self.get_default_admin(model_context):
             return admin.endpoint
