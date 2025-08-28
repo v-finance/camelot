@@ -31,13 +31,15 @@ import enum
 import logging
 
 from ...core.qt import QtGui, QtWidgets
-from .base import Action, Mode, RenderHint
+from .base import Action, EndpointAction, Mode, RenderHint
 
 from camelot.admin.icon import Icon
 from camelot.core.exception import UserException
 from camelot.core.orm import Entity
 from camelot.core.utils import ugettext, ugettext_lazy as _
 from camelot.data.types import Types
+
+from typing import Generator
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,7 +59,7 @@ class RowNumberAction( Action ):
 
 row_number_action = RowNumberAction()
 
-class EditAction(Action):
+class EditAction(EndpointAction):
     """A base class for an action that will modify the model, it will be
     disabled when the field_attributes for the relation field are set to 
     not-editable. It will also be disabled and hidden if the entity is set
@@ -66,8 +68,6 @@ class EditAction(Action):
 
     name = 'edit_action'
     render_hint = RenderHint.TOOL_BUTTON
-
-    crud_type = 'UPDATE'
 
     class Message(enum.Enum):
 
@@ -82,25 +82,13 @@ class EditAction(Action):
         editable = model_context.field_attributes.get('editable', True)
         if editable == False:
             state.enabled = False
-        # Check if the action is authorized to perform this action's CRUD operation on the level of the entity
-        admin = model_context.admin
-        from vfinance.data.types import crud_types
-        if admin and admin.endpoint:
-            if not admin.endpoint.operation_authorized(crud_types[self.crud_type]):
-                state.visible = False
-                state.enabled = False
         return state
 
-    def model_run( self, model_context, mode ):
-        # Check if the action is authorized on the level of the entity
-        # and on the level of the selected objects, if present.
-        from vfinance.data.types import crud_types
-        if model_context.admin.endpoint:
-            endpoint = model_context.admin.endpoint
-            for obj in model_context.get_selection():
-                endpoint.operation_authorized_or_raise(crud_types[self.crud_type], obj)
-            endpoint.operation_authorized_or_raise(crud_types[self.crud_type])
+    def get_endpoint(self, model_context):
+        return model_context.admin.endpoint
 
+    def get_operation_targets(self, model_context) -> Generator[Entity, None, None]:
+        return model_context.get_selection()
 
 class CloseList(Action):
     """
@@ -160,6 +148,7 @@ class OpenFormView(Action):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        yield from super().model_run(model_context, mode)
         obj = self.get_object(model_context, mode)
         yield action_steps.OpenFormView(
             obj, model_context.admin, model_context.proxy
@@ -182,12 +171,11 @@ class DuplicateSelection( EditAction ):
     tooltip = _('Duplicate')
     verbose_name = _('Duplicate')
     name = 'duplicate_selection'
-
-    crud_type = 'CREATE'
+    operation = 'CREATE'
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
-        super().model_run(model_context, mode)
+        yield from super().model_run(model_context, mode)
         admin = model_context.admin
         if model_context.selection_count > 1:
             raise UserException(self.Message.no_single_selection.value)
@@ -208,6 +196,7 @@ class DuplicateSelection( EditAction ):
             state.enabled = False
         return state
 
+
 duplicate_selection = DuplicateSelection()
 
 
@@ -220,22 +209,17 @@ class DeleteSelection( EditAction ):
     tooltip = _('Delete')
     verbose_name = _('Delete')
 
-    crud_type = 'DELETE'
+    operation = 'DELETE'
 
     def model_run( self, model_context, mode ):
         from camelot.view import action_steps
 
-        super().model_run(model_context, mode)
+        yield from super().model_run(model_context, mode)
         admin = model_context.admin
         if model_context.selection_count <= 0:
             return
 
-        # Check if all objects to removed are permitted to do so,
-        # and raised otherwise.
         objects_to_remove = list( model_context.get_selection() )
-        for obj in objects_to_remove:
-            admin.deletable_or_raise(obj)
-
         answer = yield action_steps.MessageBox(
             title = ugettext('Remove %s %s ?')%( model_context.selection_count, ugettext('rows') ),
             icon = Icon('question'), 
@@ -312,6 +296,7 @@ class ToFirstRow(AbstractToFirst, Action):
 
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
+        yield from super().model_run(model_context, mode)
         yield action_steps.ToFirstRow()
 
 to_first_row = ToFirstRow()
@@ -387,7 +372,7 @@ class ReplaceFieldContents( EditAction ):
 
     def model_run( self, model_context, selected_field ):
         from camelot.view import action_steps
-        super().model_run(model_context, selected_field)
+        yield from super().model_run(model_context, selected_field)
         if selected_field is not None:
             admin = model_context.admin
             field_attributes = admin.get_field_attributes(selected_field)
@@ -448,14 +433,10 @@ class AddNewObjectMixin(object):
         return new_object
         yield
 
-    def model_run( self, model_context, mode ):
+    def add_new_object( self, model_context, mode ):
         from camelot.view import action_steps
-        from vfinance.data.types import crud_types
         admin = self.get_admin(model_context, mode)
         assert admin is not None # required by vfinance/test/test_facade/test_asset.py
-        # Check if the action is authorized to create a new object.
-        if admin.endpoint:
-            admin.endpoint.operation_authorized_or_raise(crud_types.CREATE)
 
         create_inline = model_context.field_attributes.get('create_inline', False)
         new_object = yield from self.create_object(model_context, admin, mode)
@@ -524,7 +505,10 @@ class AddNewObjectMixin(object):
                 return admin.get_related_admin(facade_cls)
         return admin
 
-class AddNewObject( AddNewObjectMixin, EditAction ):
+    def get_owner(self, model_context):
+        return None
+
+class AddNewObject(EditAction, AddNewObjectMixin):
     """Add a new object to a collection. Depending on the
     'create_inline' field attribute, a new form is opened or not.
 
@@ -537,8 +521,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     tooltip = _('New')
     verbose_name = _('New')
     name = 'new_object'
-
-    crud_type = 'CREATE'
+    operation = 'CREATE'
 
     def get_default_admin(self, model_context, mode=None):
         return model_context.admin
@@ -549,6 +532,7 @@ class AddNewObject( AddNewObjectMixin, EditAction ):
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         yield from super().model_run(model_context, mode)
+        yield from super().add_new_object(model_context, mode)
         # Scroll to last row so that the user sees the newly added object in the list.
         yield action_steps.ToLastRow(wait_for_new_row=True)
 

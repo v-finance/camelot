@@ -62,45 +62,52 @@ class EntityMeta( DeclarativeMeta ):
 
     Auto-setting of primary key column
     ----------------------------------
-    If no primary key column is defined in an entity's class definition yet, an primary key column named 'id' will be set on the class.
-    NOTE: this behaviour is deprecated, and should be replaced by explicity primary column definitions in the entity classes themselves
+    If no primary key column is defined in an entity's class definition yet, a primary key column named 'id' will be set on the class.
+    NOTE: this behaviour is deprecated, and should be replaced by explicitly primary column definitions in the entity classes themselves
     before switching to SQLAlchemy version 1.4. In that SQLA version, the `sqlalchemy.ext.declarative` package is integrated into `sqlalchemy.orm`
     and the declarative mapping registry style is changed, which impacts this primary key column setting.
+
+    Access level handling
+    ---------------------
+    The metaclass provides a class list keyword argument `access_level` to set the access level of the entity class.
+    The access level determines which CRUD operations are allowed on instances of this entity.
+    It must be one of the values defined in :vfinance.data.types.data_access_levels:
+    By default, the status is set to :vfinance.data.types.data_access_levels.readonly,
+    meaning that all instances of this entity are immutable and can never be modified.
 
     Notes on metaclasses
     --------------------
     Metaclasses are not part of objects' class hierarchy whereas base classes are.
     So when a method is called on an object it will not look on the metaclass for this method, however the metaclass may have created it during the class' or object's creation.
-    They are generally used for use cases outside of the default rules of object-oriented programming.
-    In this case for example, the metaclass provides subclasses the means to register themselves on on of its base classes,
-    which is an OOP anti-pattern as classes should not know about their subclasses.
+    They are generally used for use cases outside the default rules of object-oriented programming.
+    In this case for example, the metaclass provides subclasses the means to register themselves on one of its base classes,
+    which is an OOP antipattern as classes should not know about their subclasses.
     """
 
     @classmethod
-    def __prepare__(metacls, name, bases, status=None, **kwargs):
+    def __prepare__(metacls, name, bases, access_level=None, **kwargs):
         """
         Generates the class's namespace.
-        :param status:
-            The status of the entity class, which determines the mutability of its instances on the global level.
-            By default, the status is set to :vfinance.data.types.data_status_types.readonly:,
+        :param access_level:
+            The access level of the entity class, which determines which CRUD operations are allowed on instances of this entity.
+            It must be one of the values defined in :vfinance.data.types.data_access_levels:
+            By default, the status is set to :vfinance.data.types.data_access_levels.readonly:,
             meaning that all instances of this entity are immutable and can never be modified.
-            When the status is set to :vfinance.data.types.data_status_types.mutable:, the instances of this entity
-            can be modified in general, but their individual mutability is determined by the status of each instance.
         """
         # TODO: move top-level after merge to vfinance repo.
-        from vfinance.data.types import data_status_types
+        from vfinance.data.types import data_access_levels
         namespace = super().__prepare__(name, bases, **kwargs)
-        if status is not None:
-            if status not in data_status_types.values():
+        if access_level is not None:
+            if access_level not in data_access_levels.values():
                 raise ValueError('Class keyword argument `status` must be a valid data status type.')
-            namespace['__status__'] = status
+            namespace['__access_level__'] = access_level
             return namespace
 
         for base in bases:
-            if hasattr(base, '__status__'):
+            if hasattr(base, '__access_level__'):
                 break
         else:
-            namespace.setdefault('__status__', data_status_types.readonly)
+            namespace.setdefault('__access_level__', data_access_levels.readonly)
         return namespace
 
     # new is called to create a new Entity class
@@ -381,10 +388,22 @@ class EntityBase( object ):
         application_date = entity.endpoint.application_date.__get__(self, None)
         return application_date is not None and not (application_date >= end_of_times or at < application_date)
 
+    def get_access_level(self):
+        """
+        Return the current access level of this entity instance.
+        By default, if the instance has a status defined, the access level is taken from the status.
+        Otherwise, the class-level access level is used.
+        Override this method in subclasses to provide custom access level handling on the instance level.
+        """
+        if (current_status := self.get_current_status()) is not None:
+            return current_status.access_level
+        return self.__access_level__
+
     def get_current_status(self):
         """
-        Return the current status of this entity instance.
-        By default, the status is determined by the `__status__` attribute of the entity class.
-        Override this method in subclasses to provide custom status handling on the instance level.
+        Return the current status of this entity instance, if any,
+        which determines the instance's access level.
+        By default, this method returns None.
+        Override this method in subclasses to provide custom status and access handling on the instance level.
         """
-        return self.__status__
+        return None

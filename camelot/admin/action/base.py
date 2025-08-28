@@ -31,14 +31,17 @@ from __future__ import annotations
 import logging
 import typing
 
-from enum import Enum
-from dataclasses import dataclass, field
-from typing import Any
+from camelot.admin.icon import Icon
+from camelot.core.exception import UserException
+from camelot.core.orm import Entity
+from camelot.core.qt import QtWidgets, QtGui
+from camelot.core.serializable import DataclassSerializable
+from camelot.core.utils import ugettext_lazy
 
-from ...admin.icon import Icon
-from ...core.qt import QtWidgets, QtGui
-from ...core.serializable import DataclassSerializable
-from ...core.utils import ugettext_lazy
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Generator
+
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -363,12 +366,15 @@ with a view.
     def model_run( self, model_context, mode ):
         """A generator that yields :class:`camelot.admin.action.ActionStep`
         objects.  This generator can be called in the *model thread*.
-        
+        It also provides a authorized or raise hook that can be used to
+        verify if the user is authorized to run the action.
+
         :param context:  An object of type
             :class:`camelot.admin.action.ModelContext`.
             What is in the  context depends on how the action was called.
         """
-        yield
+        self.is_authorized_or_raise(model_context)
+        yield from ()
 
     def get_state( self, model_context ):
         """
@@ -384,7 +390,68 @@ with a view.
         state.tooltip = self.get_tooltip()
         state.modes = self.modes
         state.shortcut = self.shortcut
+        if not self.is_authorized(model_context):
+            # As the authorization of the action (and the editability of the used admin's fields) may be influenced
+            # by a status, the action may only be disabled, not enabled, as otherwise
+            # the action may be enabled while the used admin fields are not.
+            state.enabled = False
         return state
 
+    def get_authorization_messages(self, model_context) -> Generator[str, None, None]:
+        """
+        This method is called to check if the user is authorized to run this action.
+        It should yield messages that will be shown to the user if they are not authorized.
+        """
+        yield from ()
 
+    def is_authorized(self, model_context) -> bool:
+        """
+        Check if this action is authorized to run.
+        This will be used to disable the action if not authorized.
+        """
+        # If there are any messages, the action is not authorized to run.
+        for _ in self.get_authorization_messages(model_context):
+            return False
+        return True
 
+    def is_authorized_or_raise(self, model_context):
+        """
+        Check if the user is authorized to run this action and raise an exception
+        if not authorized. This will be used to prevent the action from being
+        executed if the user is not authorized.
+        """
+        for msg in self.get_authorization_messages(model_context):
+            raise UserException(msg)
+
+class EndpointAction(Action):
+    """
+    Action that is associated with a CRUD operation on an endpoint.
+    This action will use the endpoint's authorization mechanism to check
+    if the action is authorized to run.
+    """
+
+    name = 'endpoint_action'
+    operation = 'UPDATE'
+
+    def get_endpoint(self, model_context):
+        """
+        Get the endpoint associated with the CRUD operation for this action.
+        """
+        raise NotImplementedError
+
+    def get_operation_targets(self, model_context) -> Generator[Entity, None, None]:
+        """
+        Get the instances that are the targets of the CRUD operation defined by this action.
+        This method should be implemented as a generator yielding the target instances.
+        If the operation is not instance specific (e.g. CREATE), this method can yield nothing
+        and the authorization will be checked on the endpoint level only.
+
+        """
+        raise NotImplementedError
+
+    def get_authorization_messages(self, model_context) -> Generator[str, None, None]:
+        from vfinance.data.types import crud_types
+        if endpoint := self.get_endpoint(model_context):
+            for instance in self.get_operation_targets(model_context):
+                yield from endpoint.get_authorization_messages(crud_types[self.operation], instance)
+            yield from endpoint.get_authorization_messages(crud_types[self.operation])
