@@ -28,12 +28,11 @@
 #  ============================================================================
 
 from .application_action import ApplicationActionModelContext
-from .base import Action, ActionStep, Mode, State, RenderHint
+from .base import ActionStep, Mode, State, RenderHint
 from .list_action import OpenFormView , RowNumberAction
 from .field_action import FieldActionModelContext
 
 __all__ = [
-    Action.__name__,
     ActionStep.__name__,
     ApplicationActionModelContext.__name__,
     FieldActionModelContext.__name__,

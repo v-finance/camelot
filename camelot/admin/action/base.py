@@ -32,15 +32,13 @@ import logging
 import typing
 
 from camelot.admin.icon import Icon
-from camelot.core.exception import UserException
-from camelot.core.orm import Entity
 from camelot.core.qt import QtWidgets, QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.core.utils import ugettext_lazy
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Generator
+from typing import Any
 
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
