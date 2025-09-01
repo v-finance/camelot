@@ -28,9 +28,10 @@
 #  ============================================================================
 import itertools
 
-from ...core.naming import initial_naming_context
+from camelot.core.naming import initial_naming_context
 from camelot.admin.action.base import ModelContext
-from camelot.core.orm import Session
+
+from sqlalchemy.orm import Session
 
 """ModelContext and Actions that run in the context of an 
 application.
