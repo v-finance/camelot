@@ -961,7 +961,7 @@ class EntityNamingContext(EndpointNamingContext):
 
     def __init__(self, entity):
         super().__init__()
-        from camelot.core.orm import EntityBase
+        from vfinance.model.entity import EntityBase
         assert issubclass(entity, EntityBase)
         self.entity = entity
 
@@ -1094,7 +1094,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NotImplementedError: if trying to bind an object which is not supported.
         """
-        from camelot.core.orm import Entity
+        from vfinance.model.entity import Entity
         if obj is None:
             return ('constant', 'null')
         if isinstance(obj, bool):

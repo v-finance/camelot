@@ -3,17 +3,16 @@ import typing
 
 logger = logging.getLogger(__name__)
 
+from camelot.view.controls import DelegateType
+from camelot.admin.admin_route import Route
+from camelot.admin.action.base import ActionStep, State
+from camelot.admin.icon import CompletionValue
+from camelot.core.serializable import DataclassSerializable
+from camelot.view.crud_action import CrudActions, DataUpdate
+from camelot.view.utils import get_settings_group
+
 from dataclasses import dataclass, field, InitVar
 from typing import List, Dict, Tuple, ClassVar, Any
-
-from ...admin.admin_route import Route
-from ...admin.action.base import ActionStep, State
-from ...admin.icon import CompletionValue
-from ...core.serializable import DataclassSerializable
-from ..controls import delegates
-from ..crud_action import CrudActions
-from ...view.crud_action import DataUpdate
-from ...view.utils import get_settings_group
 
 
 def filter_attributes(attributes, keys):
@@ -70,34 +69,36 @@ class SetColumns(ActionStep, DataclassSerializable):
 
     def get_delegate_state(self, static_field_attributes):
         fa = static_field_attributes
+        delegate_type = fa['delegate'].delegate_type
         attrs = {}
-        if issubclass(fa['delegate'], (delegates.EnumDelegate,)):
+        if delegate_type in (DelegateType.ENUM, DelegateType.STATUS):
             attrs = filter_attributes(fa, ['action_routes'])
-            attrs['choices'] = delegates.ComboBoxDelegate.get_choices_data(
+            # TODO: no specifics about the delegate implementation should leak here, to be reworked.
+            attrs['choices'] = fa['delegate'].get_choices_data(
                 fa['types'].get_choices()
             )
-        elif issubclass(fa['delegate'], (delegates.ComboBoxDelegate,)):
+        elif delegate_type == DelegateType.COMBO_BOX:
             attrs = filter_attributes(fa, ['action_routes'])
-        elif issubclass(fa['delegate'], (delegates.Many2OneDelegate, delegates.FileDelegate)):
+        elif delegate_type in (DelegateType.MANY2ONE, DelegateType.FILE):
             attrs = filter_attributes(fa, ['action_routes'])
-        elif issubclass(fa['delegate'], delegates.DateDelegate):
+        elif delegate_type in (DelegateType.DATE, DelegateType.DATETIME):
             attrs = filter_attributes(fa, ['nullable'])
-            if issubclass(fa['delegate'], delegates.DateTimeDelegate):
+            if delegate_type == DelegateType.DATETIME:
                 if 'editable' in fa:
                     attrs['editable'] = fa['editable']
-        elif issubclass(fa['delegate'], delegates.DbImageDelegate):
+        elif delegate_type == DelegateType.DB_IMAGE:
             attrs = filter_attributes(fa, ['preview_width', 'preview_height', 'max_size'])
-        elif issubclass(fa['delegate'], delegates.FloatDelegate):
+        elif delegate_type == DelegateType.FLOAT:
             attrs = filter_attributes(fa, ['calculator', 'decimal', 'action_routes'])
-        elif issubclass(fa['delegate'], delegates.IntegerDelegate):
+        elif delegate_type == DelegateType.INTEGER:
             attrs = filter_attributes(fa, ['calculator', 'decimal'])
-        elif issubclass(fa['delegate'], delegates.LabelDelegate):
+        elif delegate_type == DelegateType.LABEL:
             attrs = filter_attributes(fa, ['text', 'field_name'])
-        elif issubclass(fa['delegate'], delegates.LocalFileDelegate):
+        elif delegate_type == DelegateType.LOCAL_FILE:
             attrs = filter_attributes(fa, ['directory', 'save_as', 'file_filter'])
-        elif issubclass(fa['delegate'], delegates.MonthsDelegate):
+        elif delegate_type == DelegateType.MONTHS:
             attrs = filter_attributes(fa, ['minimum', 'maximum', 'forever', 'action_routes'])
-        elif issubclass(fa['delegate'], delegates.One2ManyDelegate):
+        elif delegate_type == DelegateType.ONE2MANY:
             attrs = filter_attributes(fa, ['admin_route', 'column_width', 'columns', 'rows',
                                                 'action_routes', 'list_actions', 'list_action',
                                                 'drop_action_route'])
@@ -110,9 +111,9 @@ class SetColumns(ActionStep, DataclassSerializable):
                     list_action.route, State()
                 ))
             attrs['list_actions_states'] = list_actions_states
-        elif issubclass(fa['delegate'], delegates.PlainTextDelegate):
+        elif delegate_type in (DelegateType.PLAIN_TEXT, DelegateType.LANGUAGE):
             attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type', 'completer_type'])
-        elif issubclass(fa['delegate'], delegates.TextEditDelegate):
+        elif delegate_type in (DelegateType.TEXT_EDIT, DelegateType.NOTE):
             attrs = filter_attributes(fa, ['length', 'editable'])
         return attrs
 

@@ -146,6 +146,8 @@ class MetaNamedDataclassSerializable(type):
     def __new__(cls, clsname, bases, attrs):
         newclass = super().__new__(cls, clsname, bases, attrs)
         if clsname != 'NamedDataclassSerializable':
+            if clsname in cls.cls_register:
+                raise ValueError(f"Class with name {clsname} already registered.")
             cls.cls_register[clsname] = newclass
         return newclass
 
