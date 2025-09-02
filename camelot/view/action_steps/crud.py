@@ -3,17 +3,16 @@ import typing
 
 logger = logging.getLogger(__name__)
 
-from dataclasses import dataclass, field, InitVar
-from enum import Enum
-from typing import List, Dict, Tuple, ClassVar, Any
+from camelot.view.controls import DelegateType
+from camelot.admin.admin_route import Route
+from camelot.admin.action.base import ActionStep, State
+from camelot.admin.icon import CompletionValue
+from camelot.core.serializable import DataclassSerializable
+from camelot.view.crud_action import CrudActions, DataUpdate
+from camelot.view.utils import get_settings_group
 
-from ...admin.admin_route import Route
-from ...admin.action.base import ActionStep, State
-from ...admin.icon import CompletionValue
-from ...core.serializable import DataclassSerializable
-from ..crud_action import CrudActions
-from ...view.crud_action import DataUpdate
-from ...view.utils import get_settings_group
+from dataclasses import dataclass, field, InitVar
+from typing import List, Dict, Tuple, ClassVar, Any
 
 
 def filter_attributes(attributes, keys):
@@ -43,33 +42,6 @@ class DataColumn(ActionStep, DataclassSerializable):
     delegate_state: Dict[str, Any]
     default_visible: bool # TableView
 
-
-class DelegateType(str, Enum):
-
-    ENUM = "EnumDelegate"
-    COMBO_BOX = "ComboBoxDelegate"
-    MANY2ONE = "Many2OneDelegate"
-    FILE = "FileDelegate"
-    DATE = "DateDelegate"
-    DATETIME = "DateTimeDelegate"
-    DB_IMAGE = "DbImageDelegate"
-    FLOAT = "FloatDelegate"
-    INTEGER = "IntegerDelegate"
-    LABEL = "LabelDelegate"
-    LOCAL_FILE = "LocalFileDelegate"
-    MONTHS = "MonthsDelegate"
-    ONE2MANY = "One2ManyDelegate"
-    PLAIN_TEXT = "PlainTextDelegate"
-    TEXT_EDIT = "TextEditDelegate"
-    BOOL = "BoolDelegate"
-    COLOR = "ColorDelegate"
-    LANGUAGE = "LanguageDelegate"
-    RICH_TEXT = "RichTextDelegate"
-    STATUS = "StatusDelegate"
-    NOTE = "NoteDelegate"
-
-    def __str__(self) -> str:
-        return self.value
 
 @dataclass
 class SetColumns(ActionStep, DataclassSerializable):
