@@ -31,8 +31,6 @@ import itertools
 from camelot.core.naming import initial_naming_context
 from camelot.admin.action.base import ModelContext
 
-from sqlalchemy.orm import Session
-
 """ModelContext and Actions that run in the context of an 
 application.
 """
@@ -65,4 +63,5 @@ class ApplicationActionModelContext(ModelContext):
 
     @property
     def session( self ):
+        from vfinance.model.bank.entity import Session
         return Session()
