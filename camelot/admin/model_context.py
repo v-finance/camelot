@@ -46,14 +46,20 @@ class ObjectsModelContext(ApplicationActionModelContext):
         The field attributes of the field to which the list relates, for example
         the attributes of Person.addresses if the list is the list of addresses
         of the Person.
-       
+
+    .. attribute:: collection
+
+        In case of a one-2-many collection, the relationship attribute of the object that
+        contains the collection.  For example, if the list shows the addresses of a person,
+        the collection is the Person.addresses attribute.
+
     The :attr:`collection_count` and :attr:`selection_count` attributes allow the 
     :meth:`model_run` to quickly evaluate the size of the collection or the
     selection without calling the potentially time consuming methods
     :meth:`get_collection` and :meth:`get_selection`.
     """
     
-    def __init__(self, admin, proxy, locale):
+    def __init__(self, admin, proxy, locale, collection=None):
         super().__init__(admin)
         self.proxy = proxy
         self.locale = locale
@@ -65,6 +71,7 @@ class ObjectsModelContext(ApplicationActionModelContext):
         self.current_field_name = None
         self.selection_count = 0
         self.collection_count = 0
+        self.collection = collection
         self.selected_rows = []
         self.field_attributes = dict()
         # self.obj = None
