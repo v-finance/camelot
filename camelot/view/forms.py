@@ -96,6 +96,7 @@ class Form(AbstractForm):
     content: list
     scrollbars: bool = False
     columns: int = 1
+    rows: int = 1
 
 @dataclass
 class Break(AbstractFormElement):
@@ -220,24 +221,24 @@ class VBoxForm(AbstractForm):
   """
 
     title: str = dataclasses.field(init=False, default=None)
-    rows: InitVar[list]
+    content: list
 
-    def __post_init__(self, rows):
-        assert isinstance(rows, list)
-        self.content = [structure_to_form(row) for row in rows]
+    def __post_init__(self):
+        assert isinstance(self.content, list)
+        self.content = [structure_to_form(row) for row in self.content]
 
     @property
     def rows(self):
         return self.content
 
     def _get_fields_from_form(self):
-        for form in self.rows:
+        for form in self.content:
             if isinstance(form, AbstractForm):
                 for field in form._get_fields_from_form():
                     yield field
     
     def __str__(self):
-        return 'VBoxForm [ %s\n         ]' % ('         \n'.join([str(form) for form in self.rows]))
+        return 'VBoxForm [ %s\n         ]' % ('         \n'.join([str(form) for form in self.content]))
 
 
 @dataclass
