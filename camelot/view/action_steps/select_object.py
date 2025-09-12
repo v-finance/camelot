@@ -27,6 +27,7 @@
 #
 #  ============================================================================
 
+import typing
 
 from dataclasses import dataclass, field
 
