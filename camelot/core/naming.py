@@ -961,7 +961,7 @@ class EntityNamingContext(EndpointNamingContext):
 
     def __init__(self, entity):
         super().__init__()
-        from camelot.core.orm import EntityBase
+        from vfinance.model.entity import EntityBase
         assert issubclass(entity, EntityBase)
         self.entity = entity
 
@@ -1094,7 +1094,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             UnboundException NamingException.unbound: if this NamingContext has not been bound to a name yet.
             NotImplementedError: if trying to bind an object which is not supported.
         """
-        from camelot.core.orm import Entity
+        from vfinance.model.entity import Entity
         if obj is None:
             return ('constant', 'null')
         if isinstance(obj, bool):
@@ -1122,7 +1122,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             if not inspect(obj).persistent or None in primary_key:
                 raise NotImplementedError('Only persistent entity instances are supported')
             entity = type(obj)
-            return ('entity', entity._get_entity_arg('name'), str(session.hash_key), *[str(key) for key in primary_key])
+            return ('entity', entity.endpoint.resource_name, str(session.hash_key), *[str(key) for key in primary_key])
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
         LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))

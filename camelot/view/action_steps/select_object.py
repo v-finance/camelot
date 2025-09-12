@@ -39,7 +39,7 @@ class SelectObjects(OpenTableView):
     """Select one or more object from a query.  The `yield` of this action step
     return a list of objects.
 
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
+    :param admin: a :class:`camelot.admin.AbstractAdmin` object
     :param search_text: a default string on which to search for in the selection
         dialog
     :param value: a query or a list of object from which the selection should

@@ -38,7 +38,6 @@ from typing import Optional
 from camelot.core.exception import UserException
 from camelot.core.serializable import DataclassSerializable
 from camelot.core.utils import ugettext
-from camelot.data.types import zip_code_types
 
 from dataclasses import dataclass, InitVar
 from sqlalchemy.ext import hybrid
@@ -197,51 +196,3 @@ class RegexValidatorState(ValidatorState):
 
 class RegexValidator(AbstractValidator):
     pass
-
-
-# TODO: once moved to the vFinance repo, the zip_code_types can be
-# refactored as identifier types and this ZipcodeValidatorState
-# will become superfluous (as the IdentifierValidatorState can then be used).
-@dataclass(frozen=True)
-class ZipcodeValidatorState(RegexValidatorState):
-
-    deletechars: str = ' -./#,'
-    to_upper: bool = True
-
-    @classmethod
-    def for_type(cls, zip_code_type, value):
-        state = dict()
-        if zip_code_type in zip_code_types:
-            zip_code_type = zip_code_types[zip_code_type]
-            state.update(
-                regex=zip_code_type.regex,
-                format_repl=zip_code_type.repl,
-                compact_repl=zip_code_type.compact_repl,
-                example=zip_code_type.example,
-            )
-        return cls.for_value(value, **state)
-
-    @classmethod
-    def for_city(cls, city):
-        if city is not None:
-            return cls.for_type(city.zip_code_type, city.code)
-        return cls()
-
-    @classmethod
-    def for_addressable(cls, addressable):
-        if addressable is not None:
-            if addressable.city is not None:
-                return cls.for_type(addressable.city.zip_code_type, addressable.zip_code)
-            return cls.for_value(addressable.zip_code)
-        return cls()
-
-    @classmethod
-    def hint_for_city(cls, city):
-        if (state := cls.for_city(city)) is not None and \
-           (example := state.example) is not None:
-            return 'e.g: {}'.format(example)
-
-    @classmethod
-    def hint_for_addressable(cls, addressable):
-        if addressable is not None:
-            return cls.hint_for_city(addressable.city)

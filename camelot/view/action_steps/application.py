@@ -32,13 +32,11 @@ import logging
 import typing
 
 from ...admin.action.base import ActionStep, State, ModelContext
-from ...admin.action.application_action import model_context_naming, model_context_counter, exit_name
+from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.admin_route import AdminRoute, Route
-from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
-from ...model.authentication import AuthenticationMechanism
 
 LOGGER = logging.getLogger(__name__)
 
@@ -78,19 +76,14 @@ class MainWindow(ActionStep, DataclassSerializable):
     (e.g. stopping the model thread).
     """
 
-    admin: InitVar[ApplicationAdmin]
+    window_title: str
+    exit_action: Route
     model_context: InitVar(ModelContext) = None
-    window_title: str = field(init=False)
     blocking: bool = False
-    admin_route: Route = field(init=False)
     model_context_name: Route = field(default_factory=list)
-    exit_action: Route = field(init=False)
 
-    def __post_init__(self, admin, model_context):
-        self.window_title = admin.get_name()
-        self.admin_route = admin.get_admin_route()
+    def __post_init__(self, model_context):
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
-        self.exit_action = exit_name
 
 
 @dataclass
@@ -113,7 +106,6 @@ class NavigationPanel(ActionStep, DataclassSerializable):
 
     # noinspection PyDataclass
     def __post_init__(self, model_context):
-        self.menu = self._filter_items(self.menu, AuthenticationMechanism.get_current_authentication())
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
         self._add_action_states(model_context, self.menu.items, self.action_states)
 
@@ -200,16 +192,8 @@ class InstallTranslator(ActionStep, DataclassSerializable):
 class RemoveTranslators(ActionStep, DataclassSerializable):
     """
     Unregister all previously installed translators from the application.
-
-    :param admin: a :class:`camelot.admin.application_admin.ApplicationAdmin'
-        object
     """
 
-    admin: InitVar[ApplicationAdmin]
-    admin_route: AdminRoute = field(init=False)
-
-    def __post_init__(self, admin):
-        self.admin_route = admin.get_admin_route()
 
 @dataclass
 class UpdateActionsState(ActionStep, DataclassSerializable):

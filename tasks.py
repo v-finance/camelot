@@ -92,22 +92,3 @@ def fontawesome_update(ctx):
     extract_fontawesome_metadata('tmp/fontawesome-free-{}-web/metadata/icons.json'.format(version), 'camelot/art/awesome/name_to_code.json')
     # Cleanup
     ctx.run('rm -r tmp')
-
-@task()
-def source_check(ctx):
-    """
-    check the source code for unused imports and unused variables
-    """
-    ctx.run('{}/bin/python -m pyflakes camelot camelot_example test'.format(default_test_env))
-    ctx.run('echo Done')
-
-@task(positional=['ticket_nr', 'msg'], optional=['paths'])
-def commit(ctx, ticket_nr, msg, paths=None):
-    if not re.match(JIRA_ticket_nr_regex, ticket_nr):
-        print('ERROR: the given JIRA ticket number is not valid. It should be in the form of VFIN-xxxx.')
-    else:
-        message = '{} #comment {}'.format(ticket_nr, msg)
-        if paths is None:
-            ctx.run('git commit -am "{}"'.format(message))
-        else:
-            ctx.run('git commit -m "{}" {}'.format(message, ' '.join(paths.split(','))))
