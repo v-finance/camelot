@@ -149,6 +149,12 @@ class UpdateMixin(object):
         changed_columns = set()
         changed_columns.update(model_context.edit_cache.add_data(row, obj, row_data))
         changed_columns.update(model_context.attributes_cache.add_data(row, obj, dynamic_field_attributes))
+        
+        # FIXME: The caching does not always seem to work
+        #        When an object becomes valid, the action states of a field can change
+        #        but the cache does not seem to handle this...
+        changed_columns.update(columns)
+        
         changed_ranges = []
         if row is not None:
             items = []
