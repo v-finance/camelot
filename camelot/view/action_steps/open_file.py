@@ -121,4 +121,4 @@ class ClientDirectoryInfo(ActionStep, DataclassSerializable):
 
     @classmethod
     def deserialize_result(cls, model_context, response):
-        return DirectoryInfo._from_bytes(response)
+        return DirectoryInfo(**response)
