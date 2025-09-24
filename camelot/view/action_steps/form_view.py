@@ -31,21 +31,16 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import Dict, Optional
 from dataclasses import dataclass, field
-import json
+from typing import Dict, Optional
 
-from ..controls.formview import FormView
+from .item_view import AbstractCrudView
 from ..forms import AbstractForm
-from ..workspace import show_top_level
-from ...admin.action.base import ActionStep, RenderHint
+from ...admin.action.base import ActionStep
 from ...admin.admin_route import Route, AdminRoute
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
-from ...view.utils import get_settings_group
-from ...core.backend import get_root_backend
-from .item_view import AbstractCrudView
 
 
 @dataclass
@@ -119,39 +114,18 @@ class OpenFormView(AbstractCrudView):
         """Use this method to get access to the admin in unit tests"""
         return initial_naming_context.resolve(self.admin_route)
 
-    @classmethod
-    def render(self, step):
-        form = FormView()
-        model = get_root_backend().create_model(get_settings_group(step['admin_route']), form)
-        model.setValue(step['model_context_name'])
-        columns = [ fn for fn, fa in step['fields']]
-        model.setColumns(columns)
-        form.setup(
-            title=step['title'], admin_route=step['admin_route'],
-            close_route=tuple(step['close_route']), model=model,
-            fields=step['fields'], form_display=step['form'],
-            index=step['row']
-        )
-        form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
-        for action_route, action_state in step['action_states']:
-            form.set_action_state(form, tuple(action_route), action_state)
-        return form
+@dataclass
+class HighlightField(DataclassSerializable):
 
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        step = json.loads(serialized_step)
-        formview = cls.render(step)
-        if formview is not None:
-            formview.setObjectName('form.{}.{}'.format(
-                step['admin_route'], id(formview)
-            ))
-            show_top_level(formview, gui_context_name, step['form_state'])
+    label: str = None # The label of the field to search for
+    action_route: Optional[Route] = None # Field action to highlight
+    action_mode: Optional[str] = None # The mode of the action to highlight
 
 @dataclass
 class HighlightForm(ActionStep, DataclassSerializable):
 
     tab: Optional[str] = None # The form tab
-    label: Optional[str] = None # A field label to highlight
+    label: Optional[HighlightField] = None # A field label to highlight
     label_delegate: bool = False # Highlight delegate associated with label
     label_delegate_focus: bool = False # Focus delegate associated with label
     table_label: Optional[str] = None # Label of the table for table_row and table_column
@@ -160,8 +134,15 @@ class HighlightForm(ActionStep, DataclassSerializable):
     action_route: Optional[Route] = None # Action to highlight
     action_menu_route: Optional[Route] = None # Menu to open
     action_menu_mode: Optional[str] = None # Menu mode (verbose name) to highlight
+    select_all: bool = False
+    select_row: Optional[int] = None
 
     #action_cls_state: Optional[?] = None
     #group_box: Optional[?] = None
     form_state: Optional[str] = None
     field_name: Optional[str] = None
+
+@dataclass
+class CloseMenu(ActionStep, DataclassSerializable):
+
+    action_menu_route: Optional[Route] = None # Menu to close

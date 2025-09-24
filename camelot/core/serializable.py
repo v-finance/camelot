@@ -40,6 +40,19 @@ class Serializable(object):
         self.write_object(stream)
         return stream.getvalue()
 
+    @classmethod
+    def _from_bytes(cls, data):
+        """
+        Helper method to deserialize an object from bytes.
+
+        The purpose of this method is to make unittesting easier, it is not
+        intended for use in production code.
+        """
+        stream = io.BytesIO(data)
+        obj = cls.__new__(cls)
+        obj.read_object(stream)
+        return obj
+
     def _to_dict(self):
         """
         Helper method to serialize the object to bytes, and deserialize it to
@@ -133,6 +146,8 @@ class MetaNamedDataclassSerializable(type):
     def __new__(cls, clsname, bases, attrs):
         newclass = super().__new__(cls, clsname, bases, attrs)
         if clsname != 'NamedDataclassSerializable':
+            if clsname in cls.cls_register:
+                raise ValueError(f"Class with name {clsname} already registered.")
             cls.cls_register[clsname] = newclass
         return newclass
 

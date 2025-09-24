@@ -2,7 +2,7 @@ import logging
 import json
 
 from camelot.core.qt import QtWidgets, QtCore
-from ..view.requests import AbstractRequest, CancelRequest
+from ..view.requests import AbstractRequest
 from ..view.responses import Busy
 from .singleton import QSingleton
 
@@ -44,36 +44,6 @@ def is_cpp_gui_context_name(gui_context_name):
 def cpp_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     response = get_root_backend().action_step(gui_context_name, name, step)
     return json.loads(response.data())
-
-
-class PythonBackend(QtCore.QObject):
-    """
-    Dispatch requests from the root backend that cannot be handled
-    by the root backend to this python backend object.
-    @todo : move this class to the view classes, as it is part of the ui.
-    """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        root_backend = get_root_backend()
-        root_backend.unhandled_action_step.connect(self.on_unhandled_action_step)
-
-    @QtCore.qt_slot('QStringList', str, 'QStringList', bool, QtCore.QByteArray)
-    def on_unhandled_action_step(self, gui_run_name, step_type, gui_context_name, blocking, serialized_step):
-        """The backend has cannot handle an action step"""
-        LOGGER.debug('Unhandled action step {}, blocking : {}'.format(step_type, blocking))
-        from ..admin.action.base import MetaActionStep
-        root_backend = get_root_backend()
-        try:
-            step_cls = MetaActionStep.action_steps[step_type]
-            step_cls.gui_run(tuple(gui_run_name), tuple(gui_context_name), bytes(serialized_step))
-        except CancelRequest:
-            root_backend.action_step_result_valid(gui_run_name, None, True, "")
-        except Exception as e:
-            LOGGER.error("Step type {}".format(step_type))
-            LOGGER.error("Gui context name {}".format(gui_context_name))
-            LOGGER.error("Unhandled action step raised an exception", exc_info=e)
-            root_backend.action_step_result_valid(gui_run_name, None, False, str(e))
 
 
 class PythonConnection(QtCore.QObject, metaclass=QSingleton):

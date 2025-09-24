@@ -3,7 +3,7 @@ import json
 import logging
 import typing
 
-from ..core.exception import CancelRequest
+from ..core.exception import CancelRequest, GuiException
 from ..core.naming import (
     CompositeName, NamingException, NameNotFoundException, initial_naming_context
 )
@@ -56,11 +56,13 @@ class AbstractRequest(NamedDataclassSerializable):
             run_name=run_name, gui_run_name=gui_run_name, blocking=False,
             step=(PopProgressLevel.__name__, PopProgressLevel())
         ))
-        if run_name != ('constant', 'null'):
-            initial_naming_context.unbind(run_name)
         response_handler.send_response(ActionStopped(
             run_name=run_name, gui_run_name=gui_run_name, exception=str(e)
         ))
+        # As the unbind might fail, first send the ActionStopped response
+        # so the client can let go of the run
+        if run_name != ('constant', 'null'):
+            initial_naming_context.unbind(run_name)
 
     @classmethod
     def _send_stop_message(cls, run_name, gui_run_name, response_handler, e):
@@ -122,10 +124,15 @@ class AbstractRequest(NamedDataclassSerializable):
                     result = next(run.generator)
         except CancelRequest as e:
             LOGGER.debug( 'iterator raised cancel request, pass it' )
+            # After the iterator raised a CancelRequest, it will still raise
+            # a StopIteration, so there is no need to stop the action now.
+            # However not doing so results in the progress popup not being
+            # popped in certain cases (eg run forward all schedules -> cancel)
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except StopIteration as e:
             cls._stop_action(run_name, gui_run_name, response_handler, e)
         except Exception as e:
+            LOGGER.error('Unhandled exception', exc_info=e)
             cls._send_stop_message(
                 ('constant', 'null'), gui_run_name, response_handler, e
             )
@@ -140,6 +147,12 @@ class InitiateAction(AbstractRequest):
     action_name: CompositeName
     model_context: CompositeName
     mode: typing.Union[str, dict, list, int]
+
+    @classmethod
+    def _next(cls, run: ModelRun, request_data):
+        # initiate action should implement next to make sure the action
+        # continues until its first step right after starting the action
+        return next(run.generator)
 
     @classmethod
     def execute(cls, request_data, response_handler, cancel_handler):
@@ -216,14 +229,15 @@ class ThrowActionException(AbstractRequest):
 
     @classmethod
     def _next(cls, run, request_data):
-        return run.generator.throw(Exception(request_data['exception']))
+        LOGGER.warn("User interface raised exception while handling action {}".format(request_data))
+        return run.generator.throw(GuiException(request_data['exception']))
 
 
 @dataclass
 class CancelAction(AbstractRequest):
     """
     Request an action run to be canceled, even if the action is not waiting
-    for a response. The running action is uniquely identied on the server side
+    for a response. The running action is uniquely identified on the server side
     by its run_name.
     """
     run_name: CompositeName
