@@ -63,8 +63,7 @@ class ObjectsModelContext(ApplicationActionModelContext):
         super().__init__(admin)
         self.proxy = proxy
         self.locale = locale
-        self.edit_cache = ValueCache(100)
-        self.attributes_cache = ValueCache(100)
+        self.item_cache = ValueCache(100)
         self.static_field_attributes = []
         self.current_row = None
         self.current_column = None
