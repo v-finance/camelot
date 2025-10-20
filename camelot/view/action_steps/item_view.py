@@ -237,5 +237,4 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     blocking: bool = False
 
     def __post_init__(self, model_context):
-        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
-        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)
+        model_context.item_cache = ValueCache(model_context.item_cache.max_entries)

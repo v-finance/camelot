@@ -31,15 +31,15 @@ from __future__ import annotations
 import logging
 import typing
 
-from enum import Enum
+from camelot.admin.icon import Icon
+from camelot.core.qt import QtWidgets, QtGui
+from camelot.core.serializable import DataclassSerializable
+from camelot.core.utils import ugettext_lazy
+
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
-from ...admin.icon import Icon
-from ...core.qt import QtWidgets, QtGui
-from ...core.serializable import DataclassSerializable
-from ...core.utils import ugettext_lazy
-from ...view.art import from_admin_icon
 
 LOGGER = logging.getLogger( 'camelot.admin.action' )
 
@@ -102,9 +102,6 @@ the default mode.
         """
         if self.modes:
             menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
-            if self.icon is not None:
-                menu.setIcon(from_admin_icon(self.icon).getQIcon())
-                menu.setEnabled(self.enabled)
             parent.addMenu(menu)
             return menu
         else:
@@ -112,11 +109,7 @@ the default mode.
             action.setData( self.value )
             action.setText( str(self.verbose_name) )
             action.setEnabled(self.enabled)
-            if self.icon is None:
-                action.setIconVisibleInMenu(False)
-            else:
-                action.setIcon(from_admin_icon(self.icon).getQIcon())
-                action.setIconVisibleInMenu(True)
+            action.setIconVisibleInMenu(False)
             return action
 
 @dataclass
@@ -170,6 +163,11 @@ updated state for the widget.
 
     A color used to indicate something regarding the action's state. This color
     can be used as button text color, background or outline for example.
+
+.. attribute:: directory
+
+    The action should catch the attention of the user if a file exists in this
+    client side directory.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
@@ -181,6 +179,7 @@ updated state for the widget.
     modes: typing.List[Mode] = field(default_factory=list)
     shortcut: typing.Optional[str] = None
     color: typing.Optional[str] = None
+    directory: typing.Optional[str] = None
 
 # TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
 #       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
@@ -255,145 +254,6 @@ class RenderHint(Enum):
     LABEL = 'label'
     STRETCH = 'stretch'
     STATUS_BUTTON = 'status_button'
-
-
-class Action( ActionStep ):
-    """An action has a set of attributes that define its appearance in the
-GUI.  
-    
-.. attribute:: name
-
-    The internal name of the action, this can be used to store preferences
-    concerning the action in the settings
-
-.. attribute:: render_hint
-
-    a :class:`RenderHint` instance indicating the preffered way to render
-    this action in the user interface
-
-These attributes are used at the default values for the creation of a
-:class:`camelot.admin.action.base.State` object that defines the appearance
-of the action button.  Subclasses of :class:`Action` that require dynamic
-values for these attributes can reimplement the :class:`Action.get_state`
-method.
-
-.. attribute:: verbose_name
-
-    The name as displayed to the user, this should be of type 
-    :class:`camelot.core.utils.ugettext_lazy`
-    
-.. attribute:: icon
-
-    The icon that represents the action, of type 
-    :class:`camelot.admin.icon.Icon`
-
-.. attribute:: tooltip
-
-    The tooltip as displayed to the user, this should be of type 
-    :class:`camelot.core.utils.ugettext_lazy` or :class:`QtGui.QKeySequence`
-
-.. attribute:: modes
-
-    The modes in which an action can be triggered, a list of :class:`Mode`
-    objects.
-    
-For each of these attributes there is a corresponding getter method
-which is used by the view.  Subclasses of :class:`Action` that require dynamic
-values for these attributes can reimplement the getter methods.
-
-.. attribute:: shortcut
-
-    The shortcut that can be used to trigger the action, this should be of 
-    type :class:`camelot.core.utils.ugettext_lazy`
-    
-.. attribute:: drop_mime_types
-
-    A list of strings with the mime types that can be used to trigger this
-    action by dropping objects on the related widget.  Example ::
-    
-        drop_mime_types = ['text/plain']
-    
-An action has two important methods that can be reimplemented.  These are 
-:meth:`model_run` for manipulations of the model and :meth:`gui_run` for
-direct manipulations of the user interface without a need to access the model.
-
-To prevent an action object from being garbage collected, it can be registered
-with a view.
-
-        """
-
-    name = u'action'
-    render_hint = RenderHint.PUSH_BUTTON
-    verbose_name = None
-    icon = None
-    tooltip = None
-    shortcut = None 
-    modes = []
-    drop_mime_types = []
-    
-    def get_name( self ):
-        """
-        :return: a string, by default the :attr:`name` attribute
-        """
-        return self.name
-    
-    def get_shortcut( self ):
-        """
-        :return: a :class:`camelot.core.utils.ugettext_lazy`, by default the 
-        :attr:`shortcut` attribute
-        """
-        return self.shortcut
-
-    def get_tooltip( self ):
-        """
-        :return: a `str` with the tooltip to display, by default this is
-            a combination of the :attr:`tooltip` and the :attr:`shortcut`
-            attribute
-        """
-        tooltip = None
-
-        if self.tooltip is not None:
-            tooltip = str(self.tooltip)
-
-        if isinstance(self.shortcut, QtGui.QKeySequence):
-            tooltip = (tooltip or u'') + '\n' + self.shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
-        elif isinstance(self.shortcut, QtGui.QKeySequence.StandardKey):
-            for shortcut in QtGui.QKeySequence.keyBindings(self.shortcut):
-                tooltip = (tooltip or u'') + '\n' + shortcut.toString(QtGui.QKeySequence.SequenceFormat.NativeText)
-                break
-        elif self.shortcut is not None:
-            tooltip = (tooltip or u'') + '\n' + str(self.shortcut)
-
-        return tooltip
-
-    def model_run( self, model_context, mode ):
-        """A generator that yields :class:`camelot.admin.action.ActionStep`
-        objects.  This generator can be called in the *model thread*.
-        
-        :param context:  An object of type
-            :class:`camelot.admin.action.ModelContext`.
-            What is in the  context depends on how the action was called.
-        """
-        yield
-
-    def gui_run( self, gui_context_name ):
-        raise Exception('This should not happen')
-
-    def get_state( self, model_context ):
-        """
-        This method is called inside the Model thread to verify if
-        the state of the action widget visible to the current user.
-        
-        :param model_context: the context available in the *Model thread*
-        :return: an instance of :class:`camelot.admin.action.base.State`
-        """
-        state = State()
-        state.verbose_name = self.verbose_name
-        state.icon = self.icon
-        state.tooltip = self.get_tooltip()
-        state.modes = self.modes
-        state.shortcut = self.shortcut
-        return state
-
-
+    DROP = 'drop'
+    NOTE = 'note'
 

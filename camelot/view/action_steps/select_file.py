@@ -100,9 +100,13 @@ class SaveFile( SelectActionStep, DataclassSerializable ):
     This action step stores its last location into the :class:`QtCore.QSettings` 
     and uses it as the initial location the next time it is invoked.
     """
+    # TODO FIXME: Documentation needs to be updated
 
-    file_name_filter: str = ''
-    file_name: typing.Optional[str] = None
+    url: str = field(default=None)
+    file_name_filter: str = field(default=None)
+    proposed_file_name: str = field(default=None)
+    open_dir: bool = field(default=False)
+    type: str = "url"  # "url" or "websocket"
 
     caption = _('Save')
 

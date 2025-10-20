@@ -29,9 +29,6 @@
 
 import collections
 
-_fill = object()
-
-
 
 class ValueCache(object):
     """
@@ -82,7 +79,7 @@ class ValueCache(object):
             changed_columns = set(values.keys())
             new_values = values
         else:
-            changed_columns = set(col for col, value in values.items() if value != old_value.get(col, _fill))
+            changed_columns = set(col for col, value in values.items() if value != old_value.get(col))
             new_values = old_value
             new_values.update(values)
         self.data_by_rows[row] = new_values
