@@ -85,6 +85,7 @@ class OpenFormView(AbstractCrudView):
         self.fields = [[f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
+            'column_span': fa.get('column_span', 1),
             }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
