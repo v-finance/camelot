@@ -256,4 +256,5 @@ class RenderHint(Enum):
     STATUS_BUTTON = 'status_button'
     DROP = 'drop'
     NOTE = 'note'
+    DOCUMENT = 'document'
 
