@@ -28,7 +28,10 @@
 #  ============================================================================
 
 import logging
+import traceback
 import typing
+import io
+from camelot.core.exception import UserException
 from dataclasses import dataclass
 
 from camelot.admin.action import ActionStep
@@ -93,6 +96,22 @@ updated.
 
     def __str__(self):
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
+
+
+    @classmethod
+    def from_exception(cls, message: str, exception: Exception) -> 'UpdateProgress':
+        if isinstance(exception, UserException):
+            exception_info = f"{message}\nException Title: {exception.title}\nDetail: {exception.detail}\nResolution: {exception.resolution}\n"
+            return cls(
+                detail=exception_info,
+                detail_level=logging.ERROR
+            )
+        else:
+            sio = io.StringIO()
+            traceback.print_exc(file=sio)
+            traceback_print = sio.getvalue()
+            sio.close()
+            return cls(detail=f"{message}\n{traceback_print}", detail_level=logging.ERROR)
 
 
 @dataclass
