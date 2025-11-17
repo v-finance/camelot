@@ -85,6 +85,8 @@ class OpenFormView(AbstractCrudView):
         self.fields = [[f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
+            'column_span': fa.get('column_span', 1),
+            'one2many_columns': self._one2many_columns(admin, fa),
             }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
@@ -104,6 +106,15 @@ class OpenFormView(AbstractCrudView):
         model_context = initial_naming_context.resolve(self.model_context_name)
         model_context.current_row = self.row
         model_context.selection_count = 1
+
+    def _one2many_columns(self, admin, fa):
+        target = fa.get('target', None)
+        if target is not None:
+            related_admin = fa.get('admin', admin.get_related_admin(target))
+            direction = fa.get('direction', 'onetomany')
+            python_type = fa.get('python_type')
+            if direction.endswith('many') and python_type == list and related_admin:
+                return len(related_admin.get_columns())
 
     @staticmethod
     def _add_actions(admin, actions):

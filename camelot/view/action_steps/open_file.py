@@ -29,6 +29,7 @@
 import base64
 from dataclasses import dataclass
 import os
+import typing
 
 from dataclasses import field, InitVar
 
@@ -106,6 +107,7 @@ class DirectoryInfo(Serializable):
     exists: bool
     readable: bool
     writable: bool
+    entries: typing.List[str]
 
 @dataclass
 class ClientDirectoryInfo(ActionStep, DataclassSerializable):
@@ -113,11 +115,13 @@ class ClientDirectoryInfo(ActionStep, DataclassSerializable):
     Retrieve information about a client side directory.
 
     :param path: the absolute path to the directory
+    :param files: if not `None`, a filter on the names of the files to include
 
     The :keyword:`yield` statement will return a `DirectoryInfo` object.
     """
 
     path: [str]
+    files: typing.Optional[str] = None
 
     @classmethod
     def deserialize_result(cls, model_context, response):
