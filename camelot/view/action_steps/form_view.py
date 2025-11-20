@@ -42,6 +42,7 @@ from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
 
+from vfinance.view.controls.delegates.richtextdelegate import RichTextDelegate
 
 @dataclass
 class OpenFormView(AbstractCrudView):
@@ -86,7 +87,7 @@ class OpenFormView(AbstractCrudView):
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
             'column_span': fa.get('column_span', 1),
-            'one2many_columns': self._one2many_columns(admin, fa),
+            'minimum_columns': self._minimum_columns(admin, fa),
             }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
@@ -107,7 +108,11 @@ class OpenFormView(AbstractCrudView):
         model_context.current_row = self.row
         model_context.selection_count = 1
 
-    def _one2many_columns(self, admin, fa):
+    def _minimum_columns(self, admin, fa):
+        # Make rich text fields span 4 columns minimum
+        if fa.get('delegate', None) == RichTextDelegate:
+           return 4
+        # Use # of columns for One2Many fields
         target = fa.get('target', None)
         if target is not None:
             related_admin = fa.get('admin', admin.get_related_admin(target))
