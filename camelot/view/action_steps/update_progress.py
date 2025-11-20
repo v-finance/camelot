@@ -102,6 +102,8 @@ updated.
     @classmethod
     def from_user_exception(cls, message: str, exception: UserException) -> 'UpdateProgress':
         exception_info = f"{message}\nException Title: {exception.title}\n"
+        if exception.text:
+            exception_info += f"Message: {exception.text}\n"
         if exception.resolution:
             exception_info += f"Resolution: {exception.resolution}\n"
         if exception.detail:
