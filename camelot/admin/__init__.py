@@ -26,6 +26,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple, Union
 
 from camelot.admin.action import State
@@ -33,43 +34,56 @@ from camelot.admin.admin_route import AdminRoute, Route, RouteWithRenderHint
 from camelot.core.item_model.proxy import AbstractModelProxy
 from camelot.core.utils import ugettext_lazy
 
-class AbstractAdmin(AdminRoute):
+class AbstractAdmin(AdminRoute, ABC):
 
+    @abstractmethod
     def get_admin_route(self) -> Route:
-        raise NotImplementedError
+        """Return the admin route for this admin."""
 
+    @abstractmethod
     def get_verbose_name(self) -> Union[str, ugettext_lazy]:
-        raise NotImplementedError
+        """Return the verbose name for this admin."""
 
+    @abstractmethod
     def get_verbose_name_plural(self) -> Union[str, ugettext_lazy]:
-        raise NotImplementedError
+        """Return the verbose name plural for this admin."""
 
+    @abstractmethod
     def get_columns(self) -> List[str]:
-        raise NotImplementedError
+        """Return the list of column field names for this admin."""
 
+    @abstractmethod
     def get_static_field_attributes(self, field_names):
-        raise NotImplementedError
+        """Return the static field attributes for the given field names."""
 
+    @abstractmethod
     def get_list_action(self) -> Route:
-        raise NotImplementedError
+        """Return the list action route for this admin."""
 
+    @abstractmethod
     def get_proxy(self, objects) -> AbstractModelProxy:
-        raise NotImplementedError
+        """Return a model proxy for the given objects."""
 
+    @abstractmethod
     def _get_search_fields(self, substring):
-        raise NotImplementedError
+        """Return the fields to search for the given substring."""
 
+    @abstractmethod
     def get_list_actions(self):
-        raise NotImplementedError
+        """Return the list actions for this admin."""
 
+    @abstractmethod
     def get_filters(self):
-        raise NotImplementedError
+        """Return the filters for this admin."""
 
+    @abstractmethod
     def get_list_toolbar_actions(self):
-        raise NotImplementedError
+        """Return the list toolbar actions for this admin."""
 
+    @abstractmethod
     def _set_search_filter(self, proxy: AbstractModelProxy, actions: List[RouteWithRenderHint], search_text: Optional[str]):
-        raise NotImplementedError
+        """Set the search filter on the given proxy based on the search text."""
 
+    @abstractmethod
     def _set_filters(self, action_states:List[Tuple[Route, State]], proxy: AbstractModelProxy):
-        raise NotImplementedError
+        """Set the filters on the given proxy based on the action states."""
