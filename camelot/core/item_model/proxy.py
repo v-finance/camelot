@@ -51,9 +51,11 @@ remove or filter operation is applied on the proxy, an object returned at an ind
 by the proxy will stay at this index, even when the model has changed.
 """
 
+from abc import ABC, abstractmethod
 
-class AbstractModelFilter(object):
+class AbstractModelFilter(ABC):
 
+    @abstractmethod
     def filter(self, it, value):
         """
         :param it: an iterator over objects in the model
@@ -61,24 +63,23 @@ class AbstractModelFilter(object):
 
         :return: a filtered iterator
         """
-        raise NotImplementedError()
 
+class AbstractModelProxy(ABC):
 
-class AbstractModelProxy(object):
-
+    @abstractmethod
     def __len__(self):
         """
         :return: the number of objects that can be retrieved from the proxy
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def copy(self):
         """
         :return: a new `AbstractModelProxy` with consistent indexes as long
             as no new operation is applied on one of the proxies.
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def sort(self, key=None, reverse=False):
         """
         Apply an order on the objects retrieved by the proxy.  This order is not
@@ -87,47 +88,47 @@ class AbstractModelProxy(object):
         :key: the name of the attribute to sort the objects on, use None to
             disable a previous sort.
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def filter(self, key, value):
         """
         :param key: a concrete instance of `AbstractModelFilter`
         :param value: the value of the filter to apply
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def get_filter(self, key):
         """
         :param key: a concrete instance of `AbstractModelFilter`
         :return: the value of the filter to apply if the filter is applied,
             `None` if the filters is not applied.
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def get_model(self):
         """
         :return: the model that was used to contruct the proxy
         """
-        raise NotImplementedError()
-    
+
+    @abstractmethod
     def append(self, obj):
         """
         Add an object to the proxy and the model
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def remove(self, obj):
         """
         Remove an object from the proxy and the model
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def index(self, obj):
         """
         Return the index holding the object in the proxy
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def __getitem__(self, sl, yield_per=None):
         """
         :param sl: a `slice` object representing a set of indices
@@ -137,7 +138,7 @@ class AbstractModelProxy(object):
         :return: an iterator over the indexed objects in the proxy
 
         The requested slice indexes should be positive and smaller than the number
-        lenght of the proxy, or an :attr:`IndexError` will be raised.
+        length of the proxy, or an :attr:`IndexError` will be raised.
         
         The index numbers are the numbers after sorting and filtering.
 
@@ -147,6 +148,3 @@ class AbstractModelProxy(object):
         to retrieve those objects from the model and thus yield less objects than
         requested.
         """
-        raise NotImplementedError()
-
-
