@@ -4,6 +4,13 @@ import io
 import json
 import base64
 
+with_ujson = False
+try:
+    import ujson
+    with_ujson = True
+except ImportError:
+    pass
+
 from camelot.core.qt import QtCore, QtGui
 from enum import Enum
 
@@ -64,9 +71,12 @@ class Serializable(object):
         """
         return json.loads(self._to_bytes())
         
-class DataclassEncoder(json.JSONEncoder):
 
-    def default(self, obj):
+
+
+if with_ujson:
+
+    def ujson_default(obj):
         if isinstance(obj, ugettext_lazy):
             return str(obj)
         if isinstance(obj, QtGui.QKeySequence):
@@ -90,10 +100,53 @@ class DataclassEncoder(json.JSONEncoder):
             return obj.asdict(obj)
         if isinstance(obj, (datetime.date, datetime.datetime)):
             raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
-        return json.JSONEncoder.default(self, obj)
+        return ujson.dumps(obj, default=ujson_default)
 
 
-json_encoder = DataclassEncoder()
+    class DataclassEncoderUjson:
+
+        def encode(self, obj):
+            return ujson.dumps(obj, default=ujson_default)
+
+        def iterencode(self, obj):
+            yield ujson.dumps(obj, default=ujson_default)
+
+
+    json_encoder = DataclassEncoderUjson()
+
+else:
+
+    class DataclassEncoder(json.JSONEncoder):
+
+        def default(self, obj):
+            if isinstance(obj, ugettext_lazy):
+                return str(obj)
+            if isinstance(obj, QtGui.QKeySequence):
+                return obj.toString()
+            if isinstance(obj, QtGui.QKeySequence.StandardKey):
+                return QtGui.QKeySequence(obj).toString()
+            if isinstance(obj, Enum):
+                return obj.value
+            if isinstance(obj, QtCore.QJsonValue):
+                return obj.toVariant()
+            if isinstance(obj, QtGui.QImage):
+                byte_array = QtCore.QByteArray()
+                buffer = QtCore.QBuffer(byte_array)
+                buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
+                obj.save(buffer, "PNG");
+                return base64.b64encode(byte_array).decode()
+             # FIXME: Remove this when all classes are serializable.
+             #        Currently needed to serialize some fields
+             #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
+            if isinstance(obj, DataclassSerializable):
+                return obj.asdict(obj)
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
+            return json.JSONEncoder.default(self, obj)
+
+
+    json_encoder = DataclassEncoder()
+
 
 class DataclassSerializable(Serializable):
     """
