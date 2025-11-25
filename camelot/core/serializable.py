@@ -122,8 +122,18 @@ class DataclassSerializable(Serializable):
     """
 
     def write_object(self, stream):
-        for chunk in json_encoder.iterencode(self.asdict(self)):
-            stream.write(chunk.encode())
+        # for chunk in json_encoder.iterencode(self.asdict(self)):
+        #     stream.write(chunk.encode())
+        stream.write(json_encoder.encode(self.asdict(self)).encode())
+        # TODO: favored encode() over iterencode(), as the latter is actually slower for small objects.
+        #   encode() is a thin wrapper around json.dumps implemented in C (CPython’s json module uses C accelerators when possible),
+        #   while iterencode() may fall back to calling Python-level code more often and creating many intermediate small strings.
+        #   This makes it slower unless the JSON is large enough that memory savings become more important than speed.
+        # Other options to consider:
+        # * decide between the the two based on the size of the object, but this is not straightforward as we don't know the size beforehand,
+        #   to this would have to be heuristic based on the number of fields, types of fields, etc.
+        # * use orjson or another 3rd party json library that is faster than the built-in json module.
+        #   e.g., https://github.com/ijl/orjson
     
     @classmethod
     def asdict(cls, obj):
