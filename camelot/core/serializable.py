@@ -152,7 +152,6 @@ class DataclassSerializable(Serializable):
         if _is_dataclass_type(t):
             return t.serialize_fields(obj)
         if t is dict:
-            # assuming keys are primitive; avoid recursion into keys
             return {k: cls._asdict_inner(v) for k, v in obj.items()}
         if t is list:
             return [cls._asdict_inner(v) for v in obj]
