@@ -116,6 +116,15 @@ def _is_dataclass_type(t):
     """
     return dataclasses.is_dataclass(t)
 
+@functools.lru_cache(None)
+def _dataclass_fields(t):
+    """
+    Return the dataclass fields for the given dataclass type t.
+    This function is a performance-optimized replacement for calling
+    `dataclasses.fields(t)` repeatedly.
+    """
+    return dataclasses.fields(t)
+
 class DataclassSerializable(Serializable):
     """
     Use the dataclass info to serialize the object
@@ -166,7 +175,7 @@ class DataclassSerializable(Serializable):
         By default this will return a dictionary with each field turned into a key-value pair of its name and its value.
         """
         result = []
-        for f in dataclasses.fields(obj):
+        for f in _dataclass_fields(type(obj)):
             value = cls._asdict_inner(getattr(obj, f.name))
             result.append((f.name, value))
         return dict(result)
