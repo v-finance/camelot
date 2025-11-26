@@ -120,8 +120,8 @@ class OpenFormView(AbstractCrudView):
             python_type = fa.get('python_type')
             if direction.endswith('many') and python_type == list and related_admin:
                 num_columns = 0
-                for field in related_admin.get_columns():
-                    num_columns += related_admin.get_field_attributes(field).get('column_span', 1)
+                for field_name in related_admin.get_columns():
+                    num_columns += related_admin.get_field_attributes(field_name).get('column_span', 1)
                 return num_columns
 
     @staticmethod
