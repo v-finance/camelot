@@ -163,6 +163,11 @@ updated state for the widget.
 
     A color used to indicate something regarding the action's state. This color
     can be used as button text color, background or outline for example.
+
+.. attribute:: directory
+
+    The action should catch the attention of the user if a file exists in this
+    client side directory.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
@@ -174,6 +179,7 @@ updated state for the widget.
     modes: typing.List[Mode] = field(default_factory=list)
     shortcut: typing.Optional[str] = None
     color: typing.Optional[str] = None
+    directory: typing.Optional[str] = None
 
 # TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
 #       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
@@ -250,4 +256,5 @@ class RenderHint(Enum):
     STATUS_BUTTON = 'status_button'
     DROP = 'drop'
     NOTE = 'note'
+    DOCUMENT = 'document'
 

@@ -63,5 +63,5 @@ class ApplicationActionModelContext(ModelContext):
 
     @property
     def session( self ):
-        from vfinance.model.bank.entity import Session
+        from vfinance.model.entity import Session
         return Session()
