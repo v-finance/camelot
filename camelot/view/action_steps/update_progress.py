@@ -28,7 +28,12 @@
 #  ============================================================================
 
 import logging
+import traceback
 import typing
+import sys
+import tblib
+import io
+from camelot.core.exception import UserException
 from dataclasses import dataclass
 
 from camelot.admin.action import ActionStep
@@ -93,6 +98,34 @@ updated.
 
     def __str__(self):
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
+
+    @classmethod
+    def from_user_exception(cls, message: str, exception: UserException) -> 'UpdateProgress':
+        exception_info = f"{message}\nException Title: {exception.title}\n"
+        if exception.text:
+            exception_info += f"Message: {exception.text}\n"
+        if exception.resolution:
+            exception_info += f"Resolution: {exception.resolution}\n"
+        if exception.detail:
+            exception_info += f"Details: {exception.detail}\n"
+
+        return cls(
+            detail=exception_info,
+            detail_level=logging.WARNING
+        )
+
+    @classmethod
+    def from_exception(cls, message: str, exception: Exception) -> 'UpdateProgress':
+        if isinstance(exception, UserException):
+            return cls.from_user_exception(message, exception)
+        else:
+            (exc_type, exc_value, exc_traceback) = sys.exc_info()
+            exc_traceback = tblib.Traceback(exc_traceback)
+            sio = io.StringIO()
+            traceback.print_exception(etype=exc_type, value=exc_value, tb=exc_traceback, file=sio)
+            traceback_print = sio.getvalue()
+            sio.close()
+            return cls(detail=f"{message}\n{traceback_print}", detail_level=logging.ERROR)
 
 
 @dataclass
