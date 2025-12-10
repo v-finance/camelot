@@ -60,7 +60,7 @@ class DataUpdate(DataclassSerializable):
 
 invalid_item = DataCell()
 invalid_item.flags = Qt.ItemFlag.NoItemFlags
-invalid_item.roles[Qt.ItemDataRole.EditRole] = None
+invalid_item.roles[Qt.ItemDataRole.EditRole.value] = None
 invalid_item.roles[PreviewRole] = None
 invalid_item.roles[ObjectRole] = None
 invalid_item.roles[CompletionsRole] = None

@@ -1,8 +1,16 @@
 import dataclasses
 import datetime
+import functools
 import io
 import json
 import base64
+
+with_ujson = False
+try:
+    import ujson
+    with_ujson = True
+except ImportError:
+    pass
 
 from camelot.core.qt import QtCore, QtGui
 from enum import Enum
@@ -64,9 +72,12 @@ class Serializable(object):
         """
         return json.loads(self._to_bytes())
         
-class DataclassEncoder(json.JSONEncoder):
 
-    def default(self, obj):
+
+
+if with_ujson:
+
+    def ujson_default(obj):
         if isinstance(obj, ugettext_lazy):
             return str(obj)
         if isinstance(obj, QtGui.QKeySequence):
@@ -90,10 +101,82 @@ class DataclassEncoder(json.JSONEncoder):
             return obj.asdict(obj)
         if isinstance(obj, (datetime.date, datetime.datetime)):
             raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
-        return json.JSONEncoder.default(self, obj)
+        return ujson.dumps(obj, default=ujson_default)
 
 
-json_encoder = DataclassEncoder()
+    class DataclassEncoderUjson:
+
+        def encode(self, obj):
+            return ujson.dumps(obj, default=ujson_default)
+
+        def iterencode(self, obj):
+            yield ujson.dumps(obj, default=ujson_default)
+
+
+    json_encoder = DataclassEncoderUjson()
+
+else:
+
+    class DataclassEncoder(json.JSONEncoder):
+
+        def default(self, obj):
+            if isinstance(obj, ugettext_lazy):
+                return str(obj)
+            if isinstance(obj, QtGui.QKeySequence):
+                return obj.toString()
+            if isinstance(obj, QtGui.QKeySequence.StandardKey):
+                return QtGui.QKeySequence(obj).toString()
+            if isinstance(obj, Enum):
+                return obj.value
+            if isinstance(obj, QtCore.QJsonValue):
+                return obj.toVariant()
+            if isinstance(obj, QtGui.QImage):
+                byte_array = QtCore.QByteArray()
+                buffer = QtCore.QBuffer(byte_array)
+                buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
+                obj.save(buffer, "PNG");
+                return base64.b64encode(byte_array).decode()
+             # FIXME: Remove this when all classes are serializable.
+             #        Currently needed to serialize some fields
+             #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
+            if isinstance(obj, DataclassSerializable):
+                return obj.asdict(obj)
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
+            return json.JSONEncoder.default(self, obj)
+
+
+    json_encoder = DataclassEncoder()
+
+
+@functools.lru_cache(None)
+def _is_dataclass_type(t):
+    """
+    Return True if the given type t is a dataclass type.
+
+    This function is a performance-optimized replacement for calling
+    `dataclasses.is_dataclass()` repeatedly inside deeply-nested
+    serialization logic.
+
+    Rationale:
+        * `dataclasses.is_dataclass(obj)` is relatively expensive because it
+          checks attributes on the class and may inspect annotations.
+        * In recursive serialization (e.g., converting nested dataclass
+          structures into dictionaries), this check is performed numerous times.
+        * Since types are immutable and the result of the dataclass check does
+          not change for a given class, it’s safe and highly beneficial to
+          memoize.
+    """
+    return dataclasses.is_dataclass(t)
+
+@functools.lru_cache(None)
+def _dataclass_fields(t):
+    """
+    Return the dataclass fields for the given dataclass type t.
+    This function is a performance-optimized replacement for calling
+    `dataclasses.fields(t)` repeatedly.
+    """
+    return dataclasses.fields(t)
 
 class DataclassSerializable(Serializable):
     """
@@ -101,8 +184,18 @@ class DataclassSerializable(Serializable):
     """
 
     def write_object(self, stream):
-        for chunk in json_encoder.iterencode(self.asdict(self)):
-            stream.write(chunk.encode())
+        # for chunk in json_encoder.iterencode(self.asdict(self)):
+        #     stream.write(chunk.encode())
+        stream.write(json_encoder.encode(self.asdict(self)).encode())
+        # TODO: favored encode() over iterencode(), as the latter is actually slower for small objects.
+        #   encode() is a thin wrapper around json.dumps implemented in C (CPython’s json module uses C accelerators when possible),
+        #   while iterencode() may fall back to calling Python-level code more often and creating many intermediate small strings.
+        #   This makes it slower unless the JSON is large enough that memory savings become more important than speed.
+        # Other options to consider:
+        # * decide between the the two based on the size of the object, but this is not straightforward as we don't know the size beforehand,
+        #   to this would have to be heuristic based on the number of fields, types of fields, etc.
+        # * use orjson or another 3rd party json library that is faster than the built-in json module.
+        #   e.g., https://github.com/ijl/orjson
     
     @classmethod
     def asdict(cls, obj):
@@ -110,23 +203,24 @@ class DataclassSerializable(Serializable):
         Custom implementation of dataclasses asdict that allows customizing the serialization of dataclasses' fields,
         which the default dataclass implementation does not allow.
         """
-        if not dataclasses._is_dataclass_instance(obj):
+        t = type(obj)
+        if not _is_dataclass_type(t):
             raise TypeError("asdict() should be called on dataclass instances")
         return cls._asdict_inner(obj)
     
     @classmethod
     def _asdict_inner(cls, obj):
-        if dataclasses._is_dataclass_instance(obj):
-            return type(obj).serialize_fields(obj)
-        elif isinstance(obj, (list, tuple)):
-            return type(obj)(cls._asdict_inner(v) for v in obj)
-        elif isinstance(obj, dict):
-            return type(obj)((cls._asdict_inner(k), cls._asdict_inner(v))
-                              for k, v in obj.items())
-        else:
-            # we assube obj will be handled by DataclassEncoder.default
-            return obj
-    
+        t = type(obj)
+        if _is_dataclass_type(t):
+            return t.serialize_fields(obj)
+        if t is dict:
+            return {k: cls._asdict_inner(v) for k, v in obj.items()}
+        if t is list:
+            return [cls._asdict_inner(v) for v in obj]
+        if t is tuple:
+            return tuple(cls._asdict_inner(v) for v in obj)
+        return obj
+
     @classmethod
     def serialize_fields(cls, obj):
         """
@@ -134,7 +228,7 @@ class DataclassSerializable(Serializable):
         By default this will return a dictionary with each field turned into a key-value pair of its name and its value.
         """
         result = []
-        for f in dataclasses.fields(obj):
+        for f in _dataclass_fields(type(obj)):
             value = cls._asdict_inner(getattr(obj, f.name))
             result.append((f.name, value))
         return dict(result)
