@@ -7,10 +7,25 @@ from camelot.core.serializable import DataclassSerializable
 from camelot.core.utils import ugettext
 
 from dataclasses import dataclass, InitVar
+from enum import Enum
 from sqlalchemy.ext import hybrid
 from stdnum.exceptions import InvalidFormat
 
 from typing import Optional
+
+class ValidatorType(str, Enum):
+
+    NONE = "NoValidator"
+    DATE = "DateValidator"
+    DATETIME = "DateTimeValidator"
+    REGEX = "RegexValidator"
+    NUMERIC = "NumericValidator"
+    INTEGER = "IntegerValidator"
+    FLOAT = "FloatValidator"
+    PATH = "PathValidator"
+
+    def __str__(self) -> str:
+        return self.value
 
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
@@ -90,22 +105,6 @@ class ValidatorState(DataclassSerializable):
             else:
                 yield message.format(error_msg)
 
-class AbstractValidator:
-    """
-    Validators must be default constructable.
-    Validators can have a state which is set by set_state.
-    """
-
-    validators = dict()
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.validators[cls.__name__] = cls
-
-
-class DateValidator(AbstractValidator):
-    pass
-
 
 @dataclass(frozen=True)
 class RegexValidatorState(ValidatorState):
@@ -161,10 +160,3 @@ class RegexValidatorState(ValidatorState):
                         return re.sub(m.re, repl, m.string)
             return multi_repl
         return regex_repl
-
-
-class RegexValidator(AbstractValidator):
-    pass
-
-class NumericValidator(AbstractValidator):
-    pass
