@@ -30,66 +30,27 @@
 import datetime
 import logging
 
-
 LOGGER = logging.getLogger('camelot.core.qt')
 
 
-class DelayedModule(object):
-    """
-    Import QtWebKit as late as possible, since it's the largest
-    part of the QT Library (15 meg on Ubuntu linux)
-    """
-    
-    def __init__(self, module_name):
-        self.__name__ = module_name
-        self.module = None
-    
-    def __getattr__(self, attr):
-        global qt_api
-        if self.module is None:
-            binding_module = __import__(qt_api,
-                                        globals(), locals(), [self.__name__])
-            self.module = getattr(binding_module, self.__name__)
-        return getattr(self.module, attr)
+from PyQt6 import QtCore, QtGui, QtNetwork, QtXml, QtWidgets
+# as of pyqt 5.11, qt should be imported before sip
+from PyQt6 import sip
 
-QtCore = DelayedModule('QtCore')
-QtGui = DelayedModule('QtGui')
-QtNetwork = DelayedModule('QtNetwork')
-QtXml = DelayedModule('QtXml')
+QtCore.qt_slot = QtCore.pyqtSlot
+QtCore.qt_signal = QtCore.pyqtSignal
+QtCore.qt_property = QtCore.pyqtProperty
 
-# virtual modules that points to the qt module containing these classes
-QtWidgets = DelayedModule('QtGui')
+is_deleted = sip.isdeleted
+delete = sip.delete
+transferto = sip.transferto
+Qt = QtCore.Qt
 
-qt_api = 'PyQt6'
 
-if qt_api == 'PyQt6':
-    try:
-        # as of pyqt 5.11, qt should be imported before sip
-        from PyQt6 import QtCore
-        from PyQt6 import sip
-        QtCore.qt_slot = QtCore.pyqtSlot
-        QtCore.qt_signal = QtCore.pyqtSignal
-        QtCore.qt_property = QtCore.pyqtProperty
-        QtWidgets = DelayedModule('QtWidgets')
-        QtQml = DelayedModule('QtQml')
-        QtQuick = DelayedModule('QtQuick')
-        QtWebKit = DelayedModule('QtWebKitWidgets')
-        QtQuickWidgets = DelayedModule('QtQuickWidgets')
-        is_deleted = sip.isdeleted
-        delete = sip.delete
-        transferto = sip.transferto
-    except ImportError:
-        raise Exception('Could not load PyQt6')
-
-Qt = getattr(__import__(qt_api+'.QtCore', globals(), locals(), ['Qt']), 'Qt')
-
-def _py_to_variant_2( obj=None ):
+def py_to_variant( obj=None ):
     return obj
 
-def _valid_variant_2( variant ):
-    return variant!=None
-
-def _variant_to_py_2(value=None):
+def variant_to_py(value=None):
     if isinstance( value, QtCore.QDate ):
         value = datetime.date( year = value.year(),
                                month = value.month(),
@@ -109,10 +70,6 @@ def _variant_to_py_2(value=None):
                                    second = time.second()
                                    )
     return value
-
-py_to_variant = _py_to_variant_2
-valid_variant = _valid_variant_2
-variant_to_py = _variant_to_py_2
 
 
 def qtranslate(string_to_translate, n=-1, msgctxt=None):
@@ -135,9 +92,10 @@ __all__ = [
     QtCore.__name__,
     QtGui.__name__,
     QtNetwork.__name__,
+    QtWidgets.__name__,
+    QtXml.__name__,
     Qt.__name__,
     py_to_variant.__name__,
-    valid_variant.__name__,
     variant_to_py.__name__,
 ]
 
