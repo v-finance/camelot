@@ -1,7 +1,7 @@
 import logging
 import json
 
-from camelot.core.qt import QtWidgets, QtCore
+from camelot.core.qt import QtCore
 from ..view.requests import AbstractRequest
 from .singleton import QSingleton
 
@@ -16,7 +16,7 @@ def get_root_backend():
     """
     global _backend
     if _backend is None:
-        app = QtWidgets.QApplication.instance()
+        app = QtCore.QCoreApplication.instance()
         _backend = app.findChild(QtCore.QObject, 'cpp_root_backend')
         assert _backend
     return _backend
