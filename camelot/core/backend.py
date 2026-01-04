@@ -31,15 +31,6 @@ def get_window():
         assert _window
     return _window
 
-def is_cpp_gui_context_name(gui_context_name):
-    """
-    Check if a GUI context name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
-    """
-    if not len(gui_context_name):
-        return False
-    return gui_context_name[0] == 'cpp_gui_context'
-
-
 def cpp_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     response = get_root_backend().action_step(gui_context_name, name, step)
     return json.loads(response.data())

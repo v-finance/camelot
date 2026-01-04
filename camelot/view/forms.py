@@ -296,13 +296,6 @@ class GridForm(AbstractForm):
         assert isinstance(row, list)
         self.grid.append(row)
 
-    def append_column(self, column):
-        """:param column: the list of fields that should come in the additional column
-        use this method to modify inherited grid forms"""
-        assert isinstance(column, list)
-        for row, additional_field in zip(self.grid, column):
-            row.append(additional_field)
-
 
 @dataclass
 class WidgetOnlyForm(AbstractForm):
@@ -314,11 +307,6 @@ class WidgetOnlyForm(AbstractForm):
     def __post_init__(self, field):
         assert isinstance( field, str )
         self.content = [field]
-
-    @property
-    def field(self):
-        for field in self.content:
-            return field
 
 
 @dataclass

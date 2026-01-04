@@ -52,22 +52,13 @@ class DelayedModule(object):
             self.module = getattr(binding_module, self.__name__)
         return getattr(self.module, attr)
 
-class DelayedQtWebEngineWidgets(DelayedModule):
-
-    @property
-    def QWebView(self):
-        return self.QWebEngineView
-
 QtCore = DelayedModule('QtCore')
 QtGui = DelayedModule('QtGui')
-QtWebKit = DelayedModule('QtWebKit')
 QtNetwork = DelayedModule('QtNetwork')
 QtXml = DelayedModule('QtXml')
 
 # virtual modules that points to the qt module containing these classes
-QtModel = DelayedModule('QtGui')
 QtWidgets = DelayedModule('QtGui')
-QtPrintSupport = DelayedModule('QtGui')
 
 qt_api = 'PyQt6'
 
@@ -79,12 +70,9 @@ if qt_api == 'PyQt6':
         QtCore.qt_slot = QtCore.pyqtSlot
         QtCore.qt_signal = QtCore.pyqtSignal
         QtCore.qt_property = QtCore.pyqtProperty
-        QtModel = DelayedModule('QtCore')
         QtWidgets = DelayedModule('QtWidgets')
-        QtPrintSupport = DelayedModule('QtPrintSupport')
         QtQml = DelayedModule('QtQml')
         QtQuick = DelayedModule('QtQuick')
-        #QtWebKit = DelayedQtWebEngineWidgets('QtWebEngineWidgets')
         QtWebKit = DelayedModule('QtWebKitWidgets')
         QtQuickWidgets = DelayedModule('QtQuickWidgets')
         is_deleted = sip.isdeleted
@@ -142,26 +130,6 @@ def qtranslate(string_to_translate, n=-1, msgctxt=None):
         n,
     ))
 
-def qmsghandler(msg_type, msg_log_context, msg_string):
-    """ Logging handler to redirect messages from Qt to Python """
-    log_levels = {
-        0: logging.DEBUG,
-        1: logging.WARN,
-        2: logging.ERROR,
-        3: logging.FATAL,
-    }
-    log_level = log_levels.get(msg_type)
-    if log_level is not None:
-        LOGGER.log(log_level, msg_string)
-    else:
-        LOGGER.log(logging.ERROR, 'Received message with unknown log level')
-
-
-def jsonvalue_to_py(obj=None):
-    """Convert QJsonValue to python equivalent"""
-    if isinstance(obj, QtCore.QJsonValue):
-        return obj.toVariant()
-    return obj
 
 __all__ = [
     QtCore.__name__,
@@ -171,6 +139,5 @@ __all__ = [
     py_to_variant.__name__,
     valid_variant.__name__,
     variant_to_py.__name__,
-    jsonvalue_to_py.__name__,
 ]
 
