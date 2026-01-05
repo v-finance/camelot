@@ -32,7 +32,6 @@ import logging
 import typing
 
 from camelot.admin.icon import Icon
-from camelot.core.qt import QtWidgets, QtGui
 from camelot.core.serializable import DataclassSerializable
 from camelot.core.utils import ugettext_lazy
 
@@ -90,27 +89,6 @@ the default mode.
         for mode in self.modes:
             assert isinstance(mode, type(self))
 
-    def render( self, parent ):
-        """
-        In case this mode is a leaf (no containing sub modes), a :class:`QtWidgets.QAction`
-        will be created (or `QtWidgets.QMenu` in case this modes has sub modes defined)
-        that can be used to enable the widget to trigger the action in a specific mode.
-        The data attribute of the action will contain the value of the mode.
-        In case has underlying sub modes, a `QtWidgets.QMenu` will be created to which
-        the rendered sub modes can be attached.
-        :return: a :class:`QtWidgets.QAction` or :class:`QtWidgets.QMenu` to use this mode
-        """
-        if self.modes:
-            menu = QtWidgets.QMenu(str(self.verbose_name), parent=parent)
-            parent.addMenu(menu)
-            return menu
-        else:
-            action = QtGui.QAction( parent )
-            action.setData( self.value )
-            action.setText( str(self.verbose_name) )
-            action.setEnabled(self.enabled)
-            action.setIconVisibleInMenu(False)
-            return action
 
 @dataclass
 class State(DataclassSerializable):
