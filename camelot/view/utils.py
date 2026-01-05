@@ -99,8 +99,8 @@ def string_from_string(s):
     return str(s)
 
 def bool_from_string(s):
-    if s is None: raise ParsingError()
-    if s.lower() not in ['false', 'true']: raise ParsingError()
+    if s is None: raise ParsingError("None is not a valid boolean")
+    if s.lower() not in ['false', 'true']: raise ParsingError("{} is not a valid boolean".format(s.lower()))
     return eval(s.lower().capitalize())
 
 def _insert_string(original, new, pos):
