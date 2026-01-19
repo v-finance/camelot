@@ -109,9 +109,12 @@ class OpenFormView(AbstractCrudView):
         model_context.selection_count = 1
 
     def _minimum_columns(self, admin, fa):
-        # Make rich text fields span 4 columns minimum
+        # Make rich text fields span 3 columns minimum,
+        # not to wide to avoid overlap with pdf preview,
+        # but more or less wide enough for the toolbar
+        # buttons
         if fa.get('delegate', None) == RichTextDelegate:
-           return 4
+           return 3
         # Use # of columns for One2Many fields
         target = fa.get('target', None)
         if target is not None:
