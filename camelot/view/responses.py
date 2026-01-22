@@ -13,7 +13,6 @@ class AbstractResponse(NamedDataclassSerializable):
     """
     Serialiazable Responses the model can send to the UI
     """
-
     pass
 
 

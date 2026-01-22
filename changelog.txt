@@ -1,6 +1,0 @@
-
-Changelog
----------
-
-  * Port to sqlalchemy 0.5.x
-  * A busy indicator in the status bar

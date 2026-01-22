@@ -34,7 +34,6 @@ import enum
 import logging
 
 from .qt import QtCore, qtranslate
-from sqlalchemy import sql
 
 logger = logging.getLogger('camelot.core.utils')
 
@@ -47,18 +46,6 @@ _translations_ = {}
 def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
-
-def load_translations(connectable):
-    """Fill the global dictionary of translations with all data from the
-    database, to be able to do fast gui thread lookups of translations"""
-    language = str(QtCore.QLocale().name())
-    from camelot.model.i18n import Translation
-    query = sql.select([Translation.source, Translation.value],
-                       whereclause = sql.and_(Translation.language==language,
-                                              Translation.value!=None,
-                                              Translation.value!=u''))
-    for source, value in connectable.execute(query):
-        _translations_[source] = value
 
 def ugettext(string_to_translate, msgctxt=None):
     """Translate the string_to_translate to the language of the current locale.
@@ -79,19 +66,6 @@ def ugettext(string_to_translate, msgctxt=None):
 
     return result
 
-def dgettext(domain, message):
-    """Like ugettext but look the message up in the specified domain.
-    This uses the Translation table.
-    """
-    assert isinstance(message, str)
-    from camelot.model.i18n import Translation
-    from sqlalchemy import sql
-    query = sql.select( [Translation.value],
-                          whereclause = sql.and_(Translation.language.like('%s%%'%domain),
-                                                 Translation.source==message) ).limit(1)
-    for translation in Translation.query.session.execute(query):
-        return translation[0]
-    return message
 
 class ugettext_lazy(object):
     """Like :function:`ugettext`, but delays the translation until the string

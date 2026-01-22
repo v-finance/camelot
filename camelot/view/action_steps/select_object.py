@@ -27,10 +27,11 @@
 #
 #  ============================================================================
 
-
 from dataclasses import dataclass, field
+import typing
 
 from camelot.core.naming import initial_naming_context, NameNotFoundException
+from camelot.admin.action.base import Mode
 
 from .item_view import OpenTableView
 
@@ -39,7 +40,7 @@ class SelectObjects(OpenTableView):
     """Select one or more object from a query.  The `yield` of this action step
     return a list of objects.
 
-    :param admin: a :class:`camelot.admin.object_admin.ObjectAdmin` object
+    :param admin: a :class:`camelot.admin.AbstractAdmin` object
     :param search_text: a default string on which to search for in the selection
         dialog
     :param value: a query or a list of object from which the selection should
@@ -48,11 +49,16 @@ class SelectObjects(OpenTableView):
 
     verbose_name: str = field(init=False)
     single: bool = field(init=False)
+    # modes that can be used to terminate the action step,
+    # where mode None is uses when the step finishes with
+    # selecting the objects
+    modes: typing.List[Mode] = field(default_factory=list)
 
     blocking: bool = True
 
     def __post_init__(self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
+        self.list_action = None
         self.single = False
         self.verbose_name = str(admin.get_verbose_name_plural())
         self.action_states = list()

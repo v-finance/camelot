@@ -27,16 +27,18 @@
 #
 #  ============================================================================
 
+import logging
+import traceback
+import typing
+import sys
+import tblib
+import io
+from camelot.core.exception import UserException
 from dataclasses import dataclass
 
-import logging
-import typing
-
-from camelot.core.utils import ugettext_lazy
 from camelot.admin.action import ActionStep
+from camelot.core.utils import ugettext_lazy
 from ...core.serializable import DataclassSerializable
-from camelot.core.backend import cpp_action_step
-
 
 _detail_format = u'Update Progress {0:03d}/{1:03d} {2.text} {2.detail}'
 
@@ -47,21 +49,11 @@ class PushProgressLevel(ActionStep, DataclassSerializable):
     verbose_name: str
     blocking: bool = False
 
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        # Always send to C++ (even if gui_context_name comes from python)
-        cpp_action_step(gui_context_name, 'PushProgressLevel', serialized_step)
-
 
 @dataclass
 class PopProgressLevel(ActionStep, DataclassSerializable):
 
     blocking: bool = False
-
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        # Always send to C++ (even if gui_context_name comes from python)
-        cpp_action_step(gui_context_name, 'PopProgressLevel', serialized_step)
 
 
 @dataclass
@@ -89,6 +81,7 @@ updated.
 :param enlarge: increase the size of the window to two thirds of the screen,
     useful when there are a lot of details displayed.
 :param detail_level: maps to the loglevels from the logging module and indicates the cause for the message.
+:param exc_info: contained exception traceback information to be displayed in the details.
 """
 
     value: typing.Optional[int] = None
@@ -101,16 +94,40 @@ updated.
     blocking: bool = False
     cancelable: bool = True
     detail_level: int = logging.INFO # To be determined - we currently map to the loglevels from the logging module
+    exc_info: typing.Optional[str] = None
 
     def __str__(self):
         return _detail_format.format(self.value or 0, self.maximum or 0, self)
 
     @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        # Always send to C++ (even if gui_context_name comes from python)
-        return cpp_action_step(gui_context_name, 'UpdateProgress', serialized_step)
+    def from_user_exception(cls, message: str, exception: UserException) -> 'UpdateProgress':
+        exception_info = f"{message}\nException Title: {exception.title}\n"
+        if exception.text:
+            exception_info += f"Message: {exception.text}\n"
+        if exception.resolution:
+            exception_info += f"Resolution: {exception.resolution}\n"
+        if exception.detail:
+            exception_info += f"Details: {exception.detail}\n"
+
+        return cls(
+            detail=exception_info,
+            detail_level=logging.WARNING
+        )
+
+    @classmethod
+    def from_exception(cls, message: str, exception: Exception) -> 'UpdateProgress':
+        if isinstance(exception, UserException):
+            return cls.from_user_exception(message, exception)
+        else:
+            (exc_type, exc_value, exc_traceback) = sys.exc_info()
+            exc_traceback = tblib.Traceback(exc_traceback)
+            sio = io.StringIO()
+            traceback.print_exception(etype=exc_type, value=exc_value, tb=exc_traceback, file=sio)
+            traceback_print = sio.getvalue()
+            sio.close()
+            return cls(detail=f"{message}\n{traceback_print}", detail_level=logging.ERROR)
+
 
 @dataclass
 class SetProgressAnimate(ActionStep, DataclassSerializable):
-
     animate: bool

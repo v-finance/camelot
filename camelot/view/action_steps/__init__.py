@@ -33,7 +33,7 @@ from .application import (
     StopProfiler,
 )
 from .change_object import ChangeObject, ChangeObjects, QmlChangeObjects
-from .form_view import OpenFormView, HighlightForm
+from .form_view import OpenFormView, HighlightForm, CloseMenu
 from .gui import (
     CloseView, MessageBox, Refresh, SelectItem
 )
@@ -41,8 +41,7 @@ from .item_view import (
     Sort, OpenTableView, UpdateTableView, ClearSelection, SetSelection,
     RefreshItemView, OpenQmlTableView, ToFirstRow, ToLastRow
 )
-from .open_file import ( OpenFile, OpenStream,
-                         OpenString)
+from .open_file import (OpenFile, ClientDirectoryInfo)
 from .orm import (
     CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
     UpdateObjects
@@ -60,7 +59,9 @@ __all__ = [
     ChangeObjects.__name__,
     ChangeSelection.__name__,
     ClearSelection.__name__,
+    ClientDirectoryInfo.__name__,
     SetSelection.__name__,
+    CloseMenu.__name__,
     CloseView.__name__,
     Completion.__name__,
     CompletionValue.__name__,
@@ -79,8 +80,6 @@ __all__ = [
     OpenFile.__name__,
     OpenFormView.__name__,
     HighlightForm.__name__,
-    OpenStream.__name__,
-    OpenString.__name__,
     OpenTableView.__name__,
     OpenQmlTableView.__name__,
     QmlChangeObjects.__name__,

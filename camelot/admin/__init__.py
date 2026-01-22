@@ -26,9 +26,64 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
+from abc import ABC, abstractmethod
+from typing import List, Optional, Tuple, Union
 
-from .filter_admin import FilterValueAdmin
+from camelot.admin.action import State
+from camelot.admin.admin_route import AdminRoute, Route, RouteWithRenderHint
+from camelot.core.item_model.proxy import AbstractModelProxy
+from camelot.core.utils import ugettext_lazy
 
-__all__ = [
-    FilterValueAdmin.__name__,
-]
+class AbstractAdmin(AdminRoute, ABC):
+
+    @abstractmethod
+    def get_admin_route(self) -> Route:
+        """Return the admin route for this admin."""
+
+    @abstractmethod
+    def get_verbose_name(self) -> Union[str, ugettext_lazy]:
+        """Return the verbose name for this admin."""
+
+    @abstractmethod
+    def get_verbose_name_plural(self) -> Union[str, ugettext_lazy]:
+        """Return the verbose name plural for this admin."""
+
+    @abstractmethod
+    def get_columns(self) -> List[str]:
+        """Return the list of column field names for this admin."""
+
+    @abstractmethod
+    def get_static_field_attributes(self, field_names):
+        """Return the static field attributes for the given field names."""
+
+    @abstractmethod
+    def get_list_action(self) -> Route:
+        """Return the list action route for this admin."""
+
+    @abstractmethod
+    def get_proxy(self, objects) -> AbstractModelProxy:
+        """Return a model proxy for the given objects."""
+
+    @abstractmethod
+    def _get_search_fields(self, substring):
+        """Return the fields to search for the given substring."""
+
+    @abstractmethod
+    def get_list_actions(self):
+        """Return the list actions for this admin."""
+
+    @abstractmethod
+    def get_filters(self):
+        """Return the filters for this admin."""
+
+    @abstractmethod
+    def get_list_toolbar_actions(self):
+        """Return the list toolbar actions for this admin."""
+
+    @abstractmethod
+    def _set_search_filter(self, proxy: AbstractModelProxy, actions: List[RouteWithRenderHint], search_text: Optional[str]):
+        """Set the search filter on the given proxy based on the search text."""
+
+    @abstractmethod
+    def _set_filters(self, action_states:List[Tuple[Route, State]], proxy: AbstractModelProxy):
+        """Set the filters on the given proxy based on the action states."""

@@ -31,22 +31,18 @@
 Various ``ActionStep`` subclasses to create and manipulate a form view in the
 context of the `Qt` model-view-delegate framework.
 """
-from typing import Dict, Optional
 from dataclasses import dataclass, field
-import json
+from typing import Dict, Optional
 
-from ..controls.formview import FormView
+from .item_view import AbstractCrudView
 from ..forms import AbstractForm
-from ..workspace import show_top_level
-from ...admin.action.base import ActionStep, RenderHint
+from ...admin.action.base import ActionStep
 from ...admin.admin_route import Route, AdminRoute
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.serializable import DataclassSerializable
-from ...view.utils import get_settings_group
-from ...core.backend import get_root_backend
-from .item_view import AbstractCrudView
 
+from vfinance.view.controls.delegates.richtextdelegate import RichTextDelegate
 
 @dataclass
 class OpenFormView(AbstractCrudView):
@@ -90,6 +86,8 @@ class OpenFormView(AbstractCrudView):
         self.fields = [[f, {
             'hide_title':fa.get('hide_title', False),
             'verbose_name':str(fa['name']),
+            'column_span': fa.get('column_span', 1),
+            'minimum_columns': self._minimum_columns(admin, fa),
             }] for f, fa in admin.get_fields()]
         self.form = admin.get_form_display()
         self.admin_route = admin.get_admin_route()
@@ -110,6 +108,25 @@ class OpenFormView(AbstractCrudView):
         model_context.current_row = self.row
         model_context.selection_count = 1
 
+    def _minimum_columns(self, admin, fa):
+        # Make rich text fields span 3 columns minimum,
+        # not to wide to avoid overlap with pdf preview,
+        # but more or less wide enough for the toolbar
+        # buttons
+        if fa.get('delegate', None) == RichTextDelegate:
+           return 3
+        # Use # of columns for One2Many fields
+        target = fa.get('target', None)
+        if target is not None:
+            related_admin = fa.get('admin', admin.get_related_admin(target))
+            direction = fa.get('direction', 'onetomany')
+            python_type = fa.get('python_type')
+            if direction.endswith('many') and python_type == list and related_admin:
+                num_columns = 0
+                for field_name in related_admin.get_columns():
+                    num_columns += related_admin.get_field_attributes(field_name).get('column_span', 1)
+                return num_columns
+
     @staticmethod
     def _add_actions(admin, actions):
         actions.extend(admin.get_form_actions(None))
@@ -119,39 +136,18 @@ class OpenFormView(AbstractCrudView):
         """Use this method to get access to the admin in unit tests"""
         return initial_naming_context.resolve(self.admin_route)
 
-    @classmethod
-    def render(self, step):
-        form = FormView()
-        model = get_root_backend().create_model(get_settings_group(step['admin_route']), form)
-        model.setValue(step['model_context_name'])
-        columns = [ fn for fn, fa in step['fields']]
-        model.setColumns(columns)
-        form.setup(
-            title=step['title'], admin_route=step['admin_route'],
-            close_route=tuple(step['close_route']), model=model,
-            fields=step['fields'], form_display=step['form'],
-            index=step['row']
-        )
-        form.set_actions([(rwr['route'], RenderHint._value2member_map_[rwr['render_hint']]) for rwr in step['actions']])
-        for action_route, action_state in step['action_states']:
-            form.set_action_state(form, tuple(action_route), action_state)
-        return form
+@dataclass
+class HighlightField(DataclassSerializable):
 
-    @classmethod
-    def gui_run(cls, gui_run, gui_context_name, serialized_step):
-        step = json.loads(serialized_step)
-        formview = cls.render(step)
-        if formview is not None:
-            formview.setObjectName('form.{}.{}'.format(
-                step['admin_route'], id(formview)
-            ))
-            show_top_level(formview, gui_context_name, step['form_state'])
+    label: str = None # The label of the field to search for
+    action_route: Optional[Route] = None # Field action to highlight
+    action_mode: Optional[str] = None # The mode of the action to highlight
 
 @dataclass
 class HighlightForm(ActionStep, DataclassSerializable):
 
     tab: Optional[str] = None # The form tab
-    label: Optional[str] = None # A field label to highlight
+    label: Optional[HighlightField] = None # A field label to highlight
     label_delegate: bool = False # Highlight delegate associated with label
     label_delegate_focus: bool = False # Focus delegate associated with label
     table_label: Optional[str] = None # Label of the table for table_row and table_column
@@ -160,8 +156,15 @@ class HighlightForm(ActionStep, DataclassSerializable):
     action_route: Optional[Route] = None # Action to highlight
     action_menu_route: Optional[Route] = None # Menu to open
     action_menu_mode: Optional[str] = None # Menu mode (verbose name) to highlight
+    select_all: bool = False
+    select_row: Optional[int] = None
 
     #action_cls_state: Optional[?] = None
     #group_box: Optional[?] = None
     form_state: Optional[str] = None
     field_name: Optional[str] = None
+
+@dataclass
+class CloseMenu(ActionStep, DataclassSerializable):
+
+    action_menu_route: Optional[Route] = None # Menu to close

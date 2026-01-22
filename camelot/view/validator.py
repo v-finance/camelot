@@ -1,49 +1,31 @@
-#  ============================================================================
-#
-#  Copyright (C) 2007-2016 Conceptive Engineering bvba.
-#  www.conceptive.be / info@conceptive.be
-#
-#  Redistribution and use in source and binary forms, with or without
-#  modification, are permitted provided that the following conditions are met:
-#      * Redistributions of source code must retain the above copyright
-#        notice, this list of conditions and the following disclaimer.
-#      * Redistributions in binary form must reproduce the above copyright
-#        notice, this list of conditions and the following disclaimer in the
-#        documentation and/or other materials provided with the distribution.
-#      * Neither the name of Conceptive Engineering nor the
-#        names of its contributors may be used to endorse or promote products
-#        derived from this software without specific prior written permission.
-#  
-#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-#  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-#  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#  ============================================================================
-
-""":class:`QtGui.QValidator` subclasses to be used in the
-editors or other widgets.
-"""
 import dataclasses
 import re
 import stdnum.util
-from typing import Optional
 
 from camelot.core.exception import UserException
 from camelot.core.serializable import DataclassSerializable
 from camelot.core.utils import ugettext
-from camelot.data.types import zip_code_types
 
 from dataclasses import dataclass, InitVar
+from enum import Enum
 from sqlalchemy.ext import hybrid
 from stdnum.exceptions import InvalidFormat
 
+from typing import Optional
+
+class ValidatorType(str, Enum):
+
+    NONE = "NoValidator"
+    DATE = "DateValidator"
+    DATETIME = "DateTimeValidator"
+    REGEX = "RegexValidator"
+    NUMERIC = "NumericValidator"
+    INTEGER = "IntegerValidator"
+    FLOAT = "FloatValidator"
+    PATH = "PathValidator"
+
+    def __str__(self) -> str:
+        return self.value
 
 @dataclass(frozen=True)
 class ValidatorState(DataclassSerializable):
@@ -123,22 +105,6 @@ class ValidatorState(DataclassSerializable):
             else:
                 yield message.format(error_msg)
 
-class AbstractValidator:
-    """
-    Validators must be default constructable.
-    Validators can have a state which is set by set_state.
-    """
-
-    validators = dict()
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.validators[cls.__name__] = cls
-
-
-class DateValidator(AbstractValidator):
-    pass
-
 
 @dataclass(frozen=True)
 class RegexValidatorState(ValidatorState):
@@ -194,54 +160,3 @@ class RegexValidatorState(ValidatorState):
                         return re.sub(m.re, repl, m.string)
             return multi_repl
         return regex_repl
-
-class RegexValidator(AbstractValidator):
-    pass
-
-
-# TODO: once moved to the vFinance repo, the zip_code_types can be
-# refactored as identifier types and this ZipcodeValidatorState
-# will become superfluous (as the IdentifierValidatorState can then be used).
-@dataclass(frozen=True)
-class ZipcodeValidatorState(RegexValidatorState):
-
-    deletechars: str = ' -./#,'
-    to_upper: bool = True
-
-    @classmethod
-    def for_type(cls, zip_code_type, value):
-        state = dict()
-        if zip_code_type in zip_code_types:
-            zip_code_type = zip_code_types[zip_code_type]
-            state.update(
-                regex=zip_code_type.regex,
-                format_repl=zip_code_type.repl,
-                compact_repl=zip_code_type.compact_repl,
-                example=zip_code_type.example,
-            )
-        return cls.for_value(value, **state)
-
-    @classmethod
-    def for_city(cls, city):
-        if city is not None:
-            return cls.for_type(city.zip_code_type, city.code)
-        return cls()
-
-    @classmethod
-    def for_addressable(cls, addressable):
-        if addressable is not None:
-            if addressable.city is not None:
-                return cls.for_type(addressable.city.zip_code_type, addressable.zip_code)
-            return cls.for_value(addressable.zip_code)
-        return cls()
-
-    @classmethod
-    def hint_for_city(cls, city):
-        if (state := cls.for_city(city)) is not None and \
-           (example := state.example) is not None:
-            return 'e.g: {}'.format(example)
-
-    @classmethod
-    def hint_for_addressable(cls, addressable):
-        if addressable is not None:
-            return cls.hint_for_city(addressable.city)
