@@ -99,8 +99,8 @@ def string_from_string(s):
     return str(s)
 
 def bool_from_string(s):
-    if s is None: raise ParsingError()
-    if s.lower() not in ['false', 'true']: raise ParsingError()
+    if s is None: raise ParsingError("None is not a valid boolean")
+    if s.lower() not in ['false', 'true']: raise ParsingError("{} is not a valid boolean".format(s.lower()))
     return eval(s.lower().capitalize())
 
 def _insert_string(original, new, pos):
@@ -223,20 +223,6 @@ def richtext_to_string(value):
     if value is None:
         return u''
     return u'\n'.join([line for line in text_from_richtext(value)])
-
-def resize_widget_to_screen( widget_or_window, fraction = 0.75 ):
-    """Resize a widget to fill a certain fraction of the screen
-
-    :param widget: the widget to resize
-    :param fraction: the fraction of the screen to fill after the resize
-    """
-    screen = widget_or_window.screen()
-    available_geometry = screen.availableGeometry()
-    # use the size of the screen instead to set the dialog size
-    widget_or_window.resize(
-        available_geometry.width() * fraction, 
-        available_geometry.height() * fraction
-    )
 
 def get_settings_group(admin_route):
     assert len(admin_route) >= 2
