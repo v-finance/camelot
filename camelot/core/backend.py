@@ -1,7 +1,7 @@
 import logging
 import json
 
-from camelot.core.qt import QtWidgets, QtCore
+from camelot.core.qt import QtCore
 from ..view.requests import AbstractRequest
 from .singleton import QSingleton
 
@@ -16,7 +16,7 @@ def get_root_backend():
     """
     global _backend
     if _backend is None:
-        app = QtWidgets.QApplication.instance()
+        app = QtCore.QCoreApplication.instance()
         _backend = app.findChild(QtCore.QObject, 'cpp_root_backend')
         assert _backend
     return _backend
@@ -30,15 +30,6 @@ def get_window():
         _window = get_root_backend().window()
         assert _window
     return _window
-
-def is_cpp_gui_context_name(gui_context_name):
-    """
-    Check if a GUI context name was created in C++. This is the case when the name starts with 'cpp_gui_context'.
-    """
-    if not len(gui_context_name):
-        return False
-    return gui_context_name[0] == 'cpp_gui_context'
-
 
 def cpp_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     response = get_root_backend().action_step(gui_context_name, name, step)

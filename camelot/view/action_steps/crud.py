@@ -72,13 +72,13 @@ class SetColumns(ActionStep, DataclassSerializable):
         delegate_type = fa['delegate'].delegate_type
         attrs = {}
         if delegate_type in (DelegateType.ENUM, DelegateType.STATUS):
-            attrs = filter_attributes(fa, ['action_routes', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'column_span', 'sort'])
             # TODO: no specifics about the delegate implementation should leak here, to be reworked.
             attrs['choices'] = fa['delegate'].get_choices_data(
                 fa['types'].get_choices()
             )
         elif delegate_type == DelegateType.COMBO_BOX:
-            attrs = filter_attributes(fa, ['action_routes', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'column_span', 'sort'])
         elif delegate_type in (DelegateType.MANY2ONE, DelegateType.FILE):
             attrs = filter_attributes(fa, ['action_routes', 'column_span'])
         elif delegate_type in (DelegateType.DATE, DelegateType.DATETIME):
@@ -92,8 +92,6 @@ class SetColumns(ActionStep, DataclassSerializable):
             attrs = filter_attributes(fa, ['calculator', 'decimal', 'action_routes', 'single_step', 'column_span'])
         elif delegate_type == DelegateType.INTEGER:
             attrs = filter_attributes(fa, ['calculator', 'decimal', 'single_step', 'column_span'])
-        elif delegate_type == DelegateType.LABEL:
-            attrs = filter_attributes(fa, ['text', 'field_name'])
         elif delegate_type == DelegateType.LOCAL_FILE:
             attrs = filter_attributes(fa, ['directory', 'save_as', 'file_filter', 'column_span'])
         elif delegate_type == DelegateType.MONTHS:
