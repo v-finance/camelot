@@ -82,16 +82,16 @@ class SetColumns(ActionStep, DataclassSerializable):
         elif delegate_type in (DelegateType.MANY2ONE, DelegateType.FILE):
             attrs = filter_attributes(fa, ['action_routes', 'column_span'])
         elif delegate_type in (DelegateType.DATE, DelegateType.DATETIME):
-            attrs = filter_attributes(fa, ['nullable', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'nullable', 'column_span'])
             if delegate_type == DelegateType.DATETIME:
                 if 'editable' in fa:
                     attrs['editable'] = fa['editable']
         elif delegate_type == DelegateType.DB_IMAGE:
-            attrs = filter_attributes(fa, ['preview_width', 'preview_height', 'max_size', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'preview_width', 'preview_height', 'max_size', 'column_span'])
         elif delegate_type == DelegateType.FLOAT:
-            attrs = filter_attributes(fa, ['calculator', 'decimal', 'action_routes', 'single_step', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'calculator', 'decimal', 'action_routes', 'single_step', 'column_span'])
         elif delegate_type == DelegateType.INTEGER:
-            attrs = filter_attributes(fa, ['calculator', 'decimal', 'single_step', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'calculator', 'decimal', 'single_step', 'column_span'])
         elif delegate_type == DelegateType.LOCAL_FILE:
             attrs = filter_attributes(fa, ['directory', 'save_as', 'file_filter', 'column_span'])
         elif delegate_type == DelegateType.MONTHS:
@@ -112,7 +112,7 @@ class SetColumns(ActionStep, DataclassSerializable):
         elif delegate_type in (DelegateType.PLAIN_TEXT, DelegateType.LANGUAGE):
             attrs = filter_attributes(fa, ['length', 'echo_mode', 'column_width', 'action_routes', 'validator_type', 'completer_type', 'column_span'])
         elif delegate_type in (DelegateType.TEXT_EDIT, DelegateType.NOTE):
-            attrs = filter_attributes(fa, ['length', 'editable', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'length', 'editable', 'column_span'])
         return attrs
 
 @dataclass
