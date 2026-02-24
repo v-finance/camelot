@@ -89,7 +89,7 @@ class SetColumns(ActionStep, DataclassSerializable):
         elif delegate_type == DelegateType.DB_IMAGE:
             attrs = filter_attributes(fa, ['action_routes', 'preview_width', 'preview_height', 'max_size', 'column_span'])
         elif delegate_type == DelegateType.FLOAT:
-            attrs = filter_attributes(fa, ['action_routes', 'calculator', 'decimal', 'action_routes', 'single_step', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'calculator', 'decimal', 'single_step', 'column_span'])
         elif delegate_type == DelegateType.INTEGER:
             attrs = filter_attributes(fa, ['action_routes', 'calculator', 'decimal', 'single_step', 'column_span'])
         elif delegate_type == DelegateType.LOCAL_FILE:
