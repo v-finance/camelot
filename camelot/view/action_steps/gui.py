@@ -138,6 +138,8 @@ class MessageBox( ActionStep, DataclassSerializable ):
         button = result.get("button")
         if button is None:
             return
+        if isinstance(button, str):
+            return QtWidgets.QMessageBox.StandardButton[button]
         return QtWidgets.QMessageBox.StandardButton(button)
 
     @classmethod
