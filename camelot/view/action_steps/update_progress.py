@@ -122,7 +122,7 @@ updated.
             (exc_type, exc_value, exc_traceback) = sys.exc_info()
             exc_traceback = tblib.Traceback(exc_traceback)
             sio = io.StringIO()
-            traceback.print_exception(etype=exc_type, value=exc_value, tb=exc_traceback, file=sio)
+            traceback.print_exception(exc_value, file=sio)
             traceback_print = sio.getvalue()
             sio.close()
             return cls(detail=f"{message}\n{traceback_print}", detail_level=logging.ERROR)
