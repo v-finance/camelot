@@ -31,7 +31,6 @@ import logging
 import traceback
 import typing
 import sys
-import tblib
 import io
 from camelot.core.exception import UserException
 from dataclasses import dataclass
@@ -119,8 +118,7 @@ updated.
         if isinstance(exception, UserException):
             return cls.from_user_exception(message, exception)
         else:
-            (exc_type, exc_value, exc_traceback) = sys.exc_info()
-            exc_traceback = tblib.Traceback(exc_traceback)
+            (_, exc_value, _) = sys.exc_info()
             sio = io.StringIO()
             traceback.print_exception(exc_value, file=sio)
             traceback_print = sio.getvalue()
