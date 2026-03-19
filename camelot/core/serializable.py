@@ -2,15 +2,9 @@ import dataclasses
 import datetime
 import functools
 import io
-import json
 import base64
 
-with_ujson = False
-try:
-    import ujson
-    with_ujson = True
-except ImportError:
-    pass
+import orjson
 
 from camelot.core.qt import QtCore, QtGui
 from enum import Enum
@@ -34,7 +28,7 @@ class Serializable(object):
         """
         Read the state of the object from a binary stream
         """
-        state = json.load(stream)
+        state = orjson.loads(stream.read())
         self.__dict__.update(state)
 
     def _to_bytes(self):
@@ -70,83 +64,46 @@ class Serializable(object):
         The purpose of this method is to make unittesting easier, it is not
         intended for use in production code.
         """
-        return json.loads(self._to_bytes())
+        return orjson.loads(self._to_bytes())
         
 
+def orjson_default(obj):
+    print("Default Serializing object of type:", type(obj))
+    if isinstance(obj, ugettext_lazy):
+        return str(obj)
+    if isinstance(obj, QtGui.QKeySequence):
+        print("Serializing key sequence:", obj, 'to', obj.toString())
+        return obj.toString()
+    if isinstance(obj, Enum):
+        return obj.value
+    if isinstance(obj, QtCore.QJsonValue):
+        return obj.toVariant()
+    if isinstance(obj, QtGui.QImage):
+        byte_array = QtCore.QByteArray()
+        buffer = QtCore.QBuffer(byte_array)
+        buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
+        obj.save(buffer, "PNG");
+        return base64.b64encode(byte_array).decode()
+        # FIXME: Remove this when all classes are serializable.
+        #        Currently needed to serialize some fields
+        #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
+    if isinstance(obj, DataclassSerializable):
+        return obj.asdict(obj)
+    if isinstance(obj, (datetime.date, datetime.datetime)):
+        raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
+    raise TypeError
 
 
-if with_ujson:
+class DataclassEncoderOrjson:
 
-    def ujson_default(obj):
-        if isinstance(obj, ugettext_lazy):
-            return str(obj)
-        if isinstance(obj, QtGui.QKeySequence):
-            return obj.toString()
-        if isinstance(obj, QtGui.QKeySequence.StandardKey):
-            return QtGui.QKeySequence(obj).toString()
-        if isinstance(obj, Enum):
-            return obj.value
-        if isinstance(obj, QtCore.QJsonValue):
-            return obj.toVariant()
-        if isinstance(obj, QtGui.QImage):
-            byte_array = QtCore.QByteArray()
-            buffer = QtCore.QBuffer(byte_array)
-            buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
-            obj.save(buffer, "PNG");
-            return base64.b64encode(byte_array).decode()
-         # FIXME: Remove this when all classes are serializable.
-         #        Currently needed to serialize some fields
-         #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
-        if isinstance(obj, DataclassSerializable):
-            return obj.asdict(obj)
-        if isinstance(obj, (datetime.date, datetime.datetime)):
-            raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
-        return ujson.dumps(obj, default=ujson_default)
+    def encode(self, obj):
+        return orjson.dumps(obj, default=orjson_default, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_PASSTHROUGH_SUBCLASS)
+
+    def iterencode(self, obj):
+        yield orjson.dumps(obj, default=orjson_default, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_PASSTHROUGH_SUBCLASS)
 
 
-    class DataclassEncoderUjson:
-
-        def encode(self, obj):
-            return ujson.dumps(obj, default=ujson_default)
-
-        def iterencode(self, obj):
-            yield ujson.dumps(obj, default=ujson_default)
-
-
-    json_encoder = DataclassEncoderUjson()
-
-else:
-
-    class DataclassEncoder(json.JSONEncoder):
-
-        def default(self, obj):
-            if isinstance(obj, ugettext_lazy):
-                return str(obj)
-            if isinstance(obj, QtGui.QKeySequence):
-                return obj.toString()
-            if isinstance(obj, QtGui.QKeySequence.StandardKey):
-                return QtGui.QKeySequence(obj).toString()
-            if isinstance(obj, Enum):
-                return obj.value
-            if isinstance(obj, QtCore.QJsonValue):
-                return obj.toVariant()
-            if isinstance(obj, QtGui.QImage):
-                byte_array = QtCore.QByteArray()
-                buffer = QtCore.QBuffer(byte_array)
-                buffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
-                obj.save(buffer, "PNG");
-                return base64.b64encode(byte_array).decode()
-             # FIXME: Remove this when all classes are serializable.
-             #        Currently needed to serialize some fields
-             #        (e.g. RouteWithRenderHint) from SetColumns._to_dict().
-            if isinstance(obj, DataclassSerializable):
-                return obj.asdict(obj)
-            if isinstance(obj, (datetime.date, datetime.datetime)):
-                raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
-            return json.JSONEncoder.default(self, obj)
-
-
-    json_encoder = DataclassEncoder()
+json_encoder = DataclassEncoderOrjson()
 
 
 @functools.lru_cache(None)
@@ -186,7 +143,7 @@ class DataclassSerializable(Serializable):
     def write_object(self, stream):
         # for chunk in json_encoder.iterencode(self.asdict(self)):
         #     stream.write(chunk.encode())
-        stream.write(json_encoder.encode(self.asdict(self)).encode())
+        stream.write(json_encoder.encode(self.asdict(self)))
         # TODO: favored encode() over iterencode(), as the latter is actually slower for small objects.
         #   encode() is a thin wrapper around json.dumps implemented in C (CPython’s json module uses C accelerators when possible),
         #   while iterencode() may fall back to calling Python-level code more often and creating many intermediate small strings.
