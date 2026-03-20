@@ -47,7 +47,7 @@ def set_translation(source, value):
     """Store a tranlation in the global translation dictionary"""
     _translations_[source] = value
 
-def ugettext(string_to_translate, msgctxt=None):
+def ugettext(string_to_translate, msgctxt=None, cardinality=-1):
     """Translate the string_to_translate to the language of the current locale.
     This is a two step process.  First the function will try to get the
     translation out of the Translation entity, if this is not successfull, the
@@ -56,7 +56,7 @@ def ugettext(string_to_translate, msgctxt=None):
     assert isinstance(string_to_translate, str)
     result = _translations_.get(string_to_translate, None)
     if not result:
-        result = qtranslate( string_to_translate, msgctxt=msgctxt)
+        result = qtranslate( string_to_translate, msgctxt=msgctxt, n=cardinality)
         #print string_to_translate, result
         # try one more time with string_to_translate capitalized
         if result is string_to_translate:
@@ -73,14 +73,15 @@ class ugettext_lazy(object):
     the string.
     """
 
-    def __init__(self, string_to_translate, *args, **kwargs):
+    def __init__(self, string_to_translate, *args, cardinality=-1, **kwargs):
         assert isinstance(string_to_translate, str)
         self._string_to_translate = string_to_translate
         self._args = args
         self._kwargs = kwargs
+        self._cardinality = cardinality
 
     def __str__(self):
-        return ugettext(self._string_to_translate).format(*self._args, **self._kwargs)
+        return ugettext(self._string_to_translate, cardinality=self._cardinality).format(*self._args, **self._kwargs)
 
     def __eq__(self, other_string):
         if isinstance(other_string, str):
