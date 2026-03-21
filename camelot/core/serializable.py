@@ -68,11 +68,9 @@ class Serializable(object):
         
 
 def orjson_default(obj):
-    print("Default Serializing object of type:", type(obj))
     if isinstance(obj, ugettext_lazy):
         return str(obj)
     if isinstance(obj, QtGui.QKeySequence):
-        print("Serializing key sequence:", obj, 'to', obj.toString())
         return obj.toString()
     if isinstance(obj, Enum):
         return obj.value
@@ -91,6 +89,10 @@ def orjson_default(obj):
         return obj.asdict(obj)
     if isinstance(obj, (datetime.date, datetime.datetime)):
         raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
+    if isinstance(obj, list):
+        # Since orjson is configured to passthough subclasses, these
+        # subclasses should be handled explicitly here.
+        return [orjson_default(v) for v in obj]
     raise TypeError
 
 
