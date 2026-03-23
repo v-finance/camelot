@@ -89,10 +89,12 @@ def orjson_default(obj):
         return obj.asdict(obj)
     if isinstance(obj, (datetime.date, datetime.datetime)):
         raise TypeError("{} {} can not be serialized.".format(type(obj), obj))
+    # Since orjson is configured to passthough subclasses, these
+    # subclasses should be handled explicitly here.
     if isinstance(obj, list):
-        # Since orjson is configured to passthough subclasses, these
-        # subclasses should be handled explicitly here.
         return [orjson_default(v) for v in obj]
+    if isinstance(obj, str):
+        return str(obj)
     raise TypeError
 
 
