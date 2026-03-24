@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import json
+import orjson
 import logging
 import typing
 
@@ -32,7 +32,7 @@ class AbstractRequest(NamedDataclassSerializable):
 
     @classmethod
     def handle_request(cls, request, response_handler, cancel_handler):
-        request_type_name, request_data = json.loads(request)
+        request_type_name, request_data = orjson.loads(request)
         request_type = NamedDataclassSerializable.get_cls_by_name(
             request_type_name
         )

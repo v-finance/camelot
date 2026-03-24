@@ -1,5 +1,5 @@
 import logging
-import json
+import orjson
 
 from camelot.core.qt import QtCore
 from ..view.requests import AbstractRequest
@@ -33,12 +33,12 @@ def get_window():
 
 def cpp_action_step(gui_context_name, name, step=QtCore.QByteArray()):
     response = get_root_backend().action_step(gui_context_name, name, step)
-    return json.loads(response.data())
+    return orjson.loads(response.data())
 
 
 class PythonConnection(QtCore.QObject, metaclass=QSingleton):
     """Use python to connect to a server, this is done by using
-    the PythonRootBackend, and lister for signals from the action runner
+    the PythonRootBackend, and listen for signals from the action runner
     and the dgc.  As any instance of this class listens to requests for the
     server, only one instance of this class should exist, to avoid sending
     multiple responses for the same request to the client.
