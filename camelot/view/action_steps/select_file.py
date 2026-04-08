@@ -28,7 +28,7 @@
 #  ============================================================================
 import typing
 
-from camelot.admin.action import ActionStep
+from camelot.admin.action import ActionStep, State
 from camelot.core.exception import CancelRequest
 from camelot.core.utils import ugettext as _
 
@@ -75,8 +75,8 @@ class SelectFile( SelectActionStep, DataclassSerializable ):
 
     file_name_filter: str = ''
     single: bool = True
-
-    caption = _('Open')
+    standard_locations: typing.List[State] = field(default_factory=list)
+    caption: str = _('Open')
 
 
 @dataclass
@@ -107,8 +107,7 @@ class SaveFile( SelectActionStep, DataclassSerializable ):
     proposed_file_name: str = field(default=None)
     open_dir: bool = field(default=False)
     type: str = "url"  # "url" or "websocket"
-
-    caption = _('Save')
+    caption: str = _('Save')
 
 
 @dataclass
@@ -128,5 +127,4 @@ class SelectDirectory(SelectActionStep, DataclassSerializable):
 
     directory: typing.Optional[str] = None
     options: list = field(default_factory=lambda: [QtWidgets.QFileDialog.Option.ShowDirsOnly])
-
-    caption = _('Select directory')
+    caption: str = _('Select directory')
