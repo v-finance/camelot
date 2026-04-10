@@ -46,7 +46,7 @@ from .orm import (
     CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
     UpdateObjects
 )
-from .select_file import SelectFile, SelectDirectory, SaveFile
+from .select_file import SelectFile, SelectDirectory, SaveFile, FileNameFilter
 from .select_object import SelectObjects, SelectObject
 from .update_progress import UpdateProgress, PushProgressLevel, PopProgressLevel, SetProgressAnimate
 from .crud import (
@@ -91,6 +91,7 @@ __all__ = [
     SelectDirectory.__name__,
     SelectFile.__name__,
     SelectItem.__name__,
+    FileNameFilter.__name__,
     SelectObjects.__name__,
     SelectObject.__name__,
     SetColumns.__name__,

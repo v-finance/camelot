@@ -35,7 +35,6 @@ from camelot.core.utils import ugettext as _
 from dataclasses import dataclass, field
 
 from ...core.serializable import DataclassSerializable
-from ...core.qt import QtWidgets
 
 class SelectActionStep(ActionStep):
 
