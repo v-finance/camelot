@@ -27,9 +27,10 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass
-from typing import ClassVar, Any
+from dataclasses import dataclass, field
+from typing import ClassVar, Any, List
 
+from ....admin.admin_route import Route
 from ....core.item_model import PreviewRole
 from ....core.qt import Qt, qtranslate
 from camelot.core.naming import initial_naming_context
@@ -45,6 +46,8 @@ class MonthsDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
     minimum: int = 0
     maximum: int = 10000
+    forever: int = None
+    action_routes: List[Route] = field(default_factory=list)
 
     horizontal_align: ClassVar[Any] = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 

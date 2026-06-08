@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ...admin.icon import Icon
-from ...core.qt import QtWidgets, QtGui, transferto
+from ...core.qt import QtWidgets, QtGui
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ...view.art import from_admin_icon
@@ -46,59 +46,11 @@ LOGGER = logging.getLogger( 'camelot.admin.action' )
 class ModelContext( object ):
     """
 The Model context in which an action is running.  The model context can contain
-reference to database sessions or other model related data. This object can not 
-contain references to widgets as those belong strictly to the :class:`GuiContext`.
+reference to database sessions or other model related data. 
     """
 
     def __init__( self ):
         pass
-
-
-class GuiContext( object ):
-    """
-The GUI context in which an action is running.  This object can contain
-references to widgets and other useful information.  This object cannot
-contain reference to anything database or model related, as those belong
-strictly to the :class:`ModelContext`
-    """
-
-    def get_progress_dialog(self):
-        """
-        :return: an instance of :class:`QtWidgets.QProgressDialog`
-                 or :keyword:`None`
-        """
-        from camelot.view.controls.progress_dialog import ProgressDialog
-        from camelot.view.qml_view import get_qml_root_backend
-        root_backend = get_qml_root_backend()
-        if not root_backend.isVisible():
-            return None
-        app = QtWidgets.QApplication.instance()
-        progress_dialog = app.property('application_progress')
-        if progress_dialog is None:
-            progress_dialog = ProgressDialog(None) #(parent=window) FIXME
-            transferto(progress_dialog, progress_dialog) # FIXME -> replace with qml
-            app.setProperty('application_progress', progress_dialog)
-        return progress_dialog
-
-    def get_window(self):
-        """
-        The window to be used as a reference to position new windows.  Returns
-        `None` if there is no window yet.
-        
-        :return: a :class:`QtWidgets.QWidget`
-        """
-        return None
-
-    def copy( self, base_class = None ):
-        """Create a copy of the GuiContext, this function is used
-        to create new GuiContext's that are more specialized without
-        modifying the original one.
-
-        :param base_class: the type of the new context to be created, None
-            if the new context should be of the same type as the copied context.
-        """
-        new_context = (base_class or self.__class__)()
-        return new_context
 
 
 @dataclass
@@ -109,8 +61,7 @@ the default mode.
     
 .. attribute:: value
 
-    a value representing the mode to the developer and the authentication
-    system.  this name will be used in the :class:`GuiContext`
+    a value representing the mode to the developer
     
 .. attribute:: verbose_name
 
@@ -203,6 +154,15 @@ updated state for the widget.
 
     The modes in which an action can be triggered, a list of :class:`Mode`
     objects.
+
+.. attribute:: shortcut
+
+    The shortcut key sequence to trigger the action.
+
+.. attribute:: color
+
+    A color used to indicate something regarding the action's state. This color
+    can be used as button text color, background or outline for example.
     """
 
     verbose_name: typing.Union[str, ugettext_lazy, None] = None
@@ -213,6 +173,7 @@ updated state for the widget.
     notification: bool = False
     modes: typing.List[Mode] = field(default_factory=list)
     shortcut: typing.Optional[str] = None
+    color: typing.Optional[str] = None
 
 # TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
 #       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
@@ -253,39 +214,17 @@ return immediately and the :meth:`model_run` will not be blocked.
     blocking = True
     cancelable = True
 
-    @classmethod
-    def gui_run( cls, gui_context_name, serialized_step=b'' ):
-        """This method is called in the *GUI thread* upon execution of the
-        action step.  The return value of this method is the result of the
-        :keyword:`yield` statement in the *model thread*.
-        
-        The default behavior of this method is to call the qml_action_step
-        function.
-        
-        :param gui_context:  An object of type 
-            :class:`camelot.admin.action.GuiContext`, which is the context 
-            of this action available in the *GUI thread*.  What is in the 
-            context depends on how the action was called.
-        :param serialized_step: The serialized action step.
-            
-        this method will raise a :class:`camelot.core.exception.CancelRequest`
-        exception, if the user canceled the operation.
-        """
-        from camelot.view.qml_view import qml_action_step
-        return qml_action_step(gui_context_name, cls.__name__, serialized_step)
-
     def model_run( self, model_context, mode ):
         raise Exception('This should not happen')
 
     @classmethod
-    def deserialize_result(cls, gui_context, serialized_result):
+    def deserialize_result(cls, model_context: ModelContext, serialized_result):
         """
-        :param gui_context:  An object of type
-            :class:`camelot.admin.action.GuiContext`, which is the context
-            of this action available in the *GUI thread*.  What is in the
-            context depends on how the action was called.
+        :param model_context:  An object of type
+            :class:`camelot.admin.action.ModelContext`, which is the context
+            on which the action was started.
 
-        :param serialized_result: The serialized result comming from the client.
+        :param serialized_result: The serialized result coming from the client.
 
         :return: The deserialized result. The default implementation returns the
             serialized result as is. This function can be reimplemented to change
@@ -308,6 +247,7 @@ class RenderHint(Enum):
     COMBO_BOX = 'combo_box'
     LABEL = 'label'
     STRETCH = 'stretch'
+    STATUS_BUTTON = 'status_button'
 
 
 class Action( ActionStep ):
@@ -424,9 +364,8 @@ with a view.
         objects.  This generator can be called in the *model thread*.
         
         :param context:  An object of type
-            :class:`camelot.admin.action.ModelContext`, which is context 
-            of this action available in the model_thread.  What is in the 
-            context depends on how the action was called.
+            :class:`camelot.admin.action.ModelContext`.
+            What is in the  context depends on how the action was called.
         """
         yield
 

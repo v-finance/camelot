@@ -27,25 +27,18 @@
 #
 #  ============================================================================
 
-import cProfile
 from dataclasses import dataclass, field, InitVar
-import json
 import logging
-import pstats
 import typing
 
 from ...admin.action.base import ActionStep, State, ModelContext
-from ...admin.action.application_action import model_context_naming, model_context_counter
+from ...admin.action.application_action import model_context_naming, model_context_counter, exit_name
 from ...admin.admin_route import AdminRoute, Route
 from ...admin.application_admin import ApplicationAdmin
 from ...admin.menu import MenuItem
 from ...core.naming import initial_naming_context
-from ...core.qt import QtCore, QtQuick, transferto
 from ...core.serializable import DataclassSerializable
 from ...model.authentication import AuthenticationMechanism
-from .. import gui_naming_context
-from camelot.view.qml_view import qml_action_step, get_qml_window, is_cpp_gui_context_name
-from .open_file import OpenFile
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,15 +49,9 @@ class Exit(ActionStep, DataclassSerializable):
     """
 
     return_code: int = 0
-    blocking: bool = False
-
-    @classmethod
-    def gui_run(self, gui_context, serialized_step):
-        from camelot.view.model_thread import get_model_thread
-        model_thread = get_model_thread()
-        if model_thread != None:
-            model_thread.stop()
-        qml_action_step(gui_context, 'Exit', serialized_step)
+    # blocking, since after exit has been instructed, the server should
+    # wait for termination of the client and not continue the action
+    blocking: bool = True
 
 
 @dataclass
@@ -91,40 +78,19 @@ class MainWindow(ActionStep, DataclassSerializable):
     (e.g. stopping the model thread).
     """
 
-    class MainWindowEventFilter(QtCore.QObject):
-
-        def __init__(self, parent):
-            super().__init__(parent)
-
-        def eventFilter(self, qobject, event):
-            if event.type() == QtCore.QEvent.Type.Close:
-                from camelot.view.model_thread import get_model_thread
-                model_thread = get_model_thread()
-                LOGGER.info( 'closing mainwindow' )
-                model_thread.stop()
-                QtCore.QCoreApplication.exit(0)
-            # allow events to propagate
-            return False
-
     admin: InitVar[ApplicationAdmin]
+    model_context: InitVar(ModelContext) = None
     window_title: str = field(init=False)
     blocking: bool = False
     admin_route: Route = field(init=False)
+    model_context_name: Route = field(default_factory=list)
+    exit_action: Route = field(init=False)
 
-    def __post_init__(self, admin):
+    def __post_init__(self, admin, model_context):
         self.window_title = admin.get_name()
         self.admin_route = admin.get_admin_route()
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        LOGGER.info('installing event filter')
-        qml_window = get_qml_window()
-        event_filter = cls.MainWindowEventFilter(qml_window)
-        # prevent garbage collection of the event_filter, by keeping it
-        # out of the garbage collection cyle
-        transferto(event_filter, event_filter)
-        qml_window.installEventFilter(event_filter)
-        qml_action_step(gui_context, 'MainWindow', serialized_step)
+        self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+        self.exit_action = exit_name
 
 
 @dataclass
@@ -268,56 +234,13 @@ class UpdateActionsState(ActionStep, DataclassSerializable):
                 action_route = AdminRoute._register_list_action_route(model_context.admin.get_admin_route(), action)
                 self.action_states.append((action_route, state._to_dict()))
 
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            return qml_action_step(gui_context_name, 'UpdateActionsState', serialized_step)
-        gui_context = gui_naming_context.resolve(gui_context_name)
-        step = json.loads(serialized_step)
-        for action_route, action_state in step['action_states']:
-            action = initial_naming_context.resolve(tuple(action_route))
-            rendered_action_route = gui_context.action_routes.get(action)
-            if rendered_action_route is None:
-                LOGGER.warn('Cannot update rendered action, rendered_action_route is unknown')
-                continue
-            qobject = gui_context.view.findChild(QtCore.QObject, rendered_action_route)
-            if qobject is None:
-                LOGGER.warn('Cannot update rendered action, QObject child {} not found'.format(rendered_action_route))
-                continue
-            if isinstance(qobject, QtQuick.QQuickItem):
-                qobject.setProperty('state', action_state._to_dict())
-            else:
-                qobject.set_state(action_state)
-
 @dataclass
 class StartProfiler(ActionStep, DataclassSerializable):
     """Start profiling of the gui
     """
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        gui_profile = cProfile.Profile()
-        gui_naming_context.bind(('gui_profile',), gui_profile)
-        gui_profile.enable()
-        LOGGER.info('Gui profiling started')
 
 @dataclass
 class StopProfiler(ActionStep, DataclassSerializable):
     """Start profiling of the gui
     """
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        gui_profile = gui_naming_context.resolve(('gui_profile',))
-        gui_profile.disable()
-        cls.write_profile(gui_profile, 'gui')
-
-    @classmethod
-    def write_profile(cls, profile, suffix):
-        stats = pstats.Stats(profile)
-        stats.sort_stats('cumulative')
-        LOGGER.info('Begin {} profile info'.format(suffix))
-        stats.print_stats()
-        LOGGER.info('End {} profile info'.format(suffix))
-        filename = OpenFile.create_temporary_file('-{0}.prof'.format(suffix))
-        stats.dump_stats(filename)

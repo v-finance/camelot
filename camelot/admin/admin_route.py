@@ -104,12 +104,13 @@ class AdminRoute(object):
 
     @classmethod
     def _register_list_action_route(cls, admin_route, action) -> Route:
-        assert cls._validate_action_name(action)
+        # FIXME: This was removed to allow CLIActions to override get_name(), if there are any issues re-add this validation
+        # assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in initial_naming_context
         context = initial_naming_context.resolve_context((*admin_route, 'list', 'actions'))
         try:
-            action_route = context.bind(action.get_name(), action)
+            action_route = context.bind(action.get_name(), action, immutable=True)
         except AlreadyBoundException:
             action_route = context.get_qual_name(action.get_name())
             assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__
@@ -132,12 +133,13 @@ class AdminRoute(object):
 
     @classmethod
     def _register_action_route(cls, admin_route, action) -> Route:
-        assert cls._validate_action_name(action)
+        # FIXME: This was removed to allow CLIActions to override get_name(), if there are any issues re-add this validation
+        # assert cls._validate_action_name(action)
         assert isinstance(admin_route, tuple)
         assert admin_route in initial_naming_context
         context = initial_naming_context.resolve_context((*admin_route, 'actions'))
         try:
-            action_route = context.bind(action.get_name(), action)
+            action_route = context.bind(action.get_name(), action, immutable=True)
         except AlreadyBoundException:
             action_route = context.get_qual_name(action.get_name())
             assert action == context.resolve(action.get_name()), NamingContext.verbose_name(action_route) + ' registered before with a different action : ' + type(action).__name__

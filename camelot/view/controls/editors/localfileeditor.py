@@ -86,7 +86,7 @@ class LocalFileEditor( CustomEditor ):
 
     @QtCore.qt_slot()
     def browse_button_clicked(self):
-        current_directory = os.path.dirname( self.get_value() )
+        current_directory = os.path.dirname(self.get_value() or '')
         if self._directory:
             value = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                                directory = current_directory)
@@ -105,16 +105,15 @@ class LocalFileEditor( CustomEditor ):
             self.editingFinished.emit()
 
     def set_value(self, value):
-        value = CustomEditor.set_value(self, value)
         if value:
-            self.filename.setText( value )
+            self.filename.setText(value)
         else:
-            self.filename.setText( '' )
+            self.filename.setText('')
         self.valueChanged.emit()
         return value
 
     def get_value(self):
-        return CustomEditor.get_value(self) or str( self.filename.text() )
+        return str(self.filename.text()) or None
 
     value = QtCore.qt_property( str, get_value, set_value )
 

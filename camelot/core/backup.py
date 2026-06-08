@@ -28,10 +28,7 @@
 #  ============================================================================
 import logging
 
-
 from sqlalchemy import types, sql, PrimaryKeyConstraint
-
-from .qt import QtCore
 
 from camelot.core.utils import ugettext as _
 from camelot.core.sql import metadata as default_metadata
@@ -76,26 +73,7 @@ class BackupMechanism(object):
         This method will be called inside the model thread.
         """
         return u'backup'
-    
-    @classmethod
-    def get_default_storage(cls):
-        """
-        :return: a camelot.core.files.storage.Storage object
-        
-        Returns the storage to be used to store default backups.
-        
-        By default, this will return a Storage that puts the backup files
-        in the DataLocation as specified by the QDesktopServices
-        """
-        apps_folder = str(
-            QtCore.QStandardPaths.writableLocation(
-                QtCore.QStandardPaths.DataLocation
-            )
-        )
-        
-        from camelot.core.files.storage import Storage
-        return Storage(upload_to='backups', root=apps_folder)
-        
+
     def backup_table_filter(self, from_table):
         """
         Method used to filter which tables should be backed up, overwrite this method
@@ -134,6 +112,8 @@ class BackupMechanism(object):
         """Generator function that yields tuples :
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a backup.
+
+        The reason this yields tuples and not UpdateProgress is to prevent cyclic imports.
         
         :param from_engine: a :class:`sqlalchemy.engine.Connectable` object that
             provides a connection to the database to be backed up.
@@ -201,6 +181,8 @@ class BackupMechanism(object):
         (numer_of_steps_completed, total_number_of_steps, description_of_current_step)
         while performing a restore.
 
+        The reason this yields tuples and not UpdateProgress is to prevent cyclic imports.
+
         :param to_engine: a :class:`sqlalchemy.engine.Engine` object that
             provides a connection to the database to be backed up.
         """
@@ -208,21 +190,14 @@ class BackupMechanism(object):
         # Proceed with the restore
         #
         import os
-        from camelot.core.files.storage import StoredFile
         from sqlalchemy import create_engine
         from sqlalchemy import MetaData
         from sqlalchemy.pool import NullPool
 
         yield (0, 0, _('Open backup file'))
-        if self.storage:
-            if not self.storage.exists(self.filename):
-                raise Exception('Backup file does not exist')
-            stored_file = StoredFile(self.storage, self.filename)
-            filename = self.storage.checkout( stored_file )
-        else:
-            if not os.path.exists(self.filename):
-                raise Exception('Backup file does not exist')
-            filename = self.filename
+        if not os.path.exists(self.filename):
+            raise Exception('Backup file does not exist')
+        filename = self.filename
         from_engine = create_engine('sqlite:///%s'%filename, poolclass=NullPool )
         from_connection = from_engine.connect()
 
@@ -267,9 +242,11 @@ class BackupMechanism(object):
     def update_table_after_restore(self, to_table, to_connection):
         to_dialect = to_connection.engine.url.get_dialect().name
         if to_dialect == 'postgresql':
-            for column in to_table.columns:
+            primary_key_cols = to_table.primary_key.columns.values()
+            if len(primary_key_cols) == 1:
+                column = primary_key_cols[0]
                 if not isinstance(column.type, types.Unicode) and \
-                   column.autoincrement=='auto' and column.primary_key==True and \
+                   column.autoincrement=='auto' and \
                    len(column.foreign_keys) == 0: # Exclude generated associative composite primary keys by the manytomany relation from Camelot.
                     column_name = column.name
                     table_name = to_table.name

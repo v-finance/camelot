@@ -124,7 +124,8 @@ class SimpleSettings( object ):
             os.makedirs( self.data_folder )
             
         LOGGER.info( u'store database and media in %s'%self.data_folder )
-            
+
+    @property
     def CAMELOT_MEDIA_ROOT(self):
         return os.path.join( self.data_folder, 'media' )
     

@@ -32,18 +32,15 @@ from dataclasses import dataclass, field
 import json
 from typing import List, Union
 
-from camelot.admin.action.base import GuiContext
 from camelot.admin.icon import Icon
-from camelot.core.exception import CancelRequest
 from camelot.core.item_model import ValidRole, ValidMessageRole
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext, ugettext_lazy, ugettext_lazy as _
-from camelot.view.action_runner import hide_progress_dialog
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.formview import FormWidget
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.qml_view import get_qml_root_backend
+from camelot.core.backend import get_root_backend
 from camelot.view.utils import get_settings_group
 
 from .form_view import OpenFormView
@@ -56,7 +53,7 @@ from ...admin.admin_route import AdminRoute, RouteWithRenderHint
 from ...core.qt import QtCore, QtWidgets, Qt
 
 
-class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext):
+class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin):
     """A dialog to change an object.  This differs from a FormView in that
     it does not contains Actions, and has an OK button that is enabled when
     the object is valid.
@@ -92,7 +89,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
             fields=fields, parent=self
         )
 
-        model = get_qml_root_backend().createModel(get_settings_group(admin_route), form_widget)
+        model = get_root_backend().create_model(get_settings_group(admin_route), form_widget)
         self.action_routes = dict()
         form_widget.set_model(model)
 
@@ -118,7 +115,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         self.buttons_widget().setLayout( layout )
         self._change_complete(model, False)
         cancel_button.pressed.connect( self.reject )
-        ok_button.pressed.connect( self.accept )
+        ok_button.pressed.connect( self.on_accept )
         # set the actions in the actions panel
         self.set_actions(form_actions)
         for action_route, action_state in action_states:
@@ -126,7 +123,7 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
         # set the value last, so the validity can be updated
         model.setValue(proxy_route)
         self.model_context_name = proxy_route
-        columns = [fn for fn, _fa in fields.items()]
+        columns = [fn for fn, _fa in fields]
         model.setColumns(columns)
         self.gui_context_name = gui_naming_context.bind(
             ('transient', str(id(self))), self
@@ -142,6 +139,11 @@ class ChangeObjectDialog(StandaloneWizardPage, ViewWithActionsMixin, GuiContext)
     @QtCore.qt_slot(bool)
     def button_clicked(self, checked):
         self.run_action(self.sender(), self.gui_context_name, self.model_context_name, None)
+
+    def on_accept(self):
+        # VFIN-3090: Make sure to submit values when accepting
+        self.widget_mapper.submit()
+        self.accept()
 
     @QtCore.qt_slot()
     def menu_triggered(self):
@@ -282,10 +284,14 @@ class ChangeObject(OpenFormView):
 
     """
 
-    subtitle: typing.Union[str, ugettext_lazy, None] = _('Complete the form and press the OK button')
-    accept: typing.Union[str, ugettext_lazy] = _('OK')
-    reject: typing.Union[str, ugettext_lazy] = _('Cancel')
+    subtitle: typing.Union[str, ugettext_lazy, None] = field(init=False, default_factory=lambda: _('Complete the form and press the OK button'))
+    accept: typing.Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('OK'))
+    reject: typing.Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Cancel'))
     blocking: bool = True
+
+    def __post_init__(self, value, admin, proxy):
+        super().__post_init__(value, admin, proxy)
+        self.title = admin.get_verbose_name()
 
     @staticmethod
     def _add_actions(admin, actions):
@@ -318,15 +324,11 @@ class ChangeObject(OpenFormView):
         return dialog
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
+    def gui_run(cls, gui_run, gui_context, serialized_step):
         step = json.loads(serialized_step)
         dialog = cls.render(gui_context, step)
         apply_form_state(dialog, None, step['form_state'])
-        with hide_progress_dialog( gui_context ):
-            result = dialog.exec()
-            if result == QtWidgets.QDialog.DialogCode.Rejected:
-                raise CancelRequest()
-
+        dialog.async_exec(gui_run)
 
 @dataclass
 class ChangeObjects(UpdateTableView):
@@ -364,13 +366,14 @@ class ChangeObjects(UpdateTableView):
     """
 
     validate: bool = True
+    qml: bool = False
 
     invalid_rows: List = field(init=False, default_factory=list)
     admin_route: AdminRoute = field(init=False)
     window_title: str = field(init=False)
-    title: Union[str, ugettext_lazy] = field(init=False, default= _('Data Preview'))
-    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Please review the data below.'))
-    icon: typing.Union[Icon, None] = field(init=False, default=Icon('file-excel'))
+    title: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Data Preview'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Please review the data below.'))
+    icon: typing.Union[Icon, None] = field(init=False, default_factory=lambda: Icon('file-excel'))
 
     def __post_init__( self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
@@ -417,15 +420,16 @@ class ChangeObjects(UpdateTableView):
         #
         screen = dialog.screen()
         available_geometry = screen.availableGeometry()
-        dialog.resize( available_geometry.width() * 0.75,
-                       available_geometry.height() * 0.75 )
+        dialog.resize( int(available_geometry.width() * 0.75),
+                       int(available_geometry.height() * 0.75) )
         return dialog
 
     @classmethod
-    def gui_run(cls, gui_context, serialized_step):
+    def gui_run(cls, gui_run, gui_context, serialized_step):
         step = json.loads(serialized_step)
         dialog = cls.render(step)
-        with hide_progress_dialog( gui_context ):
-            result = dialog.exec()
-            if result == QtWidgets.QDialog.DialogCode.Rejected:
-                raise CancelRequest()
+        dialog.async_exec(gui_run)
+
+@dataclass
+class QmlChangeObjects(ChangeObjects):
+    pass

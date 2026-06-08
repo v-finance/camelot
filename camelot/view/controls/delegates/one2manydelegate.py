@@ -36,7 +36,8 @@ from ....admin.action.application_action import model_context_naming, model_cont
 from ....admin.model_context import ObjectsModelContext
 from ....core.naming import initial_naming_context
 from ....core.qt import Qt
-from camelot.view.controls import editors
+from ....view.controls import editors
+from ....view.crud_action import CrudActions
 from .customdelegate import CustomDelegate, DocumentationMetaclass
 
 import logging
@@ -59,6 +60,8 @@ class One2ManyDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
     action_routes: List[Route] = field(default_factory=list)
     list_actions: List[RouteWithRenderHint] = field(default_factory=list)
     list_action: Optional[Route] = None
+    crud_actions: CrudActions = field(default_factory=list)
+    group: List[str] = field(default_factory=list)
 
     def __post_init__(self, parent):
         super().__post_init__(parent)

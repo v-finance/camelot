@@ -111,8 +111,6 @@ class ObjectValidator(QtCore.QObject):
                             is_null = True
                         elif (attributes['delegate'] == delegates.LocalFileDelegate or issubclass(attributes['delegate'],delegates.LocalFileDelegate)) and (len(value) == 0):
                             is_null = True
-                        elif (attributes['delegate'] == delegates.VirtualAddressDelegate or issubclass(attributes['delegate'],delegates.VirtualAddressDelegate)) and (not value[1]):
-                            is_null = True
                         if is_null:
                             messages.append(_(u'%s is a required field') % (attributes['name']))
 

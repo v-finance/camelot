@@ -69,7 +69,7 @@ class ObjectsModelContext(ApplicationActionModelContext):
         self.field_attributes = dict()
         # self.obj = None
         # todo : remove the concept of a validator (taken from CollectionProxy)
-        self.validator = admin.get_validator()
+        self.validator = admin.get_validator() if admin is not None else None
 
     def get_selection( self, yield_per = None ):
         """

@@ -50,7 +50,7 @@ class Many2OneDelegate(CustomDelegate, metaclass=DocumentationMetaclass):
 
   Once an item has been selected, it is represented by its unicode representation
   in the editor or the table.  So the related classes need an implementation of
-  their __unicode__ method.
+  their __str__ method.
   """
 
     action_routes: List[Route] = field(default_factory=list)

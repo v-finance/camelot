@@ -33,7 +33,6 @@ Various ``ActionStep`` subclasses that manipulate the `item_view`
 
 from dataclasses import dataclass, InitVar, field
 from typing import Union, List, Tuple, Any
-import json
 import logging
 
 from ...admin.admin_route import Route, RouteWithRenderHint
@@ -42,20 +41,14 @@ from ...admin.action.list_filter import SearchFilter, Filter, All
 from ...admin.action.application_action import model_context_naming, model_context_counter
 from ...admin.model_context import ObjectsModelContext
 from ...admin.object_admin import ObjectAdmin
+from ...core.cache import ValueCache
 from ...core.item_model import AbstractModelProxy
 from ...core.naming import initial_naming_context
 from ...core.qt import Qt, QtCore
 from ...core.serializable import DataclassSerializable
 from ...core.utils import ugettext_lazy
 from ...view.utils import get_settings_group
-from .. import gui_naming_context
-from ..workspace import show_top_level
-from camelot.view.crud_action import (
-    setcolumns_name, rowcount_name, rowdata_name, setdata_name,
-    changeselection_name, update_name, deleted_name, created_name,
-    sort_name, runfieldaction_name, completion_name
-)
-from ..qml_view import qml_action_step, is_cpp_gui_context_name
+from ...view.crud_action import CrudActions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,40 +64,6 @@ class Sort( ActionStep, DataclassSerializable ):
     order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
     blocking: bool = False
 
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'Sort', serialized_step)
-        else:
-            gui_context = gui_naming_context.resolve(gui_context_name)
-            step = json.loads(serialized_step)
-            model = gui_context.get_model()
-            if model is not None:
-                model.sort(
-                    step["column"],
-                    Qt.SortOrder._value2member_map_[step["order"]]
-                )
-
-
-@dataclass
-class CrudActions(DataclassSerializable):
-    """
-    A data class which contains the routes to crud actions available
-    to the gui to invoke.
-    """
-
-    admin: InitVar
-    set_columns: Route = field(init=False, default=setcolumns_name)
-    row_count: Route = field(init=False, default=rowcount_name)
-    row_data: Route = field(init=False, default=rowdata_name)
-    set_data: Route = field(init=False, default=setdata_name)
-    change_selection: Route = field(init=False, default=changeselection_name)
-    update: Route = field(init=False, default=update_name)
-    deleted: Route = field(init=False, default=deleted_name)
-    created: Route = field(init=False, default=created_name)
-    sort: Route = field(init=False, default=sort_name)
-    field_action: Route = field(init=False, default=runfieldaction_name)
-    completion: Route = field(init=False, default=completion_name)
 
 @dataclass
 class AbstractCrudView(ActionStep, DataclassSerializable):
@@ -217,14 +176,6 @@ class UpdateTableView(AbstractCrudView):
         actions.extend(admin.get_filters())
         actions.extend(admin.get_list_toolbar_actions())
 
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        cls.update_table_view(gui_context.view, step)
-        gui_context.view.change_title(step['title'])
-
-        gui_context.view.findChild(Qt)
-
 
 @dataclass
 class OpenTableView( UpdateTableView ):
@@ -251,31 +202,6 @@ class OpenTableView( UpdateTableView ):
         super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
 
-    @classmethod
-    def render(cls, gui_context, step):
-        from camelot.view.controls.tableview import TableView
-        table_view = TableView(gui_context, tuple(step['admin_route']))
-        cls.update_table_view(table_view, step)
-        return table_view
-        
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        step = json.loads(serialized_step)
-        table_view = cls.render(gui_context, step)
-        if gui_context.workspace is not None:
-            if step['new_tab'] == True:
-                gui_context.workspace.add_view(table_view)
-            else:
-                gui_context.workspace.set_view(table_view)
-        else:
-            table_view.setObjectName('table.{}.{}'.format(
-                step['admin_name'], id(table_view)
-            ))
-            show_top_level(table_view, None)
-        table_view.change_title(step['title'])
-        table_view.setFocus(Qt.FocusReason.PopupFocusReason)
-
-
 
 @dataclass
 class OpenQmlTableView(OpenTableView):
@@ -291,16 +217,8 @@ class OpenQmlTableView(OpenTableView):
         open the view in a new tab instead of the current tab
         
     """
+    pass
 
-    @classmethod
-    def render(cls, gui_context, action_step_name, serialized_step):
-        response = qml_action_step(gui_context, action_step_name,
-                serialized_step)
-        return response, None
-
-    @classmethod
-    def gui_run(cls, gui_context, serialized_step):
-        cls.render(gui_context, 'OpenTableView', serialized_step)
 
 @dataclass
 class ToFirstRow(ActionStep, DataclassSerializable):
@@ -322,14 +240,6 @@ class ClearSelection(ActionStep, DataclassSerializable):
 
     blocking: bool = False
 
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'ClearSelection', serialized_step)
-        else:
-            gui_context = gui_naming_context.resolve(gui_context_name)
-            gui_context.item_view.clearSelection()
-
 
 @dataclass
 class SetSelection(ActionStep, DataclassSerializable):
@@ -346,14 +256,9 @@ class RefreshItemView(ActionStep, DataclassSerializable):
     Refresh only the current item view
     """
 
+    model_context: InitVar[Any]
     blocking: bool = False
 
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'RefreshItemView', serialized_step)
-        else:
-            gui_context = gui_naming_context.resolve(gui_context_name)
-            model = gui_context.get_model()
-            if model is not None:
-                model.refresh()
+    def __post_init__(self, model_context):
+        model_context.edit_cache = ValueCache(model_context.edit_cache.max_entries)
+        model_context.attributes_cache = ValueCache(model_context.attributes_cache.max_entries)

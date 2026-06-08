@@ -593,7 +593,7 @@ class One2ManyFilter(RelatedFilter):
     def __init__(self, attribute, joins=[], field_filters=[], where=None, key=None, verbose_name=None, priority_level=PriorityLevel.MEDIUM, **field_attributes):
         assert isinstance(attribute, orm.attributes.InstrumentedAttribute) and \
                isinstance(attribute.prop, orm.RelationshipProperty), self.AssertionMessage.invalid_relationship_attribute.value
-        self.entity = attribute.prop.entity.entity
+        self.entity = attribute.prop.entity.mapper.entity
         self.admin = None
         entity_mapper = orm.class_mapper(self.entity)
         self.primary_key_attributes = [entity_mapper.get_property_by_column(pk).class_attribute for pk in entity_mapper.primary_key]
@@ -685,11 +685,6 @@ class SearchFilter(Action, AbstractModelFilter):
                         query = query.order_by(*order_by_clauses)
         return query
 
-    def gui_run(self, gui_context_name):
-        # overload the action gui run to avoid a progress dialog
-        # popping up while searching
-        super(SearchFilter, self).gui_run(gui_context_name)
-
     def model_run(self, model_context, mode):
         from camelot.view import action_steps
         search_text = mode
@@ -700,7 +695,7 @@ class SearchFilter(Action, AbstractModelFilter):
             value = (search_text, *search_strategies)
         if old_value != value:
             model_context.proxy.filter(self, value)
-            yield action_steps.RefreshItemView()
+            yield action_steps.RefreshItemView(model_context)
 
 search_filter = SearchFilter()
 
@@ -768,7 +763,7 @@ class Filter(Action):
         old_value = model_context.proxy.get_filter(self)
         if old_value != new_value:
             model_context.proxy.filter(self, new_value)
-            yield action_steps.RefreshItemView()
+            yield action_steps.RefreshItemView(model_context)
 
     def get_operator(self, values):
         return Operator.in_ if values else Operator.is_empty

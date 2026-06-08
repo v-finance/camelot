@@ -43,9 +43,9 @@ step.
 """
 
 from jinja2.environment import Environment
-from jinja2.loaders import ChoiceLoader, PackageLoader
+from jinja2.loaders import ChoiceLoader
 
-loader = ChoiceLoader( [ PackageLoader( 'camelot.art' ) ] )
+loader = ChoiceLoader([])
 
 class DefaultEnvironment( Environment ):
     

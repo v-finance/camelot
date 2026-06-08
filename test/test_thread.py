@@ -1,9 +1,10 @@
+import json
+import os
 import time
-import unittest
 
 from camelot.test import RunningProcessCase
-from camelot.view.action_runner import action_runner
-from camelot.view.model_thread.signal_slot_model_thread import TaskHandler
+from camelot.core.backend import PythonConnection
+from camelot.core.qt import QtCore
 from camelot.view.requests import (
     CancelAction, InitiateAction, SendActionResponse, ThrowActionException
 )
@@ -15,31 +16,38 @@ initiate_action = InitiateAction(
 send_action_response = SendActionResponse(run_name=['a'], response=None)
 throw_action_exception = ThrowActionException(run_name=['a'], exception=None)
 
+test_context = """
 
-class ModelThreadCase(unittest.TestCase):
+import sys
+sys.path.append('{}')
 
-    def test_handle_request(self):
-        task_queue = [None, cancel_action._to_bytes()]
-        task_handler = TaskHandler(task_queue)
-        task_handler.handle_task()
-        self.assertFalse(len(task_queue))
+import testing_context
+
+""".format(os.path.join(os.path.dirname(__file__)))
+
+testing_context_args = json.dumps([test_context])
 
 class ModelProcessCase(RunningProcessCase):
 
     def test_execute_request(self):
-        CancelAction.execute(cancel_action._to_dict()[1], action_runner, None)
+        CancelAction.execute(cancel_action._to_dict()[1], PythonConnection, None)
         InitiateAction.execute(
-            initiate_action._to_dict()[1], action_runner, None
+            initiate_action._to_dict()[1], PythonConnection, None
         )
         SendActionResponse.execute(
-            send_action_response._to_dict()[1], action_runner, None
+            send_action_response._to_dict()[1], PythonConnection, None
         )
         ThrowActionException.execute(
-            send_action_response._to_dict()[1], action_runner, None
+            send_action_response._to_dict()[1], PythonConnection, None
         )
 
     def test_post_task(self):
-        self.thread.post(cancel_action)
+        self.thread.post(QtCore.QByteArray(cancel_action._to_bytes()))
         time.sleep(1)
-        # qsize is not reliable according to multiprocessing docs
-        # self.assertFalse(self.thread._request_queue.qsize())
+
+    def test_start_stop_service(self):
+        service = self.rb.create_server_process()
+        service.start('exec', testing_context_args)
+        service.waitForConnected(10000)
+        service.stop()
+        service.waitForFinished(10000)

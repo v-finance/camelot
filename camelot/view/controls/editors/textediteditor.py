@@ -50,7 +50,6 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
         self.setReadOnly(not editable)
 
     def set_value(self, value):
-        value = AbstractCustomEditor.set_value(self, value)
         if value is not None:
             self.setText(str(value))
         else:
@@ -58,10 +57,7 @@ class TextEditEditor(QtWidgets.QTextEdit, AbstractCustomEditor, WideEditor):
         return value
 
     def get_value(self):
-        val = AbstractCustomEditor.get_value(self)
-        if val is not None:  # we need to distinguish between None
-            return val       # and other falsy values
-        return str(self.toPlainText())
+        return self.toPlainText() or None
 
     def set_enabled(self, editable=True):
         self.setEnabled(editable)

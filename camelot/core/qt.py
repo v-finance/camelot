@@ -26,31 +26,13 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-"""
-Qt compatibility module.  This module hides the differences in behavior between :
-
-    * Qt4 and Qt5
-    * PyQt and PySide
-    * PyQt4 and PyQt5
-
-To switch between different Qt bindings, set the `CAMELOT_QT_API` environment
-variable to either `PyQt4`, `PySide` or experimental `PyQt5`.
-
-"""
 
 import datetime
 import logging
-import os
-
 
 
 LOGGER = logging.getLogger('camelot.core.qt')
 
-# an empty environment variable might result in an empty string,
-# so treat a non existent environment variable as an empty string
-qt_api = os.environ.get('CAMELOT_QT_API', '')
-if qt_api != '':
-    LOGGER.warn('CAMELOT_QT_API environment variable set to {}'.format(qt_api))
 
 class DelayedModule(object):
     """
@@ -87,21 +69,10 @@ QtModel = DelayedModule('QtGui')
 QtWidgets = DelayedModule('QtGui')
 QtPrintSupport = DelayedModule('QtGui')
 
-if qt_api in ('', 'PySide'):
-    try:
-        qt_api = 'PySide'
-        QtCore.qt_slot = QtCore.Slot
-        QtCore.qt_signal = QtCore.Signal
-        QtCore.qt_property = QtCore.Property
-        is_deleted = lambda _qobj:False
-        delete = lambda _qobj:True
-    except ImportError:
-        LOGGER.warn('Could not load PySide')
-        qt_api = ''
+qt_api = 'PyQt6'
 
-if qt_api in ('', 'PyQt6'):
+if qt_api == 'PyQt6':
     try:
-        qt_api = 'PyQt6'
         # as of pyqt 5.11, qt should be imported before sip
         from PyQt6 import QtCore
         from PyQt6 import sip
@@ -120,13 +91,7 @@ if qt_api in ('', 'PyQt6'):
         delete = sip.delete
         transferto = sip.transferto
     except ImportError:
-        LOGGER.warn('Could not load PyQt6')
-        qt_api = ''
-
-if qt_api=='':
-    raise Exception('PyQt4, PyQt5, PyQt6 nor PySide could be imported')
-else:
-    LOGGER.info('Using {} Qt bindings'.format(qt_api))
+        raise Exception('Could not load PyQt6')
 
 Qt = getattr(__import__(qt_api+'.QtCore', globals(), locals(), ['Qt']), 'Qt')
 
@@ -161,63 +126,36 @@ py_to_variant = _py_to_variant_2
 valid_variant = _valid_variant_2
 variant_to_py = _variant_to_py_2
 
-if qt_api in ('PySide'):
 
-    #
-    # Encoding used when transferring translation strings from
-    # python to qt
-    #
-    _encoding=QtCore.QCoreApplication.UnicodeUTF8
+def qtranslate(string_to_translate, n=-1, msgctxt=None):
+    """Translate a string using the QCoreApplication translation framework
+    :param string_to_translate: a unicode string
+    :return: the translated unicode string if it was possible to translate
+    """
+    msgctxt_encoded = None
+    if msgctxt is not None:
+        msgctxt_encoded = msgctxt.encode('utf-8')
+    return str(QtCore.QCoreApplication.translate(
+        '',
+        string_to_translate.encode('utf-8'),
+        msgctxt_encoded,
+        n,
+    ))
 
-    def qtranslate(string_to_translate, n=-1, msgctxt=None):
-        """Translate a string using the QCoreApplication translation framework
-        :param string_to_translate: a unicode string
-        :return: the translated unicode string if it was possible to translate
-        """
-        msgctxt_encoded = None
-        if msgctxt is not None:
-            msgctxt_encoded = msgctxt.encode('utf-8')
-        return str(QtCore.QCoreApplication.translate(
-            '',
-            string_to_translate.encode('utf-8'),
-            msgctxt_encoded,
-            _encoding,
-            n
-        ))
+def qmsghandler(msg_type, msg_log_context, msg_string):
+    """ Logging handler to redirect messages from Qt to Python """
+    log_levels = {
+        0: logging.DEBUG,
+        1: logging.WARN,
+        2: logging.ERROR,
+        3: logging.FATAL,
+    }
+    log_level = log_levels.get(msg_type)
+    if log_level is not None:
+        LOGGER.log(log_level, msg_string)
+    else:
+        LOGGER.log(logging.ERROR, 'Received message with unknown log level')
 
-else:
-
-    def qtranslate(string_to_translate, n=-1, msgctxt=None):
-        """Translate a string using the QCoreApplication translation framework
-        :param string_to_translate: a unicode string
-        :return: the translated unicode string if it was possible to translate
-        """
-        msgctxt_encoded = None
-        if msgctxt is not None:
-            msgctxt_encoded = msgctxt.encode('utf-8')
-        return str(QtCore.QCoreApplication.translate(
-            '',
-            string_to_translate.encode('utf-8'),
-            msgctxt_encoded,
-            n,
-        ))
-
-    def qmsghandler(msg_type, msg_log_context, msg_string):
-        """ Logging handler to redirect messages from Qt to Python """
-        log_levels = {
-            0: logging.DEBUG,
-            1: logging.WARN,
-            2: logging.ERROR,
-            3: logging.FATAL,
-        }
-        log_level = log_levels.get(msg_type)
-        if log_level is not None:
-            LOGGER.log(log_level, msg_string)
-        else:
-            LOGGER.log(logging.ERROR, 'Received message with unknown log level')
-
-    # Qt messages are now remotely logged by the launcher's message handler
-    #QtCore.qInstallMessageHandler(qmsghandler)
 
 def jsonvalue_to_py(obj=None):
     """Convert QJsonValue to python equivalent"""

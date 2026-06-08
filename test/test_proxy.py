@@ -1,81 +1,14 @@
-import datetime
 import logging
 import unittest
 
-from camelot.admin.action.field_action import ClearObject, SelectObject
-from camelot.admin.object_admin import ObjectAdmin
 from camelot.core.item_model import (
     AbstractModelFilter, ListModelProxy, QueryModelProxy
 )
-from camelot.model.party import Party, Person
-from camelot.view.controls import delegates
 
 LOGGER = logging.getLogger(__name__)
 
-from .test_model import ExampleModelMixinCase, LoadSampleData
-
-class B(object):
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return '{}'.format(self.value)
-
-    class Admin(ObjectAdmin):
-        list_display = ['value']
-
-
-class C(B):
-    pass
-
-class A(object):
-
-    def __init__(self, x):
-        self.w = B(x)
-        self.x = x
-        self.y = 0
-        self.z = [C(0), C(0)]
-        self.created = datetime.datetime.now()
-
-    class Admin(ObjectAdmin):
-        list_display = ['x', 'y', 'z', 'created', 'w']
-        field_attributes = {
-            'w': {'editable': True,
-                  'delegate': delegates.Many2OneDelegate,
-                  'target': B,
-                  'actions':[SelectObject(), ClearObject()],
-                  },
-            'x': {'editable': True,
-                  'static':'static',
-                  'prefix':lambda o:'pre',
-                  'tooltip': 'Hint',
-                  'background_color': 'red',
-                  'delegate': delegates.IntegerDelegate,
-                  },
-            'y': {'editable': lambda o: o.x < 10,
-                  'delegate': delegates.IntegerDelegate,
-                  'nullable': False,
-                  },
-            'z': {'editable': True,
-                  'delegate': delegates.One2ManyDelegate,
-                  'target': C,
-                  },
-            'created': {
-                'delegate': delegates.DateTimeDelegate
-            }
-        }
-
-        def get_verbose_identifier(self, obj):
-            return 'A : {0}'.format(obj.x)
-
-        def get_completions(self, obj, field_name, prefix):
-            if field_name == 'w':
-                return [
-                    B('{0}_{1.x}_1'.format(prefix, obj)),
-                    B('{0}_{1.x}_2'.format(prefix, obj)),
-                    B('{0}_{1.x}_3'.format(prefix, obj)),
-                    ]
+from .test_core import ExampleModelMixinCase
+from .testing_context import LoadSampleData, A, Party, Person
 
 
 class ListModelProxyCase(unittest.TestCase):

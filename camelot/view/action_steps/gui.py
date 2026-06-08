@@ -41,14 +41,12 @@ from dataclasses import dataclass, field
 
 from camelot.admin.action.base import ActionStep
 from camelot.admin.icon import Icon
-from camelot.core.exception import CancelRequest, UserException
+from camelot.core.exception import UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from camelot.view.art import from_admin_icon
 from camelot.view.controls import editors
 from camelot.view.controls.standalone_wizard_page import StandaloneWizardPage
-from camelot.view.action_runner import hide_progress_dialog
-from camelot.view.qml_view import qml_action_step, is_cpp_gui_context_name
 from ...core.qt import QtCore, QtWidgets, is_deleted
 from ...core.serializable import DataclassSerializable
 from .. import gui_naming_context
@@ -62,22 +60,16 @@ class Refresh( ActionStep, DataclassSerializable ):
 
     blocking: bool = False
 
-    @classmethod
-    def gui_run(self, gui_context_name, serialized_step):
-        qml_action_step(gui_context_name, 'Refresh')
-
 class ItemSelectionDialog(StandaloneWizardPage):
 
     def __init__( self,
                   window_title=None,
-                  autoaccept=False,
-                  parent=None):
+                  autoaccept=False):
         """
         :param autoaccept: if True, the value of the ComboBox is immediately
         accepted after selecting it.
         """
-        super(ItemSelectionDialog, self).__init__( window_title = window_title,
-                                                   parent = parent )
+        super(ItemSelectionDialog, self).__init__(window_title = window_title)
         self.autoaccept = autoaccept
         self.set_default_buttons()
         layout = QtWidgets.QVBoxLayout()
@@ -124,8 +116,8 @@ class SelectItem(ActionStep, DataclassSerializable):
     value: str = initial_naming_context._bind_object(None)
     autoaccept: bool = True
 
-    title: Union[str, ugettext_lazy] = field(init=False, default= _('Please select'))
-    subtitle: Union[str, ugettext_lazy] = field(init=False, default=_('Make a selection and press the OK button.'))
+    title: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Please select'))
+    subtitle: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Make a selection and press the OK button.'))
 
     def __post_init__(self):
         self.autoaccept = True
@@ -140,12 +132,9 @@ class SelectItem(ActionStep, DataclassSerializable):
         return dialog
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
         dialog = cls.render(step = json.loads(serialized_step))
-        result = dialog.exec()
-        if result == QtWidgets.QDialog.DialogCode.Rejected:
-            raise CancelRequest()
-        return dialog.get_value()
+        dialog.async_exec(gui_run)
 
     @classmethod
     def deserialize_result(cls, gui_context_name, result):
@@ -169,16 +158,13 @@ class CloseView(ActionStep, DataclassSerializable):
     accept: bool = True
 
     @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        if is_cpp_gui_context_name(gui_context_name):
-            qml_action_step(gui_context_name, 'CloseView', serialized_step)
-        else:
-            # python implementation, still used for FormView
-            gui_context = gui_naming_context.resolve(gui_context_name)
-            step = json.loads(serialized_step)
-            view = gui_context.view
-            if view is not None and not is_deleted(view):
-                view.close_view(step["accept"])
+    def gui_run(cls, gui_run, gui_context_name, serialized_step):
+        # python implementation, still used for FormView
+        gui_context = gui_naming_context.resolve(gui_context_name)
+        step = json.loads(serialized_step)
+        view = gui_context.view
+        if view is not None and not is_deleted(view):
+            view.close_view(step["accept"])
 
 
 @dataclass
@@ -203,8 +189,8 @@ class MessageBox( ActionStep, DataclassSerializable ):
     """
 
     text: typing.Union[str, ugettext_lazy]
-    icon: Icon = Icon('info')
-    title: typing.Union[str, ugettext_lazy] = _('Message')
+    icon: Icon = field(default_factory=lambda: Icon('info'))
+    title: typing.Union[str, ugettext_lazy] = field(default_factory=lambda: _('Message'))
     standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
     informative_text: str = field(init=False)
     detailed_text: str = field(init=False)
@@ -232,21 +218,12 @@ class MessageBox( ActionStep, DataclassSerializable ):
         return message_box
 
     @classmethod
-    def show_message_box(cls, step):
-        message_box = cls.render(step)
-        result = message_box.exec()
-        if result == QtWidgets.QMessageBox.StandardButton.Cancel:
-            raise CancelRequest()
-        return result
-
-    @classmethod
-    def gui_run(cls, gui_context_name, serialized_step):
-        step = json.loads(serialized_step)
-        if step['hide_progress']:
-            with hide_progress_dialog(gui_context_name):
-                return cls.show_message_box(step)
-        else:
-            return cls.show_message_box(step)
+    def deserialize_result(cls, gui_context_name, result):
+        # the result might be empty in case step was send as non-blocking
+        button = result.get("button")
+        if button is None:
+            return
+        return QtWidgets.QMessageBox.StandardButton(button)
 
     @classmethod
     def from_exception(cls, logger, text, exception):

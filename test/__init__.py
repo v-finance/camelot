@@ -9,12 +9,10 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)-7s] [%(name)-35s] 
 #logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 faulthandler.enable()
-from camelot.core.naming import initial_naming_context
 from camelot.core.qt import QtCore
 from camelot.core.qt import QtGui
 from camelot.core.qt import QtWidgets
 from camelot.core.qt import QtNetwork
-from camelot.admin.application_admin import ApplicationAdmin
 
 from sqlalchemy.pool import StaticPool
 from sqlalchemy import create_engine
@@ -26,12 +24,6 @@ getattr(QtCore, 'QObject')
 getattr(QtGui, 'QColor')
 getattr(QtWidgets, 'QWidget')
 getattr(QtNetwork, 'QNetworkAccessManager')
-
-app_admin = ApplicationAdmin()
-
-unit_test_context = initial_naming_context.bind_new_context(
-    'unit_test', immutable=True
-)
 
 class TestSettings( object ):
 
