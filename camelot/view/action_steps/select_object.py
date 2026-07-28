@@ -33,6 +33,7 @@ import typing
 from camelot.core.naming import initial_naming_context, NameNotFoundException
 from camelot.admin.action.base import Mode
 
+from ...core.qt import QtWidgets
 from .item_view import OpenTableView
 
 @dataclass
@@ -55,6 +56,7 @@ class SelectObjects(OpenTableView):
     modes: typing.List[Mode] = field(default_factory=list)
 
     blocking: bool = True
+    standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
 
     def __post_init__(self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
