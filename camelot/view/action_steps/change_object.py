@@ -36,6 +36,7 @@ from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from .form_view import OpenFormView
 from .item_view import UpdateTableView
 from ...admin.admin_route import AdminRoute
+from ...core.qt import QtWidgets
 
 
 @dataclass
@@ -57,14 +58,12 @@ class ChangeObject(OpenFormView):
     """
 
     subtitle: typing.Union[str, ugettext_lazy, None] = field(init=False, default_factory=lambda: _('Complete the form and press the OK button'))
-    accept: typing.Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('OK'))
-    reject: typing.Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Cancel'))
     blocking: bool = True
+    buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
 
     def __post_init__(self, value, admin, proxy):
         super().__post_init__(value, admin, proxy)
         self.title = admin.get_verbose_name()
-        self.qml = True
 
     @staticmethod
     def _add_actions(admin, actions):
@@ -114,7 +113,6 @@ class ChangeObjects(UpdateTableView):
     """
 
     validate: bool = True
-    qml: bool = False
 
     invalid_rows: List = field(init=False, default_factory=list)
     admin_route: AdminRoute = field(init=False)
@@ -122,12 +120,12 @@ class ChangeObjects(UpdateTableView):
     title: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Data Preview'))
     subtitle: Union[str, ugettext_lazy] = field(init=False, default_factory=lambda: _('Please review the data below.'))
     icon: typing.Union[Icon, None] = field(init=False, default_factory=lambda: Icon('file-excel'))
+    buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
 
     def __post_init__( self, value, admin, proxy, search_text):
         super().__post_init__(value, admin, proxy, search_text)
         self.admin_route = admin.get_admin_route()
         self.window_title = admin.get_verbose_name_plural()
-        self.qml = True
         if self.validate:
             validator = admin.get_validator()
             for row, obj in enumerate(value):
@@ -142,7 +140,3 @@ class ChangeObjects(UpdateTableView):
     def get_admin(self):
         """Use this method to get access to the admin in unit tests"""
         return initial_naming_context.resolve(self.admin_route)
-
-@dataclass
-class QmlChangeObjects(ChangeObjects):
-    pass

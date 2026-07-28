@@ -32,7 +32,7 @@ from .application import (
     MainMenu, UpdateActionsState, SetThemeColors, Authenticate, StartProfiler,
     StopProfiler,
 )
-from .change_object import ChangeObject, ChangeObjects, QmlChangeObjects
+from .change_object import ChangeObject, ChangeObjects
 from .form_view import OpenFormView, HighlightForm, CloseMenu
 from .gui import (
     CloseView, MessageBox, Refresh, SelectItem
@@ -81,7 +81,6 @@ __all__ = [
     OpenFile.__name__,
     OpenFormView.__name__,
     HighlightForm.__name__,
-    QmlChangeObjects.__name__,
     Refresh.__name__,
     RefreshItemView.__name__,
     RemoveTranslators.__name__,
