@@ -35,6 +35,14 @@ def get_window():
     return _window
 
 def cpp_action_step(gui_context_name, name, step=QtCore.QByteArray()):
+    """
+    Send an action step to the C++ backend, and return the result as a dict.
+
+    TODO FIXME:
+        This function is sometimes mocked in tests to return network request results without actually connecting with third-party services.
+        This should problably be revised in the future and implemented in a more robust way on the level of the network request itself,
+        so that the network request can be tested without actually connecting to third-party services.
+    """
     response = get_root_backend().action_step(gui_context_name, name, step)
     return orjson.loads(response.data())
 
