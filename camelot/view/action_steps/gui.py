@@ -107,7 +107,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
     :param text: the text to be displayed within the message box
     :param icon: one of the :class:`QtWidgets.QMessageBox.Icon` constants
     :param title: the window title of the message box
-    :param standard_buttons: the buttons to be displayed on the message box,
+    :param buttons: the buttons to be displayed on the message box,
         out of the :class:`QtWidgets.QMessageBox.StandardButton` enumeration. by
         default an :guilabel:`Ok` and a button :guilabel:`Cancel` will be shown.
 
@@ -121,7 +121,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
     text: typing.Union[str, ugettext_lazy]
     icon: Icon = field(default_factory=lambda: Icon('info'))
     title: typing.Union[str, ugettext_lazy] = field(default_factory=lambda: _('Message'))
-    standard_buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
+    buttons: list = field(default_factory=lambda: [QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Cancel])
     informative_text: str = field(init=False)
     detailed_text: str = field(init=False)
     hide_progress: bool = False
@@ -154,7 +154,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
                 title=exception.title,
                 text=exception.text,
                 icon=exception.icon,
-                standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
+                buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
             )
             step.informative_text=exception.resolution
             step.detailed_text=exception.detail
@@ -166,7 +166,7 @@ class MessageBox( ActionStep, DataclassSerializable ):
                 title=_('Exception'),
                 text=_('An unexpected event occurred'),
                 icon=None,
-                standard_buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
+                buttons=[QtWidgets.QMessageBox.StandardButton.Ok,],
             )
             # chop the size of the text to prevent error dialogs larger than the screen
             step.informative_text=str(exception)[:1000]
