@@ -27,9 +27,11 @@
 #
 #  ============================================================================
 
-from dataclasses import dataclass, field, InitVar
 import logging
 import typing
+
+from dataclasses import dataclass, field, InitVar
+from typing import Optional
 
 from ...admin.action.base import ActionStep, State, ModelContext
 from ...admin.action.application_action import model_context_naming, model_context_counter
@@ -88,6 +90,22 @@ class MainWindow(ActionStep, DataclassSerializable):
 
     def __post_init__(self, model_context):
         self.model_context_name = model_context_naming.bind(str(next(model_context_counter)), model_context)
+
+
+@dataclass
+class SetAnnouncementBanner(ActionStep, DataclassSerializable):
+    """
+    This step configures the announcement banner of the application.
+
+    :param text: The text to display in the announcement banner. If empty, no banner will be displayed.
+    :param title: The title to display in the announcement banner.
+    :param dismissable: Whether the announcement banner can be dismissed by the user.
+    """
+
+    text: Optional[str]
+    title: Optional[str]
+    dismissable: bool = True
+    blocking: bool = False
 
 
 @dataclass
