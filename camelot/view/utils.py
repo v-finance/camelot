@@ -138,12 +138,13 @@ def datetime_from_string(s):
                     dt.time().hour(), dt.time().minute(), dt.time().second())
 
 def int_from_string(s):
-    value = float_from_string(s)
+    value = _float_from_string(s)
     if value != None:
         value = int( value )
     return value
 
-def float_from_string(s):
+def _float_from_string(s):
+    """This method should not be used directly, as anything should be decimal or int, never float"""
     if s == None:
         return None
     s = s.strip()
@@ -158,7 +159,10 @@ def float_from_string(s):
 
 def decimal_from_string(s):
     # direct conversion not possible, due to locale
-    return decimal.Decimal( float_from_string( s ) )
+    f = _float_from_string(s)
+    if f is None:
+        return None
+    return decimal.Decimal(f).quantize(decimal.Decimal('0.000001'))
 
 def pyvalue_from_string(pytype, s):
     if pytype is str:
@@ -174,7 +178,7 @@ def pyvalue_from_string(pytype, s):
     elif pytype is datetime:
         return datetime_from_string(s)
     elif pytype is float:
-        return float_from_string(s)
+        return decimal_from_string(s)
     elif pytype is int:
         return int_from_string(s)
 
