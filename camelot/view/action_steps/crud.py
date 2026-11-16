@@ -92,8 +92,10 @@ class SetColumns(ActionStep, DataclassSerializable):
             attrs = filter_attributes(fa, ['action_routes', 'calculator', 'decimal', 'single_step', 'column_span'])
         elif delegate_type == DelegateType.INTEGER:
             attrs = filter_attributes(fa, ['action_routes', 'calculator', 'decimal', 'single_step', 'column_span'])
+        elif delegate_type == DelegateType.BOOL:
+            attrs = filter_attributes(fa, ['action_routes'])
         elif delegate_type == DelegateType.LOCAL_FILE:
-            attrs = filter_attributes(fa, ['directory', 'save_as', 'file_filter', 'column_span'])
+            attrs = filter_attributes(fa, ['action_routes', 'directory', 'save_as', 'file_filter', 'column_span'])
         elif delegate_type == DelegateType.MONTHS:
             attrs = filter_attributes(fa, ['minimum', 'maximum', 'forever', 'action_routes', 'column_span'])
         elif delegate_type == DelegateType.ONE2MANY:
