@@ -28,6 +28,7 @@
 #  ============================================================================
 
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 import typing
 
 from pydantic import AnyUrl
@@ -62,6 +63,12 @@ class OpenFile( ActionStep, DataclassSerializable ):
 
     def __str__(self):
         return 'Open file {}'.format(self.url.path)
+
+
+@dataclass
+class OpenClientDirectory(ActionStep, DataclassSerializable):
+    path: PurePosixPath
+    blocking = False
 
 
 @dataclass
