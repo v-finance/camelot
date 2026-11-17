@@ -137,6 +137,10 @@ updated state for the widget.
 
     The shortcut key sequence to trigger the action.
 
+.. attribute:: standard_shortcut
+
+    The Qt standard key identifier, resolved to a key sequence by the client.
+
 .. attribute:: color
 
     A color used to indicate something regarding the action's state. This color
@@ -158,6 +162,7 @@ updated state for the widget.
     shortcut: typing.Optional[str] = None
     color: typing.Optional[str] = None
     directory: typing.Optional[str] = None
+    standard_shortcut: typing.Optional[int] = None
 
 # TODO: When all action step have been refactored to be serializable, ActionStep can be implemented as NamedDataclassSerializable,
 #       which NamedDataclassSerializableMeta metaclass replaces the need for MetaActionStep.
