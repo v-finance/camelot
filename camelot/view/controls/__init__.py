@@ -11,6 +11,7 @@ class DelegateType(str, Enum):
     DB_IMAGE = "DbImageDelegate"
     FLOAT = "FloatDelegate"
     INTEGER = "IntegerDelegate"
+    YEAR = "YearDelegate"
     LOCAL_FILE = "LocalFileDelegate"
     MONTHS = "MonthsDelegate"
     ONE2MANY = "One2ManyDelegate"
