@@ -74,7 +74,6 @@ class SelectObjects(OpenTableView):
 
     @staticmethod
     def _add_actions(admin, actions):
-        actions.extend(admin.get_list_actions())
         actions.extend(admin.get_filters())
         actions.extend(admin.get_select_list_toolbar_actions())
 
