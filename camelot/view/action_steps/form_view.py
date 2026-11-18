@@ -79,6 +79,7 @@ class OpenFormView(AbstractCrudView):
     blocking: bool = False
     qml: bool = False
     auto_update: bool = True
+    preview_pdf_path: Optional[str] = field(default=None, kw_only=True)
 
     def __post_init__(self, value, admin, proxy):
         assert value is not None
