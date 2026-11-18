@@ -39,12 +39,37 @@ from typing import List, Union
 
 from camelot.admin.action.base import ActionStep
 from camelot.admin.icon import Icon
-from camelot.core.exception import UserException
+from camelot.core.exception import GuiException, UserException
 from camelot.core.naming import initial_naming_context
 from camelot.core.utils import ugettext_lazy, ugettext_lazy as _
 from .crud import CompletionValue
 from ...core.qt import QtWidgets
 from ...core.serializable import DataclassSerializable
+
+
+@dataclass
+class ActionStepRequest(DataclassSerializable):
+    """A GUI action step and its optional context within an ordered batch."""
+
+    request: ActionStep
+    gui_context_name: typing.Optional[typing.Tuple[str, ...]] = None
+    name: str = field(init=False)
+
+    def __post_init__(self):
+        self.name = type(self.request).__name__
+
+
+@dataclass
+class BatchActionSteps(ActionStep, DataclassSerializable):
+    """Run each request to completion and return its raw response in order."""
+
+    steps: List[ActionStepRequest]
+
+    @classmethod
+    def deserialize_result(cls, model_context, result):
+        if 'error' in result:
+            raise GuiException(result['error'])
+        return result['results']
 
 
 @dataclass

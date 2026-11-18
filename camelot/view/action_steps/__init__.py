@@ -35,7 +35,7 @@ from .application import (
 from .change_object import ChangeObject, ChangeObjects
 from .form_view import OpenFormView, HighlightForm, CloseMenu
 from .gui import (
-    CloseView, MessageBox, Refresh, SelectItem
+    ActionStepRequest, BatchActionSteps, CloseView, MessageBox, Refresh, SelectItem
 )
 from .item_view import (
     Sort, OpenTableView, UpdateTableView, ClearSelection, SetSelection,
