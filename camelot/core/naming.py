@@ -1125,7 +1125,7 @@ class InitialNamingContext(NamingContext, metaclass=Singleton):
             return ('entity', entity.endpoint.resource_name, str(session.hash_key), *[str(key) for key in primary_key])
         if isinstance(obj, float):
             raise NotImplementedError('Use Decimal instead')
-        LOGGER.warn('Binding non-delegated object of type {}'.format(type(obj)))
+        LOGGER.warning('Binding non-delegated object of type {}'.format(type(obj)))
         return self.rebind(('object', str(hash(obj))), obj)
 
 initial_naming_context = InitialNamingContext()
