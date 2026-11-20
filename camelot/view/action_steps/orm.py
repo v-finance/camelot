@@ -82,7 +82,7 @@ class CreateUpdateDelete(ActionStep, DataclassSerializable):
         if len(objects_created):
             self.created = leases.bind(str(next(self._lease_counter)), objects_created)
         if len(leases) > 10:
-            LOGGER.warn('Number of leases is growing to {}'.format(len(leases)))
+            LOGGER.warning('Number of leases is growing to {}'.format(len(leases)))
 
 
 class FlushSession(CreateUpdateDelete):
