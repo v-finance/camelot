@@ -263,7 +263,7 @@ class ThrowActionException(AbstractRequest):
 
     @classmethod
     def _next(cls, run, request_data):
-        LOGGER.warn("User interface raised exception while handling action {}".format(request_data))
+        LOGGER.warning("User interface raised exception while handling action {}".format(request_data))
         return run.generator.throw(GuiException(request_data['exception']))
 
 
@@ -300,4 +300,4 @@ class Unbind(AbstractRequest):
             try:
                 initial_naming_context.unbind(tuple(lease))
             except NameNotFoundException:
-                LOGGER.warn('received unbind request for non bound lease : {}'.format(lease))
+                LOGGER.warning('received unbind request for non bound lease : {}'.format(lease))
