@@ -26,12 +26,12 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #  ============================================================================
-import base64
+
 from dataclasses import dataclass
-import os
+from pathlib import PurePosixPath
 import typing
 
-from dataclasses import field, InitVar
+from pydantic import AnyUrl
 
 from camelot.admin.action import ActionStep
 
@@ -51,56 +51,25 @@ class OpenFile( ActionStep, DataclassSerializable ):
     """
     # TODO FIXME: Documentation needs to be updated
 
-    path: InitVar[str]
-    type: str = "url"   # "url", "content" or "websocket"
+    url: AnyUrl
+    blocking = False
 
-    url: str = field(init=False, default=None)
-    content: str = field(init=False, default=None)
-    filename: str = field(init=False, default=None)
+    def get_path(self):
+        """For testing purposes"""
+        return self.url.path
 
-    blocking: bool = False
+    def __post_init__(self):
+        assert isinstance(self.url, AnyUrl)
 
-    def __post_init__(self, path):
-        self._path = path
-        if self.type not in ("content", "url", "websocket"):
-                    raise ValueError(f"Invalid type: {self.type}. Must be 'content', 'url' or 'websocket'.")
-        self.filename = os.path.basename(path)
-        if self.type == "url":
-            # Assume path is already a valid URL or file path to be used as a URL
-            self.url = path
-        elif self.type == "content":
-            if not os.path.isfile(path):
-                raise FileNotFoundError(f"File not found: {path}")
-            with open(path, "rb") as f:
-                raw_data = f.read()
-                self.content = base64.b64encode(raw_data).decode("utf-8")
-        elif self.type == "websocket":
-            self.url = path
+    def __str__(self):
+        return 'Open file {}'.format(self.url.path)
 
-    def __str__( self ):
-        return u'Open file {}'.format( self._path )
-    
-    def get_path( self ):
-        """
-        :return: the path to the file that will be opened, use this method
-        to verify the content of the file in unit tests
-        """
-        return self._path
 
-    @classmethod
-    def create_temporary_file( cls, suffix ):
-        """
-        Create a temporary filename that can be used to write to, and open
-        later on.
-        
-        :param suffix: the suffix of the file to create
-        :return: the filename of the temporary file
-        """
-        import tempfile
-        import os
-        file_descriptor, file_name = tempfile.mkstemp( suffix=suffix )
-        os.close( file_descriptor )
-        return file_name
+@dataclass
+class OpenClientDirectory(ActionStep, DataclassSerializable):
+    path: PurePosixPath
+    blocking = False
+
 
 @dataclass
 class DirectoryInfo(Serializable):
@@ -108,6 +77,7 @@ class DirectoryInfo(Serializable):
     readable: bool
     writable: bool
     entries: typing.List[str]
+
 
 @dataclass
 class ClientDirectoryInfo(ActionStep, DataclassSerializable):

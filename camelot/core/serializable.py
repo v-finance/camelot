@@ -2,8 +2,10 @@ import dataclasses
 import datetime
 import functools
 import io
+from pathlib import PurePosixPath
 import base64
 
+from pydantic import AnyUrl
 import orjson
 
 from camelot.core.qt import QtCore, QtGui
@@ -93,8 +95,10 @@ def orjson_default(obj):
     # subclasses should be handled explicitly here.
     if isinstance(obj, list):
         return [orjson_default(v) for v in obj]
-    if isinstance(obj, str):
+    if isinstance(obj, (str, AnyUrl)):
         return str(obj)
+    if isinstance(obj, PurePosixPath):
+        return obj.as_posix()
     raise TypeError
 
 

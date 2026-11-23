@@ -41,7 +41,7 @@ from .item_view import (
     Sort, OpenTableView, UpdateTableView, ClearSelection, SetSelection,
     RefreshItemView, ToFirstRow, ToLastRow
 )
-from .open_file import (OpenFile, ClientDirectoryInfo)
+from .open_file import (OpenFile, ClientDirectoryInfo, OpenClientDirectory)
 from .orm import (
     CreateUpdateDelete, CreateObjects, DeleteObjects, FlushSession,
     UpdateObjects
@@ -79,6 +79,7 @@ __all__ = [
     SetAnnouncementBanner.__name__,
     MessageBox.__name__,
     NavigationPanel.__name__,
+    OpenClientDirectory.__name__,
     OpenFile.__name__,
     OpenFormView.__name__,
     HighlightForm.__name__,
