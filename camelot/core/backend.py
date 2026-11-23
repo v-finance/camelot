@@ -64,10 +64,12 @@ class PythonConnection(QtCore.QObject, AbstractClientConnection):
         self.dgc = self.backend.distributed_garbage_collector()
 
     def __enter__(self):
-        self.dgc.request.connect(self.on_request)
+        self.dgc_connection = self.dgc.request.connect(self.on_request)
         # queued, to allow the python code to store the returned gui_run of the action before
         # the actual action step results are sent back
-        self.backend.action_runner().request.connect(self.on_request, Qt.ConnectionType.QueuedConnection)
+        self.action_connection = self.backend.action_runner().request.connect(
+            self.on_request, Qt.ConnectionType.QueuedConnection
+        )
         # as this connection is used for testing, don't provide a hint for an action to start
         # running, to keep the testing code in control of when actions start running
         self.send_response(Ready(action_name=None, model_context=None))
@@ -75,8 +77,8 @@ class PythonConnection(QtCore.QObject, AbstractClientConnection):
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.backend.action_runner().waitForCompletion()
-        self.dgc.request.disconnect(self.on_request)
-        self.backend.action_runner().request.disconnect(self.on_request)
+        QtCore.QObject.disconnect(self.dgc_connection)
+        QtCore.QObject.disconnect(self.action_connection)
         return False
 
     @QtCore.qt_slot(QtCore.QByteArray)
